@@ -318,3 +318,18 @@ explains this arithmetic. The helper's Lean contract requires `w <= 64` and
 `u < 2^w`, established by validated construction and the unsigned decoder's
 proof. This is ordinary bounded arithmetic, not a tool workaround or a reliance
 on signed overflow.
+
+## Fixed-width integer readers
+
+`BeU16`, `BeU32`, `BeU64`, `I8`, `BeI16`, `BeI32`, and `BeI64` reuse `Bits` and
+`SignedBits` with fixed valid configurations. A private Rust macro expands the
+zero-sized types and identical outcome propagation; it needs no tool-specific
+source form. Unsigned and signed narrowing casts translate at both library MIR
+stages and have proofs that they preserve values. The same-type 64-bit casts
+are eliminated during extraction.
+
+The normal Cargo consumer translates all seven readers, sequencing native
+unsigned/signed outputs through a parser reference and using the signed-byte
+complete API. Its 21 entry points Lean type-check. The reader contracts cover
+arbitrary input/cursors and both statuses; the axiom audit lists only `propext`,
+`Classical.choice`, and `Quot.sound`. No new Aeneas workaround is needed.

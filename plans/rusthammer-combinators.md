@@ -259,8 +259,8 @@ The combinators above also need a deliberate primitive and extension inventory:
 
 | Capability | Direction |
 | --- | --- |
-| Bits, unsigned numbers, numeric literals, exact EOF | Retain `Bit`, `Bits`, `Literal`, and `End`. Fixed-width readers with narrower Rust outputs can be permanent conveniences over common decoding operations. |
-| Signed numbers | Implemented and proved: `SignedBits::new(width)` corresponds to `h_bits(width, true)` and returns `i64` for widths 0 through 64. Zero width returns zero after validating the cursor. Nonempty fields use specified two's-complement interpretation; every arithmetic intermediate and cast is proved in bounds. Fixed-width readers with narrower outputs corresponding to `h_int*` remain planned conveniences. |
+| Bits, unsigned numbers, numeric literals, exact EOF | Retain `Bit`, `Bits`, `Literal`, and `End`. Implemented and proved: `Byte`, `BeU16`, `BeU32`, and `BeU64` correspond to `h_uint*` under default ordering, with native unsigned Rust outputs. Fixed-width readers are zero-sized `Copy`/`Clone` values with no configuration or fallible constructor. |
+| Signed numbers | Implemented and proved: `SignedBits::new(width)` corresponds to `h_bits(width, true)` and returns `i64` for widths 0 through 64. Zero width returns zero after validating the cursor. Nonempty fields use specified two's-complement interpretation; every arithmetic intermediate and cast is proved in bounds. `I8`, `BeI16`, `BeI32`, and `BeI64` now correspond to `h_int*` under default ordering, with native signed outputs and proved lossless narrowing. |
 | Byte/token parsing | Implemented and proved: `Byte` (`h_uint8`) returns `u8`; `BytePattern::new(&pattern)` (`h_token` / `h_literal`) borrows an arbitrary byte pattern and returns that configured slice on success. Input and pattern lifetimes are independent. Both support unaligned starts without allocation. Empty patterns succeed without cursor validation; nonempty patterns compare complete bytes in order. `h_ch` can be a later literal-reader convenience. |
 | Byte sequences | Keep `TakeAligned` for borrowed slices. `Repeat::exact(Byte, count)` now supplies `h_bytes`-style decoded `Vec<u8>` with `alloc`; a named convenience can be added if useful. Never silently align unaligned input. |
 | Skipping and position | `SkipBits` discards a specified number of bits; `Tell` reports the cursor without consuming. Preserve `h_skip` and `h_tell` capabilities, with explicit Rust position units and checked arithmetic. |
@@ -315,8 +315,12 @@ helpers should represent grammar operations or output needs.
    `SignedBits` now adds verified signed fields of width 0 through 64, with total
    parsing and safe sign-extension proofs. It passes both MIR stages and the
    Cargo consumer; 27,724 signed-field C comparisons cover boundaries, truncation,
-   and every bit offset. Next add fixed-width typed conveniences, ranges,
-   skipping/position, and match comparisons as specified above.
+   and every bit offset. Fixed-width typed integer readers are also implemented
+   and proved, with zero-sized configuration-free values, native output types,
+   and lossless conversions. Both MIR stages and all 21 consumer entry points
+   pass; 134,896 additional C comparisons exercise the named integer primitives.
+   Next add numeric ranges and byte sets via `Verify`, then skipping/position and
+   match comparisons as specified above.
    Resolve cursor/span/order questions before implementing their affected APIs.
    Plan permutation, recursion, and the other larger capabilities separately.
 

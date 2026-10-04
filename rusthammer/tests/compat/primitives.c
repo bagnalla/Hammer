@@ -56,3 +56,39 @@ int compare_signed(unsigned width, const uint8_t *input, size_t input_len,
     h_parser_free(atom);
     return accepted;
 }
+
+int compare_integer(unsigned width, unsigned signedp,
+                    const uint8_t *input, size_t input_len, unsigned offset,
+                    size_t *position, uint64_t *unsigned_value, int64_t *signed_value) {
+    HParser *atom = NULL;
+    switch (width) {
+    case 8: atom = signedp ? h_int8() : h_uint8(); break;
+    case 16: atom = signedp ? h_int16() : h_uint16(); break;
+    case 32: atom = signedp ? h_int32() : h_uint32(); break;
+    case 64: atom = signedp ? h_int64() : h_uint64(); break;
+    default: assert(0 && "unsupported integer width");
+    }
+    assert(atom != NULL);
+    HParser *skip = offset ? h_bits(offset, false) : NULL;
+    HParser *parser = skip ? h_right(skip, atom) : atom;
+    HParseResult *result = h_parse(parser, input, input_len);
+    int accepted = result != NULL;
+    if (accepted) {
+        assert(result->ast != NULL);
+        *position = result->bit_length;
+        if (signedp) {
+            assert(result->ast->token_type == TT_SINT);
+            *signed_value = result->ast->token_data.sint;
+        } else {
+            assert(result->ast->token_type == TT_UINT);
+            *unsigned_value = result->ast->token_data.uint;
+        }
+        h_parse_result_free(result);
+    }
+    if (skip) {
+        h_parser_free(parser);
+        h_parser_free(skip);
+    }
+    h_parser_free(atom);
+    return accepted;
+}

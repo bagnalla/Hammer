@@ -3,7 +3,10 @@
 #[path = "../../src/lib.rs"]
 mod rusthammer;
 
-use rusthammer::{Byte, BytePattern, Cursor, Parser, SignedBits};
+use rusthammer::{
+    BeI16, BeI32, BeI64, BeU16, BeU32, BeU64, Byte, BytePattern, Cursor, ParseError, Parser,
+    SignedBits, I8,
+};
 use std::io::{self, BufRead};
 
 fn unhex(text: &str) -> Vec<u8> {
@@ -16,6 +19,20 @@ fn unhex(text: &str) -> Vec<u8> {
         .collect()
 }
 
+fn widened<'input, P>(
+    parser: P,
+    input: &'input [u8],
+    cursor: Cursor,
+) -> Result<(Cursor, i128), ParseError>
+where
+    P: Parser<'input>,
+    P::Output: Into<i128>,
+{
+    parser
+        .parse(input, cursor)
+        .map(|(next, value)| (next, value.into()))
+}
+
 fn main() {
     for line in io::stdin().lock().lines() {
         let line = line.unwrap();
@@ -24,12 +41,25 @@ fn main() {
         let input = unhex(fields[3]);
         let cursor = Cursor { byte: 0, bit };
         let result = if fields[0] == "byte" {
-            Byte.parse(&input, cursor)
-                .map(|(next, value)| (next, i64::from(value)))
+            widened(Byte, &input, cursor)
         } else if fields[0] == "signed" {
-            SignedBits::new(fields[2].parse().unwrap())
-                .unwrap()
-                .parse(&input, cursor)
+            widened(
+                SignedBits::new(fields[2].parse().unwrap()).unwrap(),
+                &input,
+                cursor,
+            )
+        } else if fields[0] == "uint" || fields[0] == "int" {
+            match (fields[0], fields[2]) {
+                ("uint", "8") => widened(Byte, &input, cursor),
+                ("int", "8") => widened(I8, &input, cursor),
+                ("uint", "16") => widened(BeU16, &input, cursor),
+                ("int", "16") => widened(BeI16, &input, cursor),
+                ("uint", "32") => widened(BeU32, &input, cursor),
+                ("int", "32") => widened(BeI32, &input, cursor),
+                ("uint", "64") => widened(BeU64, &input, cursor),
+                ("int", "64") => widened(BeI64, &input, cursor),
+                _ => panic!("unsupported integer reader"),
+            }
         } else {
             let pattern = unhex(fields[2]);
             BytePattern::new(&pattern)

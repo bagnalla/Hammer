@@ -5,10 +5,41 @@
 extern crate alloc;
 
 use rusthammer::{
-    Bind, Bit, Bits, Byte, BytePattern, ConfigError, Cursor, End, FoldRepeat, Ignore, InputStatus,
-    Left, Literal, Middle, ParseError, ParseOutcome, Parser, Right, Seq, SignedBits, TakeAligned,
-    TryMap,
+    BeI16, BeI32, BeI64, BeU16, BeU32, BeU64, Bind, Bit, Bits, Byte, BytePattern, ConfigError,
+    Cursor, End, FoldRepeat, Ignore, InputStatus, Left, Literal, Middle, ParseError, ParseOutcome,
+    Parser, Right, Seq, SignedBits, TakeAligned, TryMap, I8,
 };
+
+/// The fixed-width output types survive sequencing and a shared parser reference.
+pub fn integers16(input: &[u8], cursor: Cursor, status: InputStatus) -> ParseOutcome<(u16, i16)> {
+    let unsigned = BeU16;
+    Seq {
+        first: &unsigned,
+        second: BeI16,
+    }
+    .parse_with(input, cursor, status)
+}
+
+pub fn integers32(input: &[u8], cursor: Cursor, status: InputStatus) -> ParseOutcome<(u32, i32)> {
+    Seq {
+        first: BeU32,
+        second: BeI32,
+    }
+    .parse_with(input, cursor, status)
+}
+
+pub fn integers64(input: &[u8], cursor: Cursor, status: InputStatus) -> ParseOutcome<(u64, i64)> {
+    Seq {
+        first: BeU64,
+        second: BeI64,
+    }
+    .parse_with(input, cursor, status)
+}
+
+/// Exercise the default complete-input method with the signed byte output.
+pub fn complete_i8(input: &[u8], cursor: Cursor) -> Result<(Cursor, i8), ParseError> {
+    I8.parse(input, cursor)
+}
 
 /// Dynamic construction preserves configuration errors separately from parsing.
 pub fn signed_field(
@@ -258,6 +289,64 @@ pub fn leading_ones(input: &[u8], status: InputStatus) -> ParseOutcome<alloc::ve
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn fixed_width_types_sequence_across_the_crate_boundary() {
+        for status in [InputStatus::Partial, InputStatus::Final] {
+            assert_eq!(
+                integers16(&[0x12, 0x34, 0xff, 0xfd], Cursor::start(), status),
+                ParseOutcome::Success(Cursor { byte: 4, bit: 0 }, (0x1234u16, -3i16))
+            );
+            assert_eq!(
+                integers32(
+                    &[0xff, 0xff, 0xff, 0xff, 0x80, 0, 0, 0],
+                    Cursor::start(),
+                    status
+                ),
+                ParseOutcome::Success(Cursor { byte: 8, bit: 0 }, (u32::MAX, i32::MIN))
+            );
+            assert_eq!(
+                integers64(
+                    &[0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x80, 0, 0, 0, 0, 0, 0, 0],
+                    Cursor::start(),
+                    status
+                ),
+                ParseOutcome::Success(Cursor { byte: 16, bit: 0 }, (u64::MAX, i64::MIN))
+            );
+        }
+        assert_eq!(
+            integers16(&[0, 0, 0], Cursor::start(), InputStatus::Partial),
+            ParseOutcome::NeedMore
+        );
+        assert_eq!(
+            integers32(&[0; 7], Cursor::start(), InputStatus::Final),
+            ParseOutcome::Error(ParseError::UnexpectedEnd)
+        );
+        assert_eq!(
+            integers64(&[0; 17], Cursor { byte: 0, bit: 1 }, InputStatus::Partial),
+            ParseOutcome::Success(Cursor { byte: 16, bit: 1 }, (0, 0))
+        );
+    }
+
+    #[test]
+    fn signed_byte_complete_method_keeps_its_native_type() {
+        assert_eq!(
+            complete_i8(&[0x80], Cursor::start()),
+            Ok((Cursor { byte: 1, bit: 0 }, i8::MIN))
+        );
+        assert_eq!(
+            complete_i8(&[0x7f], Cursor::start()),
+            Ok((Cursor { byte: 1, bit: 0 }, i8::MAX))
+        );
+        assert_eq!(
+            complete_i8(&[], Cursor::start()),
+            Err(ParseError::UnexpectedEnd)
+        );
+        assert_eq!(
+            complete_i8(&[], Cursor { byte: 0, bit: 1 }),
+            Err(ParseError::InvalidCursor)
+        );
+    }
 
     #[test]
     fn signed_construction_and_extremes_cross_the_crate_boundary() {

@@ -421,6 +421,121 @@ impl<'input> Parser<'input> for Byte {
     }
 }
 
+// These fixed widths always satisfy the private field invariants. Decoding
+// establishes that each value fits its output type, so every cast is lossless.
+// A private macro keeps the outcome propagation identical for all readers.
+macro_rules! fixed_integer {
+    ($(#[$doc:meta])* $name:ident, $output:ty, $field:expr) => {
+        $(#[$doc])*
+        #[derive(Clone, Copy)]
+        pub struct $name;
+
+        impl<'input> Parser<'input> for $name {
+            type Output = $output;
+
+            fn parse_with(
+                &self,
+                input: &'input [u8],
+                cursor: Cursor,
+                status: InputStatus,
+            ) -> ParseOutcome<$output> {
+                match ($field).parse_with(input, cursor, status) {
+                    ParseOutcome::Success(next, value) => ParseOutcome::Success(next, value as $output),
+                    ParseOutcome::Error(error) => ParseOutcome::Error(error),
+                    ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+                }
+            }
+        }
+    };
+}
+
+fixed_integer!(
+    /// Read a big-endian 16-bit unsigned integer as `u16`.
+    ///
+    /// Reads MSB-first from the supplied cursor, without implicit alignment.
+    /// This zero-sized parser has no configuration to validate.
+    ///
+    /// ```
+    /// use rusthammer::{BeI16, BeU16, Cursor, Parser, Seq};
+    /// let parser = Seq { first: BeU16, second: BeI16 };
+    /// let (next, values): (Cursor, (u16, i16)) =
+    ///     parser.parse(&[0x12, 0x34, 0xff, 0xfd], Cursor::start()).unwrap();
+    /// assert_eq!(values, (0x1234, -3));
+    /// assert_eq!(next, Cursor { byte: 4, bit: 0 });
+    /// ```
+    BeU16,
+    u16,
+    Bits { width: 16 }
+);
+
+fixed_integer!(
+    /// Read a big-endian 32-bit unsigned integer as `u32`.
+    ///
+    /// Reads MSB-first from the supplied cursor, without implicit alignment.
+    /// This zero-sized parser has no configuration to validate.
+    BeU32,
+    u32,
+    Bits { width: 32 }
+);
+
+fixed_integer!(
+    /// Read a big-endian 64-bit unsigned integer as `u64`.
+    ///
+    /// Reads MSB-first from the supplied cursor, without implicit alignment.
+    /// This zero-sized parser has no configuration to validate.
+    BeU64,
+    u64,
+    Bits { width: 64 }
+);
+
+fixed_integer!(
+    /// Read eight MSB-first bits as a two's-complement `i8`.
+    ///
+    /// Reads from the supplied cursor, without implicit alignment.
+    /// This zero-sized parser has no configuration to validate.
+    I8,
+    i8,
+    SignedBits {
+        bits: Bits { width: 8 }
+    }
+);
+
+fixed_integer!(
+    /// Read a big-endian 16-bit two's-complement integer as `i16`.
+    ///
+    /// Reads MSB-first from the supplied cursor, without implicit alignment.
+    /// This zero-sized parser has no configuration to validate.
+    BeI16,
+    i16,
+    SignedBits {
+        bits: Bits { width: 16 }
+    }
+);
+
+fixed_integer!(
+    /// Read a big-endian 32-bit two's-complement integer as `i32`.
+    ///
+    /// Reads MSB-first from the supplied cursor, without implicit alignment.
+    /// This zero-sized parser has no configuration to validate.
+    BeI32,
+    i32,
+    SignedBits {
+        bits: Bits { width: 32 }
+    }
+);
+
+fixed_integer!(
+    /// Read a big-endian 64-bit two's-complement integer as `i64`.
+    ///
+    /// Reads MSB-first from the supplied cursor, without implicit alignment.
+    /// This zero-sized parser has no configuration to validate.
+    BeI64,
+    i64,
+    SignedBits {
+        bits: Bits { width: 64 }
+    }
+);
+
 /// Match a borrowed byte pattern, including from an unaligned bit cursor.
 ///
 /// Success returns the configured pattern slice, whose lifetime is independent

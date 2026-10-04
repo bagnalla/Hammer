@@ -18,6 +18,8 @@ The prototype supports:
   supporting unaligned starts and byte-boundary crossing.
 - Signed two's-complement fields of 0 through 64 bits, producing `i64` with
   the same cursor and input-finality rules.
+- Fixed-width `BeU16`, `BeU32`, `BeU64`, `I8`, `BeI16`, `BeI32`, and `BeI64`
+  readers returning their corresponding native Rust integer types.
 - `Byte` producing `u8` and `BytePattern` matching arbitrary borrowed patterns,
   both supporting unaligned starts without allocation.
 - Private numeric and literal configuration, validated by fallible constructors.
@@ -60,6 +62,7 @@ cargo test --features alloc
 cargo run --example flags
 cargo run --example fields
 cargo run --example signed_fields
+cargo run --example integers
 cargo run --example bytes
 cargo run --example marker
 cargo run --example record
@@ -159,8 +162,49 @@ oracle, signed boundaries at every width and bit offset, retries, invalid raw
 cursors, and composition. Separate-crate extraction exercises dynamic
 construction, signed extremes, and sequencing through a parser reference.
 The optional C comparison below includes 27,724 signed-field cases in addition
-to the byte-pattern cases. Fixed-width readers returning narrower Rust integer
-types remain planned conveniences over these general fields.
+to the byte-pattern and fixed-width integer cases.
+
+## Fixed-width integers
+
+The integer readers return native Rust values and correspond to C Hammer's
+named integer primitives under its default ordering:
+
+| RustHammer | Output | C Hammer |
+| --- | --- | --- |
+| `Byte` | `u8` | `h_uint8()` |
+| `I8` | `i8` | `h_int8()` |
+| `BeU16`, `BeI16` | `u16`, `i16` | `h_uint16()`, `h_int16()` |
+| `BeU32`, `BeI32` | `u32`, `i32` | `h_uint32()`, `h_int32()` |
+| `BeU64`, `BeI64` | `u64`, `i64` | `h_uint64()`, `h_int64()` |
+
+These are zero-sized, `Copy` and `Clone` parser values. Use them directly; their
+widths are always valid, so they have no fallible constructor or configuration.
+`Be` explicitly means big-endian. All readers consume MSB-first bits at the
+supplied cursor, including unaligned fields, and never insert alignment padding.
+They consume exactly their output type's bit width and use two's-complement
+interpretation for signed outputs. Invalid cursors return `InvalidCursor`; short
+input returns `NeedMore` in partial mode or `UnexpectedEnd` in final mode.
+Configurable bit/byte order remains future work.
+
+```rust
+use rusthammer::{BeI16, BeU16, Cursor, Parser, Seq};
+
+let parser = Seq { first: BeU16, second: BeI16 };
+let (next, values): (Cursor, (u16, i16)) =
+    parser.parse(&[0x12, 0x34, 0xff, 0xfd], Cursor::start()).unwrap();
+assert_eq!(values, (0x1234, -3));
+assert_eq!(next, Cursor { byte: 4, bit: 0 });
+```
+
+The [integers example](examples/integers.rs) runs this typed sequence. The readers
+reuse `Bits` or `SignedBits`; a private macro shares outcome propagation. Lean
+proves that narrowing casts preserve the decoded value, including each signed
+minimum. The 64-bit readers preserve the general decoders' values directly.
+No callbacks or allocation are needed. Native tests use an independent
+binary-string/`i128` oracle, exhaust every 8- and 16-bit pattern, and compare
+native `from_be_bytes` decoding at every starting bit offset. Tests also cover
+raw invalid cursors, truncation, partial retries, references, and typed composition.
+The optional C check adds 134,896 cases against the named integer primitives.
 
 ## Bytes and byte patterns
 
@@ -219,8 +263,10 @@ python3 tools/compare_primitives.py --hammer-library ../build/opt/src/libhammer.
 
 This check needs GCC and compares complete input at valid starting cursors.
 It does not assert equivalence of streaming interfaces or other C backends.
-The tool was renamed from `compare_bytes.py` when signed fields were added;
-it now runs 38,285 cases across both families.
+The tool also checks signed bit fields and all named fixed-width integer readers.
+It runs 173,181 cases in total: 10,561 byte/pattern, 27,724 signed-field, and
+134,896 fixed-width cases. Unsigned results retain their full range, including
+`u64::MAX`, when normalized for comparison.
 
 ## Partial input and finality
 
@@ -883,6 +929,15 @@ reuses unsigned decoding's contents, consumption, and termination guarantees.
 The new theorems' axiom audit lists only `propext`, `Classical.choice`, and
 `Quot.sound`.
 
+[IntegerSpec.lean](lean/RustHammer/IntegerSpec.lean) specifies fixed-width integer
+values and exact consumption using the output type's bit width.
+[IntegerProofs.lean](lean/RustHammer/IntegerProofs.lean) reuses the general field
+proofs, proves each narrowing cast is lossless, and establishes total contracts
+for both statuses and the complete API. The fixed settings need no caller-supplied
+configuration invariant. The existing `Byte` reader also satisfies this unsigned
+integer contract. Axiom audits of all new reader theorems list only `propext`,
+`Classical.choice`, and `Quot.sound`.
+
 [ByteSpec.lean](lean/RustHammer/ByteSpec.lean) specifies byte decoding and ordered
 pattern matching over mathematical lists. Its [proofs](lean/RustHammer/ByteProofs.lean)
 establish lossless narrowing, total parsing, exact consumption and bit contents,
@@ -1024,6 +1079,9 @@ complete-input operations.
 | `signed_bits_new_spec`, `signed_bits_new_valid`, `signed_bits_width_spec` | Construction rejects precisely widths above 64, establishes the private invariant, and preserves the width. |
 | `sign_extend_spec`, `signed_value_bounds` | Sign extension equals mathematical two's-complement interpretation, all arithmetic/casts are in bounds, and nonempty fields have their specified signed range. |
 | `signed_bits_with_spec`, `signed_bits_final_spec`, `signed_bits_spec` | Total signed decoding for every input/cursor and validated width, including zero width, truncation, and finality. |
+| `be_u16_with_spec`, `be_u32_with_spec`, `be_u64_with_spec`, `byte_integer_with_spec` | Fixed-width unsigned decoding preserves values in native outputs and consumes exactly the output type's bit width, for every cursor and both statuses. |
+| `i8_with_spec`, `be_i16_with_spec`, `be_i32_with_spec`, `be_i64_with_spec` | Fixed-width signed decoding and lossless narrowing, including signed minima, invalid cursors, and exhaustion. |
+| `be_u16_spec`, `be_u32_spec`, `be_u64_spec`, `i8_spec`, `be_i16_spec`, `be_i32_spec`, `be_i64_spec` | Complete-input contracts; corresponding `*_final_spec` theorems exclude `NeedMore` on final input. |
 | `byte_pattern_with_spec`, `byte_pattern_final_spec`, `byte_pattern_spec` | Total ordered pattern matching, empty-pattern identity, byte-wise error precedence, and final-input exclusion of `NeedMore`. |
 | `byte_pattern_success` | Output equals the configured pattern; each byte matches eight input bits and total consumption is exactly eight times the pattern length. |
 | `seq_spec` | Sequencing preserves arbitrary supplied child specifications, including error propagation. |
@@ -1125,7 +1183,9 @@ Named length/count convenience wrappers remain proposals; their core composition
 is now available.
 
 Expand binary primitives and match restrictions, with semantic and differential
-checks. Settle cursor/span and bit-order semantics before their affected APIs.
+checks. Fixed-width typed integer readers are implemented and proved; next add
+numeric ranges and byte sets using `Verify`, then skipping/position and match
+comparisons. Settle cursor/span and bit-order semantics before their affected APIs.
 
 Keep application grammars in examples or proof fixtures as the API is organized;
 the current exported demo types are also recorded for migration in the plan.

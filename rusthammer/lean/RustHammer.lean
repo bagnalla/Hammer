@@ -9,3 +9,4 @@ import RustHammer.SepByProperties
 import RustHammer.DependentProofs
 import RustHammer.ByteProofs
 import RustHammer.SignedBitsProofs
+import RustHammer.IntegerProofs

@@ -137,6 +137,7 @@ def main():
         "bound_payload", "bound_literal", "bound_blocks", "bound_reference",
         "matched_pattern", "pattern_and_input",
         "signed_field", "signed_and_unsigned",
+        "integers16", "integers32", "integers64", "complete_i8",
     )
     entry_args = [
         arg for name in entries

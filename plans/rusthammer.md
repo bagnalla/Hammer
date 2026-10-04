@@ -1,6 +1,6 @@
 # RustHammer design and verification plan
 
-Status: verified prototype with signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection, 2026-10-04.
+Status: verified prototype with native integer readers, signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection, 2026-10-04.
 
 RustHammer will be a Rust rewrite of Hammer whose parsers can be translated
 through Charon and Aeneas and proved correct in Lean. It should preserve Hammer's
@@ -57,8 +57,24 @@ casts. Constructor, accessor, helper, and both parsing APIs are proved. Library
 extraction at both MIR stages and the ordinary Cargo consumer pass without a new
 tool workaround. Native tests use an independent string/`i128` oracle and cover
 all widths and offsets, signed boundaries, raw cursor errors, and partial retries.
-Direct-backend C comparisons add 27,724 signed-field cases. Fixed-width typed
-readers remain planned conveniences; general signed bit fields are a permanent API.
+Direct-backend C comparisons add 27,724 signed-field cases. General signed bit
+fields remain a permanent API alongside fixed-width typed readers.
+
+`BeU16`, `BeU32`, `BeU64`, `I8`, `BeI16`, `BeI32`, and `BeI64` now return their
+corresponding native Rust integer types; existing `Byte` supplies `u8`. They
+correspond to C's `h_uint*` and `h_int*` under default ordering. The `Be` prefix
+explicitly fixes big-endian interpretation. All read MSB-first at the supplied
+cursor without implicit alignment. They are zero-sized `Copy`/`Clone` values
+with fixed valid widths, so no fallible constructors are needed.
+
+The readers reuse `Bits` and `SignedBits`, with a private macro sharing outcome
+propagation. Lean proves exact native values, consumption, lossless narrowing,
+and the full cursor/finality contract for both parsing APIs without a caller
+configuration assumption. Native tests exhaust 8- and 16-bit patterns, check
+larger boundaries against `from_be_bytes` at all bit offsets, and use an
+independent string/`i128` oracle for cursors, truncation, and finality. Both MIR
+stages and cross-crate extraction pass. C comparisons add 134,896 cases against
+the named integer readers. No new Aeneas workaround is needed.
 
 `Byte` now reads eight bits as `u8`, with a proof that narrowing the numeric
 result is lossless. `BytePattern::new(pattern)` matches arbitrary borrowed byte
@@ -272,8 +288,9 @@ The initial combinator inventory and proposed contracts are in the companion API
 plan. Empty/failing parsers, checked mapping, folding, separated lists, and `Bind`
 are implemented and proved, including representative dependent grammars. `Byte`
 and `BytePattern` expand the binary primitives, and signed fields are implemented
-and proved. Next add fixed-width typed conveniences and restrictions from the
-API plan, with further semantic/differential checks. CI integration and the
+and proved, including fixed-width readers with native Rust integer outputs.
+Next add numeric ranges, byte sets, and other restrictions from the API plan,
+with further semantic/differential checks. CI integration and the
 recorded Aeneas callback investigation are deferred. Configurable byte and bit
 order remains unimplemented.
 

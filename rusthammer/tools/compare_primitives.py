@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare byte and signed-field primitives with C Hammer on complete input.
+"""Compare byte, signed-field, and fixed-width primitives with C Hammer on complete input.
 
 Requires GCC, rustc, and an already built C Hammer shared library. The ordinary
 Rust/Lean verification command does not require a C build or this optional tool.
@@ -59,6 +59,21 @@ def signed_cases():
                     yield "signed", offset, width, data[:length]
 
 
+def integer_cases():
+    # Reuse the boundary/truncation corpus, now invoking the named C primitives
+    # and the corresponding native-output Rust readers on both signednesses.
+    for _, offset, width, data in signed_cases():
+        if width in (8, 16, 32, 64):
+            yield "uint", offset, width, data
+            yield "int", offset, width, data
+    # Exhaust all aligned 8- and 16-bit patterns as well as their signed values.
+    for width in (8, 16):
+        for value in range(1 << width):
+            data = value.to_bytes(width // 8, "big")
+            yield "uint", 0, width, data
+            yield "int", 0, width, data
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--hammer-library", type=Path, required=True)
@@ -86,12 +101,19 @@ def main():
     parse_signed.argtypes = [c.c_uint, c.c_char_p, c.c_size_t, c.c_uint,
                             c.POINTER(c.c_size_t), c.POINTER(c.c_int64)]
     parse_signed.restype = c.c_int
-    byte_corpus, signed_corpus = list(byte_cases()), list(signed_cases())
-    corpus = byte_corpus + signed_corpus
-    wire = ""
+    parse_integer = hammer.compare_integer
+    parse_integer.argtypes = [c.c_uint, c.c_uint, c.c_char_p, c.c_size_t, c.c_uint,
+                             c.POINTER(c.c_size_t), c.POINTER(c.c_uint64), c.POINTER(c.c_int64)]
+    parse_integer.restype = c.c_int
+    byte_corpus = list(byte_cases())
+    signed_corpus = list(signed_cases())
+    integer_corpus = list(integer_cases())
+    corpus = byte_corpus + signed_corpus + integer_corpus
+    lines = []
     for kind, offset, config, data in corpus:
-        setting = str(config) if kind == "signed" else config.hex() or "-"
-        wire += f"{kind} {offset} {setting} {data.hex() or '-'}\n"
+        setting = (config.hex() or "-") if kind in ("byte", "pattern") else str(config)
+        lines.append(f"{kind} {offset} {setting} {data.hex() or '-'}\n")
+    wire = "".join(lines)
     rust = subprocess.run([str(driver)], input=wire, text=True, capture_output=True, check=True)
     results = rust.stdout.splitlines()
     assert len(results) == len(corpus)
@@ -101,6 +123,11 @@ def main():
         if kind == "signed":
             value = c.c_int64()
             accepted = parse_signed(config, data, len(data), offset, c.byref(position), c.byref(value))
+        elif kind in ("uint", "int"):
+            unsigned_value, signed_value = c.c_uint64(), c.c_int64()
+            accepted = parse_integer(config, kind == "int", data, len(data), offset,
+                                     c.byref(position), c.byref(unsigned_value), c.byref(signed_value))
+            value = signed_value if kind == "int" else unsigned_value
         else:
             value = c.c_uint()
             accepted = parse(kind == "byte", config, len(config), data, len(data), offset,
@@ -108,7 +135,8 @@ def main():
         expected = f"{position.value} {value.value}" if accepted else "error"
         assert actual == expected, (case, actual, expected)
     print(f"C/Rust primitive comparison passed: {len(corpus)} cases "
-          f"({len(byte_corpus)} byte/pattern, {len(signed_corpus)} signed).")
+          f"({len(byte_corpus)} byte/pattern, {len(signed_corpus)} signed, "
+          f"{len(integer_corpus)} fixed-width).")
     print("Acceptance, consumption, and decoded outputs agree.")
 
 
