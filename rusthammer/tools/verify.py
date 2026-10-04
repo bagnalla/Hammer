@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Test Rust, regenerate its Aeneas translation, and check the Lean proofs."""
+"""Test Rust, check Lean proofs, and guard dependency extraction compatibility."""
 
 import argparse
 from pathlib import Path
@@ -19,6 +19,14 @@ def output(*args, cwd=None):
 def run(*args, cwd=ROOT):
     print("+ " + " ".join(str(arg) for arg in args), flush=True)
     subprocess.run(args, cwd=cwd, check=True)
+
+
+def translate(aeneas, llbc, destination, namespace):
+    run(
+        str(aeneas), "-backend", "lean", "-dest", destination,
+        "-namespace", namespace, "-abort-on-error", "-warnings-as-errors",
+        "-no-progress-bar", llbc,
+    )
 
 
 def main():
@@ -46,7 +54,9 @@ def main():
     run("cargo", "fmt", "--check")
     run("cargo", "test", "--locked", "--no-default-features")
     run("cargo", "test", "--locked", "--features", "alloc")
-    run(
+    # Reuse the exact same roots at both MIR stages. Dependencies expose the
+    # later stage, which can contain cleanup code absent from promoted MIR.
+    library_extraction = (
         str(charon), "cargo", "--preset=aeneas", "--sysroot", "default",
         "--start-from", "rusthammer::parse_flags",
         "--start-from", "rusthammer::take_aligned",
@@ -70,19 +80,63 @@ def main():
         "--start-from", "{impl rusthammer::Parser for _}",
         "--start-from", "{impl core::clone::Clone for rusthammer::_}",
         "--include", "core::option::{impl core::clone::Clone for core::option::Option}",
-        "--dest-file", "target/rusthammer.llbc", "--", "--lib", "--locked", "--features", "alloc",
     )
     run(
-        str(aeneas), "-backend", "lean", "-dest", "lean/RustHammer",
-        "-namespace", "RustHammer.Code", "-abort-on-error", "-warnings-as-errors",
-        "-no-progress-bar", "target/rusthammer.llbc",
+        *library_extraction,
+        "--dest-file", "target/rusthammer.llbc", "--", "--lib", "--locked", "--features", "alloc",
     )
+    translate(aeneas, "target/rusthammer.llbc", "lean/RustHammer", "RustHammer.Code")
+
+    optimized = ROOT / "target" / "optimized"
+    optimized.mkdir(parents=True, exist_ok=True)
+    run(
+        *library_extraction, "--mir", "optimized",
+        "--dest-file", optimized / "rusthammer.llbc",
+        "--", "--lib", "--locked", "--features", "alloc",
+    )
+    translate(aeneas, optimized / "rusthammer.llbc", optimized / "lean", "RustHammer.Optimized")
+
+    # This is a separate Cargo package with a normal path dependency. Keep its
+    # outputs under the main target directory; Charon runs in each package's cwd,
+    # so its output path must be absolute. The consumer is compiled last.
+    consumer = ROOT / "target" / "cross-crate"
+    consumer.mkdir(parents=True, exist_ok=True)
+    manifest = ROOT / "probes" / "cross_crate" / "Cargo.toml"
+    cargo_args = ("--manifest-path", manifest, "--target-dir", consumer / "cargo", "--locked")
+    run("cargo", "fmt", "--manifest-path", manifest, "--check")
+    run("cargo", "test", *cargo_args, "--no-default-features")
+    run("cargo", "test", *cargo_args, "--features", "alloc")
+    entries = ("checked_flag", "packet", "complete_bit", "blocks", "leading_ones")
+    entry_args = [
+        arg for name in entries
+        for arg in ("--start-from-if-exists", f"rusthammer_cross_crate_probe::{name}")
+    ]
+    run(
+        str(charon), "cargo", "--preset=aeneas", "--sysroot", "default",
+        *entry_args, "--include", "rusthammer::_",
+        "--dest-file", consumer / "rusthammer_cross_crate_probe.llbc",
+        "--", "--lib", *cargo_args, "--features", "alloc",
+    )
+    translate(
+        aeneas, consumer / "rusthammer_cross_crate_probe.llbc",
+        consumer / "lean", "RustHammer.Consumer",
+    )
+    consumer_lean = consumer / "lean" / "RusthammerCrossCrateProbe.lean"
+    # The if-exists roots intentionally skip the dependency's own compiler run.
+    # Do not mistake an empty dependency extraction for a successful consumer run.
+    for name in entries:
+        if not re.search(rf"^def {name}\s", consumer_lean.read_text(), re.M):
+            parser.error(f"missing consumer entry point {name} in {consumer_lean}")
+
+    compatibility_files = [optimized / "lean" / "Rusthammer.lean", consumer_lean]
 
     # Check project code only; dependency models remain part of the trust boundary.
-    for path in (ROOT / "lean" / "RustHammer").glob("*.lean"):
+    for path in [*(ROOT / "lean" / "RustHammer").glob("*.lean"), *compatibility_files]:
         if re.search(r"\b(?:sorry|admit)\b|^\s*(?:axiom|opaque)\s", path.read_text(), re.M):
             parser.error(f"unproved or opaque declaration in {path}")
     run("lake", "build", cwd=ROOT / "lean")
+    for path in compatibility_files:
+        run("lake", "env", "lean", "-DwarningAsError=true", path, cwd=ROOT / "lean")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,15 @@
+[package]
+name = "rusthammer-cross-crate-probe"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[features]
+default = []
+alloc = ["rusthammer/alloc"]
+
+[dependencies]
+rusthammer = { path = "../..", default-features = false }
+
+[lib]
+path = "lib.rs"

@@ -118,7 +118,14 @@ impl InputStatus {
     // grammar would lose incomplete results already caught by its combinators.
     fn classify<T>(self, result: Result<(Cursor, T), ParseError>) -> ParseOutcome<T> {
         match result {
-            Ok((next, value)) => ParseOutcome::Success(next, value),
+            // Aeneas workaround: move the tuple before destructuring it. Nested
+            // Ok((next, value)) generates cleanup reads of a partly moved enum
+            // in dependency MIR, which the pinned Aeneas interpreter rejects.
+            // See probes/cross_crate/README.md for the reproducer and tool versions.
+            Ok(parsed) => {
+                let (next, value) = parsed;
+                ParseOutcome::Success(next, value)
+            }
             Err(ParseError::UnexpectedEnd) => match self {
                 Self::Partial => ParseOutcome::NeedMore,
                 Self::Final => ParseOutcome::Error(ParseError::UnexpectedEnd),
@@ -522,7 +529,12 @@ impl<'input, P: Parser<'input>, Q: Parser<'input>> Parser<'input> for Left<P, Q>
             second: &self.second,
         };
         match sequence.parse_with(input, cursor, status) {
-            ParseOutcome::Success(next, (first, _)) => ParseOutcome::Success(next, first),
+            // Keep tuple destructuring separate for Aeneas dependency extraction;
+            // see InputStatus::classify and probes/cross_crate/README.md.
+            ParseOutcome::Success(next, values) => {
+                let (first, _) = values;
+                ParseOutcome::Success(next, first)
+            }
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
         }
@@ -552,7 +564,12 @@ impl<'input, P: Parser<'input>, Q: Parser<'input>> Parser<'input> for Right<P, Q
             second: &self.second,
         };
         match sequence.parse_with(input, cursor, status) {
-            ParseOutcome::Success(next, (_, second)) => ParseOutcome::Success(next, second),
+            // Keep tuple destructuring separate for Aeneas dependency extraction;
+            // see InputStatus::classify and probes/cross_crate/README.md.
+            ParseOutcome::Success(next, values) => {
+                let (_, second) = values;
+                ParseOutcome::Success(next, second)
+            }
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
         }
@@ -588,7 +605,12 @@ impl<'input, L: Parser<'input>, P: Parser<'input>, R: Parser<'input>> Parser<'in
             },
         };
         match sequence.parse_with(input, cursor, status) {
-            ParseOutcome::Success(next, (_, (middle, _))) => ParseOutcome::Success(next, middle),
+            // Keep tuple destructuring separate for Aeneas dependency extraction;
+            // see InputStatus::classify and probes/cross_crate/README.md.
+            ParseOutcome::Success(next, values) => {
+                let (_, (middle, _)) = values;
+                ParseOutcome::Success(next, middle)
+            }
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
         }
@@ -868,7 +890,10 @@ where
         match self.parser.parse_with(input, cursor, status) {
             ParseOutcome::Success(next, value) => match (self.map)(value) {
                 Ok(mapped) => ParseOutcome::Success(next, mapped),
-                Err(_) => ParseOutcome::Error(ParseError::Mismatch),
+                // Keep `_error`: unlike `_`, it moves the payload out of Result.
+                // This avoids cleanup reads of a partly moved enum in dependency MIR;
+                // see probes/cross_crate/README.md.
+                Err(_error) => ParseOutcome::Error(ParseError::Mismatch),
             },
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,

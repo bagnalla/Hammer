@@ -679,9 +679,16 @@ callback probe returns an owned, non-`Copy` record through the actual library
 source and passes translation and Lean checking. `Fail<T>` uses `PhantomData<T>`:
 the pinned Aeneas rejects a function-type marker such as `PhantomData<fn() -> T>`.
 Manual `Copy`/`Clone` implementations avoid bounds on its output type. The
-[probe notes](../rusthammer/probes/README.md) also record why the concrete callback
-probe compiles the library source in the same crate instead of extracting optimized
-dependency MIR.
+[cross-crate investigation](../rusthammer/probes/cross_crate/README.md) diagnosed
+the separate dependency-extraction failure: later MIR inserts cleanup discriminant
+reads on partially moved enums, which the pinned interpreter rejects. Five
+internal matches now move complete payloads before unpacking or discarding them.
+The API and existing proofs are unchanged. Local verification now also extracts
+all library verification roots at optimized MIR and a separate Cargo consumer,
+including borrowed outputs and repetition, then Lean type-checks both results.
+Minimal failing and passing patterns are retained for toolchain upgrades. These
+checks establish compatibility for the exercised code; consumer application
+correctness still requires its own specification and proofs.
 
 Pin Aeneas, Charon, Rust extraction tooling, Lean, and proof dependencies together.
 The local verification command runs extraction and Lean checking; CI integration

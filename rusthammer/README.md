@@ -568,6 +568,21 @@ during verification; edit the Rust source rather than that file.
 Extraction includes derived `Clone` methods and the standard library's
 `Option::clone` implementation used by repetition bounds.
 
+The command also extracts the same library roots at the optimized MIR stage
+available for dependency bodies and checks a
+[separate Cargo consumer](probes/cross_crate/README.md). The consumer has native
+tests in both allocation configurations; its extraction includes RustHammer's
+implementation with `alloc` enabled. Both extra translations are checked for
+admitted/opaque declarations and Lean type-checked. They stay under `target/`.
+
+The cross-crate investigation found that cleanup code can recheck an enum's tag
+after a payload move, which the pinned Aeneas rejects. Five internal pattern
+matches now move whole payloads before unpacking or discarding them to avoid
+that code. This preserves the API and existing proofs. The
+[minimal reproductions and explanation](probes/cross_crate/README.md#cause-of-the-original-failure)
+record the constraint for future changes; the borrowed-record callback issue
+remains separate and deferred.
+
 The first Lean build downloads the pinned Aeneas proof library, its dependencies,
 and available cached build artifacts. Subsequent builds reuse `lean/.lake/`.
 The extraction tools use the local Aeneas checkout; the Lean dependency uses the

@@ -1,8 +1,8 @@
 //! Exercise a captured, fallible callback through the actual library source.
 #![no_std]
 
-// Compile the library in this crate so Charon gets the same MIR stage as it
-// does for the library's normal verification, rather than dependency MIR.
+// Retain a same-crate comparison. The cross_crate fixture separately checks
+// the library as an ordinary Cargo dependency at the later MIR stage.
 #[allow(dead_code, unused_attributes)]
 #[path = "../src/lib.rs"]
 mod rusthammer;

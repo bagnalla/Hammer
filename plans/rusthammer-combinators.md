@@ -280,6 +280,11 @@ under child/callback contracts. Differential tests should normalize typed output
 differences and identify intentional differences from C. Implementation steps may
 be small; each public addition must have a durable role in this plan.
 
+The local verification command also checks every library verification root at
+the MIR stage used for dependencies and translates a separate Cargo consumer.
+Retain those checks when adding combinators: the promoted-MIR proof path alone
+missed the [partial-enum-move issue](../rusthammer/probes/cross_crate/README.md).
+
 CI and the recorded borrowed-callback investigation remain deferred. The
 [eager literal rejection task](rusthammer.md#deferred-eager-literal-rejection)
 remains scheduled before streaming buffering/resumption. Repetition work

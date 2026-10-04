@@ -1,2 +1,3 @@
 /target/
 /lean/.lake/
+/probes/cross_crate/target/

@@ -3,6 +3,8 @@
 These small programs record extraction behavior separately from the main proof
 suite. They are not imported into the crate or its Lean proofs. The checked
 mapping probe includes the actual library source to exercise a concrete callback.
+The `cross_crate` fixture instead uses a normal Cargo dependency and is checked
+by the local verification command.
 
 ## Capturing callback with a borrowed record output
 
@@ -129,13 +131,14 @@ cd lean
 lake env lean -DwarningAsError=true ../target/try-map-probe/TryMap.lean
 ```
 
-The probe includes `src/lib.rs` as a module, so Charon sees its bodies at the same
-MIR stage as normal library verification. Extracting the native `composition`
-example with RustHammer as a separate dependency instead exposed Aeneas's
-`There should be no bottoms in the value` failure in `InputStatus::classify` and
-`TryMap::parse_with`. Charon only has optimized MIR for dependency bodies; this
-observation is specific to that extraction path, and is not evidence that the
-fallible callback shape is unsupported. To recheck that path from `rusthammer/`:
+The probe includes `src/lib.rs` as a module and remains useful as a same-crate
+comparison. The original separate-crate `composition` example failed on cleanup
+discriminant reads after partial enum moves. That issue is now understood and
+avoided in the library. The original example translates and Lean type-checks;
+the normal verification command also checks a separate Cargo consumer. See the
+[investigation and regression fixture](cross_crate/README.md).
+
+To recheck the original example from `rusthammer/`:
 
 ```sh
 ~/source/aeneas/charon/bin/charon cargo --preset=aeneas --sysroot default \
@@ -144,6 +147,8 @@ fallible callback shape is unsupported. To recheck that path from `rusthammer/`:
 ~/source/aeneas/bin/aeneas -backend lean -dest target/composition-example-lean \
   -abort-on-error -warnings-as-errors -no-progress-bar \
   target/composition-example/composition.llbc
+cd lean
+lake env lean -DwarningAsError=true ../target/composition-example-lean/Composition.lean
 ```
 
 The failing parser also exposed a smaller representation constraint:
