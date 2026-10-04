@@ -1,0 +1,17 @@
+[package]
+name = "rusthammer"
+version = "0.0.0"
+edition = "2021"
+publish = false
+description = "Experimental Hammer parsing core for Aeneas verification"
+
+[features]
+default = []
+alloc = []
+
+[lib]
+path = "src/lib.rs"
+
+[[example]]
+name = "repeat"
+required-features = ["alloc"]
