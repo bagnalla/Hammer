@@ -1,6 +1,6 @@
 # RustHammer design and verification plan
 
-Status: verified prototype with repetition, parser references, and output selection, 2026-10-04.
+Status: verified prototype with ordinary/separated collection and folding, parser references, and output selection, 2026-10-04.
 
 RustHammer will be a Rust rewrite of Hammer whose parsers can be translated
 through Charon and Aeneas and proved correct in Lean. It should preserve Hammer's
@@ -127,7 +127,7 @@ with `CountOverflow`. All three errors are fatal. Progress uses direct byte/bit
 comparisons without computing a machine-sized absolute bit index. Outputs need
 neither `Copy` nor `Clone`, and unit values are retained. The
 [repetition design](rusthammer-combinators.md#one-repetition-design) records these
-rules for future folding and separated lists too.
+rules shared by folding and separated lists too.
 
 Aeneas extraction and Lean checking cover constructors, accessors, and the shared
 collection loop. Generic theorems prove count bounds, ordered values, cursor
@@ -145,6 +145,47 @@ Allocation grows with successes, not the configured count. Proofs use Aeneas's
 `Vec` model, which abstracts allocation and byte capacity; allocation failure and
 resource budgets remain outside this increment.
 
+`FoldRepeat<P, I, F>` now offers `exact(parser, count, init, fold)`,
+`new(parser, min, max, init, fold)`, and `at_least(parser, min, init, fold)` in the
+allocation-free core. `I: Fn() -> R` initializes each parse; `F: Fn(R, A) -> R`
+moves the accumulator and each accepted output, requiring neither to be cloned.
+The repetition combinators share private validated bounds, the iteration driver,
+and a list-based Lean stopping specification. Generic driver proofs carry a
+storage invariant; collection instantiates vector contents and folding instantiates
+an initializer/left-fold recurrence. Constructor, accessor, both input modes,
+complete-input, exact-count, and callback short-circuit contracts are proved.
+Initialization follows the unbounded initial-cursor check and still runs for a
+zero maximum. The step follows successful-child progress/count checks. Failure or
+`NeedMore` discards the accumulator; retrying initializes and parses again.
+
+The driver extracts at promoted and optimized MIR. A Cargo consumer checks
+captured initializers, borrowed child values, and owned non-`Clone` accumulators;
+these examples translate and Lean type-check. A callback returning a borrowed
+accumulator reproduces the deferred non-endable-abstraction failure, now recorded
+in `rusthammer/probes/fold_borrowed_accumulator.rs`. Native Rust supports that
+pattern. No tool patch or extra public policy type was needed. A counting/checksum
+example runs with default features disabled.
+
+`SepBy<P, S>` and `FoldSepBy<P, S, I, F>` now add separated lists with the same
+`exact`, fallible `new`, and `at_least` count policy. `SepBy` needs `alloc`;
+`FoldSepBy` does not. Minima zero and one correspond to C's `h_sepBy` and
+`h_sepBy1`. The first attempt parses only an item; later attempts use
+`Right(separator, item)` over shared references. The shared driver rolls back
+the whole rejected pair, leaving a trailing separator unconsumed, and propagates
+fatal errors and `NeedMore`. Finite caps probe no further separator. Unbounded
+progress applies to the first item and then each whole pair; a later empty item
+is permitted if the separator advances. Only item values are collected or folded.
+
+The generalized loop has an indexed attempt contract and one storage invariant;
+ordinary repetition is proved equivalent to its existing constant-child
+specification. Separated-list proofs cover constructors, bounds, both input modes,
+finite/unbounded stopping, rollback, exact counts, zero caps, invalid starts,
+and termination. Native tests include an independent exhaustive short-string
+oracle, C list examples, bit boundaries, empty matches, and ownership cleanup.
+Both MIR modes and the Cargo consumer translate and Lean type-check, including
+borrowed item/separator values and owned folding. No new tool limitation appeared;
+the previously recorded borrowed-callback investigation remains deferred.
+
 The first application parser is a byte-aligned record with a 3-bit version, 5-bit
 flags, 16-bit payload length, and a borrowed payload. It accepts version 1, all
 five flag bits, and lengths through 1,024 bytes, then requires exact end-of-input.
@@ -161,8 +202,9 @@ failing shape for toolchain upgrades; this is not a finding that all callbacks
 returning borrowed values are unsupported.
 
 The initial combinator inventory and proposed contracts are in the companion API
-plan. Empty/failing parsers and checked mapping are implemented and proved. Next add folding,
-separated lists, and further semantic/differential checks. CI integration
+plan. Empty/failing parsers, checked mapping, folding, and separated lists are
+implemented and proved. Next add `Bind` and reusable dependent grammars, with
+further semantic/differential checks. CI integration
 and the recorded Aeneas callback investigation are deferred. Signed decoding and
 configurable byte and bit order remain unimplemented.
 
@@ -272,7 +314,9 @@ lifetime, determines its output type. It keeps composition direct:
 | --- | --- |
 | `Seq<P, Q>` | `(P::Output, Q::Output)` |
 | `Repeat<P>` | `Vec<P::Output>` with the optional `alloc` feature |
-| `FoldRepeat<P, I, F>` (planned) | The accumulator type, without requiring allocation |
+| `FoldRepeat<P, I, F>` | The accumulator type, without requiring allocation |
+| `SepBy<P, S>` | `Vec<P::Output>` with `alloc`; separator outputs are discarded |
+| `FoldSepBy<P, S, I, F>` | An accumulator over item outputs, without library allocation |
 | `Optional<P>` | `Option<P::Output>` |
 | `Map<P, F>` | The result type of the mapping function |
 | `Choice<P, Q>` | A common output type, or an explicit enum distinguishing branches |
@@ -750,7 +794,7 @@ not required for this milestone.
   rules best preserve the chosen semantics?
 - Which resource limits, error categories, and diagnostics belong in the initial
   core, and which require a separate execution context?
-- The API plan proposes allocation-free folding alongside opt-in collected
+- The core provides allocation-free folding alongside opt-in collected
   outputs. Are additional collection policies or explicit allocation-failure
   results needed? Which platforms and Rust versions should be supported
   independently of the extraction toolchain?
@@ -764,7 +808,7 @@ Resolve interface questions using small Lean-checked examples before expanding
 the implementation. The prototype now provides a verified record parser and
 reusable primitive, sequencing, choice, mapping, predicate, optionality, lookahead,
 finite/unbounded repetition, parser-reference, output-selection, empty/failing
-grammar, and checked-mapping contracts. Next add folding, separated lists, and
-the other durable families in the companion API plan.
+grammar, checked-mapping, folding, and separated-list contracts. Next add `Bind`
+and the other durable families in the companion API plan.
 Continue focused semantic and differential checks. CI and the Aeneas callback
 investigation remain deferred.

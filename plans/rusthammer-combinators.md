@@ -1,6 +1,6 @@
 # RustHammer combinator API plan
 
-Status: target API and implementation order, with repetition, parser references, and output selection verified,
+Status: target API and implementation order, with ordinary/separated collection and folding, parser references, and output selection verified,
 2026-10-04. Unimplemented features remain proposals. See the
 [main plan](rusthammer.md) and [prototype README](../rusthammer/README.md) for
 current implementation and proof coverage.
@@ -38,8 +38,8 @@ values. Only collecting operations require the optional `alloc` feature.
 | Selecting sequence outputs | `Left<P, Q>`, `Right<P, Q>`, `Middle<L, P, R>`, and `Ignore<P>` return `A`, `B`, the middle output, or `()`, respectively. | Implemented and proved; correspond to `h_left`, `h_right`, `h_middle`, and `h_ignore`. Derived from sequencing and output projection. Arbitrary `h_drop_from` becomes typed tuple projection. |
 | Empty and failing grammars | `Epsilon` produces `()`; `Fail<T>` always rejects with `Mismatch`. | Implemented and proved; correspond to `h_epsilon_p` and `h_nothing_p`. Neither reads input; `Epsilon` preserves the supplied cursor without validation. `Fail::new()` is infallible and needs an inferred or explicit output type so it composes with typed alternatives. |
 | Repetition | `Repeat<P>` produces `Vec<A>` with `alloc`. | Exact, finite bounded, and unbounded forms are implemented and proved, replacing `RepeatN` and covering `h_repeat_n`, `h_many_cap`, `h_many1_cap`, `h_many`, and `h_many1`. |
-| Folding repetition | `FoldRepeat<P, I, F>` produces an accumulator `R`. | Same count and stopping rules as `Repeat`; initialize a fresh accumulator and update it with each output. Supports allocation-free counting, discarding, checksums, and application accumulators. No C wrapper is required to justify this separate output policy. |
-| Separated repetition | `SepBy<P, S>` produces `Vec<A>` with `alloc`; `FoldSepBy<P, S, I, F>` produces an accumulator without library allocation. | One count policy covers `h_sepBy` and `h_sepBy1`, as well as finite limits. Parse the first item, then separator/item pairs; discard separator outputs. |
+| Folding repetition | `FoldRepeat<P, I, F>` produces an accumulator `R`. | Implemented and proved. Same count and stopping rules as `Repeat`; initialize a fresh accumulator and update it with each output. Supports allocation-free counting, discarding, checksums, and application accumulators. No C wrapper is required to justify this separate output policy. |
+| Separated repetition | `SepBy<P, S>` produces `Vec<A>` with `alloc`; `FoldSepBy<P, S, I, F>` produces an accumulator without library allocation. | Implemented and proved. One count policy covers `h_sepBy` and `h_sepBy1`, as well as finite limits. Parse the first item, then separator/item pairs; discard separator outputs. |
 | Value-dependent sequencing | `Bind<P, F>` produces the output of the parser selected or constructed from `A`. | Corresponds to `h_bind`. Run the first child, move its value into the factory, then run the resulting parser at the next cursor. |
 | Match restrictions | `ButNot<P, Q>` and `Difference<P, Q>` preserve `A`; `Xor<P, Q>` requires a common output type. | Separate semantics from ordered choice and lookahead. Compare matches starting at the same cursor; see below. |
 
@@ -84,7 +84,14 @@ accessors. `min()` returns `usize`; `max()` returns `Option<usize>`, with `Some`
 for finite constructors and `None` for `at_least`. The absent maximum is explicit
 internally too; `usize::MAX` is a valid finite count. Exact construction sets
 both bounds to `count` and cannot fail. The folding and separated forms reuse
-this count policy and corresponding constructors.
+this count policy and corresponding constructors. Folding is implemented as
+`FoldRepeat::exact(parser, count, init, fold)`,
+`FoldRepeat::new(parser, min, max, init, fold)`, and
+`FoldRepeat::at_least(parser, min, init, fold)` with the same bounds accessors.
+Separated forms are implemented as `SepBy::exact(parser, separator, count)`,
+`SepBy::new(parser, separator, min, max)`, and
+`SepBy::at_least(parser, separator, min)`; `FoldSepBy` has the same constructors
+with `init, fold` appended. All four families share private validated bounds.
 
 | Hammer expression | Rust form |
 | --- | --- |
@@ -93,6 +100,8 @@ this count policy and corresponding constructors.
 | `h_many1_cap(p, n)` | `Repeat::new(p, 1, n)`; `n == 0` is a configuration error |
 | `h_many(p)` | `Repeat::at_least(p, 0)` |
 | `h_many1(p)` | `Repeat::at_least(p, 1)` |
+| `h_sepBy(p, s)` | `SepBy::at_least(p, s, 0)` |
+| `h_sepBy1(p, s)` | `SepBy::at_least(p, s, 1)` |
 
 All variants follow these rules:
 
@@ -125,14 +134,27 @@ to before the separator. Thus a trailing separator remains unconsumed; enclosing
 maximum consumes no following separator. For unbounded lists, check progress of
 the first item and then each whole separator/item iteration, as Hammer's direct
 implementation does; finite lists allow empty successes.
+Thus an empty first item is rejected for an unbounded list; later empty items
+are allowed when their separators advance, and empty separators are allowed when
+their following items advance. Count and progress checks precede retention or folding.
 
-Share validated bounds, the iteration driver, and its specification between
-collection and folding; keep implementation policy traits private. A fold uses
+Collection and folding, with or without separators, share private validated
+`RepeatBounds`, one `repeat_run_with` iteration driver, a private accumulator
+trait, and a list-based Lean specification. The driver uses the item parser
+for the first attempt and a supplied parser for subsequent attempts. Ordinary
+repetition supplies the same child twice; separated repetition supplies
+`Right(separator, item)` over shared references. The logical attempt contract is
+indexed by retained item count; the constant-contract specialization preserves
+the existing repetition specifications and proofs. A fold uses
 an initializer `Fn() -> R` and a step `Fn(R, A) -> R`, so the accumulator is passed
-explicitly and outputs need not be cloned. Probe the private driver with Aeneas
-before committing to its representation. If extraction requires a different
-internal structure, preserve the public semantics and prove the implementations
-against the same recurrence.
+explicitly and outputs need not be cloned. Initialization runs once, after the
+unbounded starting-cursor check, including for a zero maximum. Steps run after
+successful-child progress/count checks. Errors and `NeedMore` discard the state;
+retries initialize again, and callback side effects are not rolled back.
+The driver translates at promoted and optimized MIR. A separate Cargo consumer
+checks captured initialization and borrowed child outputs with owned accumulators.
+A borrowed accumulator returned by callbacks reproduces the deferred Aeneas
+non-endable-abstraction error; see the [probe notes](../rusthammer/probes/README.md#folding-and-borrowed-accumulators).
 
 `FoldRepeat` has a lasting purpose because it changes storage and output behavior.
 Another exact-count type returning the same vector does not. A future parser
@@ -252,9 +274,14 @@ helpers should represent grammar operations or output needs.
    conversion errors become recoverable rejection; child failures/incompleteness
    skip the callback. A captured fallible callback returning an owned record
    translates and Lean type-checks through the actual library source.
-3. **Complete repetition outputs and lists.** Add the shared fold path and
-   separator handling, including their unbounded forms under the progress rule.
-   Verify collection and folding use the same stopping and rollback semantics.
+3. **Complete repetition outputs and lists (complete).** `FoldRepeat`
+   supports exact, bounded, and unbounded counts without library allocation.
+   `SepBy` and `FoldSepBy` add separated lists with the same constructors.
+   The shared driver and recurrence are proved for all four families, including
+   separator/item rollback, progress of whole pairs, error propagation, and
+   final-input specialization. Native tests cover empty successes, ownership,
+   bit boundaries, independent short-input oracles, and C list examples. Both
+   MIR modes and the ordinary Cargo consumer translate and Lean type-check.
 4. **Generalize data dependencies.** Validate and implement `Bind`, then use it
    in count-prefixed elements and length-prefixed bytes. Prove a representative
    format against an independent format specification.

@@ -28,6 +28,8 @@ The prototype supports:
 - `Choice<P, Q>`, which tries ordered alternatives with the same output type.
 - `Optional<P>` for optional typed values, and `And<P>` / `Not<P>` for lookahead.
 - Exact, bounded, and unbounded `Repeat<P>` collecting typed outputs, with optional `alloc`.
+- `FoldRepeat<P, I, F>` folding those same repetitions into an owned accumulator without library allocation.
+- `SepBy<P, S>` and `FoldSepBy<P, S, I, F>` for separated lists, collecting or folding only item outputs.
 - Numeric literal matching and an exact end-of-input check.
 - A toy three-bit header parser returning a `Flags` struct.
 - An explicitly aligned payload parser returning a borrowed `&'input [u8]`.
@@ -37,7 +39,7 @@ The prototype supports:
 
 The library uses `no_std` and forbids unsafe Rust. Default features are empty;
 without `alloc`, the built-in core allocates no memory. The optional `alloc` feature
-enables `Repeat`, using `alloc::vec::Vec` and an application-provided allocator.
+enables `Repeat` and `SepBy`, using `alloc::vec::Vec` and an application-provided allocator.
 It does not enable `std`. Successful parsing reports the next cursor and preserves
 remaining bits; composing with
 `End` requires complete consumption. `TakeAligned` deliberately requires byte
@@ -59,6 +61,9 @@ cargo run --example input_status
 cargo run --example selection
 cargo run --example composition
 cargo run --features alloc --example repeat
+cargo run --no-default-features --example fold_repeat
+cargo run --no-default-features --example separated
+cargo run --features alloc --example separated
 ```
 
 The `flags` example parses `101` from the start of `0b1010_0000` and returns:
@@ -243,8 +248,9 @@ bound on parsers or outputs. `Left`, `Right`, and `Middle` reuse `Seq` through
 shared references and project its tuple with pattern matching. `Ignore` replaces
 the successful value with unit. No callbacks are needed for these projections.
 The child still constructs its output: ignoring a `Repeat` still builds its
-vector, and ignoring a `Map` still runs its callback. Allocation-free repeated
-discarding belongs to the planned folding API.
+vector, and ignoring a `Map` still runs its callback. Use
+`FoldRepeat::at_least(parser, 0, || (), |(), _| ())` to discard repeated outputs
+without constructing a vector.
 
 The counterparts are C Hammer's `h_left`, `h_right`, `h_middle`, and `h_ignore`.
 Rust keeps `()` as an ordinary value in surrounding tuples; it does not remove a
@@ -339,7 +345,7 @@ disambiguation example. They also check partial rejection, unaligned bit cursors
 empty matches, borrowed and non-`Copy` values, and fatal-error propagation.
 This is focused semantic coverage, not a complete backend differential suite.
 
-## Repetition (optional `alloc`)
+## Collecting repetition (optional `alloc`)
 
 `Repeat::exact(parser, count)`, `Repeat::new(parser, min, max)`, and
 `Repeat::at_least(parser, min)` share one implementation. The experimental
@@ -437,6 +443,93 @@ empty/non-advancing successes, invalid returned cursors, count overflow, error a
 choice example, capped and unbounded zero-or-more and one-or-more examples, and
 its 2,000-element repetition case. This is focused compatibility
 coverage, not a full differential harness.
+
+## Folding repetition (no `alloc` required)
+
+`FoldRepeat<P, I, F>` uses the same private bounds and iteration driver as `Repeat`,
+returning one accumulator instead of a vector. Its constructors are:
+
+```rust,ignore
+FoldRepeat::exact(parser, count, init, fold)
+FoldRepeat::new(parser, min, max, init, fold) // Result<_, ConfigError>
+FoldRepeat::at_least(parser, min, init, fold)
+```
+
+Bounds are private and validated, with the same `min()` and `max()` accessors.
+`init: Fn() -> R` makes a fresh accumulator; `fold: Fn(R, P::Output) -> R` consumes
+it and each accepted child output in order. No `Clone` or `Copy` bounds apply to
+outputs or accumulators. Parser `Clone`/`Copy` depends only on its stored components.
+
+```rust
+use rusthammer::{Bits, Cursor, FoldRepeat, Parser};
+
+let checksum = FoldRepeat::exact(Bits::new(8).unwrap(), 3,
+    || 0u64, |sum, byte| sum ^ byte);
+assert_eq!(checksum.parse(b"abc", Cursor::start()),
+    Ok((Cursor { byte: 3, bit: 0 }, 0x60)));
+```
+
+Initialization runs once per parse, including a zero maximum, but after the
+starting-cursor check for unbounded repetition. Each fold step runs only after
+child success and the progress/count checks. Recoverable stopping returns the
+accumulator and the cursor before the rejected attempt; fatal errors and
+`NeedMore` discard it. Retrying initializes again and reparses the prefix.
+Callbacks may have side effects that cursor rollback cannot undo. The driver
+allocates no storage; child parsers and callbacks may still allocate or panic.
+Their correctness and termination require separate contracts.
+
+The [folding example](examples/fold_repeat.rs) counts matching bytes and computes
+an XOR checksum with default features disabled. Native tests also cover empty
+successes, invalid cursors, partial input, non-`Clone` outputs and accumulators,
+destructors, and borrowed accumulator identity.
+
+Generic folding, captured initialization, and borrowed child outputs folded into
+an owned non-`Clone` accumulator translate through an ordinary Cargo dependency.
+The [borrowed-accumulator probe](probes/README.md#folding-and-borrowed-accumulators)
+records a callback that returns a borrowed slice and fails with Aeneas's
+non-endable-abstraction error. That pattern works in native Rust; concrete
+callback extraction still needs checking separately from the generic fold proof.
+
+## Separated lists
+
+`SepBy<P, S>` collects item outputs with `alloc`; `FoldSepBy<P, S, I, F>` folds
+them without library allocation. Separator outputs are discarded. Both use
+private validated bounds and the same `min()` / `max()` accessors as `Repeat`:
+
+```rust,ignore
+SepBy::exact(item, separator, count)
+SepBy::new(item, separator, min, max) // Result<_, ConfigError>
+SepBy::at_least(item, separator, min)
+FoldSepBy::exact(item, separator, count, init, fold)
+FoldSepBy::new(item, separator, min, max, init, fold) // Result<_, ConfigError>
+FoldSepBy::at_least(item, separator, min, init, fold)
+```
+
+`SepBy::at_least(p, s, 0)` corresponds to Hammer's `h_sepBy(p, s)`, and minimum
+one corresponds to `h_sepBy1`. Counts refer to items, including unit values.
+The first attempt parses only an item. Later attempts parse a separator and an
+item together; after the minimum, recoverable rejection at either stage restores
+the cursor to before that whole attempt. A trailing separator remains unconsumed,
+so composing with `End` rejects it. For example, parsing `"a,a,"` on final input
+retains two items and stops before the final comma; on partial input it returns
+`NeedMore`. Fatal errors and incompleteness always propagate.
+
+A finite maximum stops without probing another separator. Zero invokes neither
+parser; folding still initializes once. Finite empty successes are allowed.
+Unbounded lists require the first item and each whole subsequent pair to advance
+to a valid cursor. An empty first item is `NonProgress`; a later empty item is
+allowed if its separator advances. Empty separators also work if items advance.
+The same count-overflow and accumulator rules apply as for ordinary repetition.
+No output or accumulator needs `Copy` or `Clone`.
+
+All four repetition types share one private loop. Separated forms supply an item
+parser for the first attempt and `Right(separator, item)` for following attempts,
+using shared references. This reuses sequencing and output-selection semantics.
+The [separated example](examples/separated.rs) runs with and without `alloc`.
+Tests exhaust short strings over item, separator, and conflicting bytes against
+an independent language oracle, port C Hammer's list examples, and cover bit
+boundaries, rollback, callback counts, partial input, empty matches, borrowed
+identity, and cleanup of owned items, separators, and accumulators.
 
 ## Empty and failing grammars
 
@@ -683,11 +776,40 @@ Each retained item consumes at least one bit. Initial cursor rejection needs no
 child contract at all. Final-input, numeric, and borrowed-payload specializations
 are also proved.
 
+[IterationProofs.lean](lean/RustHammer/IterationProofs.lean) proves the shared
+iteration driver with a storage invariant relating the accumulator to a logical
+list of retained outputs. Attempt contracts may depend on the number of retained
+items, allowing distinct first-item and separator/item behavior.
+[RepeatDriverProofs.lean](lean/RustHammer/RepeatDriverProofs.lean) specializes it
+to a constant child contract and proves equivalence with the existing repetition
+specifications. `Repeat` specializes the storage invariant to vector contents;
+[FoldRepeatProofs.lean](lean/RustHammer/FoldRepeatProofs.lean) specializes it to
+an initializer and left-fold recurrence, defined in
+[FoldRepeatSpec.lean](lean/RustHammer/FoldRepeatSpec.lean). Both use the same
+list-based stopping and rollback specifications and termination arguments.
+Fold step contracts are required only for reachable prefixes and child successes
+that pass the count/progress checks. Fold constructor, accessor, exact-count,
+zero-count, invalid-start, and complete-input contracts are included. The zero
+case needs only the initializer contract; an invalid unbounded start needs no
+callback or child contracts. `folds_function` identifies deterministic callback
+contracts with mathematical `List.foldl`.
+
+[SepBySpec.lean](lean/RustHammer/SepBySpec.lean) independently describes the
+first item and subsequent separator/item pairs, including failures at either
+stage. [SepByProofs.lean](lean/RustHammer/SepByProofs.lean) connects these contracts
+to `Right` and the common driver for both collection and folding. The theorems
+cover constructors, accessors, finite and unbounded parsing, both finalities,
+and the complete API. [SepByProperties.lean](lean/RustHammer/SepByProperties.lean)
+proves zero-cap and invalid-start short-circuiting, exact item counts, and the
+consumption bound for advancing attempts. Fold contracts concern retained items
+only; separator values never enter the recurrence.
+
 These are per-invocation proofs. A future buffering/resumption implementation
 will need its own cross-chunk correctness and ownership arguments.
 
 Rust field privacy does not make extracted Lean records intrinsically valid.
-The specifications therefore state `validBits`, `validLiteral`, `validRepeat`,
+The specifications therefore state `validBits`, `validLiteral`, `validRepeat`, `validFoldRepeat`,
+`validSepBy`, `validFoldSepBy`,
 `validMarker`, and `validRecordParser`
 explicitly. Constructor theorems establish these invariants on success; parsing
 theorems take them as hypotheses. This separates configuration validation from
@@ -795,10 +917,11 @@ Follow the [combinator API plan](../plans/rusthammer-combinators.md):
 Basic composition is implemented and proved, including parser references,
 output selection, empty/failing grammars, and checked mapping.
 
-1. Add folding and separated repetition, sharing the count and stopping rules
-   now implemented for exact, bounded, and unbounded `Repeat`.
-2. Implement verified `Bind` and reusable length/count-dependent grammars.
-3. Expand binary primitives and match restrictions, with semantic and differential
+Collection and folding now support both ordinary and separated repetition with
+shared count, stopping, and progress rules and proofs.
+
+1. Implement verified `Bind` and reusable length/count-dependent grammars.
+2. Expand binary primitives and match restrictions, with semantic and differential
    checks. Settle cursor/span and bit-order semantics before their affected APIs.
 
 Keep application grammars in examples or proof fixtures as the API is organized;

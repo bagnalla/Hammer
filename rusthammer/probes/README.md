@@ -158,3 +158,56 @@ supported yet`. The supported `Fail<T>` uses plain `PhantomData<T>`, with manual
 marker, it inherits `T`'s auto-trait restrictions. It stores no output at runtime,
 and its constructor, clone, and parsing methods are translated and proved by the
 normal verification command.
+
+## Folding and borrowed accumulators
+
+The library's shared repetition driver uses a private accumulator trait, with
+collection and fold implementations. The driver and both implementations
+translate at promoted and optimized MIR and have shared Lean contracts. The
+normal Cargo consumer exercises a captured initializer, borrowed child slices
+folded into an owned non-`Clone` checksum, and unbounded counting. Translation
+and Lean type-checking succeed with the pinned tools. These consumer checks
+establish extraction compatibility, not application correctness theorems.
+
+[`fold_borrowed_accumulator.rs`](fold_borrowed_accumulator.rs) instead returns a
+borrowed slice from both callbacks. It initializes with an empty slice of the
+input and retains the last parsed one-byte slice. Native Rust supports this
+pattern and a native test checks that the accumulator still points into the input.
+Both callbacks fail Aeneas translation with `Can't end abstraction ... as it is
+set as non-endable` in `InterpBorrows.ml`. This was reproduced through a normal
+Cargo dependency and with the library included as a module; it is separate from
+the resolved partially moved enum problem. The error matches the older borrowed
+record callback failure; a common underlying cause has not been established.
+
+Reproduce from `rusthammer/` with the pinned tools:
+
+```sh
+~/source/aeneas/charon/bin/charon rustc --preset=aeneas --sysroot default \
+  --start-from fold_borrowed_accumulator::last_block \
+  --dest-file target/fold_borrowed_accumulator.llbc -- \
+  --crate-type lib --edition 2021 probes/fold_borrowed_accumulator.rs
+~/source/aeneas/bin/aeneas -backend lean -dest target/fold-borrowed-probe \
+  -abort-on-error -warnings-as-errors -no-progress-bar target/fold_borrowed_accumulator.llbc
+```
+
+The second command is expected to fail. This diagnostic probe stays outside the
+normal verification command. The generic fold proof requires callback contracts;
+it does not assert that every concrete callback translates. Further investigation
+remains deferred alongside the borrowed-record callback probe.
+
+## Separated repetition through the shared driver
+
+`SepBy` and `FoldSepBy` use the item parser for the first attempt and
+`Right(separator, item)` over shared parser references for subsequent attempts.
+The private loop selects by retained item count, so finite empty successes still
+invoke separators after the first item. Collection, folding, progress, rollback,
+and count checks remain in one driver.
+
+The library and all four repetition families translate at promoted and optimized
+MIR with the pinned tools. The normal [Cargo consumer](cross_crate/README.md)
+also translates and Lean type-checks separated collection with borrowed item and
+separator outputs, and folding with a non-`Clone` separator output and an owned
+accumulator. `tools/verify.py` checks these actual library paths; no separate
+minimized probe or new tool workaround was needed. Generic Lean proofs establish
+the separated-list contracts, while the consumer remains an extraction regression.
+The borrowed-accumulator callback limitation above is unchanged and deferred.

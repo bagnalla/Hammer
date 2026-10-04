@@ -3,7 +3,11 @@
 This Cargo package consumes RustHammer through a normal path dependency. It
 checks a captured fallible callback returning an owned, non-`Clone` value,
 sequencing and output selection returning a borrowed payload, the default
-complete-input method, and exact/unbounded repetition with `alloc`.
+complete-input method, exact/unbounded collection with `alloc`, and allocation-free
+folding with captured initialization, borrowed child values, and an owned non-`Clone`
+accumulator. Both finite and unbounded folding are exercised. Separated-list
+entries check exact collection with borrowed item and separator outputs, and
+unbounded folding with an owned non-`Clone` separator output that is discarded.
 
 Run `python3 tools/verify.py` from `rusthammer/`. Alongside the library tests and
 proofs, that command:
@@ -12,7 +16,7 @@ proofs, that command:
    the compiler stage available for dependencies, and Lean type-checks it.
 2. Tests this consumer with allocation disabled and enabled.
 3. Extracts the consumer with RustHammer's dependency bodies included and `alloc`
-   enabled, checks that all five entry points were translated, and Lean
+   enabled, checks that all nine entry points were translated, and Lean
    type-checks the result.
 4. Rejects admitted or opaque project declarations in both extra translations.
 

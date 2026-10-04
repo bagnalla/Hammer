@@ -4,3 +4,5 @@ import RustHammer.RepeatProofs
 import RustHammer.UnboundedRepeatProofs
 import RustHammer.SelectionProofs
 import RustHammer.CompositionProofs
+import RustHammer.FoldRepeatProofs
+import RustHammer.SepByProperties

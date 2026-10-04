@@ -77,6 +77,21 @@ def main():
         "--start-from", "rusthammer::Repeat::at_least",
         "--start-from", "rusthammer::Repeat::min",
         "--start-from", "rusthammer::Repeat::max",
+        "--start-from", "rusthammer::FoldRepeat::new",
+        "--start-from", "rusthammer::FoldRepeat::exact",
+        "--start-from", "rusthammer::FoldRepeat::at_least",
+        "--start-from", "rusthammer::FoldRepeat::min",
+        "--start-from", "rusthammer::FoldRepeat::max",
+        "--start-from", "rusthammer::SepBy::new",
+        "--start-from", "rusthammer::SepBy::exact",
+        "--start-from", "rusthammer::SepBy::at_least",
+        "--start-from", "rusthammer::SepBy::min",
+        "--start-from", "rusthammer::SepBy::max",
+        "--start-from", "rusthammer::FoldSepBy::new",
+        "--start-from", "rusthammer::FoldSepBy::exact",
+        "--start-from", "rusthammer::FoldSepBy::at_least",
+        "--start-from", "rusthammer::FoldSepBy::min",
+        "--start-from", "rusthammer::FoldSepBy::max",
         "--start-from", "{impl rusthammer::Parser for _}",
         "--start-from", "{impl core::clone::Clone for rusthammer::_}",
         "--include", "core::option::{impl core::clone::Clone for core::option::Option}",
@@ -106,7 +121,11 @@ def main():
     run("cargo", "fmt", "--manifest-path", manifest, "--check")
     run("cargo", "test", *cargo_args, "--no-default-features")
     run("cargo", "test", *cargo_args, "--features", "alloc")
-    entries = ("checked_flag", "packet", "complete_bit", "blocks", "leading_ones")
+    entries = (
+        "checked_flag", "packet", "complete_bit", "blocks", "leading_ones",
+        "folded_checksum", "leading_ones_count",
+        "separated_blocks", "separated_checksum",
+    )
     entry_args = [
         arg for name in entries
         for arg in ("--start-from-if-exists", f"rusthammer_cross_crate_probe::{name}")
