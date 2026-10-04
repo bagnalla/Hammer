@@ -65,7 +65,7 @@ impl Cursor {
 /// Invalid parameters supplied while constructing a parser, before parsing input.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ConfigError {
-    /// The requested unsigned field width exceeds 64 bits.
+    /// The requested integer field width exceeds 64 bits.
     InvalidWidth,
     /// The expected literal value cannot be represented in its field width.
     InvalidLiteral,
@@ -324,6 +324,79 @@ pub fn read_bits(input: &[u8], cursor: Cursor, parser: &Bits) -> Result<(Cursor,
         }
     }
     Ok((next, value))
+}
+
+/// Read a signed, MSB-first two's-complement field of 0 through 64 bits as `i64`.
+///
+/// Fields may start inside a byte and cross byte boundaries. Width zero returns
+/// zero without consuming input, but still validates the cursor, just like `Bits`.
+/// Construction rejects widths above 64 before any input is supplied.
+///
+/// ```
+/// use rusthammer::{Cursor, Parser, SignedBits};
+/// let field = SignedBits::new(5).unwrap();
+/// assert_eq!(field.parse(&[0b1110_1000], Cursor::start()),
+///     Ok((Cursor { byte: 0, bit: 5 }, -3i64)));
+/// ```
+///
+/// ```compile_fail,E0451
+/// let parser = rusthammer::SignedBits { bits: rusthammer::Bits::new(5).unwrap() };
+/// ```
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct SignedBits {
+    bits: Bits,
+}
+
+impl SignedBits {
+    /// Construct a signed field, rejecting widths above 64 with `InvalidWidth`.
+    pub const fn new(width: u8) -> Result<Self, ConfigError> {
+        let bits = match Bits::new(width) {
+            Ok(bits) => bits,
+            Err(error) => return Err(error),
+        };
+        Ok(Self { bits })
+    }
+
+    /// Return the validated field width.
+    pub const fn width(&self) -> u8 {
+        self.bits.width()
+    }
+}
+
+impl<'input> Parser<'input> for SignedBits {
+    type Output = i64;
+
+    fn parse_with(
+        &self,
+        input: &'input [u8],
+        cursor: Cursor,
+        status: InputStatus,
+    ) -> ParseOutcome<i64> {
+        match self.bits.parse_with(input, cursor, status) {
+            ParseOutcome::Success(next, value) => {
+                ParseOutcome::Success(next, sign_extend(value, self.bits.width))
+            }
+            ParseOutcome::Error(error) => ParseOutcome::Error(error),
+            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+        }
+    }
+}
+
+// The caller supplies a width <= 64 and a value that fits in that width.
+fn sign_extend(value: u64, width: u8) -> i64 {
+    if width == 0 {
+        return 0;
+    }
+    let sign = 1u64 << (width - 1);
+    if value < sign {
+        value as i64
+    } else {
+        // Compute value - 2^width as -1 - (2^width - 1 - value).
+        // Splitting around the sign bit avoids constructing 2^64, out-of-range
+        // signed casts, and negating i64::MIN. Both casts preserve their values.
+        let complement = (sign - 1) - (value - sign);
+        -1 - complement as i64
+    }
 }
 
 /// Read eight MSB-first bits as a `u8`, including from an unaligned cursor.

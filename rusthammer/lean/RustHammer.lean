@@ -8,3 +8,4 @@ import RustHammer.FoldRepeatProofs
 import RustHammer.SepByProperties
 import RustHammer.DependentProofs
 import RustHammer.ByteProofs
+import RustHammer.SignedBitsProofs

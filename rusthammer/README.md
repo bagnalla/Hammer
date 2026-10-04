@@ -16,6 +16,8 @@ The prototype supports:
   next byte without implicit alignment.
 - Unsigned numeric fields of 0 through 64 bits, producing `u64` values and
   supporting unaligned starts and byte-boundary crossing.
+- Signed two's-complement fields of 0 through 64 bits, producing `i64` with
+  the same cursor and input-finality rules.
 - `Byte` producing `u8` and `BytePattern` matching arbitrary borrowed patterns,
   both supporting unaligned starts without allocation.
 - Private numeric and literal configuration, validated by fallible constructors.
@@ -57,6 +59,7 @@ cargo test --no-default-features
 cargo test --features alloc
 cargo run --example flags
 cargo run --example fields
+cargo run --example signed_fields
 cargo run --example bytes
 cargo run --example marker
 cargo run --example record
@@ -87,8 +90,8 @@ before any input is supplied. The resulting parser can be reused through
 `parser.parse(input, cursor)` or `read_bits(input, cursor, &parser)`.
 A zero-width field returns zero without consuming input, including at end-of-input;
 an invalid cursor is still rejected. `Byte` reads the same eight bits as
-`Bits::new(8)` and returns `u8`. Signed fields and configurable
-byte or bit order remain future work.
+`Bits::new(8)` and returns `u8`. `SignedBits::new(width)` reads those bits as a
+signed `i64`. Configurable byte or bit order remains future work.
 
 For example, a grammar builder can propagate construction errors with `?`:
 
@@ -120,6 +123,44 @@ every cursor in several longer inputs, including truncation and the maximum
 `u64` value. Constructor tests cover every `u8` width and literal representability
 boundaries at all supported widths. Compile-fail doctests check that callers
 cannot directly construct or mutate the private configuration.
+
+## Signed fields
+
+`SignedBits::new(width)` corresponds to C Hammer's `h_bits(width, true)`.
+It returns `Result<SignedBits, ConfigError>`, accepting widths 0 through 64 and
+rejecting larger widths with `InvalidWidth`. The configuration is private,
+`width()` exposes it, and parser values implement `Copy` and `Clone`.
+
+```rust
+use rusthammer::{Cursor, Parser, SignedBits};
+
+let field = SignedBits::new(5).unwrap();
+assert_eq!(field.parse(&[0b1110_1000], Cursor::start()),
+    Ok((Cursor { byte: 0, bit: 5 }, -3i64)));
+```
+
+For a nonempty field of width `w`, its unsigned binary value `u` is interpreted
+as `u` when the top bit is zero, or mathematically `u - 2^w` when it is one.
+The range is `-2^(w-1)` through `2^(w-1)-1`; width 64 covers all of `i64`.
+Width zero returns zero without consuming input, while still validating the
+cursor. Reads may start inside a byte and never implicitly align. Short input
+returns `NeedMore` in partial mode or `UnexpectedEnd` in final mode.
+
+The implementation reuses `Bits` and a private sign-extension helper. The
+negative branch computes `-1 - (2^w - 1 - u)` using bounded intermediate values;
+it never constructs `2^64`, negates `i64::MIN`, or casts an unrepresentable value
+to `i64`. Lean proves every intermediate fits and both casts preserve values.
+No allocation, callbacks, or additional Aeneas workaround is required.
+
+The [signed-fields example](examples/signed_fields.rs) sequences an unaligned
+signed field and unsigned flags, retaining `i64` and `u64` as distinct output
+types. Tests cover all constructor widths, an independent binary-string/`i128`
+oracle, signed boundaries at every width and bit offset, retries, invalid raw
+cursors, and composition. Separate-crate extraction exercises dynamic
+construction, signed extremes, and sequencing through a parser reference.
+The optional C comparison below includes 27,724 signed-field cases in addition
+to the byte-pattern cases. Fixed-width readers returning narrower Rust integer
+types remain planned conveniences over these general fields.
 
 ## Bytes and byte patterns
 
@@ -173,11 +214,13 @@ patterns. With a C shared library built using `scons --no-tests` at the reposito
 root, run from `rusthammer/`:
 
 ```sh
-python3 tools/compare_bytes.py --hammer-library ../build/opt/src/libhammer.so
+python3 tools/compare_primitives.py --hammer-library ../build/opt/src/libhammer.so
 ```
 
 This check needs GCC and compares complete input at valid starting cursors.
 It does not assert equivalence of streaming interfaces or other C backends.
+The tool was renamed from `compare_bytes.py` when signed fields were added;
+it now runs 38,285 cases across both families.
 
 ## Partial input and finality
 
@@ -831,6 +874,15 @@ positional binary notation with unbounded natural numbers. Its
 an accumulator bound, exact consumption, and the complete input-error contract
 for validated numeric parsers. Constructor proofs cover every configuration value.
 
+[SignedBitsSpec.lean](lean/RustHammer/SignedBitsSpec.lean) defines two's-complement
+values with unbounded mathematical integers. Its
+[proofs](lean/RustHammer/SignedBitsProofs.lean) establish constructor validity,
+safe sign extension, the exact signed range for each nonzero width, and total
+parsing contracts for both statuses and the complete API. The decoder proof
+reuses unsigned decoding's contents, consumption, and termination guarantees.
+The new theorems' axiom audit lists only `propext`, `Classical.choice`, and
+`Quot.sound`.
+
 [ByteSpec.lean](lean/RustHammer/ByteSpec.lean) specifies byte decoding and ordered
 pattern matching over mathematical lists. Its [proofs](lean/RustHammer/ByteProofs.lean)
 establish lossless narrowing, total parsing, exact consumption and bit contents,
@@ -950,7 +1002,7 @@ These are per-invocation proofs. A future buffering/resumption implementation
 will need its own cross-chunk correctness and ownership arguments.
 
 Rust field privacy does not make extracted Lean records intrinsically valid.
-The specifications therefore state `validBits`, `validLiteral`, `validRepeat`, `validFoldRepeat`,
+The specifications therefore state `validBits`, `validSignedBits`, `validLiteral`, `validRepeat`, `validFoldRepeat`,
 `validSepBy`, `validFoldSepBy`,
 `validMarker`, and `validRecordParser`
 explicitly. Constructor theorems establish these invariants on success; parsing
@@ -969,6 +1021,9 @@ complete-input operations.
 | `read_bit_failure` | Every cursor without a readable bit returns the specified invalid-cursor or end-of-input error. |
 | `bit_spec` | Combines those cases into a total specification of the `Bit` parser for all inputs and raw cursors. |
 | `byte_with_spec`, `byte_spec` | Eight-bit decoding as `u8`, including lossless narrowing, invalid cursors, and exhaustion in both modes. |
+| `signed_bits_new_spec`, `signed_bits_new_valid`, `signed_bits_width_spec` | Construction rejects precisely widths above 64, establishes the private invariant, and preserves the width. |
+| `sign_extend_spec`, `signed_value_bounds` | Sign extension equals mathematical two's-complement interpretation, all arithmetic/casts are in bounds, and nonempty fields have their specified signed range. |
+| `signed_bits_with_spec`, `signed_bits_final_spec`, `signed_bits_spec` | Total signed decoding for every input/cursor and validated width, including zero width, truncation, and finality. |
 | `byte_pattern_with_spec`, `byte_pattern_final_spec`, `byte_pattern_spec` | Total ordered pattern matching, empty-pattern identity, byte-wise error precedence, and final-input exclusion of `NeedMore`. |
 | `byte_pattern_success` | Output equals the configured pattern; each byte matches eight input bits and total consumption is exactly eight times the pattern length. |
 | `seq_spec` | Sequencing preserves arbitrary supplied child specifications, including error propagation. |

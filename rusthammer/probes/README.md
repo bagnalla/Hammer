@@ -300,3 +300,21 @@ Use `--mir optimized` to check the other stage. The second command is expected
 to fail at the pinned revisions above. This diagnostic probe stays outside
 `tools/verify.py`, which checks the supported implementation. Investigating the
 tool's loop-context matching further remains deferred.
+
+## Signed numeric fields
+
+`SignedBits` reuses `Bits` and a private `sign_extend` helper. Both library MIR
+stages translate, including the helper's unsigned-to-signed casts and signed
+subtraction. The ordinary Cargo consumer also translates and Lean type-checks
+runtime construction returning a separate configuration error, and signed/unsigned
+sequencing through a shared parser reference. No new extraction limitation was
+encountered, and the actual library paths are checked by `tools/verify.py`.
+
+For a negative `w`-bit value `u`, the helper computes `u - 2^w` as
+`-1 - (2^w - 1 - u)`, splitting the inner difference around the sign bit so no
+operation constructs `2^64`. All intermediates fit their types even at width 64
+and `i64::MIN`; both casts to `i64` preserve their values. The source comment
+explains this arithmetic. The helper's Lean contract requires `w <= 64` and
+`u < 2^w`, established by validated construction and the unsigned decoder's
+proof. This is ordinary bounded arithmetic, not a tool workaround or a reliance
+on signed overflow.

@@ -1,6 +1,6 @@
 # RustHammer design and verification plan
 
-Status: verified prototype with byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection, 2026-10-04.
+Status: verified prototype with signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection, 2026-10-04.
 
 RustHammer will be a Rust rewrite of Hammer whose parsers can be translated
 through Charon and Aeneas and proved correct in Lean. It should preserve Hammer's
@@ -19,7 +19,7 @@ API, independent of implementation or proof milestones.
 ## Prototype checkpoint
 
 An initial implementation now lives in [rusthammer/](../rusthammer/README.md).
-It includes most-significant-first bit and unsigned numeric readers, typed
+It includes most-significant-first bit readers, unsigned and signed numeric fields, typed
 sequencing, a three-bit header example, and an explicitly aligned borrowed-payload
 parser. The verification command checks Rust tests, regenerates the Aeneas
 translation, and checks Lean proofs with pinned tools.
@@ -43,6 +43,23 @@ exhaustive two-byte inputs for 8-bit fields
 at every bit offset and an independent binary-string oracle for all supported
 widths on representative longer inputs.
 
+`SignedBits::new(width)` now provides `i64` decoding for widths 0 through 64,
+corresponding to C's `h_bits(width, true)`. It shares the unsigned reader's
+validated width, unaligned decoding, cursor/error rules, and input-finality
+handling. Zero width returns zero after validating the cursor. Private
+configuration and a read-only accessor preserve the constructor invariant.
+
+The Lean specification interprets nonempty fields as mathematical two's-complement
+integers, and the proof establishes the exact signed range. The private
+sign-extension helper uses bounded arithmetic even for the 64-bit minimum:
+it avoids constructing `2^64`, negating `i64::MIN`, or relying on out-of-range
+casts. Constructor, accessor, helper, and both parsing APIs are proved. Library
+extraction at both MIR stages and the ordinary Cargo consumer pass without a new
+tool workaround. Native tests use an independent string/`i128` oracle and cover
+all widths and offsets, signed boundaries, raw cursor errors, and partial retries.
+Direct-backend C comparisons add 27,724 signed-field cases. Fixed-width typed
+readers remain planned conveniences; general signed bit fields are a permanent API.
+
 `Byte` now reads eight bits as `u8`, with a proof that narrowing the numeric
 result is lossless. `BytePattern::new(pattern)` matches arbitrary borrowed byte
 sequences at aligned or unaligned positions and returns the configured pattern
@@ -62,7 +79,7 @@ private matching helper returning unit keeps the returned borrow outside the
 loop. The [probe notes](../rusthammer/probes/README.md#pattern-borrows-and-loops)
 record the failing shape and supported implementation.
 
-An optional [C/Rust differential check](../rusthammer/tools/compare_bytes.py)
+An optional [C/Rust differential check](../rusthammer/tools/compare_primitives.py)
 passes 10,561 complete-input cases against direct-backend `h_uint8` and `h_token`,
 normalizing ownership and typed output differences. It covers every bit offset,
 truncation, mismatches, empty patterns, embedded zeros, and 256-byte patterns.
@@ -254,10 +271,11 @@ returning borrowed values are unsupported.
 The initial combinator inventory and proposed contracts are in the companion API
 plan. Empty/failing parsers, checked mapping, folding, separated lists, and `Bind`
 are implemented and proved, including representative dependent grammars. `Byte`
-and `BytePattern` now expand the binary primitives. Next implement signed readers
-and restrictions from the API plan, with further semantic/differential checks. CI integration
-and the recorded Aeneas callback investigation are deferred. Signed decoding and
-configurable byte and bit order remain unimplemented.
+and `BytePattern` expand the binary primitives, and signed fields are implemented
+and proved. Next add fixed-width typed conveniences and restrictions from the
+API plan, with further semantic/differential checks. CI integration and the
+recorded Aeneas callback investigation are deferred. Configurable byte and bit
+order remains unimplemented.
 
 ## Requirements and working decisions
 

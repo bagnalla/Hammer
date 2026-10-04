@@ -1,9 +1,9 @@
-// Standalone driver for tools/compare_bytes.py; not part of the library API.
+// Standalone driver for tools/compare_primitives.py; not part of the library API.
 #[allow(dead_code)]
 #[path = "../../src/lib.rs"]
 mod rusthammer;
 
-use rusthammer::{Byte, BytePattern, Cursor, Parser};
+use rusthammer::{Byte, BytePattern, Cursor, Parser, SignedBits};
 use std::io::{self, BufRead};
 
 fn unhex(text: &str) -> Vec<u8> {
@@ -21,13 +21,17 @@ fn main() {
         let line = line.unwrap();
         let fields: Vec<_> = line.split_whitespace().collect();
         let bit = fields[1].parse().unwrap();
-        let pattern = unhex(fields[2]);
         let input = unhex(fields[3]);
         let cursor = Cursor { byte: 0, bit };
         let result = if fields[0] == "byte" {
             Byte.parse(&input, cursor)
-                .map(|(next, value)| (next, u32::from(value)))
+                .map(|(next, value)| (next, i64::from(value)))
+        } else if fields[0] == "signed" {
+            SignedBits::new(fields[2].parse().unwrap())
+                .unwrap()
+                .parse(&input, cursor)
         } else {
+            let pattern = unhex(fields[2]);
             BytePattern::new(&pattern)
                 .parse(&input, cursor)
                 .map(|(next, matched)| {

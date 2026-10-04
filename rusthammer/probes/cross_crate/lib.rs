@@ -5,9 +5,35 @@
 extern crate alloc;
 
 use rusthammer::{
-    Bind, Bit, Bits, Byte, BytePattern, Cursor, End, FoldRepeat, Ignore, InputStatus, Left,
-    Literal, Middle, ParseError, ParseOutcome, Parser, Right, Seq, TakeAligned, TryMap,
+    Bind, Bit, Bits, Byte, BytePattern, ConfigError, Cursor, End, FoldRepeat, Ignore, InputStatus,
+    Left, Literal, Middle, ParseError, ParseOutcome, Parser, Right, Seq, SignedBits, TakeAligned,
+    TryMap,
 };
+
+/// Dynamic construction preserves configuration errors separately from parsing.
+pub fn signed_field(
+    input: &[u8],
+    cursor: Cursor,
+    width: u8,
+    status: InputStatus,
+) -> Result<ParseOutcome<i64>, ConfigError> {
+    let parser = SignedBits::new(width)?;
+    Ok(parser.parse_with(input, cursor, status))
+}
+
+/// A validated signed parser composes with an unsigned byte through a reference.
+pub fn signed_and_unsigned(
+    input: &[u8],
+    cursor: Cursor,
+    signed: &SignedBits,
+    status: InputStatus,
+) -> ParseOutcome<(i64, u8)> {
+    Seq {
+        first: signed,
+        second: Byte,
+    }
+    .parse_with(input, cursor, status)
+}
 
 /// Input, pattern, and parser references have independent lifetimes.
 pub fn matched_pattern<'pattern>(
@@ -232,6 +258,48 @@ pub fn leading_ones(input: &[u8], status: InputStatus) -> ParseOutcome<alloc::ve
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn signed_construction_and_extremes_cross_the_crate_boundary() {
+        assert_eq!(
+            signed_field(&[], Cursor::start(), 65, InputStatus::Final),
+            Err(ConfigError::InvalidWidth)
+        );
+        assert_eq!(
+            signed_field(&[], Cursor::start(), 0, InputStatus::Partial),
+            Ok(ParseOutcome::Success(Cursor::start(), 0))
+        );
+        for value in [i64::MIN, -1, 0, i64::MAX] {
+            assert_eq!(
+                signed_field(
+                    &value.to_be_bytes(),
+                    Cursor::start(),
+                    64,
+                    InputStatus::Final
+                ),
+                Ok(ParseOutcome::Success(Cursor { byte: 8, bit: 0 }, value))
+            );
+        }
+        assert_eq!(
+            signed_field(&[0xff], Cursor::start(), 9, InputStatus::Partial),
+            Ok(ParseOutcome::NeedMore)
+        );
+        assert_eq!(
+            signed_field(&[0xff], Cursor::start(), 9, InputStatus::Final),
+            Ok(ParseOutcome::Error(ParseError::UnexpectedEnd))
+        );
+    }
+
+    #[test]
+    fn signed_parser_references_sequence_with_an_unsigned_byte() {
+        let signed = SignedBits::new(5).unwrap();
+        // Skip three prefix bits; the signed field is 11101 (-3), then A5.
+        let cursor = Cursor { byte: 0, bit: 3 };
+        assert_eq!(
+            signed_and_unsigned(&[0x1d, 0xa5], cursor, &signed, InputStatus::Partial),
+            ParseOutcome::Success(Cursor { byte: 2, bit: 0 }, (-3, 0xa5))
+        );
+    }
 
     #[test]
     fn pattern_output_outlives_input_and_parser() {

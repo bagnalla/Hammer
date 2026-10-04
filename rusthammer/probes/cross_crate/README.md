@@ -13,6 +13,9 @@ first value configuring an owned literal parser, a constructed repetition with
 a copied child, and a factory returning an existing parser by shared reference.
 Byte-pattern entries check independent input/pattern/parser lifetimes, a `u8`
 reader, and sequencing whose output contains both pattern and input borrows.
+Signed-field entries check a runtime constructor with distinct configuration
+errors and sequencing a validated signed parser by reference with an unsigned
+byte. Native tests include the full `i64` extremes and both input statuses.
 
 Run `python3 tools/verify.py` from `rusthammer/`. Alongside the library tests and
 proofs, that command:
@@ -21,7 +24,7 @@ proofs, that command:
    the compiler stage available for dependencies, and Lean type-checks it.
 2. Tests this consumer with allocation disabled and enabled.
 3. Extracts the consumer with RustHammer's dependency bodies included and `alloc`
-   enabled, checks that all fifteen entry points were translated, and Lean
+   enabled, checks that all seventeen entry points were translated, and Lean
    type-checks the result.
 4. Rejects admitted or opaque project declarations in both extra translations.
 

@@ -70,6 +70,8 @@ def main():
         "--start-from", "rusthammer::parse_record",
         "--start-from", "rusthammer::Bits::new",
         "--start-from", "rusthammer::Bits::width",
+        "--start-from", "rusthammer::SignedBits::new",
+        "--start-from", "rusthammer::SignedBits::width",
         "--start-from", "rusthammer::BytePattern::new",
         "--start-from", "rusthammer::BytePattern::pattern",
         "--start-from", "rusthammer::Literal::new",
@@ -134,6 +136,7 @@ def main():
         "separated_blocks", "separated_checksum",
         "bound_payload", "bound_literal", "bound_blocks", "bound_reference",
         "matched_pattern", "pattern_and_input",
+        "signed_field", "signed_and_unsigned",
     )
     entry_args = [
         arg for name in entries
