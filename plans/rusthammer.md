@@ -1,6 +1,6 @@
 # RustHammer design and verification plan
 
-Status: verified prototype with ordinary/separated collection and folding, parser references, and output selection, 2026-10-04.
+Status: verified prototype with `Bind`, ordinary/separated collection and folding, parser references, and output selection, 2026-10-04.
 
 RustHammer will be a Rust rewrite of Hammer whose parsers can be translated
 through Charon and Aeneas and proved correct in Lean. It should preserve Hammer's
@@ -192,8 +192,33 @@ five flag bits, and lengths through 1,024 bytes, then requires exact end-of-inpu
 Its constructor establishes fixed field widths. An independent Lean format
 specification and compositional proofs cover decoded values, payload contents,
 exact consumption, the bounded integer conversion, and every input/cursor error.
-The dependent payload step uses explicit Rust control flow; a general `Bind`
-combinator remains future work.
+Its dependent payload step still uses explicit Rust control flow. The core now
+also provides a verified `Bind` combinator for reusable value-dependent sequencing.
+
+`Bind { parser, then }` moves a first-stage output into an `Fn(A) -> Q` factory,
+then runs the returned parser at the success cursor with the same finality.
+The returned parser's output becomes the result. First-stage errors and
+`NeedMore` skip the factory; second-stage outcomes propagate. Generic proofs
+cover both input modes and the complete API, with contracts required only for
+reachable callbacks and constructed parsers. No cloning or allocation is required.
+
+New application fixtures decode an eight-bit count capped at 64 and use `Bind`
+to read borrowed bytes or collect four-bit elements. Their source lives under
+`examples/support/`, shared by native tests, runnable examples, and a private
+`rusthammer_verify` extraction module. These formats add no public API or Cargo
+feature. Independent format specifications and Lean proofs cover every input,
+raw cursor, and finality, plus exact payload contents/length, element count, and
+byte/bit consumption. Native tests use independent bit-string and slice oracles
+and cover callback skipping, retries, borrowed identity, and ownership cleanup.
+
+The generic combinator, factories constructing owned parsers from borrowed
+values, copied children inside constructed parsers, and factories returning an
+existing parser by reference all extract. A factory returning a new parser
+containing a captured reference reproduces the recorded non-endable-abstraction
+error. `Repeat::exact(element, count)` passes for a `Copy` element where
+`Repeat::exact(&element, count)` fails extraction. Both work in native Rust;
+the [probe notes](../rusthammer/probes/README.md#bind-factories-containing-borrowed-parsers)
+record this boundary. The callback investigation remains deferred.
 
 A capturing closure constructing the borrowed record failed extraction in the
 pinned Aeneas revision. Direct struct construction extracts and is proved.
@@ -202,9 +227,9 @@ failing shape for toolchain upgrades; this is not a finding that all callbacks
 returning borrowed values are unsupported.
 
 The initial combinator inventory and proposed contracts are in the companion API
-plan. Empty/failing parsers, checked mapping, folding, and separated lists are
-implemented and proved. Next add `Bind` and reusable dependent grammars, with
-further semantic/differential checks. CI integration
+plan. Empty/failing parsers, checked mapping, folding, separated lists, and `Bind`
+are implemented and proved, including representative dependent grammars. Next
+expand binary primitives and restrictions, with further semantic/differential checks. CI integration
 and the recorded Aeneas callback investigation are deferred. Signed decoding and
 configurable byte and bit order remain unimplemented.
 
@@ -313,6 +338,7 @@ lifetime, determines its output type. It keeps composition direct:
 | Combinator | Output |
 | --- | --- |
 | `Seq<P, Q>` | `(P::Output, Q::Output)` |
+| `Bind<P, F>` | The output of the parser constructed from `P::Output` |
 | `Repeat<P>` | `Vec<P::Output>` with the optional `alloc` feature |
 | `FoldRepeat<P, I, F>` | The accumulator type, without requiring allocation |
 | `SepBy<P, S>` | `Vec<P::Output>` with `alloc`; separator outputs are discarded |
@@ -808,7 +834,8 @@ Resolve interface questions using small Lean-checked examples before expanding
 the implementation. The prototype now provides a verified record parser and
 reusable primitive, sequencing, choice, mapping, predicate, optionality, lookahead,
 finite/unbounded repetition, parser-reference, output-selection, empty/failing
-grammar, checked-mapping, folding, and separated-list contracts. Next add `Bind`
-and the other durable families in the companion API plan.
+grammar, checked-mapping, folding, separated-list, and `Bind` contracts, plus
+verified dependent-format examples. Next expand the binary primitives and other
+durable families in the companion API plan.
 Continue focused semantic and differential checks. CI and the Aeneas callback
 investigation remain deferred.

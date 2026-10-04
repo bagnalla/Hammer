@@ -8,6 +8,9 @@ folding with captured initialization, borrowed child values, and an owned non-`C
 accumulator. Both finite and unbounded folding are exercised. Separated-list
 entries check exact collection with borrowed item and separator outputs, and
 unbounded folding with an owned non-`Clone` separator output that is discarded.
+`Bind` entries check a captured count limit and borrowed payload, a borrowed
+first value configuring an owned literal parser, a constructed repetition with
+a copied child, and a factory returning an existing parser by shared reference.
 
 Run `python3 tools/verify.py` from `rusthammer/`. Alongside the library tests and
 proofs, that command:
@@ -16,7 +19,7 @@ proofs, that command:
    the compiler stage available for dependencies, and Lean type-checks it.
 2. Tests this consumer with allocation disabled and enabled.
 3. Extracts the consumer with RustHammer's dependency bodies included and `alloc`
-   enabled, checks that all nine entry points were translated, and Lean
+   enabled, checks that all thirteen entry points were translated, and Lean
    type-checks the result.
 4. Rejects admitted or opaque project declarations in both extra translations.
 

@@ -32,6 +32,13 @@
 
 use core::marker::PhantomData;
 
+// Extract the same application code used by the examples and tests without
+// adding example formats to the library API or ordinary builds.
+#[cfg(rusthammer_verify)]
+#[allow(dead_code)] // Entry points are reached by Charon, not by Rust library calls.
+#[path = "../examples/support/dependent.rs"]
+mod dependent_examples;
+
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
@@ -502,6 +509,66 @@ impl<'input, P: Parser<'input>, Q: Parser<'input>> Parser<'input> for Seq<P, Q> 
                 ParseOutcome::Error(error) => ParseOutcome::Error(error),
                 ParseOutcome::Success(end, second) => ParseOutcome::Success(end, (first, second)),
             },
+        }
+    }
+}
+
+/// Use a parsed value to construct the next parser, returning that parser's output.
+///
+/// `then` takes ownership of the first output and runs exactly once after success.
+/// Its parser runs at that success cursor with the same input and finality. Errors
+/// and `NeedMore` from either stage propagate unchanged; a first-stage failure
+/// skips the factory. Outputs and the constructed parser need neither `Copy` nor
+/// `Clone`. Copying this combinator depends only on its stored parser and factory.
+///
+/// For each input lifetime, the factory returns one concrete parser type. Parsed
+/// values can change that parser's configuration. Use a typed parser enum for
+/// branches with different implementations. `TryMap` can check input-derived
+/// counts or construct a checked parser before `Bind` executes it.
+///
+/// The combinator allocates no memory and retains no state between calls.
+/// Verification requires contracts for the first parser, factory, and constructed
+/// parsers. Retrying or backtracking can rerun the factory; its effects are not
+/// rolled back. `Fn` alone does not imply purity, termination, or panic freedom.
+///
+/// ```
+/// use rusthammer::{Bind, Bits, Cursor, Parser, TakeAligned, TryMap};
+/// let payload = Bind {
+///     parser: TryMap {
+///         parser: Bits::new(8).unwrap(),
+///         map: |length| usize::try_from(length),
+///     },
+///     then: |count| TakeAligned { count },
+/// };
+/// assert_eq!(payload.parse(b"\x03abc!", Cursor::start()),
+///     Ok((Cursor { byte: 4, bit: 0 }, &b"abc"[..])));
+/// ```
+#[derive(Clone, Copy)]
+pub struct Bind<P, F> {
+    pub parser: P,
+    pub then: F,
+}
+
+impl<'input, P, F, Q> Parser<'input> for Bind<P, F>
+where
+    P: Parser<'input>,
+    F: Fn(P::Output) -> Q,
+    Q: Parser<'input>,
+{
+    type Output = Q::Output;
+
+    fn parse_with(
+        &self,
+        input: &'input [u8],
+        cursor: Cursor,
+        status: InputStatus,
+    ) -> ParseOutcome<Self::Output> {
+        match self.parser.parse_with(input, cursor, status) {
+            ParseOutcome::Success(next, value) => {
+                (self.then)(value).parse_with(input, next, status)
+            }
+            ParseOutcome::Error(error) => ParseOutcome::Error(error),
+            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
         }
     }
 }

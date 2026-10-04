@@ -6,3 +6,4 @@ import RustHammer.SelectionProofs
 import RustHammer.CompositionProofs
 import RustHammer.FoldRepeatProofs
 import RustHammer.SepByProperties
+import RustHammer.DependentProofs

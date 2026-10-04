@@ -5,8 +5,8 @@
 extern crate alloc;
 
 use rusthammer::{
-    Bit, Bits, Cursor, End, FoldRepeat, Ignore, InputStatus, Left, Literal, Middle, ParseError,
-    ParseOutcome, Parser, Right, Seq, TakeAligned, TryMap,
+    Bind, Bit, Bits, Cursor, End, FoldRepeat, Ignore, InputStatus, Left, Literal, Middle,
+    ParseError, ParseOutcome, Parser, Right, Seq, TakeAligned, TryMap,
 };
 
 #[derive(Debug, PartialEq, Eq)]
@@ -53,6 +53,63 @@ pub fn packet(input: &[u8], status: InputStatus) -> ParseOutcome<(bool, &[u8])> 
 /// Also exercise the default complete-input trait method across the crate boundary.
 pub fn complete_bit(input: &[u8]) -> Result<(Cursor, bool), ParseError> {
     Bit.parse(input, Cursor::start())
+}
+
+/// A checked input value configures a parser returning a borrowed slice.
+pub fn bound_payload(input: &[u8], limit: u64, status: InputStatus) -> ParseOutcome<&[u8]> {
+    Bind {
+        parser: TryMap {
+            parser: Bits::new(8).unwrap(),
+            map: |length| {
+                if length <= limit && length <= 255 {
+                    Ok(length as usize)
+                } else {
+                    Err(())
+                }
+            },
+        },
+        then: |count| TakeAligned { count },
+    }
+    .parse_with(input, Cursor::start(), status)
+}
+
+/// The factory reads a borrowed first output to construct an owned parser.
+pub fn bound_literal(input: &[u8], status: InputStatus) -> ParseOutcome<u64> {
+    Bind {
+        parser: TakeAligned { count: 1 },
+        then: |byte: &[u8]| Literal::new(8, u64::from(byte[0])).unwrap(),
+    }
+    .parse_with(input, Cursor::start(), status)
+}
+
+/// A constructed repetition owns a copy of its captured child parser.
+#[cfg(feature = "alloc")]
+pub fn bound_blocks(input: &[u8], status: InputStatus) -> ParseOutcome<alloc::vec::Vec<&[u8]>> {
+    let element = TakeAligned { count: 1 };
+    Bind {
+        parser: TryMap {
+            parser: Bits::new(8).unwrap(),
+            map: |count| {
+                if count <= 255 {
+                    Ok(count as usize)
+                } else {
+                    Err(())
+                }
+            },
+        },
+        then: |count| rusthammer::Repeat::exact(element, count),
+    }
+    .parse_with(input, Cursor::start(), status)
+}
+
+/// A factory may also return an existing parser by shared reference.
+pub fn bound_reference(input: &[u8], status: InputStatus) -> ParseOutcome<&[u8]> {
+    let body = TakeAligned { count: 1 };
+    Bind {
+        parser: Bits::new(8).unwrap(),
+        then: |_| &body,
+    }
+    .parse_with(input, Cursor::start(), status)
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -147,6 +204,58 @@ pub fn leading_ones(input: &[u8], status: InputStatus) -> ParseOutcome<alloc::ve
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn dependent_factories_preserve_borrowing_finality_and_checked_counts() {
+        assert_eq!(
+            bound_payload(b"\x02ab!", 2, InputStatus::Partial),
+            ParseOutcome::Success(Cursor { byte: 3, bit: 0 }, &b"ab"[..])
+        );
+        assert_eq!(
+            bound_payload(b"\x02a", 2, InputStatus::Partial),
+            ParseOutcome::NeedMore
+        );
+        assert_eq!(
+            bound_payload(b"\x02a", 1, InputStatus::Partial),
+            ParseOutcome::Error(ParseError::Mismatch)
+        );
+        assert_eq!(
+            bound_payload(b"\x02a", 2, InputStatus::Final),
+            ParseOutcome::Error(ParseError::UnexpectedEnd)
+        );
+        assert_eq!(
+            bound_literal(b"aa", InputStatus::Final),
+            ParseOutcome::Success(Cursor { byte: 2, bit: 0 }, 97)
+        );
+        assert_eq!(
+            bound_literal(b"ab", InputStatus::Final),
+            ParseOutcome::Error(ParseError::Mismatch)
+        );
+        assert_eq!(
+            bound_reference(b"ab", InputStatus::Partial),
+            ParseOutcome::Success(Cursor { byte: 2, bit: 0 }, &b"b"[..])
+        );
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn dependent_collection_owns_its_captured_child() {
+        assert_eq!(
+            bound_blocks(b"\x02ab!", InputStatus::Partial),
+            ParseOutcome::Success(
+                Cursor { byte: 3, bit: 0 },
+                alloc::vec![&b"a"[..], &b"b"[..]]
+            )
+        );
+        assert_eq!(
+            bound_blocks(b"\x02a", InputStatus::Partial),
+            ParseOutcome::NeedMore
+        );
+        assert_eq!(
+            bound_blocks(b"\x00", InputStatus::Partial),
+            ParseOutcome::Success(Cursor { byte: 1, bit: 0 }, alloc::vec![])
+        );
+    }
 
     #[test]
     fn captured_conversion_and_complete_entry_point() {

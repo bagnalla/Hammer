@@ -58,6 +58,11 @@ def main():
     # later stage, which can contain cleanup code absent from promoted MIR.
     library_extraction = (
         str(charon), "cargo", "--preset=aeneas", "--sysroot", "default",
+        # Private fixture module shares source with the runnable examples; it is
+        # excluded from ordinary library builds and does not expand the API.
+        "--rustc-arg=--cfg=rusthammer_verify",
+        "--start-from", "rusthammer::dependent_examples::payload",
+        "--start-from", "rusthammer::dependent_examples::fields",
         "--start-from", "rusthammer::parse_flags",
         "--start-from", "rusthammer::take_aligned",
         "--start-from", "rusthammer::read_bits",
@@ -125,6 +130,7 @@ def main():
         "checked_flag", "packet", "complete_bit", "blocks", "leading_ones",
         "folded_checksum", "leading_ones_count",
         "separated_blocks", "separated_checksum",
+        "bound_payload", "bound_literal", "bound_blocks", "bound_reference",
     )
     entry_args = [
         arg for name in entries

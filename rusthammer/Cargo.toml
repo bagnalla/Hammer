@@ -12,6 +12,9 @@ alloc = []
 [lib]
 path = "src/lib.rs"
 
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(rusthammer_verify)'] }
+
 [[example]]
 name = "repeat"
 required-features = ["alloc"]

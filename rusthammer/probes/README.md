@@ -211,3 +211,55 @@ accumulator. `tools/verify.py` checks these actual library paths; no separate
 minimized probe or new tool workaround was needed. Generic Lean proofs establish
 the separated-list contracts, while the consumer remains an extraction regression.
 The borrowed-accumulator callback limitation above is unchanged and deferred.
+
+## Bind factories containing borrowed parsers
+
+The generic `Bind` implementation translates at promoted and optimized MIR.
+The normal Cargo consumer passes with four concrete factory shapes: a checked
+scalar count constructing `TakeAligned`, a borrowed first output constructing
+an owned `Literal`, a captured `Copy` child placed in `Repeat::exact`, and a
+factory returning an existing parser by shared reference. These concrete
+translations Lean type-check, and their native tests run in both feature modes.
+
+[`bind_borrowed_parser.rs`](bind_borrowed_parser.rs) instead constructs
+`Repeat::exact(&element, count)` inside the factory. The returned parser contains
+a reference captured by the closure. Native Rust supports it, but the pinned
+Aeneas fails with `Can't end abstraction ... as it is set as non-endable` in
+`InterpBorrows.ml`. This reproduces both through a Cargo dependency and with the
+library included as a module. Using `Repeat::exact(element, count)` with the
+`Copy` child passes. Returning `&element` directly also passes: this is a specific
+borrowed aggregate construction boundary, not a blanket ban on factory references.
+The error matches the previously recorded callback failures; a shared underlying
+cause has not been established.
+
+Reproduce from `rusthammer/` with the pinned tools:
+
+```sh
+~/source/aeneas/charon/bin/charon rustc --preset=aeneas --sysroot default \
+  --start-from bind_borrowed_parser::blocks \
+  --dest-file target/bind_borrowed_parser.llbc -- \
+  --crate-type lib --edition 2021 --cfg 'feature="alloc"' probes/bind_borrowed_parser.rs
+~/source/aeneas/bin/aeneas -backend lean -dest target/bind-borrowed-probe \
+  -abort-on-error -warnings-as-errors -no-progress-bar target/bind_borrowed_parser.llbc
+```
+
+The second command is expected to fail. The probe stays outside the normal
+verification command, while that command checks the supported library and
+consumer shapes. The Rust API remains unrestricted, and the extraction tools are unchanged.
+Further investigation remains deferred.
+
+## Fixed constructors in application proofs
+
+The dependent-format fixture originally used `Bits::new(8).unwrap()` and
+`Bits::new(4).unwrap()`. Its correctness proofs checked, but a `#print axioms`
+audit also listed Aeneas's abstract formatter type and generated formatting
+assumptions through the `Debug` argument to `Result::unwrap`, even though the
+constructors always succeeded.
+
+The fixture's private `fixed_bits` helper instead matches the constructor result
+and has an explicit panic branch. Its proof establishes successful construction
+at both constant widths, so that branch is unreachable. This removes the
+formatting dependencies from the application theorems without altering parsing
+behavior or the public library. The source includes a comment explaining this
+proof-motivated spelling. It is separate from the borrowed-factory extraction
+failure above.

@@ -1,6 +1,6 @@
 # RustHammer combinator API plan
 
-Status: target API and implementation order, with ordinary/separated collection and folding, parser references, and output selection verified,
+Status: target API and implementation order, with `Bind`, ordinary/separated collection and folding, parser references, and output selection verified,
 2026-10-04. Unimplemented features remain proposals. See the
 [main plan](rusthammer.md) and [prototype README](../rusthammer/README.md) for
 current implementation and proof coverage.
@@ -40,7 +40,7 @@ values. Only collecting operations require the optional `alloc` feature.
 | Repetition | `Repeat<P>` produces `Vec<A>` with `alloc`. | Exact, finite bounded, and unbounded forms are implemented and proved, replacing `RepeatN` and covering `h_repeat_n`, `h_many_cap`, `h_many1_cap`, `h_many`, and `h_many1`. |
 | Folding repetition | `FoldRepeat<P, I, F>` produces an accumulator `R`. | Implemented and proved. Same count and stopping rules as `Repeat`; initialize a fresh accumulator and update it with each output. Supports allocation-free counting, discarding, checksums, and application accumulators. No C wrapper is required to justify this separate output policy. |
 | Separated repetition | `SepBy<P, S>` produces `Vec<A>` with `alloc`; `FoldSepBy<P, S, I, F>` produces an accumulator without library allocation. | Implemented and proved. One count policy covers `h_sepBy` and `h_sepBy1`, as well as finite limits. Parse the first item, then separator/item pairs; discard separator outputs. |
-| Value-dependent sequencing | `Bind<P, F>` produces the output of the parser selected or constructed from `A`. | Corresponds to `h_bind`. Run the first child, move its value into the factory, then run the resulting parser at the next cursor. |
+| Value-dependent sequencing | `Bind<P, F>` produces the output of the parser selected or constructed from `A`. | Implemented and proved. Corresponds to `h_bind`. Run the first child, move its value into the factory, then run the resulting parser at the next cursor. |
 | Match restrictions | `ButNot<P, Q>` and `Difference<P, Q>` preserve `A`; `Xor<P, Q>` requires a common output type. | Separate semantics from ordered choice and lookahead. Compare matches starting at the same cursor; see below. |
 
 Output selection moves retained values and drops the others without requiring
@@ -167,7 +167,7 @@ successful iterations rather than reserve an input-derived count in advance.
 
 ## Dependent parsing and reusable helpers
 
-The target `Bind` factory has the shape `Fn(A) -> Q`, where `Q` implements
+The implemented `Bind { parser, then }` factory has the shape `Fn(A) -> Q`, where `Q` implements
 `Parser<'input>`. For a given input lifetime, it returns one concrete parser type;
 input values may change that parser's configuration. Choosing heterogeneous
 branches requires a typed parser enum or another explicitly represented choice.
@@ -176,9 +176,28 @@ Static dispatch does not make a Rust return type depend on a runtime value.
 The factory is called once after first-child success and never after its error
 or `NeedMore`. Its parser consumes from that success cursor. `Fn` permits repeated
 use of a grammar; neither purity nor termination follows from that trait bound.
-Prove a factory contract and child-parser family contract. Probe factories using
-borrowed values and parser references before exporting the generic implementation.
-Keep the previously deferred borrowed-record callback investigation separate.
+Generic proofs require factory and child-parser family contracts only for
+reachable first-stage successes. Both finalities and the complete API are proved;
+first-stage errors and `NeedMore` skip the factory without assumptions about it.
+Neither parsed outputs nor constructed parsers need copying or cloning.
+
+Promoted/optimized MIR and a normal Cargo consumer pass for scalar factories,
+borrowed first values used to build owned parsers, copied children inside new
+parsers, and returning an existing parser by reference. Returning a new parser
+containing a captured reference, such as `Repeat::exact(&element, count)`, fails
+with the recorded non-endable-abstraction error. Copying a `Copy` child into the
+returned parser passes; native Rust supports both. The focused
+[probe](../rusthammer/probes/README.md#bind-factories-containing-borrowed-parsers)
+records this boundary without changing the Rust API. Further callback investigation
+remains deferred.
+
+The verified [dependent examples](../rusthammer/examples/support/dependent.rs)
+decode an eight-bit count limited to 64, then read borrowed aligned bytes or
+collect four-bit elements. Lean proves their independent format contracts and
+exact contents/counts/consumption. Examples and native tests share the same source;
+a private extraction-only module supplies the application proof fixtures without
+adding public demo types or a Cargo feature. Named convenience wrappers below
+remain proposals; their compositions now work through `Bind`.
 
 Build these permanent conveniences from the core, rather than separate engines:
 
@@ -282,9 +301,11 @@ helpers should represent grammar operations or output needs.
    final-input specialization. Native tests cover empty successes, ownership,
    bit boundaries, independent short-input oracles, and C list examples. Both
    MIR modes and the ordinary Cargo consumer translate and Lean type-check.
-4. **Generalize data dependencies.** Validate and implement `Bind`, then use it
-   in count-prefixed elements and length-prefixed bytes. Prove a representative
-   format against an independent format specification.
+4. **Generalize data dependencies (core and formats complete).** `Bind` and
+   count-prefixed element/byte examples are implemented and proved. Tests cover
+   both input modes, checked counts, factory invocation, cursor rollback, borrowed
+   identity, and owned output/parser cleanup. Application proofs cover the actual
+   shared example source. Named length/count helpers remain planned conveniences.
 5. **Expand binary vocabulary and restrictions.** Add byte patterns, signed
    readers, ranges, skipping/position, and match comparisons as specified above.
    Resolve cursor/span/order questions before implementing their affected APIs.

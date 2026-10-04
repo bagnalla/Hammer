@@ -20,6 +20,7 @@ The prototype supports:
 - `Parser<'input>` with an associated `Output` type and explicit input finality.
 - Separate `Success`, `Error`, and `NeedMore` outcomes, with a complete-buffer convenience API.
 - `Seq<P, Q>`, which returns a typed pair and propagates child errors.
+- `Bind<P, F>`, whose factory uses a parsed value to configure the next parser.
 - Shared parser references and `Left`, `Right`, `Middle`, and `Ignore` for selecting outputs.
 - `Clone` and `Copy` for parser values when their stored children and callbacks support them.
 - `Map<P, F>` for typed output transformations, `TryMap<P, F>` for checked conversions,
@@ -64,6 +65,8 @@ cargo run --features alloc --example repeat
 cargo run --no-default-features --example fold_repeat
 cargo run --no-default-features --example separated
 cargo run --features alloc --example separated
+cargo run --no-default-features --example dependent
+cargo run --features alloc --example dependent
 ```
 
 The `flags` example parses `101` from the start of `0b1010_0000` and returns:
@@ -434,8 +437,8 @@ below. The count alone does not impose a resource budget on children or their ou
 
 The [repeat example](examples/repeat.rs) demonstrates crossing byte boundaries,
 bounded and unbounded stopping, partial input, and a runtime count read from an
-eight-bit field. It uses explicit Rust control flow for the dependent count; a
-general `Bind` remains future work.
+eight-bit field. That example uses explicit Rust control flow for the dependent
+count; the [dependent example](examples/dependent.rs) uses the reusable `Bind`.
 Tests cover bit values against a binary-string oracle, borrowed slice identity,
 non-`Copy` values and drop behavior, private validated bounds, zero/huge counts,
 empty/non-advancing successes, invalid returned cursors, count overflow, error and
@@ -530,6 +533,56 @@ Tests exhaust short strings over item, separator, and conflicting bytes against
 an independent language oracle, port C Hammer's list examples, and cover bit
 boundaries, rollback, callback counts, partial input, empty matches, borrowed
 identity, and cleanup of owned items, separators, and accumulators.
+
+## Value-dependent sequencing
+
+`Bind { parser, then }` corresponds to Hammer's `h_bind`. The first parser
+produces a value `A`; `then: Fn(A) -> Q` consumes it and constructs a parser `Q`.
+That parser runs at the first parser's success cursor with the same input and
+finality, and its output is the output of `Bind`. Both stages propagate errors
+and `NeedMore` unchanged. The factory runs once after first-stage success and is
+skipped on error or incompleteness.
+
+```rust
+use rusthammer::{Bind, Bits, Cursor, Parser, TakeAligned, TryMap};
+
+let payload = Bind {
+    parser: TryMap {
+        parser: Bits::new(8).unwrap(),
+        map: |length| usize::try_from(length),
+    },
+    then: |count| TakeAligned { count },
+};
+assert_eq!(payload.parse(b"\x03abc!", Cursor::start()),
+    Ok((Cursor { byte: 4, bit: 0 }, &b"abc"[..])));
+```
+
+For a given input lifetime the factory returns one concrete parser type; values
+change its configuration. Heterogeneous branches need a typed parser enum or
+another explicit representation. Input-derived validation belongs in `TryMap`;
+the checked result may be a count or an already constructed parser that `Bind`
+then executes. Neither output nor the constructed parser needs `Clone` or `Copy`.
+The combinator itself supports these traits when its stored components do.
+It allocates no storage and saves no state between calls. Retrying can rerun the
+factory, and cursor rollback does not undo callback effects.
+
+The [dependent formats](examples/support/dependent.rs) check an eight-bit count
+against a format limit of 64, then parse either borrowed aligned bytes or that
+many four-bit elements. Both parse prefixes, so callers can retain trailing input;
+zero counts finish immediately after the header, even on partial input. The byte
+format checks alignment after count validation; the element format also supports
+unaligned starts. The runnable example works without `alloc` for borrowed bytes;
+element collection requires `alloc`.
+
+Generic extraction and the separate Cargo consumer cover scalar factories,
+borrowed first outputs used to construct owned parsers, copied children inside
+constructed repetitions, and returning an existing parser by reference.
+A factory returning a *new parser containing a captured reference*, such as
+`|count| Repeat::exact(&element, count)`, hits the recorded Aeneas
+non-endable-abstraction error. Copying the child into the returned parser passes
+when that child is `Copy`. Native Rust supports both forms; no restriction was
+added to `Bind`'s Rust API. The [regression probe](probes/README.md#bind-factories-containing-borrowed-parsers)
+records this distinction; the callback investigation remains deferred.
 
 ## Empty and failing grammars
 
@@ -660,6 +713,13 @@ declarations, and runs `lake build`. The checked-in generated file is replaced
 during verification; edit the Rust source rather than that file.
 Extraction includes derived `Clone` methods and the standard library's
 `Option::clone` implementation used by repetition bounds.
+
+The library extraction also sets the private `rusthammer_verify` configuration
+to include [the dependent-format source](examples/support/dependent.rs) as a
+private module. Examples and native tests compile that same source against the
+ordinary library. These formats are absent from normal library builds and add
+no public API or Cargo feature. This gives application proofs access to the same
+generated core definitions without maintaining a second implementation.
 
 The command also extracts the same library roots at the optimized MIR stage
 available for dependency bodies and checks a
@@ -804,6 +864,19 @@ proves zero-cap and invalid-start short-circuiting, exact item counts, and the
 consumption bound for advancing attempts. Fold contracts concern retained items
 only; separator values never enter the recurrence.
 
+[BindSpec.lean](lean/RustHammer/BindSpec.lean) specifies value-dependent sequencing.
+[BindProofs.lean](lean/RustHammer/BindProofs.lean) proves both input modes, the
+complete API, and first-stage short-circuiting without assumptions about skipped
+callbacks or constructed parsers. Factory and second-parser contracts apply only
+to reachable first-stage successes. [DependentSpec.lean](lean/RustHammer/DependentSpec.lean)
+specifies the example count field by its positional binary value and format bound,
+and the bodies by slice contents or ordered numeric fields.
+[DependentProofs.lean](lean/RustHammer/DependentProofs.lean) proves the extracted
+examples against those contracts for all inputs, raw cursors, and finalities,
+including the checked cast. Success theorems establish exact payload contents
+and length, element counts, and byte/bit consumption. Native tests check borrowed
+identity and ownership cleanup, which are outside these functional specifications.
+
 These are per-invocation proofs. A future buffering/resumption implementation
 will need its own cross-chunk correctness and ownership arguments.
 
@@ -907,8 +980,8 @@ Aeneas models borrowed slices by their contents; pointer identity is checked by
 the Rust tests. The full core has not been compared against C Hammer by a
 differential test harness. The record is an example format, not a claim of
 compatibility with an existing protocol or full C Hammer coverage. Its dependent
-payload step is explicit Rust control flow; a general-purpose `Bind` combinator
-remains future work.
+payload step still uses explicit Rust control flow. New dependent examples use
+the verified `Bind` combinator.
 
 ## Next increments
 
@@ -920,9 +993,12 @@ output selection, empty/failing grammars, and checked mapping.
 Collection and folding now support both ordinary and separated repetition with
 shared count, stopping, and progress rules and proofs.
 
-1. Implement verified `Bind` and reusable length/count-dependent grammars.
-2. Expand binary primitives and match restrictions, with semantic and differential
-   checks. Settle cursor/span and bit-order semantics before their affected APIs.
+`Bind` and representative count-prefixed formats are also implemented and proved.
+Named length/count convenience wrappers remain proposals; their core composition
+is now available.
+
+Expand binary primitives and match restrictions, with semantic and differential
+checks. Settle cursor/span and bit-order semantics before their affected APIs.
 
 Keep application grammars in examples or proof fixtures as the API is organized;
 the current exported demo types are also recorded for migration in the plan.
