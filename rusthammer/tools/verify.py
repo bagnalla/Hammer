@@ -70,6 +70,8 @@ def main():
         "--start-from", "rusthammer::parse_record",
         "--start-from", "rusthammer::Bits::new",
         "--start-from", "rusthammer::Bits::width",
+        "--start-from", "rusthammer::BytePattern::new",
+        "--start-from", "rusthammer::BytePattern::pattern",
         "--start-from", "rusthammer::Literal::new",
         "--start-from", "rusthammer::Literal::width",
         "--start-from", "rusthammer::Literal::value",
@@ -131,6 +133,7 @@ def main():
         "folded_checksum", "leading_ones_count",
         "separated_blocks", "separated_checksum",
         "bound_payload", "bound_literal", "bound_blocks", "bound_reference",
+        "matched_pattern", "pattern_and_input",
     )
     entry_args = [
         arg for name in entries

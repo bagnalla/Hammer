@@ -5,9 +5,37 @@
 extern crate alloc;
 
 use rusthammer::{
-    Bind, Bit, Bits, Cursor, End, FoldRepeat, Ignore, InputStatus, Left, Literal, Middle,
-    ParseError, ParseOutcome, Parser, Right, Seq, TakeAligned, TryMap,
+    Bind, Bit, Bits, Byte, BytePattern, Cursor, End, FoldRepeat, Ignore, InputStatus, Left,
+    Literal, Middle, ParseError, ParseOutcome, Parser, Right, Seq, TakeAligned, TryMap,
 };
+
+/// Input, pattern, and parser references have independent lifetimes.
+pub fn matched_pattern<'pattern>(
+    pattern: &'pattern [u8],
+    input: &[u8],
+    cursor: Cursor,
+    status: InputStatus,
+) -> ParseOutcome<&'pattern [u8]> {
+    let parser = BytePattern::new(pattern);
+    let borrowed = &parser;
+    borrowed.parse_with(input, cursor, status)
+}
+
+/// Both borrowing sources remain distinct through typed sequencing.
+pub fn pattern_and_input<'pattern, 'input>(
+    pattern: &'pattern [u8],
+    input: &'input [u8],
+    status: InputStatus,
+) -> ParseOutcome<((&'pattern [u8], u8), &'input [u8])> {
+    Seq {
+        first: Seq {
+            first: BytePattern::new(pattern),
+            second: Byte,
+        },
+        second: TakeAligned { count: 1 },
+    }
+    .parse_with(input, Cursor::start(), status)
+}
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Flag {
@@ -204,6 +232,47 @@ pub fn leading_ones(input: &[u8], status: InputStatus) -> ParseOutcome<alloc::ve
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn pattern_output_outlives_input_and_parser() {
+        let pattern = [0xab, 0xcd];
+        let result = {
+            let input = [0x55, 0xe6, 0x80];
+            matched_pattern(
+                &pattern,
+                &input,
+                Cursor { byte: 0, bit: 1 },
+                InputStatus::Partial,
+            )
+        };
+        assert_eq!(
+            result,
+            ParseOutcome::Success(Cursor { byte: 2, bit: 1 }, &pattern[..])
+        );
+        let ParseOutcome::Success(_, matched) = result else {
+            panic!("expected match")
+        };
+        assert!(core::ptr::eq(matched, &pattern[..]));
+    }
+
+    #[test]
+    fn sequence_retains_distinct_pattern_and_input_borrows() {
+        let pattern = *b"ab";
+        let input = *b"abcd";
+        let result = pattern_and_input(&pattern, &input, InputStatus::Final);
+        assert_eq!(
+            result,
+            ParseOutcome::Success(
+                Cursor { byte: 4, bit: 0 },
+                ((&pattern[..], b'c'), &input[3..])
+            )
+        );
+        let ParseOutcome::Success(_, ((matched, _), payload)) = result else {
+            panic!("expected match")
+        };
+        assert!(core::ptr::eq(matched, &pattern[..]));
+        assert!(core::ptr::eq(payload, &input[3..]));
+    }
 
     #[test]
     fn dependent_factories_preserve_borrowing_finality_and_checked_counts() {

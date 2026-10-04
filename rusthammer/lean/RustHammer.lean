@@ -7,3 +7,4 @@ import RustHammer.CompositionProofs
 import RustHammer.FoldRepeatProofs
 import RustHammer.SepByProperties
 import RustHammer.DependentProofs
+import RustHammer.ByteProofs

@@ -1,6 +1,6 @@
 # RustHammer combinator API plan
 
-Status: target API and implementation order, with `Bind`, ordinary/separated collection and folding, parser references, and output selection verified,
+Status: target API and implementation order, with byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection verified,
 2026-10-04. Unimplemented features remain proposals. See the
 [main plan](rusthammer.md) and [prototype README](../rusthammer/README.md) for
 current implementation and proof coverage.
@@ -261,8 +261,8 @@ The combinators above also need a deliberate primitive and extension inventory:
 | --- | --- |
 | Bits, unsigned numbers, numeric literals, exact EOF | Retain `Bit`, `Bits`, `Literal`, and `End`. Fixed-width readers with narrower Rust outputs can be permanent conveniences over common decoding operations. |
 | Signed numbers | Add specified sign extension and typed readers for `h_bits(..., true)` and `h_int*`; do not approximate signed fields with an undocumented cast. |
-| Byte/token parsing | Add a `u8` reader and byte-pattern matching, including unaligned starts. `h_ch` can be a literal-reader convenience; patterns should not be restricted to the numeric literal's 64 bits. Choose pattern output and ownership before exporting its API. |
-| Byte sequences | Keep `TakeAligned` for borrowed slices. Supply `h_bytes` through exact repetition of decoded bytes with `alloc`, with a convenience operation if useful. Never silently align unaligned input. |
+| Byte/token parsing | Implemented and proved: `Byte` (`h_uint8`) returns `u8`; `BytePattern::new(&pattern)` (`h_token` / `h_literal`) borrows an arbitrary byte pattern and returns that configured slice on success. Input and pattern lifetimes are independent. Both support unaligned starts without allocation. Empty patterns succeed without cursor validation; nonempty patterns compare complete bytes in order. `h_ch` can be a later literal-reader convenience. |
+| Byte sequences | Keep `TakeAligned` for borrowed slices. `Repeat::exact(Byte, count)` now supplies `h_bytes`-style decoded `Vec<u8>` with `alloc`; a named convenience can be added if useful. Never silently align unaligned input. |
 | Skipping and position | `SkipBits` discards a specified number of bits; `Tell` reports the cursor without consuming. Preserve `h_skip` and `h_tell` capabilities, with explicit Rust position units and checked arithmetic. |
 | Recognizing matched input | A bit-span view and `Recognize`/value-with-span operations are useful additions. Settle span invariants and bit-order interaction before promising a borrowed slice for arbitrary bit matches. |
 | Floating-point fields/ranges | Preserve as a later capability; specify bit decoding, NaNs, infinities, rounding where applicable, and available Aeneas models before exporting readers or range helpers. |
@@ -306,8 +306,14 @@ helpers should represent grammar operations or output needs.
    both input modes, checked counts, factory invocation, cursor rollback, borrowed
    identity, and owned output/parser cleanup. Application proofs cover the actual
    shared example source. Named length/count helpers remain planned conveniences.
-5. **Expand binary vocabulary and restrictions.** Add byte patterns, signed
-   readers, ranges, skipping/position, and match comparisons as specified above.
+5. **Expand binary vocabulary and restrictions (in progress).** `Byte` and
+   `BytePattern` are implemented and proved, including arbitrary patterns,
+   unaligned starts, both input modes, empty patterns, and independent output
+   lifetimes. Both MIR stages and the normal Cargo consumer pass; optional
+   direct-backend C comparisons cover 10,561 complete-input cases. A private
+   matching helper avoids the documented Aeneas loop-borrow limitation.
+   Next add signed readers, ranges, skipping/position, and match comparisons
+   as specified above.
    Resolve cursor/span/order questions before implementing their affected APIs.
    Plan permutation, recursion, and the other larger capabilities separately.
 

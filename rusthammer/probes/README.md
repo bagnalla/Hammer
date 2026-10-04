@@ -263,3 +263,40 @@ formatting dependencies from the application theorems without altering parsing
 behavior or the public library. The source includes a comment explaining this
 proof-motivated spelling. It is separate from the borrowed-factory extraction
 failure above.
+
+## Pattern borrows and loops
+
+`BytePattern<'pattern>` implements `Parser<'input>` with independent lifetimes
+and returns the configured pattern slice. The supported library translates at
+promoted and optimized MIR. The normal Cargo consumer also translates and Lean
+type-checks both direct matching and sequencing with separate pattern and input
+borrows in the output. Native tests confirm pointer identity and that the output
+can outlive the input and the parser value.
+
+Putting the matching loop directly inside `parse_with`, returning the pattern
+slice afterward, failed in the pinned Aeneas with an internal error in
+`InterpMatchCtxs.ml`. Copying `self.pattern` to a local before the loop did not
+resolve it. The smaller [pattern_loop_borrow.rs](pattern_loop_borrow.rs) reproduces
+a loop-context matching failure (`Could not match the contexts`, `InterpJoin.ml`)
+at both MIR stages. These observations concern the tested loop and returned
+borrow shape; they do not establish a general limitation on independent lifetimes.
+
+The library instead uses a private `match_byte_pattern` helper returning a cursor
+and `()`. The parser attaches the configured slice after the helper succeeds.
+Both functions translate and have total Lean proofs; no tool patch, extra lifetime
+bound, allocation, or API restriction is needed. The source comment explains the
+split. Reproduce the failing shape from `rusthammer/`:
+
+```sh
+~/source/aeneas/charon/bin/charon rustc --preset=aeneas --sysroot default \
+  --mir promoted --start-from pattern_loop_borrow::match_pattern \
+  --dest-file target/pattern_loop_borrow.llbc -- \
+  --crate-type lib --edition 2021 probes/pattern_loop_borrow.rs
+~/source/aeneas/bin/aeneas -backend lean -dest target/pattern-loop-probe \
+  -abort-on-error -warnings-as-errors -no-progress-bar target/pattern_loop_borrow.llbc
+```
+
+Use `--mir optimized` to check the other stage. The second command is expected
+to fail at the pinned revisions above. This diagnostic probe stays outside
+`tools/verify.py`, which checks the supported implementation. Investigating the
+tool's loop-context matching further remains deferred.

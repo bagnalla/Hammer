@@ -16,6 +16,8 @@ The prototype supports:
   next byte without implicit alignment.
 - Unsigned numeric fields of 0 through 64 bits, producing `u64` values and
   supporting unaligned starts and byte-boundary crossing.
+- `Byte` producing `u8` and `BytePattern` matching arbitrary borrowed patterns,
+  both supporting unaligned starts without allocation.
 - Private numeric and literal configuration, validated by fallible constructors.
 - `Parser<'input>` with an associated `Output` type and explicit input finality.
 - Separate `Success`, `Error`, and `NeedMore` outcomes, with a complete-buffer convenience API.
@@ -55,6 +57,7 @@ cargo test --no-default-features
 cargo test --features alloc
 cargo run --example flags
 cargo run --example fields
+cargo run --example bytes
 cargo run --example marker
 cargo run --example record
 cargo run --example lookahead
@@ -83,8 +86,8 @@ The `fields` example sequences a 3-bit version and a 13-bit length from `[0xa1,
 before any input is supplied. The resulting parser can be reused through
 `parser.parse(input, cursor)` or `read_bits(input, cursor, &parser)`.
 A zero-width field returns zero without consuming input, including at end-of-input;
-an invalid cursor is still rejected. `Bits::new(8)` constructs a byte decoder that
-also works at unaligned positions and returns `u64`. Signed fields and configurable
+an invalid cursor is still rejected. `Byte` reads the same eight bits as
+`Bits::new(8)` and returns `u8`. Signed fields and configurable
 byte or bit order remain future work.
 
 For example, a grammar builder can propagate construction errors with `?`:
@@ -117,6 +120,64 @@ every cursor in several longer inputs, including truncation and the maximum
 `u64` value. Constructor tests cover every `u8` width and literal representability
 boundaries at all supported widths. Compile-fail doctests check that callers
 cannot directly construct or mutate the private configuration.
+
+## Bytes and byte patterns
+
+`Byte` corresponds to `h_uint8()`: it consumes eight MSB-first bits and returns
+`u8`, including from an unaligned cursor. `BytePattern::new(pattern)` corresponds
+to `h_token` / `h_literal` matching arbitrary byte sequences, including embedded
+zeros and patterns longer than 64 bits. Every slice is a valid configuration, so
+construction is infallible. Its field is private; `pattern()` exposes the slice.
+
+```rust
+use rusthammer::{Byte, BytePattern, Cursor, Parser, Seq};
+
+let pattern = [0xab, 0xcd];
+let parser = Seq { first: BytePattern::new(&pattern), second: Byte };
+let (next, (matched, value)) = parser
+    .parse(&[0x55, 0xe6, 0xa1, 0], Cursor { byte: 0, bit: 1 }).unwrap();
+assert!(core::ptr::eq(matched, &pattern[..]));
+assert_eq!(value, 0x42);
+assert_eq!(next, Cursor { byte: 3, bit: 1 });
+```
+
+The output of `BytePattern<'pattern>` is `&'pattern [u8]`: it borrows the
+configured pattern and can outlive both the input and the parser value.
+An unaligned match cannot be represented by a borrowed input byte slice.
+C Hammer copies the configured pattern; RustHammer borrows it without allocation.
+Use `TakeAligned` when the output should borrow aligned input bytes. The
+[bytes example](examples/bytes.rs) demonstrates these output lifetimes.
+With `alloc`, `Repeat::exact(Byte, count)` collects decoded bytes as `Vec<u8>`
+for `h_bytes`-style unaligned reads.
+
+An empty pattern succeeds at the original cursor without reading or validating
+it, like `Epsilon`. Nonempty patterns validate the cursor through `Byte`. Bytes
+are compared in order: `BytePattern::new(b"ab")` rejects partial `b"x"` with
+`Mismatch`, while partial `b"a"` yields `NeedMore`. Final `b"a"` yields
+`UnexpectedEnd`. An incomplete *individual byte* is read before comparison,
+so available conflicting bits can still yield `NeedMore`. The deferred
+[eager bit-prefix rejection task](../plans/rusthammer.md#deferred-eager-literal-rejection)
+also covers that case; numeric `Literal` behavior is unchanged.
+
+Lean proofs cover both modes and the complete API, all raw cursors, empty
+patterns, ordered comparison, exact consumption and bit contents, safe narrowing
+to `u8`, and loop termination. Native tests check pattern slice identity, which
+is not represented by Lean's value-based slice model. Independent pattern/input
+lifetimes also pass the separate Cargo consumer extraction check. The private
+matching helper avoids a documented [Aeneas loop-borrow limitation](probes/README.md#pattern-borrows-and-loops).
+
+The optional direct-backend differential check compares acceptance, consumption,
+and normalized outputs with C `h_uint8` and `h_token` over 10,561 cases. It includes
+all bit offsets, truncations, mismatches, empty patterns, zeros, and 256-byte
+patterns. With a C shared library built using `scons --no-tests` at the repository
+root, run from `rusthammer/`:
+
+```sh
+python3 tools/compare_bytes.py --hammer-library ../build/opt/src/libhammer.so
+```
+
+This check needs GCC and compares complete input at valid starting cursors.
+It does not assert equivalence of streaming interfaces or other C backends.
 
 ## Partial input and finality
 
@@ -770,6 +831,14 @@ positional binary notation with unbounded natural numbers. Its
 an accumulator bound, exact consumption, and the complete input-error contract
 for validated numeric parsers. Constructor proofs cover every configuration value.
 
+[ByteSpec.lean](lean/RustHammer/ByteSpec.lean) specifies byte decoding and ordered
+pattern matching over mathematical lists. Its [proofs](lean/RustHammer/ByteProofs.lean)
+establish lossless narrowing, total parsing, exact consumption and bit contents,
+termination by remaining pattern length, and exclusion of `NeedMore` on final
+input. The constructor and accessor preserve the configured slice. An axiom
+audit of the new parser theorems lists only `propext`, `Classical.choice`, and
+`Quot.sound`; physical pointer identity is covered by native tests.
+
 [ControlSpec.lean](lean/RustHammer/ControlSpec.lean) defines literal matching,
 ordered choice, optionality, lookahead, end-of-input, and the marker grammar. Its
 [proofs](lean/RustHammer/ControlProofs.lean) reuse the numeric and sequencing
@@ -899,6 +968,9 @@ complete-input operations.
 | `read_bit_success` | Every readable cursor returns the specified bit and next cursor, without a modeled execution failure. |
 | `read_bit_failure` | Every cursor without a readable bit returns the specified invalid-cursor or end-of-input error. |
 | `bit_spec` | Combines those cases into a total specification of the `Bit` parser for all inputs and raw cursors. |
+| `byte_with_spec`, `byte_spec` | Eight-bit decoding as `u8`, including lossless narrowing, invalid cursors, and exhaustion in both modes. |
+| `byte_pattern_with_spec`, `byte_pattern_final_spec`, `byte_pattern_spec` | Total ordered pattern matching, empty-pattern identity, byte-wise error precedence, and final-input exclusion of `NeedMore`. |
+| `byte_pattern_success` | Output equals the configured pattern; each byte matches eight input bits and total consumption is exactly eight times the pattern length. |
 | `seq_spec` | Sequencing preserves arbitrary supplied child specifications, including error propagation. |
 | `parser_ref_with_spec`, `parser_ref_spec` | Shared references preserve the underlying parser's contracts for both methods, including custom complete-method overrides. |
 | `left_with_spec`, `right_with_spec`, `middle_with_spec`, `ignore_with_spec` | Output selection preserves sequencing or child behavior for both input statuses and arbitrary output types. |

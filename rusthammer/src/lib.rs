@@ -326,6 +326,109 @@ pub fn read_bits(input: &[u8], cursor: Cursor, parser: &Bits) -> Result<(Cursor,
     Ok((next, value))
 }
 
+/// Read eight MSB-first bits as a `u8`, including from an unaligned cursor.
+#[derive(Clone, Copy)]
+pub struct Byte;
+
+impl<'input> Parser<'input> for Byte {
+    type Output = u8;
+
+    fn parse_with(
+        &self,
+        input: &'input [u8],
+        cursor: Cursor,
+        status: InputStatus,
+    ) -> ParseOutcome<u8> {
+        match (Bits { width: 8 }).parse_with(input, cursor, status) {
+            // An eight-bit field is always representable as a byte.
+            ParseOutcome::Success(next, value) => ParseOutcome::Success(next, value as u8),
+            ParseOutcome::Error(error) => ParseOutcome::Error(error),
+            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+        }
+    }
+}
+
+/// Match a borrowed byte pattern, including from an unaligned bit cursor.
+///
+/// Success returns the configured pattern slice, whose lifetime is independent
+/// of the input and of the parser value. This requires no allocation even when
+/// the matched bits cross byte boundaries. Use `TakeAligned` to borrow input.
+/// An empty pattern succeeds without reading input or validating the cursor.
+///
+/// Bytes are compared in order: a complete differing byte rejects immediately.
+/// A missing or incomplete byte returns `NeedMore` on partial input and
+/// `UnexpectedEnd` on final input, even if its available bits already differ.
+///
+/// ```
+/// use rusthammer::{BytePattern, Cursor, Parser};
+/// let pattern = [0xab, 0xcd];
+/// let matched = {
+///     let input = [0x55, 0xe6, 0x80];
+///     BytePattern::new(&pattern).parse(&input, Cursor { byte: 0, bit: 1 }).unwrap().1
+/// };
+/// assert!(core::ptr::eq(matched, &pattern[..]));
+/// ```
+#[derive(Clone, Copy)]
+pub struct BytePattern<'pattern> {
+    pattern: &'pattern [u8],
+}
+
+impl<'pattern> BytePattern<'pattern> {
+    /// Every slice is a valid pattern, including empty slices and embedded zeros.
+    pub const fn new(pattern: &'pattern [u8]) -> Self {
+        Self { pattern }
+    }
+
+    /// Return the configured pattern, which is also the successful parse output.
+    pub const fn pattern(&self) -> &'pattern [u8] {
+        self.pattern
+    }
+}
+
+impl<'input, 'pattern> Parser<'input> for BytePattern<'pattern> {
+    type Output = &'pattern [u8];
+
+    fn parse_with(
+        &self,
+        input: &'input [u8],
+        cursor: Cursor,
+        status: InputStatus,
+    ) -> ParseOutcome<Self::Output> {
+        // Keep the returned pattern borrow outside the matching loop. The pinned
+        // Aeneas cannot join the loop's borrow contexts when it returns the slice.
+        // See probes/pattern_loop_borrow.rs and the accompanying probe notes.
+        match match_byte_pattern(self.pattern, input, cursor, status) {
+            ParseOutcome::Success(next, ()) => ParseOutcome::Success(next, self.pattern),
+            ParseOutcome::Error(error) => ParseOutcome::Error(error),
+            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+        }
+    }
+}
+
+fn match_byte_pattern(
+    pattern: &[u8],
+    input: &[u8],
+    cursor: Cursor,
+    status: InputStatus,
+) -> ParseOutcome<()> {
+    let mut next = cursor;
+    let mut index = 0;
+    while index < pattern.len() {
+        match Byte.parse_with(input, next, status) {
+            ParseOutcome::Success(after, value) => {
+                if value != pattern[index] {
+                    return ParseOutcome::Error(ParseError::Mismatch);
+                }
+                next = after;
+                index += 1;
+            }
+            ParseOutcome::Error(error) => return ParseOutcome::Error(error),
+            ParseOutcome::NeedMore => return ParseOutcome::NeedMore,
+        }
+    }
+    ParseOutcome::Success(next, ())
+}
+
 /// Match an MSB-first numeric field against an expected value.
 ///
 /// Construction checks that width is at most 64 and value fits that width.

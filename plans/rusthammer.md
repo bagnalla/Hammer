@@ -1,6 +1,6 @@
 # RustHammer design and verification plan
 
-Status: verified prototype with `Bind`, ordinary/separated collection and folding, parser references, and output selection, 2026-10-04.
+Status: verified prototype with byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection, 2026-10-04.
 
 RustHammer will be a Rust rewrite of Hammer whose parsers can be translated
 through Charon and Aeneas and proved correct in Lean. It should preserve Hammer's
@@ -42,6 +42,31 @@ provides unaligned byte decoding as a numeric value. Native tests include
 exhaustive two-byte inputs for 8-bit fields
 at every bit offset and an independent binary-string oracle for all supported
 widths on representative longer inputs.
+
+`Byte` now reads eight bits as `u8`, with a proof that narrowing the numeric
+result is lossless. `BytePattern::new(pattern)` matches arbitrary borrowed byte
+sequences at aligned or unaligned positions and returns the configured pattern
+slice. Input, pattern, and parser-reference lifetimes are independent. Every
+slice is valid, so construction is infallible; the field is private with a
+read-only accessor. Empty patterns succeed without cursor validation. Nonempty
+patterns compare each fully decoded byte immediately and classify incomplete
+bytes according to finality. Neither primitive needs allocation.
+
+The byte-pattern loop terminates by the remaining pattern length. Total Lean
+contracts cover all cursors and both statuses, error precedence, exact bit
+consumption and contents, and the complete API. Rust tests check pointer identity
+and output lifetimes, which the Lean slice model erases. Library extraction at
+both MIR stages and the ordinary Cargo consumer pass. Returning the pattern
+borrow through the loop itself exposed an Aeneas loop-context limitation; a
+private matching helper returning unit keeps the returned borrow outside the
+loop. The [probe notes](../rusthammer/probes/README.md#pattern-borrows-and-loops)
+record the failing shape and supported implementation.
+
+An optional [C/Rust differential check](../rusthammer/tools/compare_bytes.py)
+passes 10,561 complete-input cases against direct-backend `h_uint8` and `h_token`,
+normalizing ownership and typed output differences. It covers every bit offset,
+truncation, mismatches, empty patterns, embedded zeros, and 256-byte patterns.
+This is focused compatibility evidence, not an audit of all C backends.
 
 Numeric `Literal`, ordered `Choice<P, Q>`, and exact `End` checks now have Lean
 contracts and proofs. Choice requires matching child output types, retries input
@@ -228,8 +253,9 @@ returning borrowed values are unsupported.
 
 The initial combinator inventory and proposed contracts are in the companion API
 plan. Empty/failing parsers, checked mapping, folding, separated lists, and `Bind`
-are implemented and proved, including representative dependent grammars. Next
-expand binary primitives and restrictions, with further semantic/differential checks. CI integration
+are implemented and proved, including representative dependent grammars. `Byte`
+and `BytePattern` now expand the binary primitives. Next implement signed readers
+and restrictions from the API plan, with further semantic/differential checks. CI integration
 and the recorded Aeneas callback investigation are deferred. Signed decoding and
 configurable byte and bit order remain unimplemented.
 
@@ -586,7 +612,8 @@ and Lean type-checking of default trait methods and borrowed three-outcome value
 Streaming machinery remains a later capability. Specify buffering, resumption,
 consistency across growing buffers, and output lifetime/ownership across chunks.
 Retries currently reparse prefixes and can rerun callbacks; speculative effects
-are not rolled back. Borrowed outputs refer to the input of their invocation.
+are not rolled back. Input-borrowing outputs refer to the input of their invocation;
+`BytePattern` outputs instead borrow its configured pattern.
 
 Seeking needs explicit bounds, position units, and interaction with backtracking,
 memoization, spans, and termination. It should not silently inherit the invariants
@@ -598,8 +625,8 @@ Deferred by agreement on 2026-10-04. Revisit before implementing streaming
 buffering and resumption; repetition work can proceed first.
 
 `Literal` currently reads its entire numeric field before comparing. For example,
-the literal `"ab"` given partial input `"x"` returns `NeedMore` even though the
-available prefix already conflicts. This is conservative and permitted by the
+`Literal::new(16, 0x6162)` (the bits of `"ab"`) given partial input `"x"` returns
+`NeedMore` even though the available prefix already conflicts. This is conservative and permitted by the
 current contract, but delays rejection and selection of later `Choice` branches.
 
 The follow-up is to compare available bits with the expected literal prefix and
@@ -613,6 +640,12 @@ Update the literal specification, Lean proofs, affected application proofs, and
 tests together. Cover matching and conflicting truncated prefixes, unaligned
 fields, and interactions with choice and lookahead. The parser interface and
 generic combinators need no redesign.
+
+`BytePattern` already compares each complete decoded byte, so `b"ab"` against
+partial `b"x"` returns `Mismatch`. Its incomplete final byte remains conservative:
+at an unaligned position, conflicting available bits still yield `NeedMore` until
+that byte is complete. Include this case in the future eager bit-prefix work;
+adding byte patterns did not change numeric `Literal` semantics.
 
 ## Verification approach
 
