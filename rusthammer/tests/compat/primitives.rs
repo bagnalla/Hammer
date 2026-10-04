@@ -4,8 +4,8 @@
 mod rusthammer;
 
 use rusthammer::{
-    BeI16, BeI32, BeI64, BeU16, BeU32, BeU64, Byte, BytePattern, Cursor, ParseError, Parser,
-    SignedBits, I8,
+    BeI16, BeI32, BeI64, BeU16, BeU32, BeU64, Byte, BytePattern, Cursor, IntRange, ParseError,
+    Parser, SignedBits, I8,
 };
 use std::io::{self, BufRead};
 
@@ -48,6 +48,33 @@ fn main() {
                 &input,
                 cursor,
             )
+        } else if fields[0].starts_with("range_") {
+            let setting: Vec<_> = fields[2].split(':').collect();
+            macro_rules! range {
+                ($parser:expr, $ty:ty) => {
+                    widened(
+                        IntRange::new(
+                            $parser,
+                            setting[1].parse::<$ty>().unwrap(),
+                            setting[2].parse::<$ty>().unwrap(),
+                        )
+                        .unwrap(),
+                        &input,
+                        cursor,
+                    )
+                };
+            }
+            match (fields[0], setting[0]) {
+                ("range_ch" | "range_uint", "8") => range!(Byte, u8),
+                ("range_int", "8") => range!(I8, i8),
+                ("range_uint", "16") => range!(BeU16, u16),
+                ("range_int", "16") => range!(BeI16, i16),
+                ("range_uint", "32") => range!(BeU32, u32),
+                ("range_int", "32") => range!(BeI32, i32),
+                ("range_uint", "64") => range!(BeU64, u64),
+                ("range_int", "64") => range!(BeI64, i64),
+                _ => panic!("unsupported range reader"),
+            }
         } else if fields[0] == "uint" || fields[0] == "int" {
             match (fields[0], fields[2]) {
                 ("uint", "8") => widened(Byte, &input, cursor),

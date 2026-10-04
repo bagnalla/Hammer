@@ -19,6 +19,10 @@ byte. Native tests include the full `i64` extremes and both input statuses.
 Fixed-width entries sequence native unsigned/signed 16-, 32-, and 64-bit outputs,
 include a shared parser reference, and call the default complete method for `I8`.
 They cover all seven new reader implementations as ordinary dependency bodies.
+Range entries check dynamic unsigned bounds through `u64::MAX`, signed and byte
+range sequencing through a child reference, the complete API, and an owned integer
+newtype with derived ordering and neither `Copy` nor `Clone`. Configuration errors
+remain separate from parsing outcomes.
 
 Run `python3 tools/verify.py` from `rusthammer/`. Alongside the library tests and
 proofs, that command:
@@ -27,7 +31,7 @@ proofs, that command:
    the compiler stage available for dependencies, and Lean type-checks it.
 2. Tests this consumer with allocation disabled and enabled.
 3. Extracts the consumer with RustHammer's dependency bodies included and `alloc`
-   enabled, checks that all twenty-one entry points were translated, and Lean
+   enabled, checks that all twenty-five entry points were translated, and Lean
    type-checks the result.
 4. Rejects admitted or opaque project declarations in both extra translations.
 

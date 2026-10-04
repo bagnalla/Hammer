@@ -69,7 +69,7 @@ pub enum ConfigError {
     InvalidWidth,
     /// The expected literal value cannot be represented in its field width.
     InvalidLiteral,
-    /// A repetition minimum exceeds its maximum.
+    /// A lower range bound or repetition minimum exceeds its upper bound or maximum.
     InvalidBounds,
 }
 
@@ -1742,6 +1742,94 @@ where
                 }
             }
         }
+    }
+}
+
+/// Keep a parsed integer only when it lies between inclusive, typed bounds.
+///
+/// Bounds have the child's output type and use its `Ord` implementation, so
+/// integer newtypes also work. The child and bounds need not be `Copy` or `Clone`;
+/// the range implements those traits when its stored fields do. Floating-point
+/// types lack `Ord`; use `Verify` with an explicit predicate for those instead.
+///
+/// Construction rejects reversed bounds with `ConfigError::InvalidBounds`.
+/// Parsing delegates to `Verify`: acceptance preserves the child's value and
+/// cursor, rejection returns recoverable `Mismatch`, and child errors and
+/// `NeedMore` propagate unchanged. No input is read during construction.
+///
+/// ```
+/// use rusthammer::{BeU16, Byte, Cursor, IntRange, Parser};
+/// let length = IntRange::new(BeU16, 1u16, 4096u16).unwrap();
+/// assert_eq!(length.parse(&[0x01, 0x00], Cursor::start()),
+///     Ok((Cursor { byte: 2, bit: 0 }, 256u16)));
+/// let digit = IntRange::new(Byte, b'0', b'9').unwrap();
+/// assert_eq!(digit.parse(b"7", Cursor::start()),
+///     Ok((Cursor { byte: 1, bit: 0 }, b'7')));
+/// ```
+///
+/// ```compile_fail,E0451
+/// use rusthammer::{Byte, IntRange};
+/// let invalid = IntRange { parser: Byte, lower: 9u8, upper: 0u8 };
+/// ```
+///
+/// ```compile_fail,E0308
+/// use rusthammer::{BeU16, IntRange};
+/// let wrong_type = IntRange::new(BeU16, 0i16, 100i16);
+/// ```
+#[derive(Clone, Copy)]
+pub struct IntRange<P, T> {
+    parser: P,
+    lower: T,
+    upper: T,
+}
+
+impl<P, T> IntRange<P, T> {
+    /// Construct an inclusive range, rejecting `lower > upper` before parsing.
+    pub fn new<'input>(parser: P, lower: T, upper: T) -> Result<Self, ConfigError>
+    where
+        P: Parser<'input, Output = T>,
+        T: Ord,
+    {
+        if lower > upper {
+            Err(ConfigError::InvalidBounds)
+        } else {
+            Ok(Self {
+                parser,
+                lower,
+                upper,
+            })
+        }
+    }
+
+    /// Borrow the inclusive lower bound.
+    pub const fn lower(&self) -> &T {
+        &self.lower
+    }
+
+    /// Borrow the inclusive upper bound.
+    pub const fn upper(&self) -> &T {
+        &self.upper
+    }
+}
+
+impl<'input, P, T> Parser<'input> for IntRange<P, T>
+where
+    P: Parser<'input, Output = T>,
+    T: Ord,
+{
+    type Output = T;
+
+    fn parse_with(
+        &self,
+        input: &'input [u8],
+        cursor: Cursor,
+        status: InputStatus,
+    ) -> ParseOutcome<T> {
+        Verify {
+            parser: &self.parser,
+            predicate: |value: &T| self.lower <= *value && *value <= self.upper,
+        }
+        .parse_with(input, cursor, status)
     }
 }
 

@@ -6,9 +6,62 @@ extern crate alloc;
 
 use rusthammer::{
     BeI16, BeI32, BeI64, BeU16, BeU32, BeU64, Bind, Bit, Bits, Byte, BytePattern, ConfigError,
-    Cursor, End, FoldRepeat, Ignore, InputStatus, Left, Literal, Middle, ParseError, ParseOutcome,
-    Parser, Right, Seq, SignedBits, TakeAligned, TryMap, I8,
+    Cursor, End, FoldRepeat, Ignore, InputStatus, IntRange, Left, Literal, Map, Middle, ParseError,
+    ParseOutcome, Parser, Right, Seq, SignedBits, TakeAligned, TryMap, I8,
 };
+
+pub fn ranged_u64(
+    input: &[u8],
+    lower: u64,
+    upper: u64,
+    status: InputStatus,
+) -> Result<ParseOutcome<u64>, ConfigError> {
+    let range = IntRange::new(BeU64, lower, upper)?;
+    Ok(range.parse_with(input, Cursor::start(), status))
+}
+
+/// A borrowed child, typed signed bounds, and a byte range compose as usual.
+pub fn ranged_pair(
+    input: &[u8],
+    lower: i16,
+    upper: i16,
+    status: InputStatus,
+) -> Result<ParseOutcome<(i16, u8)>, ConfigError> {
+    let signed = BeI16;
+    let parser = Seq {
+        first: IntRange::new(&signed, lower, upper)?,
+        second: IntRange::new(Byte, b'0', b'9')?,
+    };
+    Ok(parser.parse_with(input, Cursor::start(), status))
+}
+
+/// An integer newtype deliberately implementing neither Copy nor Clone.
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Count {
+    pub value: u16,
+}
+
+pub fn ranged_count(
+    input: &[u8],
+    lower: u16,
+    upper: u16,
+    status: InputStatus,
+) -> Result<ParseOutcome<Count>, ConfigError> {
+    let child = Map {
+        parser: BeU16,
+        map: |value| Count { value },
+    };
+    let range = IntRange::new(child, Count { value: lower }, Count { value: upper })?;
+    Ok(range.parse_with(input, Cursor::start(), status))
+}
+
+pub fn complete_range(
+    input: &[u8],
+    cursor: Cursor,
+    range: &IntRange<BeU16, u16>,
+) -> Result<(Cursor, u16), ParseError> {
+    range.parse(input, cursor)
+}
 
 /// The fixed-width output types survive sequencing and a shared parser reference.
 pub fn integers16(input: &[u8], cursor: Cursor, status: InputStatus) -> ParseOutcome<(u16, i16)> {
@@ -289,6 +342,61 @@ pub fn leading_ones(input: &[u8], status: InputStatus) -> ParseOutcome<alloc::ve
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn typed_ranges_keep_bounds_finality_and_rejection_across_crates() {
+        assert_eq!(
+            ranged_u64(&[], 2, 1, InputStatus::Partial),
+            Err(ConfigError::InvalidBounds)
+        );
+        assert_eq!(
+            ranged_u64(&[0xff; 8], 1 << 63, u64::MAX, InputStatus::Partial),
+            Ok(ParseOutcome::Success(Cursor { byte: 8, bit: 0 }, u64::MAX))
+        );
+        assert_eq!(
+            ranged_u64(&[0xff; 7], 0, 100, InputStatus::Partial),
+            Ok(ParseOutcome::NeedMore)
+        );
+        assert_eq!(
+            ranged_u64(&[0xff; 7], 0, 100, InputStatus::Final),
+            Ok(ParseOutcome::Error(ParseError::UnexpectedEnd))
+        );
+        assert_eq!(
+            ranged_pair(&[0xff, 0xfd, b'7'], -100, 100, InputStatus::Partial),
+            Ok(ParseOutcome::Success(
+                Cursor { byte: 3, bit: 0 },
+                (-3, b'7')
+            ))
+        );
+        assert_eq!(
+            ranged_pair(&[0xff, 0xfd, b'x'], -100, 100, InputStatus::Final),
+            Ok(ParseOutcome::Error(ParseError::Mismatch))
+        );
+        let range = IntRange::new(BeU16, 1, 4096).unwrap();
+        assert_eq!(
+            complete_range(&[0x01, 0], Cursor::start(), &range),
+            Ok((Cursor { byte: 2, bit: 0 }, 256))
+        );
+    }
+
+    #[test]
+    fn ordered_newtype_bounds_and_outputs_need_no_copy_or_clone() {
+        assert_eq!(
+            ranged_count(&[0x01, 0], 1, 4096, InputStatus::Partial),
+            Ok(ParseOutcome::Success(
+                Cursor { byte: 2, bit: 0 },
+                Count { value: 256 }
+            ))
+        );
+        assert_eq!(
+            ranged_count(&[0x01, 0], 1, 100, InputStatus::Final),
+            Ok(ParseOutcome::Error(ParseError::Mismatch))
+        );
+        assert_eq!(
+            ranged_count(&[], 2, 1, InputStatus::Final),
+            Err(ConfigError::InvalidBounds)
+        );
+    }
 
     #[test]
     fn fixed_width_types_sequence_across_the_crate_boundary() {

@@ -206,7 +206,8 @@ Build these permanent conveniences from the core, rather than separate engines:
 | Length-counted elements | Decode and check a count, then `Repeat::exact(element, count)`. This is Hammer's `h_length_value`; prefer the unambiguous name `LengthCount`. |
 | Length-prefixed aligned bytes | Decode and check a byte length, then construct `TakeAligned`. Preserve the length in the typed output if the application needs it. |
 | Discriminator-based parsing | Decode a tag and select a typed parser branch. This supplies the capability of `h_dispatch`, including an explicit default/rejection branch; retain tag and payload when needed. |
-| Numeric ranges and byte sets | `Verify` over numeric or byte readers implements `h_int_range`, `h_ch_range`, `h_in`, and `h_not_in`. Validated range helpers may share that implementation. |
+| Numeric ranges | Implemented and proved: `IntRange::new(parser, lower, upper)` returns `Result<IntRange<P, T>, ConfigError>` and delegates to `Verify`. Inclusive bounds have the output type; private fields and a fallible constructor reject reversed bounds with `InvalidBounds`. Immutable accessors borrow both endpoints. Corresponds to `h_int_range`, and to `h_ch_range` when the child is `Byte`. |
+| Byte sets | Planned: `Verify` over `Byte` implements membership (`h_in`) and exclusion (`h_not_in`). |
 | Leading whitespace | Skip repeated ASCII whitespace, then return the following parser's output, corresponding to `h_whitespace`. Specify the ASCII set explicitly instead of importing locale-dependent `isspace` behavior. |
 
 `TryMap` is useful when decoding counts: overflow during conversion to `usize`,
@@ -317,10 +318,16 @@ helpers should represent grammar operations or output needs.
    Cargo consumer; 27,724 signed-field C comparisons cover boundaries, truncation,
    and every bit offset. Fixed-width typed integer readers are also implemented
    and proved, with zero-sized configuration-free values, native output types,
-   and lossless conversions. Both MIR stages and all 21 consumer entry points
-   pass; 134,896 additional C comparisons exercise the named integer primitives.
-   Next add numeric ranges and byte sets via `Verify`, then skipping/position and
-   match comparisons as specified above.
+   and lossless conversions. Both MIR stages and the Cargo consumer pass;
+   134,896 additional C comparisons exercise the named integer primitives.
+   `IntRange` now adds inclusive typed restrictions by delegating to `Verify`,
+   with constructor, ordering, native-reader, and generic compositional proofs.
+   Bounds use `Ord`; integer newtypes need neither `Copy` nor `Clone`. Both MIR
+   stages and all 25 consumer entry points pass, and 138,240 additional C cases
+   cover `h_int_range` and `h_ch_range` at every bit offset, including truncation
+   and endpoint/extreme values. Native tests separately verify construction-time
+   rejection of reversed bounds. Next add byte sets via `Verify`, then
+   skipping/position and match comparisons as specified above.
    Resolve cursor/span/order questions before implementing their affected APIs.
    Plan permutation, recursion, and the other larger capabilities separately.
 

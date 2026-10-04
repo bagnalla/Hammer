@@ -455,7 +455,7 @@ impl_def dependent_examples.CountPrefix.Insts.RusthammerParserInputUsize :
 }
 
 /-- [rusthammer::take_aligned]:
-    Source: 'src/lib.rs', lines 1932:0-1951:1
+    Source: 'src/lib.rs', lines 2020:0-2039:1
     Visibility: public -/
 def take_aligned
   (input : Slice Std.U8) (cursor : Cursor) (count : Std.Usize) :
@@ -505,13 +505,13 @@ def take_aligned
             ok (core.result.Result.Ok ({ byte := «end», bit := 0#u8 }, s))
 
 /-- [rusthammer::TakeAligned]
-    Source: 'src/lib.rs', lines 1887:0-1889:1
+    Source: 'src/lib.rs', lines 1975:0-1977:1
     Visibility: public -/
 structure TakeAligned where
   count : Std.Usize
 
 /-- [rusthammer::{impl rusthammer::Parser<'input, &'input [u8]> for rusthammer::TakeAligned}::parse_with]:
-    Source: 'src/lib.rs', lines 1894:4-1901:5
+    Source: 'src/lib.rs', lines 1982:4-1989:5
     Visibility: public -/
 def TakeAligned.Insts.RusthammerParserInputSharedInputSliceU8.parse_with
   (self : TakeAligned) (input : Slice Std.U8) (cursor : Cursor)
@@ -522,7 +522,7 @@ def TakeAligned.Insts.RusthammerParserInputSharedInputSliceU8.parse_with
   InputStatus.classify status r
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Parser<'input, &'input [u8]> for rusthammer::TakeAligned}]
-    Source: 'src/lib.rs', lines 1891:0-1902:1 -/
+    Source: 'src/lib.rs', lines 1979:0-1990:1 -/
 @[reducible]
 impl_def TakeAligned.Insts.RusthammerParserInputSharedInputSliceU8 : Parser
   TakeAligned (Slice Std.U8) := {
@@ -2968,15 +2968,191 @@ impl_def Verify.Insts.RusthammerParser {P : Type} {F : Type} {Clause0_Output :
     coreopsfunctionFnFTupleSharedInputClause0_OutputBoolInst)
 }
 
+/-- [rusthammer::IntRange]
+    Source: 'src/lib.rs', lines 1780:0-1784:1
+    Visibility: public -/
+structure IntRange (P : Type) (T : Type) where
+  parser : P
+  lower : T
+  upper : T
+
+/-- [rusthammer::{impl core::clone::Clone for rusthammer::IntRange<P, T>}::clone]:
+    Source: 'src/lib.rs', lines 1779:9-1779:14
+    Visibility: public -/
+def IntRange.Insts.CoreCloneClone.clone
+  {P : Type} {T : Type} (corecloneCloneInst : core.clone.Clone P)
+  (corecloneCloneInst1 : core.clone.Clone T) (self : IntRange P T) :
+  Result (IntRange P T)
+  := do
+  let t ← corecloneCloneInst.clone self.parser
+  let t1 ← corecloneCloneInst1.clone self.lower
+  let t2 ← corecloneCloneInst1.clone self.upper
+  ok { parser := t, lower := t1, upper := t2 }
+
+/-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::IntRange<P, T>}]
+    Source: 'src/lib.rs', lines 1779:9-1779:14 -/
+@[reducible]
+def IntRange.Insts.CoreCloneClone {P : Type} {T : Type} (corecloneCloneInst :
+  core.clone.Clone P) (corecloneCloneInst1 : core.clone.Clone T) :
+  core.clone.Clone (IntRange P T) := {
+  clone := IntRange.Insts.CoreCloneClone.clone corecloneCloneInst
+    corecloneCloneInst1
+}
+
+/-- [rusthammer::{rusthammer::IntRange<P, T>}::new]:
+    Source: 'src/lib.rs', lines 1788:4-1802:5
+    Visibility: public -/
+def IntRange.new
+  {P : Type} {T : Type} (ParserInst : Parser P T) (corecmpOrdInst :
+  core.cmp.Ord T) (parser : P) (lower : T) (upper : T) :
+  Result (core.result.Result (IntRange P T) ConfigError)
+  := do
+  let b ← corecmpOrdInst.partialOrdInst.gt lower upper
+  if b
+  then ok (core.result.Result.Err ConfigError.InvalidBounds)
+  else ok (core.result.Result.Ok { parser, lower, upper })
+
+/-- [rusthammer::{rusthammer::IntRange<P, T>}::lower]:
+    Source: 'src/lib.rs', lines 1805:4-1807:5
+    Visibility: public -/
+def IntRange.impl.lower
+  {P : Type} {T : Type} (self : IntRange P T) : Result T := do
+  ok self.lower
+
+/-- [rusthammer::{rusthammer::IntRange<P, T>}::upper]:
+    Source: 'src/lib.rs', lines 1810:4-1812:5
+    Visibility: public -/
+def IntRange.impl.upper
+  {P : Type} {T : Type} (self : IntRange P T) : Result T := do
+  ok self.upper
+
+/-- [rusthammer::{impl rusthammer::Parser<'input, T> for rusthammer::IntRange<P, T>}::parse_with::{closure}]
+    Source: 'src/lib.rs', lines 1830:23-1830:79 -/
+@[reducible]
+def ParserInputIntRangeT.parse_with.closure (P : Type) (T : Type) :=
+  IntRange P T
+
+/-- [rusthammer::{impl rusthammer::Parser<'input, T> for rusthammer::IntRange<P, T>}::parse_with::{impl core::ops::function::Fn<(&'_2 T,), bool> for rusthammer::{impl rusthammer::Parser<'input, T> for rusthammer::IntRange<P, T>}::parse_with::{closure}<'input, '_1, P, T>}::call]:
+    Source: 'src/lib.rs', lines 1830:23-1830:79 -/
+def
+  ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1TBool.call
+  {P : Type} {T : Type} (ParserInst : Parser P T) (corecmpOrdInst :
+  core.cmp.Ord T) (c : ParserInputIntRangeT.parse_with.closure P T)
+  (tupled_args : T) :
+  Result Bool
+  := do
+  let b ← corecmpOrdInst.partialOrdInst.le c.lower tupled_args
+  if b
+  then corecmpOrdInst.partialOrdInst.le tupled_args c.upper
+  else ok false
+
+/-- [rusthammer::{impl rusthammer::Parser<'input, T> for rusthammer::IntRange<P, T>}::parse_with::{impl core::ops::function::FnMut<(&'_2 T,), bool> for rusthammer::{impl rusthammer::Parser<'input, T> for rusthammer::IntRange<P, T>}::parse_with::{closure}<'input, '_1, P, T>}::call_mut]:
+    Source: 'src/lib.rs', lines 1830:23-1830:79 -/
+def
+  ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnMutTupleShared1TBool.call_mut
+  {P : Type} {T : Type} (ParserInst : Parser P T) (corecmpOrdInst :
+  core.cmp.Ord T) (state : ParserInputIntRangeT.parse_with.closure P T)
+  (args : T) :
+  Result (Bool × (ParserInputIntRangeT.parse_with.closure P T))
+  := do
+  let b ←
+    ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1TBool.call
+      ParserInst corecmpOrdInst state args
+  ok (b, state)
+
+/-- [rusthammer::{impl rusthammer::Parser<'input, T> for rusthammer::IntRange<P, T>}::parse_with::{impl core::ops::function::FnOnce<(&'_2 T,), bool> for rusthammer::{impl rusthammer::Parser<'input, T> for rusthammer::IntRange<P, T>}::parse_with::{closure}<'input, '_1, P, T>}::call_once]:
+    Source: 'src/lib.rs', lines 1830:23-1830:79 -/
+def
+  ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnOnceTupleShared1TBool.call_once
+  {P : Type} {T : Type} (ParserInst : Parser P T) (corecmpOrdInst :
+  core.cmp.Ord T) (c : ParserInputIntRangeT.parse_with.closure P T) (t : T) :
+  Result Bool
+  := do
+  let (b, _) ←
+    ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnMutTupleShared1TBool.call_mut
+      ParserInst corecmpOrdInst c t
+  ok b
+
+/-- Trait implementation: [rusthammer::{impl rusthammer::Parser<'input, T> for rusthammer::IntRange<P, T>}::parse_with::{impl core::ops::function::FnOnce<(&'_2 T,), bool> for rusthammer::{impl rusthammer::Parser<'input, T> for rusthammer::IntRange<P, T>}::parse_with::{closure}<'input, '_1, P, T>}]
+    Source: 'src/lib.rs', lines 1830:23-1830:79 -/
+@[reducible]
+def
+  ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnOnceTupleShared1TBool
+  {P : Type} {T : Type} (ParserInst : Parser P T) (corecmpOrdInst :
+  core.cmp.Ord T) : core.ops.function.FnOnce
+  (ParserInputIntRangeT.parse_with.closure P T) T Bool := {
+  call_once :=
+    ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnOnceTupleShared1TBool.call_once
+    ParserInst corecmpOrdInst
+}
+
+/-- Trait implementation: [rusthammer::{impl rusthammer::Parser<'input, T> for rusthammer::IntRange<P, T>}::parse_with::{impl core::ops::function::FnMut<(&'_2 T,), bool> for rusthammer::{impl rusthammer::Parser<'input, T> for rusthammer::IntRange<P, T>}::parse_with::{closure}<'input, '_1, P, T>}]
+    Source: 'src/lib.rs', lines 1830:23-1830:79 -/
+@[reducible]
+def
+  ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnMutTupleShared1TBool
+  {P : Type} {T : Type} (ParserInst : Parser P T) (corecmpOrdInst :
+  core.cmp.Ord T) : core.ops.function.FnMut
+  (ParserInputIntRangeT.parse_with.closure P T) T Bool := {
+  FnOnceInst :=
+    ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnOnceTupleShared1TBool
+    ParserInst corecmpOrdInst
+  call_mut :=
+    ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnMutTupleShared1TBool.call_mut
+    ParserInst corecmpOrdInst
+}
+
+/-- Trait implementation: [rusthammer::{impl rusthammer::Parser<'input, T> for rusthammer::IntRange<P, T>}::parse_with::{impl core::ops::function::Fn<(&'_2 T,), bool> for rusthammer::{impl rusthammer::Parser<'input, T> for rusthammer::IntRange<P, T>}::parse_with::{closure}<'input, '_1, P, T>}]
+    Source: 'src/lib.rs', lines 1830:23-1830:79 -/
+@[reducible]
+def
+  ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1TBool
+  {P : Type} {T : Type} (ParserInst : Parser P T) (corecmpOrdInst :
+  core.cmp.Ord T) : core.ops.function.Fn
+  (ParserInputIntRangeT.parse_with.closure P T) T Bool := {
+  FnMutInst :=
+    ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnMutTupleShared1TBool
+    ParserInst corecmpOrdInst
+  call :=
+    ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1TBool.call
+    ParserInst corecmpOrdInst
+}
+
+/-- [rusthammer::{impl rusthammer::Parser<'input, T> for rusthammer::IntRange<P, T>}::parse_with]:
+    Source: 'src/lib.rs', lines 1822:4-1833:5
+    Visibility: public -/
+def IntRange.Insts.RusthammerParser.parse_with
+  {P : Type} {T : Type} (ParserInst : Parser P T) (corecmpOrdInst :
+  core.cmp.Ord T) (self : IntRange P T) (input : Slice Std.U8)
+  (cursor : Cursor) (status : InputStatus) :
+  Result (ParseOutcome T)
+  := do
+  Verify.Insts.RusthammerParser.parse_with (Shared0P.Insts.RusthammerParser
+    ParserInst)
+    (ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1TBool
+    ParserInst corecmpOrdInst) { parser := self.parser, predicate := self }
+    input cursor status
+
+/-- Trait implementation: [rusthammer::{impl rusthammer::Parser<'input, T> for rusthammer::IntRange<P, T>}]
+    Source: 'src/lib.rs', lines 1815:0-1834:1 -/
+@[reducible]
+impl_def IntRange.Insts.RusthammerParser {P : Type} {T : Type} (ParserInst :
+  Parser P T) (corecmpOrdInst : core.cmp.Ord T) : Parser (IntRange P T) T := {
+  parse_with := IntRange.Insts.RusthammerParser.parse_with ParserInst
+    corecmpOrdInst
+  parse := Parser.parse.default (IntRange.Insts.RusthammerParser ParserInst
+    corecmpOrdInst)
+}
+
 /-- [rusthammer::Choice]
-    Source: 'src/lib.rs', lines 1756:0-1759:1
+    Source: 'src/lib.rs', lines 1844:0-1847:1
     Visibility: public -/
 structure Choice (P : Type) (Q : Type) where
   first : P
   second : Q
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Choice<P, Q>}::clone]:
-    Source: 'src/lib.rs', lines 1755:9-1755:14
+    Source: 'src/lib.rs', lines 1843:9-1843:14
     Visibility: public -/
 def Choice.Insts.CoreCloneClone.clone
   {P : Type} {Q : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -2988,7 +3164,7 @@ def Choice.Insts.CoreCloneClone.clone
   ok { first := t, second := t1 }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Choice<P, Q>}]
-    Source: 'src/lib.rs', lines 1755:9-1755:14 -/
+    Source: 'src/lib.rs', lines 1843:9-1843:14 -/
 @[reducible]
 def Choice.Insts.CoreCloneClone {P : Type} {Q : Type} (corecloneCloneInst :
   core.clone.Clone P) (corecloneCloneInst1 : core.clone.Clone Q) :
@@ -2998,7 +3174,7 @@ def Choice.Insts.CoreCloneClone {P : Type} {Q : Type} (corecloneCloneInst :
 }
 
 /-- [rusthammer::{impl rusthammer::Parser<'input, Clause0_Output> for rusthammer::Choice<P, Q>}::parse_with]:
-    Source: 'src/lib.rs', lines 1768:4-1785:5
+    Source: 'src/lib.rs', lines 1856:4-1873:5
     Visibility: public -/
 def Choice.Insts.RusthammerParser.parse_with
   {P : Type} {Q : Type} {Clause0_Output : Type} (ParserInst : Parser P
@@ -3017,7 +3193,7 @@ def Choice.Insts.RusthammerParser.parse_with
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Parser<'input, Clause0_Output> for rusthammer::Choice<P, Q>}]
-    Source: 'src/lib.rs', lines 1761:0-1786:1 -/
+    Source: 'src/lib.rs', lines 1849:0-1874:1 -/
 @[reducible]
 impl_def Choice.Insts.RusthammerParser {P : Type} {Q : Type} {Clause0_Output :
   Type} (ParserInst : Parser P Clause0_Output) (ParserInst1 : Parser Q
@@ -3028,13 +3204,13 @@ impl_def Choice.Insts.RusthammerParser {P : Type} {Q : Type} {Clause0_Output :
 }
 
 /-- [rusthammer::Optional]
-    Source: 'src/lib.rs', lines 1795:0-1797:1
+    Source: 'src/lib.rs', lines 1883:0-1885:1
     Visibility: public -/
 structure Optional (P : Type) where
   parser : P
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Optional<P>}::clone]:
-    Source: 'src/lib.rs', lines 1794:9-1794:14
+    Source: 'src/lib.rs', lines 1882:9-1882:14
     Visibility: public -/
 def Optional.Insts.CoreCloneClone.clone
   {P : Type} (corecloneCloneInst : core.clone.Clone P) (self : Optional P) :
@@ -3044,7 +3220,7 @@ def Optional.Insts.CoreCloneClone.clone
   ok { parser := t }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Optional<P>}]
-    Source: 'src/lib.rs', lines 1794:9-1794:14 -/
+    Source: 'src/lib.rs', lines 1882:9-1882:14 -/
 @[reducible]
 def Optional.Insts.CoreCloneClone {P : Type} (corecloneCloneInst :
   core.clone.Clone P) : core.clone.Clone (Optional P) := {
@@ -3052,7 +3228,7 @@ def Optional.Insts.CoreCloneClone {P : Type} (corecloneCloneInst :
 }
 
 /-- [rusthammer::{impl rusthammer::Parser<'input, core::option::Option<Clause0_Output>> for rusthammer::Optional<P>}::parse_with]:
-    Source: 'src/lib.rs', lines 1802:4-1819:5
+    Source: 'src/lib.rs', lines 1890:4-1907:5
     Visibility: public -/
 def Optional.Insts.RusthammerParserInputOption.parse_with
   {P : Type} {Clause0_Output : Type} (ParserInst : Parser P Clause0_Output)
@@ -3072,7 +3248,7 @@ def Optional.Insts.RusthammerParserInputOption.parse_with
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Parser<'input, core::option::Option<Clause0_Output>> for rusthammer::Optional<P>}]
-    Source: 'src/lib.rs', lines 1799:0-1820:1 -/
+    Source: 'src/lib.rs', lines 1887:0-1908:1 -/
 @[reducible]
 impl_def Optional.Insts.RusthammerParserInputOption {P : Type} {Clause0_Output
   : Type} (ParserInst : Parser P Clause0_Output) : Parser (Optional P) (Option
@@ -3084,13 +3260,13 @@ impl_def Optional.Insts.RusthammerParserInputOption {P : Type} {Clause0_Output
 }
 
 /-- [rusthammer::And]
-    Source: 'src/lib.rs', lines 1828:0-1830:1
+    Source: 'src/lib.rs', lines 1916:0-1918:1
     Visibility: public -/
 structure And (P : Type) where
   parser : P
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::And<P>}::clone]:
-    Source: 'src/lib.rs', lines 1827:9-1827:14
+    Source: 'src/lib.rs', lines 1915:9-1915:14
     Visibility: public -/
 def And.Insts.CoreCloneClone.clone
   {P : Type} (corecloneCloneInst : core.clone.Clone P) (self : And P) :
@@ -3100,7 +3276,7 @@ def And.Insts.CoreCloneClone.clone
   ok { parser := t }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::And<P>}]
-    Source: 'src/lib.rs', lines 1827:9-1827:14 -/
+    Source: 'src/lib.rs', lines 1915:9-1915:14 -/
 @[reducible]
 def And.Insts.CoreCloneClone {P : Type} (corecloneCloneInst : core.clone.Clone
   P) : core.clone.Clone (And P) := {
@@ -3108,7 +3284,7 @@ def And.Insts.CoreCloneClone {P : Type} (corecloneCloneInst : core.clone.Clone
 }
 
 /-- [rusthammer::{impl rusthammer::Parser<'input, ()> for rusthammer::And<P>}::parse_with]:
-    Source: 'src/lib.rs', lines 1835:4-1846:5
+    Source: 'src/lib.rs', lines 1923:4-1934:5
     Visibility: public -/
 def And.Insts.RusthammerParserInputTuple.parse_with
   {P : Type} {Clause0_Output : Type} (ParserInst : Parser P Clause0_Output)
@@ -3123,7 +3299,7 @@ def And.Insts.RusthammerParserInputTuple.parse_with
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Parser<'input, ()> for rusthammer::And<P>}]
-    Source: 'src/lib.rs', lines 1832:0-1847:1 -/
+    Source: 'src/lib.rs', lines 1920:0-1935:1 -/
 @[reducible]
 impl_def And.Insts.RusthammerParserInputTuple {P : Type} {Clause0_Output :
   Type} (ParserInst : Parser P Clause0_Output) : Parser (And P) Unit := {
@@ -3133,13 +3309,13 @@ impl_def And.Insts.RusthammerParserInputTuple {P : Type} {Clause0_Output :
 }
 
 /-- [rusthammer::Not]
-    Source: 'src/lib.rs', lines 1855:0-1857:1
+    Source: 'src/lib.rs', lines 1943:0-1945:1
     Visibility: public -/
 structure Not (P : Type) where
   parser : P
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Not<P>}::clone]:
-    Source: 'src/lib.rs', lines 1854:9-1854:14
+    Source: 'src/lib.rs', lines 1942:9-1942:14
     Visibility: public -/
 def Not.Insts.CoreCloneClone.clone
   {P : Type} (corecloneCloneInst : core.clone.Clone P) (self : Not P) :
@@ -3149,7 +3325,7 @@ def Not.Insts.CoreCloneClone.clone
   ok { parser := t }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Not<P>}]
-    Source: 'src/lib.rs', lines 1854:9-1854:14 -/
+    Source: 'src/lib.rs', lines 1942:9-1942:14 -/
 @[reducible]
 def Not.Insts.CoreCloneClone {P : Type} (corecloneCloneInst : core.clone.Clone
   P) : core.clone.Clone (Not P) := {
@@ -3157,7 +3333,7 @@ def Not.Insts.CoreCloneClone {P : Type} (corecloneCloneInst : core.clone.Clone
 }
 
 /-- [rusthammer::{impl rusthammer::Parser<'input, ()> for rusthammer::Not<P>}::parse_with]:
-    Source: 'src/lib.rs', lines 1862:4-1879:5
+    Source: 'src/lib.rs', lines 1950:4-1967:5
     Visibility: public -/
 def Not.Insts.RusthammerParserInputTuple.parse_with
   {P : Type} {Clause0_Output : Type} (ParserInst : Parser P Clause0_Output)
@@ -3176,7 +3352,7 @@ def Not.Insts.RusthammerParserInputTuple.parse_with
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Parser<'input, ()> for rusthammer::Not<P>}]
-    Source: 'src/lib.rs', lines 1859:0-1880:1 -/
+    Source: 'src/lib.rs', lines 1947:0-1968:1 -/
 @[reducible]
 impl_def Not.Insts.RusthammerParserInputTuple {P : Type} {Clause0_Output :
   Type} (ParserInst : Parser P Clause0_Output) : Parser (Not P) Unit := {
@@ -3186,21 +3362,21 @@ impl_def Not.Insts.RusthammerParserInputTuple {P : Type} {Clause0_Output :
 }
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::TakeAligned}::clone]:
-    Source: 'src/lib.rs', lines 1886:9-1886:14
+    Source: 'src/lib.rs', lines 1974:9-1974:14
     Visibility: public -/
 def TakeAligned.Insts.CoreCloneClone.clone
   (self : TakeAligned) : Result TakeAligned := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::TakeAligned}]
-    Source: 'src/lib.rs', lines 1886:9-1886:14 -/
+    Source: 'src/lib.rs', lines 1974:9-1974:14 -/
 @[reducible]
 def TakeAligned.Insts.CoreCloneClone : core.clone.Clone TakeAligned := {
   clone := TakeAligned.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::Flags]
-    Source: 'src/lib.rs', lines 1906:0-1910:1
+    Source: 'src/lib.rs', lines 1994:0-1998:1
     Visibility: public -/
 structure Flags where
   urgent : Bool
@@ -3208,12 +3384,12 @@ structure Flags where
   compressed : Bool
 
 /-- [rusthammer::parse_flags::{closure}]
-    Source: 'src/lib.rs', lines 1922:13-1926:9 -/
+    Source: 'src/lib.rs', lines 2010:13-2014:9 -/
 @[reducible]
 def parse_flags.closure := Unit
 
 /-- [rusthammer::parse_flags::{impl core::ops::function::Fn<((bool, (bool, bool)),), rusthammer::Flags> for rusthammer::parse_flags::{closure}}::call]:
-    Source: 'src/lib.rs', lines 1922:13-1926:9 -/
+    Source: 'src/lib.rs', lines 2010:13-2014:9 -/
 def
   parse_flags.closure.Insts.CoreOpsFunctionFnTuplePairBoolPairBoolBoolFlags.call
   (c : parse_flags.closure) (tupled_args : (Bool × (Bool × Bool))) :
@@ -3223,7 +3399,7 @@ def
   ok { urgent, encrypted, compressed }
 
 /-- [rusthammer::parse_flags::{impl core::ops::function::FnMut<((bool, (bool, bool)),), rusthammer::Flags> for rusthammer::parse_flags::{closure}}::call_mut]:
-    Source: 'src/lib.rs', lines 1922:13-1926:9 -/
+    Source: 'src/lib.rs', lines 2010:13-2014:9 -/
 def
   parse_flags.closure.Insts.CoreOpsFunctionFnMutTuplePairBoolPairBoolBoolFlags.call_mut
   (state : parse_flags.closure) (args : (Bool × (Bool × Bool))) :
@@ -3235,7 +3411,7 @@ def
   ok (f, state)
 
 /-- [rusthammer::parse_flags::{impl core::ops::function::FnOnce<((bool, (bool, bool)),), rusthammer::Flags> for rusthammer::parse_flags::{closure}}::call_once]:
-    Source: 'src/lib.rs', lines 1922:13-1926:9 -/
+    Source: 'src/lib.rs', lines 2010:13-2014:9 -/
 def
   parse_flags.closure.Insts.CoreOpsFunctionFnOnceTuplePairBoolPairBoolBoolFlags.call_once
   (c : parse_flags.closure) (p : (Bool × (Bool × Bool))) : Result Flags := do
@@ -3245,7 +3421,7 @@ def
   ok f
 
 /-- Trait implementation: [rusthammer::parse_flags::{impl core::ops::function::FnOnce<((bool, (bool, bool)),), rusthammer::Flags> for rusthammer::parse_flags::{closure}}]
-    Source: 'src/lib.rs', lines 1922:13-1926:9 -/
+    Source: 'src/lib.rs', lines 2010:13-2014:9 -/
 @[reducible]
 def
   parse_flags.closure.Insts.CoreOpsFunctionFnOnceTuplePairBoolPairBoolBoolFlags
@@ -3256,7 +3432,7 @@ def
 }
 
 /-- Trait implementation: [rusthammer::parse_flags::{impl core::ops::function::FnMut<((bool, (bool, bool)),), rusthammer::Flags> for rusthammer::parse_flags::{closure}}]
-    Source: 'src/lib.rs', lines 1922:13-1926:9 -/
+    Source: 'src/lib.rs', lines 2010:13-2014:9 -/
 @[reducible]
 def
   parse_flags.closure.Insts.CoreOpsFunctionFnMutTuplePairBoolPairBoolBoolFlags
@@ -3269,7 +3445,7 @@ def
 }
 
 /-- Trait implementation: [rusthammer::parse_flags::{impl core::ops::function::Fn<((bool, (bool, bool)),), rusthammer::Flags> for rusthammer::parse_flags::{closure}}]
-    Source: 'src/lib.rs', lines 1922:13-1926:9 -/
+    Source: 'src/lib.rs', lines 2010:13-2014:9 -/
 @[reducible]
 def parse_flags.closure.Insts.CoreOpsFunctionFnTuplePairBoolPairBoolBoolFlags :
   core.ops.function.Fn parse_flags.closure (Bool × (Bool × Bool)) Flags := {
@@ -3280,7 +3456,7 @@ def parse_flags.closure.Insts.CoreOpsFunctionFnTuplePairBoolPairBoolBoolFlags :
 }
 
 /-- [rusthammer::parse_flags]:
-    Source: 'src/lib.rs', lines 1913:0-1929:1
+    Source: 'src/lib.rs', lines 2001:0-2017:1
     Visibility: public -/
 def parse_flags
   (input : Slice Std.U8) (cursor : Cursor) :
@@ -3297,26 +3473,26 @@ def parse_flags
     } input cursor
 
 /-- [rusthammer::Marker]
-    Source: 'src/lib.rs', lines 1956:0-1958:1
+    Source: 'src/lib.rs', lines 2044:0-2046:1
     Visibility: public -/
 structure Marker where
   parser : Seq (Choice Literal Literal) End
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Marker}::clone]:
-    Source: 'src/lib.rs', lines 1955:9-1955:14
+    Source: 'src/lib.rs', lines 2043:9-2043:14
     Visibility: public -/
 def Marker.Insts.CoreCloneClone.clone (self : Marker) : Result Marker := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Marker}]
-    Source: 'src/lib.rs', lines 1955:9-1955:14 -/
+    Source: 'src/lib.rs', lines 2043:9-2043:14 -/
 @[reducible]
 def Marker.Insts.CoreCloneClone : core.clone.Clone Marker := {
   clone := Marker.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::{rusthammer::Marker}::new]:
-    Source: 'src/lib.rs', lines 1963:4-1978:5
+    Source: 'src/lib.rs', lines 2051:4-2066:5
     Visibility: public -/
 def Marker.new : Result (core.result.Result Marker ConfigError) := do
   let r ← Literal.new 16#u8 51966#u64
@@ -3334,7 +3510,7 @@ def Marker.new : Result (core.result.Result Marker ConfigError) := do
   | core.result.Result.Err error => ok (core.result.Result.Err error)
 
 /-- [rusthammer::{impl rusthammer::Parser<'input, u64> for rusthammer::Marker}::parse_with]:
-    Source: 'src/lib.rs', lines 1984:4-1995:5
+    Source: 'src/lib.rs', lines 2072:4-2083:5
     Visibility: public -/
 def Marker.Insts.RusthammerParserInputU64.parse_with
   (self : Marker) (input : Slice Std.U8) (cursor : Cursor)
@@ -3354,7 +3530,7 @@ def Marker.Insts.RusthammerParserInputU64.parse_with
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Parser<'input, u64> for rusthammer::Marker}]
-    Source: 'src/lib.rs', lines 1981:0-1996:1 -/
+    Source: 'src/lib.rs', lines 2069:0-2084:1 -/
 @[reducible]
 impl_def Marker.Insts.RusthammerParserInputU64 : Parser Marker Std.U64 := {
   parse_with := Marker.Insts.RusthammerParserInputU64.parse_with
@@ -3362,7 +3538,7 @@ impl_def Marker.Insts.RusthammerParserInputU64 : Parser Marker Std.U64 := {
 }
 
 /-- [rusthammer::parse_marker]:
-    Source: 'src/lib.rs', lines 1999:0-2005:1
+    Source: 'src/lib.rs', lines 2087:0-2093:1
     Visibility: public -/
 def parse_marker
   (input : Slice Std.U8) (cursor : Cursor) (parser : Marker) :
@@ -3372,12 +3548,12 @@ def parse_marker
     cursor
 
 /-- [rusthammer::MAX_RECORD_PAYLOAD]
-    Source: 'src/lib.rs', lines 2008:0-2008:41
+    Source: 'src/lib.rs', lines 2096:0-2096:41
     Visibility: public -/
 @[global_simps, irreducible] def MAX_RECORD_PAYLOAD : Std.U64 := 1024#u64
 
 /-- [rusthammer::Record]
-    Source: 'src/lib.rs', lines 2012:0-2016:1
+    Source: 'src/lib.rs', lines 2100:0-2104:1
     Visibility: public -/
 structure Record where
   version : Std.U64
@@ -3385,7 +3561,7 @@ structure Record where
   payload : Slice Std.U8
 
 /-- [rusthammer::RecordParser]
-    Source: 'src/lib.rs', lines 2027:0-2031:1
+    Source: 'src/lib.rs', lines 2115:0-2119:1
     Visibility: public -/
 structure RecordParser where
   version : Bits
@@ -3393,21 +3569,21 @@ structure RecordParser where
   length : Bits
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::RecordParser}::clone]:
-    Source: 'src/lib.rs', lines 2026:9-2026:14
+    Source: 'src/lib.rs', lines 2114:9-2114:14
     Visibility: public -/
 def RecordParser.Insts.CoreCloneClone.clone
   (self : RecordParser) : Result RecordParser := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::RecordParser}]
-    Source: 'src/lib.rs', lines 2026:9-2026:14 -/
+    Source: 'src/lib.rs', lines 2114:9-2114:14 -/
 @[reducible]
 def RecordParser.Insts.CoreCloneClone : core.clone.Clone RecordParser := {
   clone := RecordParser.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::{rusthammer::RecordParser}::new]:
-    Source: 'src/lib.rs', lines 2035:4-2053:5
+    Source: 'src/lib.rs', lines 2123:4-2141:5
     Visibility: public -/
 def RecordParser.new
   : Result (core.result.Result RecordParser ConfigError) := do
@@ -3427,7 +3603,7 @@ def RecordParser.new
   | core.result.Result.Err error => ok (core.result.Result.Err error)
 
 /-- [rusthammer::parse_record_body]:
-    Source: 'src/lib.rs', lines 2094:0-2118:1 -/
+    Source: 'src/lib.rs', lines 2182:0-2206:1 -/
 def parse_record_body
   (input : Slice Std.U8) (cursor : Cursor) (version : Std.U64)
   (flags : Std.U64) (count : Std.Usize) (status : InputStatus) :
@@ -3446,12 +3622,12 @@ def parse_record_body
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore
 
 /-- [rusthammer::{impl rusthammer::Parser<'input, rusthammer::Record<'input>> for rusthammer::RecordParser}::parse_with::{closure}]
-    Source: 'src/lib.rs', lines 2079:23-2081:13 -/
+    Source: 'src/lib.rs', lines 2167:23-2169:13 -/
 @[reducible]
 def ParserInputRecordParserRecord.parse_with.closure := Unit
 
 /-- [rusthammer::{impl rusthammer::Parser<'input, rusthammer::Record<'input>> for rusthammer::RecordParser}::parse_with::{impl core::ops::function::Fn<(&'_1 (u64, (u64, u64)),), bool> for rusthammer::{impl rusthammer::Parser<'input, rusthammer::Record<'input>> for rusthammer::RecordParser}::parse_with::{closure}<'input>}::call]:
-    Source: 'src/lib.rs', lines 2079:23-2081:13 -/
+    Source: 'src/lib.rs', lines 2167:23-2169:13 -/
 def
   ParserInputRecordParserRecord.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared0PairU64PairU64U64Bool.call
   (c : ParserInputRecordParserRecord.parse_with.closure)
@@ -3465,7 +3641,7 @@ def
   else ok false
 
 /-- [rusthammer::{impl rusthammer::Parser<'input, rusthammer::Record<'input>> for rusthammer::RecordParser}::parse_with::{impl core::ops::function::FnMut<(&'_1 (u64, (u64, u64)),), bool> for rusthammer::{impl rusthammer::Parser<'input, rusthammer::Record<'input>> for rusthammer::RecordParser}::parse_with::{closure}<'input>}::call_mut]:
-    Source: 'src/lib.rs', lines 2079:23-2081:13 -/
+    Source: 'src/lib.rs', lines 2167:23-2169:13 -/
 def
   ParserInputRecordParserRecord.parse_with.closure.Insts.CoreOpsFunctionFnMutTupleShared0PairU64PairU64U64Bool.call_mut
   (state : ParserInputRecordParserRecord.parse_with.closure)
@@ -3478,7 +3654,7 @@ def
   ok (b, ())
 
 /-- [rusthammer::{impl rusthammer::Parser<'input, rusthammer::Record<'input>> for rusthammer::RecordParser}::parse_with::{impl core::ops::function::FnOnce<(&'_1 (u64, (u64, u64)),), bool> for rusthammer::{impl rusthammer::Parser<'input, rusthammer::Record<'input>> for rusthammer::RecordParser}::parse_with::{closure}<'input>}::call_once]:
-    Source: 'src/lib.rs', lines 2079:23-2081:13 -/
+    Source: 'src/lib.rs', lines 2167:23-2169:13 -/
 def
   ParserInputRecordParserRecord.parse_with.closure.Insts.CoreOpsFunctionFnOnceTupleShared0PairU64PairU64U64Bool.call_once
   (c : ParserInputRecordParserRecord.parse_with.closure)
@@ -3491,7 +3667,7 @@ def
   ok b
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Parser<'input, rusthammer::Record<'input>> for rusthammer::RecordParser}::parse_with::{impl core::ops::function::FnOnce<(&'_1 (u64, (u64, u64)),), bool> for rusthammer::{impl rusthammer::Parser<'input, rusthammer::Record<'input>> for rusthammer::RecordParser}::parse_with::{closure}<'input>}]
-    Source: 'src/lib.rs', lines 2079:23-2081:13 -/
+    Source: 'src/lib.rs', lines 2167:23-2169:13 -/
 @[reducible]
 def
   ParserInputRecordParserRecord.parse_with.closure.Insts.CoreOpsFunctionFnOnceTupleShared0PairU64PairU64U64Bool
@@ -3502,7 +3678,7 @@ def
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Parser<'input, rusthammer::Record<'input>> for rusthammer::RecordParser}::parse_with::{impl core::ops::function::FnMut<(&'_1 (u64, (u64, u64)),), bool> for rusthammer::{impl rusthammer::Parser<'input, rusthammer::Record<'input>> for rusthammer::RecordParser}::parse_with::{closure}<'input>}]
-    Source: 'src/lib.rs', lines 2079:23-2081:13 -/
+    Source: 'src/lib.rs', lines 2167:23-2169:13 -/
 @[reducible]
 def
   ParserInputRecordParserRecord.parse_with.closure.Insts.CoreOpsFunctionFnMutTupleShared0PairU64PairU64U64Bool
@@ -3515,7 +3691,7 @@ def
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Parser<'input, rusthammer::Record<'input>> for rusthammer::RecordParser}::parse_with::{impl core::ops::function::Fn<(&'_1 (u64, (u64, u64)),), bool> for rusthammer::{impl rusthammer::Parser<'input, rusthammer::Record<'input>> for rusthammer::RecordParser}::parse_with::{closure}<'input>}]
-    Source: 'src/lib.rs', lines 2079:23-2081:13 -/
+    Source: 'src/lib.rs', lines 2167:23-2169:13 -/
 @[reducible]
 def
   ParserInputRecordParserRecord.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared0PairU64PairU64U64Bool
@@ -3528,7 +3704,7 @@ def
 }
 
 /-- [rusthammer::{impl rusthammer::Parser<'input, rusthammer::Record<'input>> for rusthammer::RecordParser}::parse_with]:
-    Source: 'src/lib.rs', lines 2059:4-2091:5
+    Source: 'src/lib.rs', lines 2147:4-2179:5
     Visibility: public -/
 def RecordParser.Insts.RusthammerParserInputRecord.parse_with
   (self : RecordParser) (input : Slice Std.U8) (cursor : Cursor)
@@ -3567,7 +3743,7 @@ def RecordParser.Insts.RusthammerParserInputRecord.parse_with
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Parser<'input, rusthammer::Record<'input>> for rusthammer::RecordParser}]
-    Source: 'src/lib.rs', lines 2056:0-2092:1 -/
+    Source: 'src/lib.rs', lines 2144:0-2180:1 -/
 @[reducible]
 impl_def RecordParser.Insts.RusthammerParserInputRecord : Parser RecordParser
   Record := {
@@ -3576,7 +3752,7 @@ impl_def RecordParser.Insts.RusthammerParserInputRecord : Parser RecordParser
 }
 
 /-- [rusthammer::parse_record]:
-    Source: 'src/lib.rs', lines 2121:0-2127:1
+    Source: 'src/lib.rs', lines 2209:0-2215:1
     Visibility: public -/
 def parse_record
   (input : Slice Std.U8) (cursor : Cursor) (parser : RecordParser) :

@@ -74,6 +74,9 @@ def main():
         "--start-from", "rusthammer::SignedBits::width",
         "--start-from", "rusthammer::BytePattern::new",
         "--start-from", "rusthammer::BytePattern::pattern",
+        "--start-from", "rusthammer::IntRange::new",
+        "--start-from", "rusthammer::IntRange::lower",
+        "--start-from", "rusthammer::IntRange::upper",
         "--start-from", "rusthammer::Literal::new",
         "--start-from", "rusthammer::Literal::width",
         "--start-from", "rusthammer::Literal::value",
@@ -138,6 +141,7 @@ def main():
         "matched_pattern", "pattern_and_input",
         "signed_field", "signed_and_unsigned",
         "integers16", "integers32", "integers64", "complete_i8",
+        "ranged_u64", "ranged_pair", "ranged_count", "complete_range",
     )
     entry_args = [
         arg for name in entries

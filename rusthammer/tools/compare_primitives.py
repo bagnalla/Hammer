@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare byte, signed-field, and fixed-width primitives with C Hammer on complete input.
+"""Compare numeric/byte primitives and ranges with C Hammer on complete input.
 
 Requires GCC, rustc, and an already built C Hammer shared library. The ordinary
 Rust/Lean verification command does not require a C build or this optional tool.
@@ -74,6 +74,37 @@ def integer_cases():
             yield "int", 0, width, data
 
 
+def range_cases():
+    for width in (8, 16, 32, 64):
+        for signed in (False, True):
+            minimum = -(1 << (width - 1)) if signed else 0
+            maximum = (1 << (width - int(signed))) - 1
+            bounds = {(minimum, maximum), (minimum, minimum), (maximum, maximum),
+                      (0, 0), (0, 100), (maximum - 2, maximum)}
+            if signed:
+                bounds.update({(-10, 10), (-100, -1)})
+            elif width == 8:
+                bounds.add((ord('0'), ord('9')))
+            for lower, upper in sorted(bounds):
+                if width == 8:
+                    values = range(minimum, maximum + 1)
+                else:
+                    values = sorted({value for value in (
+                        minimum, minimum + 1, maximum - 1, maximum, -1, 0, 1,
+                        lower - 1, lower, lower + 1, upper - 1, upper, upper + 1,
+                    ) if minimum <= value <= maximum})
+                for value in values:
+                    raw = value & ((1 << width) - 1)
+                    for offset in range(8):
+                        bits = "1010101"[:offset] + f"{raw:0{width}b}" + "01100101"
+                        bits += "0" * (-len(bits) % 8)
+                        data = bytes(int(bits[i:i + 8], 2) for i in range(0, len(bits), 8))
+                        for length in range(int(offset != 0), len(data) + 1):
+                            yield "range_int" if signed else "range_uint", offset, (width, lower, upper), data[:length]
+                            if width == 8 and not signed:
+                                yield "range_ch", offset, (width, lower, upper), data[:length]
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--hammer-library", type=Path, required=True)
@@ -105,13 +136,22 @@ def main():
     parse_integer.argtypes = [c.c_uint, c.c_uint, c.c_char_p, c.c_size_t, c.c_uint,
                              c.POINTER(c.c_size_t), c.POINTER(c.c_uint64), c.POINTER(c.c_int64)]
     parse_integer.restype = c.c_int
+    parse_range = hammer.compare_range
+    parse_range.argtypes = [c.c_uint, c.c_uint, c.c_uint, c.c_int64, c.c_int64,
+                           c.c_char_p, c.c_size_t, c.c_uint, c.POINTER(c.c_size_t),
+                           c.POINTER(c.c_uint64), c.POINTER(c.c_int64)]
+    parse_range.restype = c.c_int
     byte_corpus = list(byte_cases())
     signed_corpus = list(signed_cases())
     integer_corpus = list(integer_cases())
-    corpus = byte_corpus + signed_corpus + integer_corpus
+    range_corpus = list(range_cases())
+    corpus = byte_corpus + signed_corpus + integer_corpus + range_corpus
     lines = []
     for kind, offset, config, data in corpus:
-        setting = (config.hex() or "-") if kind in ("byte", "pattern") else str(config)
+        if kind.startswith("range_"):
+            setting = ':'.join(str(part) for part in config)
+        else:
+            setting = (config.hex() or "-") if kind in ("byte", "pattern") else str(config)
         lines.append(f"{kind} {offset} {setting} {data.hex() or '-'}\n")
     wire = "".join(lines)
     rust = subprocess.run([str(driver)], input=wire, text=True, capture_output=True, check=True)
@@ -123,6 +163,16 @@ def main():
         if kind == "signed":
             value = c.c_int64()
             accepted = parse_signed(config, data, len(data), offset, c.byref(position), c.byref(value))
+        elif kind.startswith("range_"):
+            width, lower, upper = config
+            unsigned_value, signed_value = c.c_uint64(), c.c_int64()
+            # h_int_range takes int64_t even for unsigned children and then
+            # compares after converting both bounds to uint64_t. Encode unsigned
+            # endpoints modulo 2^64 here; Rust retains its native typed bounds.
+            accepted = parse_range(width, kind == "range_int", kind == "range_ch",
+                                   c.c_int64(lower), c.c_int64(upper), data, len(data), offset,
+                                   c.byref(position), c.byref(unsigned_value), c.byref(signed_value))
+            value = signed_value if kind == "range_int" else unsigned_value
         elif kind in ("uint", "int"):
             unsigned_value, signed_value = c.c_uint64(), c.c_int64()
             accepted = parse_integer(config, kind == "int", data, len(data), offset,
@@ -136,7 +186,7 @@ def main():
         assert actual == expected, (case, actual, expected)
     print(f"C/Rust primitive comparison passed: {len(corpus)} cases "
           f"({len(byte_corpus)} byte/pattern, {len(signed_corpus)} signed, "
-          f"{len(integer_corpus)} fixed-width).")
+          f"{len(integer_corpus)} fixed-width, {len(range_corpus)} range).")
     print("Acceptance, consumption, and decoded outputs agree.")
 
 

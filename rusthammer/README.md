@@ -20,6 +20,7 @@ The prototype supports:
   the same cursor and input-finality rules.
 - Fixed-width `BeU16`, `BeU32`, `BeU64`, `I8`, `BeI16`, `BeI32`, and `BeI64`
   readers returning their corresponding native Rust integer types.
+- `IntRange<P, T>` for inclusive ranges with typed, validated bounds.
 - `Byte` producing `u8` and `BytePattern` matching arbitrary borrowed patterns,
   both supporting unaligned starts without allocation.
 - Private numeric and literal configuration, validated by fallible constructors.
@@ -63,6 +64,7 @@ cargo run --example flags
 cargo run --example fields
 cargo run --example signed_fields
 cargo run --example integers
+cargo run --example ranges
 cargo run --example bytes
 cargo run --example marker
 cargo run --example record
@@ -206,6 +208,51 @@ native `from_be_bytes` decoding at every starting bit offset. Tests also cover
 raw invalid cursors, truncation, partial retries, references, and typed composition.
 The optional C check adds 134,896 cases against the named integer primitives.
 
+## Inclusive integer ranges
+
+`IntRange::new(parser, lower, upper)` corresponds to `h_int_range`; using `Byte`
+as its child also supplies `h_ch_range`. Both endpoints are inclusive and have
+the child's output type. Construction returns `Result<IntRange<P, T>, ConfigError>`
+and rejects `lower > upper` with `InvalidBounds` before any parsing. Equal
+bounds accept precisely one value. Fields are private, and `lower()` / `upper()`
+borrow the endpoints without exposing mutation.
+
+```rust
+use rusthammer::{BeI16, BeU16, Byte, IntRange};
+
+let length = IntRange::new(BeU16, 1u16, 4096u16).unwrap();
+let adjustment = IntRange::new(BeI16, -100i16, 100i16).unwrap();
+let digit = IntRange::new(Byte, b'0', b'9').unwrap();
+```
+
+The [ranges example](examples/ranges.rs) combines these parsers and propagates
+configuration errors with `?`. Bounds remain in their native type, including
+the full `u64` range and signed minima. The generic implementation uses `Ord`,
+so integer newtypes and other ordered outputs also work. Neither the child,
+bounds, nor outputs need `Copy` or `Clone`; the range has those traits when its
+stored fields do. Floating-point values lack `Ord` and need an explicit `Verify`
+predicate with the desired NaN policy. The generic constructor is not `const`.
+
+Parsing delegates to `Verify`. It runs the child once, preserves an accepted
+value and cursor, maps an out-of-range value to recoverable `Mismatch`, and
+propagates child errors and `NeedMore` unchanged. It adds no cursor validation
+or implicit alignment. Bounds need not overlap the child's possible outputs;
+for example, a three-bit reader restricted to 10 through 20 is a valid parser
+that rejects every completed field. Range rejection waits for child success:
+a two-byte reader given only `FF` in partial mode still returns `NeedMore`, even
+if that prefix cannot fit the configured range. This retains the child's
+established finality and error precedence.
+
+Native tests cover every 8-bit bound pair, all native reader types, variable
+widths (including zero), an independent string/`i128` oracle, all bit offsets,
+raw cursors, inclusive endpoints, recovery, and owned-value cleanup. The ordinary
+Cargo consumer checks dynamic bounds, signed/unsigned composition, references,
+the complete API, and a non-`Copy`, non-`Clone` integer newtype. Both MIR modes
+translate without a new workaround. The optional C check adds 138,240 cases
+against `h_int_range` and `h_ch_range` using valid ordered bounds; Rust rejects
+reversed configuration during construction rather than constructing C's empty
+range parser.
+
 ## Bytes and byte patterns
 
 `Byte` corresponds to `h_uint8()`: it consumes eight MSB-first bits and returns
@@ -264,9 +311,13 @@ python3 tools/compare_primitives.py --hammer-library ../build/opt/src/libhammer.
 This check needs GCC and compares complete input at valid starting cursors.
 It does not assert equivalence of streaming interfaces or other C backends.
 The tool also checks signed bit fields and all named fixed-width integer readers.
-It runs 173,181 cases in total: 10,561 byte/pattern, 27,724 signed-field, and
-134,896 fixed-width cases. Unsigned results retain their full range, including
-`u64::MAX`, when normalized for comparison.
+It also checks integer and byte ranges, for 311,421 cases in total: 10,561
+byte/pattern, 27,724 signed-field, 134,896 fixed-width, and 138,240 range cases.
+Unsigned results retain their full range, including `u64::MAX`, when normalized
+for comparison. C `h_int_range` accepts `int64_t` endpoints even for unsigned
+children and then casts them to `uint64_t` for comparison. The adapter encodes
+unsigned endpoints modulo `2^64` to preserve that interpretation; Rust keeps
+native typed endpoints throughout.
 
 ## Partial input and finality
 
@@ -938,6 +989,16 @@ configuration invariant. The existing `Byte` reader also satisfies this unsigned
 integer contract. Axiom audits of all new reader theorems list only `propext`,
 `Classical.choice`, and `Quot.sound`.
 
+[IntRangeSpec.lean](lean/RustHammer/IntRangeSpec.lean) defines inclusive membership
+and constructor validity using an ordering relation. Its
+[proofs](lean/RustHammer/IntRangeProofs.lean) connect construction, bound access,
+cloning, and both parsing APIs to that contract, reusing `Verify`'s proofs. Generic
+theorems take contracts for the child and the `Ord` comparison methods; native
+comparison lemmas discharge those obligations for all eight primitive output
+types. Specialized native-reader theorems cover arbitrary cursors, values,
+endpoints, and input statuses. The axiom audit lists only `propext`,
+`Classical.choice`, and `Quot.sound`.
+
 [ByteSpec.lean](lean/RustHammer/ByteSpec.lean) specifies byte decoding and ordered
 pattern matching over mathematical lists. Its [proofs](lean/RustHammer/ByteProofs.lean)
 establish lossless narrowing, total parsing, exact consumption and bit contents,
@@ -1066,6 +1127,11 @@ per-input checks without assuming that an arbitrary Lean record came from a
 Rust constructor. The marker constructor also proves the exact fixed grammar,
 so its application contract is connected to construction.
 
+`validIntRange` similarly records the constructor's ordered-bound invariant.
+The range filtering proof does not need that assumption: membership uses only
+comparisons, so it also specifies filtering for raw Lean records with reversed
+bounds. The public Rust constructor still rejects those configurations.
+
 The following original contracts use final input for parser methods; their
 `*_with_spec` counterparts cover both statuses. Raw reader functions remain
 complete-input operations.
@@ -1082,6 +1148,9 @@ complete-input operations.
 | `be_u16_with_spec`, `be_u32_with_spec`, `be_u64_with_spec`, `byte_integer_with_spec` | Fixed-width unsigned decoding preserves values in native outputs and consumes exactly the output type's bit width, for every cursor and both statuses. |
 | `i8_with_spec`, `be_i16_with_spec`, `be_i32_with_spec`, `be_i64_with_spec` | Fixed-width signed decoding and lossless narrowing, including signed minima, invalid cursors, and exhaustion. |
 | `be_u16_spec`, `be_u32_spec`, `be_u64_spec`, `i8_spec`, `be_i16_spec`, `be_i32_spec`, `be_i64_spec` | Complete-input contracts; corresponding `*_final_spec` theorems exclude `NeedMore` on final input. |
+| `int_range_new_spec`, `int_range_new_valid`, `int_range_lower_spec`, `int_range_upper_spec` | Construction validates ordered typed bounds without parsing and preserves immutable endpoint access. |
+| `int_range_with_spec`, `int_range_final_spec`, `int_range_spec`, `int_range_success` | Inclusive filtering preserves the child's accepted value and cursor, returns `Mismatch` on rejected values, and propagates child errors and incompleteness. |
+| `int_range_u64_comparisons`, `int_range_i64_comparisons` (and the narrower variants) | Native comparison models match mathematical ordering, including unsigned maxima and signed minima. |
 | `byte_pattern_with_spec`, `byte_pattern_final_spec`, `byte_pattern_spec` | Total ordered pattern matching, empty-pattern identity, byte-wise error precedence, and final-input exclusion of `NeedMore`. |
 | `byte_pattern_success` | Output equals the configured pattern; each byte matches eight input bits and total consumption is exactly eight times the pattern length. |
 | `seq_spec` | Sequencing preserves arbitrary supplied child specifications, including error propagation. |
@@ -1183,8 +1252,8 @@ Named length/count convenience wrappers remain proposals; their core composition
 is now available.
 
 Expand binary primitives and match restrictions, with semantic and differential
-checks. Fixed-width typed integer readers are implemented and proved; next add
-numeric ranges and byte sets using `Verify`, then skipping/position and match
+checks. Fixed-width typed integer readers and inclusive ranges are implemented
+and proved; next add byte sets using `Verify`, then skipping/position and match
 comparisons. Settle cursor/span and bit-order semantics before their affected APIs.
 
 Keep application grammars in examples or proof fixtures as the API is organized;

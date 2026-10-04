@@ -10,3 +10,4 @@ import RustHammer.DependentProofs
 import RustHammer.ByteProofs
 import RustHammer.SignedBitsProofs
 import RustHammer.IntegerProofs
+import RustHammer.IntRangeProofs

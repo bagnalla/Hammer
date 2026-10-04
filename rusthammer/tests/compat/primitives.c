@@ -57,9 +57,7 @@ int compare_signed(unsigned width, const uint8_t *input, size_t input_len,
     return accepted;
 }
 
-int compare_integer(unsigned width, unsigned signedp,
-                    const uint8_t *input, size_t input_len, unsigned offset,
-                    size_t *position, uint64_t *unsigned_value, int64_t *signed_value) {
+static HParser *integer_parser(unsigned width, unsigned signedp) {
     HParser *atom = NULL;
     switch (width) {
     case 8: atom = signedp ? h_int8() : h_uint8(); break;
@@ -69,6 +67,13 @@ int compare_integer(unsigned width, unsigned signedp,
     default: assert(0 && "unsupported integer width");
     }
     assert(atom != NULL);
+    return atom;
+}
+
+int compare_integer(unsigned width, unsigned signedp,
+                    const uint8_t *input, size_t input_len, unsigned offset,
+                    size_t *position, uint64_t *unsigned_value, int64_t *signed_value) {
+    HParser *atom = integer_parser(width, signedp);
     HParser *skip = offset ? h_bits(offset, false) : NULL;
     HParser *parser = skip ? h_right(skip, atom) : atom;
     HParseResult *result = h_parse(parser, input, input_len);
@@ -90,5 +95,38 @@ int compare_integer(unsigned width, unsigned signedp,
         h_parser_free(skip);
     }
     h_parser_free(atom);
+    return accepted;
+}
+
+int compare_range(unsigned width, unsigned signedp, unsigned character,
+                  int64_t lower, int64_t upper,
+                  const uint8_t *input, size_t input_len, unsigned offset,
+                  size_t *position, uint64_t *unsigned_value, int64_t *signed_value) {
+    HParser *atom = character ? NULL : integer_parser(width, signedp);
+    HParser *range = character ? h_ch_range((uint8_t)lower, (uint8_t)upper)
+                              : h_int_range(atom, lower, upper);
+    HParser *skip = offset ? h_bits(offset, false) : NULL;
+    HParser *parser = skip ? h_right(skip, range) : range;
+    HParseResult *result = h_parse(parser, input, input_len);
+    int accepted = result != NULL;
+    if (accepted) {
+        assert(result->ast != NULL);
+        *position = result->bit_length;
+        if (signedp) {
+            assert(result->ast->token_type == TT_SINT);
+            *signed_value = result->ast->token_data.sint;
+        } else {
+            assert(result->ast->token_type == TT_UINT);
+            *unsigned_value = result->ast->token_data.uint;
+        }
+        h_parse_result_free(result);
+    }
+    if (skip) {
+        h_parser_free(parser);
+        h_parser_free(skip);
+    }
+    h_parser_free(range);
+    if (atom)
+        h_parser_free(atom);
     return accepted;
 }

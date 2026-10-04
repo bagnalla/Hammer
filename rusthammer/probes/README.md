@@ -330,6 +330,23 @@ are eliminated during extraction.
 
 The normal Cargo consumer translates all seven readers, sequencing native
 unsigned/signed outputs through a parser reference and using the signed-byte
-complete API. Its 21 entry points Lean type-check. The reader contracts cover
+complete API. These entries Lean type-check. The reader contracts cover
 arbitrary input/cursors and both statuses; the axiom audit lists only `propext`,
 `Classical.choice`, and `Quot.sound`. No new Aeneas workaround is needed.
+
+## Typed inclusive ranges
+
+`IntRange<P, T>` stores a child and two typed endpoints, validating their order
+with `Ord` during construction. Parsing uses `Verify` over a shared child and
+a closure that borrows the endpoints. Both library MIR stages translate this
+generic source without a new workaround. The ordinary Cargo consumer also
+translates dynamic native bounds, signed/byte composition, parser references,
+the complete API, and an integer newtype implementing neither `Copy` nor `Clone`.
+All 25 consumer entry points Lean type-check.
+
+The generic Lean proof requires comparison contracts as well as a child contract;
+custom `Ord` implementations have the same proof obligations as other user code.
+Native comparison lemmas discharge those obligations by mathematical ordering.
+Constructor, accessor, cloning, filtering, and native-reader proof audits list
+only `propext`, `Classical.choice`, and `Quot.sound`. Native tests also exercise
+owned bounds/output cleanup, outside the functional destructor model.

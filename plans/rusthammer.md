@@ -1,6 +1,6 @@
 # RustHammer design and verification plan
 
-Status: verified prototype with native integer readers, signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection, 2026-10-04.
+Status: verified prototype with typed ranges, native integer readers, signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection, 2026-10-04.
 
 RustHammer will be a Rust rewrite of Hammer whose parsers can be translated
 through Charon and Aeneas and proved correct in Lean. It should preserve Hammer's
@@ -75,6 +75,26 @@ larger boundaries against `from_be_bytes` at all bit offsets, and use an
 independent string/`i128` oracle for cursors, truncation, and finality. Both MIR
 stages and cross-crate extraction pass. C comparisons add 134,896 cases against
 the named integer readers. No new Aeneas workaround is needed.
+
+`IntRange::new(parser, lower, upper)` now supplies inclusive numeric restrictions
+corresponding to `h_int_range` and, over `Byte`, `h_ch_range`. Bounds have the
+child's output type; reversed bounds return `ConfigError::InvalidBounds` during
+construction. Fields are private with immutable endpoint accessors. Parsing
+delegates to `Verify`, preserving accepted values/cursors and child errors or
+`NeedMore`, while rejected values produce recoverable `Mismatch`.
+
+The implementation uses `Ord`, supports integer newtypes, and requires no copying
+or cloning of child values or endpoints. Lean proves construction, accessors,
+cloning under field contracts, and inclusive filtering in both APIs under child
+and comparison contracts. Native scalar comparison lemmas and reader
+specializations discharge the ordering obligations for all primitive outputs.
+The ordered-bound invariant is explicit; the filtering proof also works for
+raw Lean records without that invariant because it performs only comparisons.
+Native tests cover constructor bounds, exact endpoints, signed/unsigned extremes,
+all offsets, finality, composition, and cleanup. Both MIR stages and the normal
+Cargo consumer pass, including a non-`Copy`, non-`Clone` newtype. C comparisons
+add 138,240 valid-configuration range cases. The adapter preserves unsigned
+endpoints despite C's signed bound parameters. No new Aeneas workaround is needed.
 
 `Byte` now reads eight bits as `u8`, with a proof that narrowing the numeric
 result is lossless. `BytePattern::new(pattern)` matches arbitrary borrowed byte
@@ -289,8 +309,9 @@ plan. Empty/failing parsers, checked mapping, folding, separated lists, and `Bin
 are implemented and proved, including representative dependent grammars. `Byte`
 and `BytePattern` expand the binary primitives, and signed fields are implemented
 and proved, including fixed-width readers with native Rust integer outputs.
-Next add numeric ranges, byte sets, and other restrictions from the API plan,
-with further semantic/differential checks. CI integration and the
+Inclusive typed ranges are also implemented and proved. Next add byte sets and
+other restrictions from the API plan, with further semantic/differential checks.
+CI integration and the
 recorded Aeneas callback investigation are deferred. Configurable byte and bit
 order remains unimplemented.
 
