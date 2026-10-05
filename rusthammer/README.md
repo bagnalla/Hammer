@@ -24,6 +24,7 @@ The prototype supports:
 - `Byte` producing `u8` and `BytePattern` matching arbitrary borrowed patterns,
   both supporting unaligned starts without allocation.
 - `ByteIn` and `ByteNotIn` accepting or excluding literal byte sets and returning `u8`.
+- `SkipBits` discarding arbitrary bit counts and `Tell` reporting a validated cursor.
 - Private numeric and literal configuration, validated by fallible constructors.
 - `Parser<'input>` with an associated `Output` type and explicit input finality.
 - Separate `Success`, `Error`, and `NeedMore` outcomes, with a complete-buffer convenience API.
@@ -67,6 +68,7 @@ cargo run --example signed_fields
 cargo run --example integers
 cargo run --example ranges
 cargo run --example byte_sets
+cargo run --example position
 cargo run --example bytes
 cargo run --example marker
 cargo run --example record
@@ -310,6 +312,49 @@ properties. Both MIR modes and the separate Cargo consumer pass without a new
 Aeneas workaround. The optional C check adds 147,456 cases
 against `h_in` and `h_not_in`, including empty, full, duplicate, and long sets.
 
+## Skipping and position
+
+`SkipBits::new(bits)` corresponds to `h_skip`: it discards exactly that many bits
+and returns `()`, with no implicit alignment or 64-bit field-width restriction.
+Every `usize` count is valid, so its private configuration has an infallible
+`const` constructor and a `const bits()` accessor. It reads no input bytes,
+allocates nothing, and advances in constant time. Parsing validates the cursor
+even for a zero count. Insufficient input returns `NeedMore` on partial input
+and `UnexpectedEnd` on final input, with the usual retry/backtracking rules.
+
+`Tell` corresponds to `h_tell` and returns the current `Cursor` without consuming
+input. It succeeds immediately at every valid position in either input mode,
+including the end of a partial buffer, and rejects invalid cursors with
+`InvalidCursor`. `End` remains the operation that requires finality. Both new
+parsers implement `Copy`/`Clone`; `Tell` is zero-sized and both outputs are owned.
+Unbounded repetition rejects successful `Tell` or zero-bit skips with `NonProgress`.
+
+```rust
+use rusthammer::{Cursor, Parser, Right, SkipBits, Tell};
+
+let parser = Right { first: SkipBits::new(81), second: Tell };
+let end = Cursor { byte: 11, bit: 0 };
+assert_eq!(parser.parse(&[0; 11], Cursor { byte: 0, bit: 7 }), Ok((end, end)));
+```
+
+Position reporting preserves byte-and-bit coordinates instead of forming an
+absolute `usize` bit count; the [known C overflow issue](../plans/rusthammer.md#known-c-issue-absolute-bit-position-overflow)
+records why this matters. A private advancement helper splits the count into
+whole bytes and a bounded remainder, handles a bit carry, and checks the
+remaining input before adding to the byte index. Its Lean contract uses
+unbounded natural-number positions and covers every `usize` input length and
+count without assuming that the absolute bit position fits in `usize`.
+
+The [position example](examples/position.rs) parses a bit count, skips that many
+bits, records the next field's cursor, and decodes an unaligned byte. Native
+tests compare against independent `u128` position arithmetic, including virtual
+lengths near `usize::MAX` without allocating input. They also cover both statuses,
+all bit offsets, truncation, invalid cursors, zero counts, parser references,
+dependent counts, lookahead, backtracking, and repetition. Both MIR modes and
+all 35 consumer entry points translate and Lean type-check without a new
+workaround. The C comparison adds 118,188 cases for `h_skip` and `h_tell` at
+representable positions, including canonical end-of-input and large skip counts.
+
 ## Bytes and byte patterns
 
 `Byte` corresponds to `h_uint8()`: it consumes eight MSB-first bits and returns
@@ -368,9 +413,10 @@ python3 tools/compare_primitives.py --hammer-library ../build/opt/src/libhammer.
 This check needs GCC and compares complete input at valid starting cursors.
 It does not assert equivalence of streaming interfaces or other C backends.
 The tool also checks signed bit fields and all named fixed-width integer readers.
-It also checks integer and byte ranges and byte sets, for 458,877 cases in total:
-10,561 byte/pattern, 27,724 signed-field, 134,896 fixed-width, 138,240 range, and
-147,456 byte-set cases.
+It also checks integer and byte ranges, byte sets, and skipping/position, for
+577,065 cases in total:
+10,561 byte/pattern, 27,724 signed-field, 134,896 fixed-width, 138,240 range,
+147,456 byte-set, and 118,188 skip/position cases.
 Unsigned results retain their full range, including `u64::MAX`, when normalized
 for comparison. C `h_int_range` accepts `int64_t` endpoints even for unsigned
 children and then casts them to `uint64_t` for comparison. The adapter encodes
@@ -1083,6 +1129,15 @@ exactly eight bits, and satisfies membership/exclusion. Lists with equal
 membership have equivalent contracts regardless of order or duplicates.
 The axiom audit lists only `propext`, `Classical.choice`, and `Quot.sound`.
 
+[PositionSpec.lean](lean/RustHammer/PositionSpec.lean) specifies advancement using
+mathematical bit positions and bounds, and position reporting as cursor identity
+after validation. Its [proofs](lean/RustHammer/PositionProofs.lean) establish safe
+arithmetic and casts for every input length, raw cursor, and count; constructor,
+accessor, and clone contracts; both parsing interfaces; exact advancement; and
+zero-count behavior. `Tell` never returns `NeedMore`, even on partial input.
+An audit of all 14 public position theorems finds only `propext`,
+`Classical.choice`, and `Quot.sound`.
+
 [ControlSpec.lean](lean/RustHammer/ControlSpec.lean) defines literal matching,
 ordered choice, optionality, lookahead, end-of-input, and the marker grammar. Its
 [proofs](lean/RustHammer/ControlProofs.lean) reuse the numeric and sequencing
@@ -1223,6 +1278,10 @@ complete-input operations.
 | `byte_in_bitmap_with_spec`, `byte_not_in_bitmap_with_spec`, `byte_in_spec`, `byte_not_in_spec` | Total parsing for every bitmap preserves byte decoding and finality; `*_final_spec` excludes `NeedMore` on final input. |
 | `byte_in_with_spec`, `byte_not_in_with_spec`, `byte_in_set_spec`, `byte_not_in_set_spec` | Construction's representation relation recovers the original literal-set contract in both APIs. |
 | `byte_set_success`, `byte_set_membership_ext` | Success consumes exactly eight bits with the decoded member/nonmember value; lists with equal membership have equivalent contracts. |
+| `advance_cursor_spec`, `advance_cursor_zero_spec` | Cursor arithmetic is total and agrees with unbounded positions for every machine length/count; zero counts validate and preserve the cursor. |
+| `skip_bits_new_spec`, `skip_bits_bits_spec`, `skip_bits_clone_spec`, `tell_clone_spec` | Construction, access, and cloning preserve configuration without extra validity assumptions. |
+| `skip_bits_with_spec`, `skip_bits_final_spec`, `skip_bits_spec`, `skip_bits_success` | Skips consume exactly the requested bits, with cursor-validation precedence and correct partial/final exhaustion. |
+| `skip_bits_zero_with_spec`, `tell_with_spec`, `tell_spec`, `tell_never_need_more` | Zero skips and position reporting validate the cursor and succeed without consuming input at every valid position, regardless of finality. |
 | `signed_bits_new_spec`, `signed_bits_new_valid`, `signed_bits_width_spec` | Construction rejects precisely widths above 64, establishes the private invariant, and preserves the width. |
 | `sign_extend_spec`, `signed_value_bounds` | Sign extension equals mathematical two's-complement interpretation, all arithmetic/casts are in bounds, and nonempty fields have their specified signed range. |
 | `signed_bits_with_spec`, `signed_bits_final_spec`, `signed_bits_spec` | Total signed decoding for every input/cursor and validated width, including zero width, truncation, and finality. |
@@ -1334,7 +1393,7 @@ is now available.
 
 Expand binary primitives and match restrictions, with semantic and differential
 checks. Fixed-width typed integer readers, inclusive ranges, and byte sets are
-implemented and proved; next add skipping/position and match comparisons.
+implemented and proved, as are `SkipBits` and `Tell`; next add match comparisons.
 Settle cursor/span and bit-order semantics before their affected APIs.
 
 Keep application grammars in examples or proof fixtures as the API is organized;

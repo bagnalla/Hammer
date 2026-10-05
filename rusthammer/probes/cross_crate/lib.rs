@@ -7,9 +7,43 @@ extern crate alloc;
 use rusthammer::{
     BeI16, BeI32, BeI64, BeU16, BeU32, BeU64, Bind, Bit, Bits, Byte, ByteIn, ByteNotIn,
     BytePattern, ConfigError, Cursor, End, FoldRepeat, Ignore, InputStatus, IntRange, Left,
-    Literal, Map, Middle, ParseError, ParseOutcome, Parser, Right, Seq, SignedBits, TakeAligned,
-    TryMap, I8,
+    Literal, Map, Middle, ParseError, ParseOutcome, Parser, Right, Seq, SignedBits, SkipBits,
+    TakeAligned, Tell, TryMap, I8,
 };
+
+pub fn skipped_position(
+    input: &[u8],
+    cursor: Cursor,
+    bits: usize,
+    status: InputStatus,
+) -> ParseOutcome<Cursor> {
+    let skip = SkipBits::new(bits);
+    Right {
+        first: &skip,
+        second: Tell,
+    }
+    .parse_with(input, cursor, status)
+}
+
+pub fn reported_position(
+    input: &[u8],
+    cursor: Cursor,
+    status: InputStatus,
+) -> ParseOutcome<Cursor> {
+    Tell.parse_with(input, cursor, status)
+}
+
+pub fn complete_skip(
+    parser: &SkipBits,
+    input: &[u8],
+    cursor: Cursor,
+) -> Result<(Cursor, ()), ParseError> {
+    parser.parse(input, cursor)
+}
+
+pub fn skip_configuration(bits: usize) -> usize {
+    SkipBits::new(bits).clone().bits()
+}
 
 pub fn byte_in(
     bytes: &[u8],
@@ -397,6 +431,53 @@ pub fn leading_ones(input: &[u8], status: InputStatus) -> ParseOutcome<alloc::ve
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn positions_and_dynamic_skips_cross_crate_boundaries() {
+        let cursor = Cursor { byte: 0, bit: 7 };
+        let end = Cursor { byte: 11, bit: 0 };
+        assert_eq!(skip_configuration(usize::MAX), usize::MAX);
+        assert_eq!(
+            skipped_position(&[0; 11], cursor, 81, InputStatus::Partial),
+            ParseOutcome::Success(end, end)
+        );
+        assert_eq!(
+            skipped_position(&[0; 10], cursor, 81, InputStatus::Partial),
+            ParseOutcome::NeedMore
+        );
+        assert_eq!(
+            skipped_position(&[0; 10], cursor, 81, InputStatus::Final),
+            ParseOutcome::Error(ParseError::UnexpectedEnd)
+        );
+        assert_eq!(
+            complete_skip(&SkipBits::new(81), &[0; 11], cursor),
+            Ok((end, ()))
+        );
+        assert_eq!(
+            complete_skip(&SkipBits::new(usize::MAX), &[0], cursor),
+            Err(ParseError::UnexpectedEnd)
+        );
+        assert_eq!(
+            reported_position(&[], Cursor::start(), InputStatus::Partial),
+            ParseOutcome::Success(Cursor::start(), Cursor::start())
+        );
+        assert_eq!(
+            reported_position(&[0], cursor, InputStatus::Final),
+            ParseOutcome::Success(cursor, cursor)
+        );
+        let invalid = Cursor {
+            byte: usize::MAX,
+            bit: 0,
+        };
+        assert_eq!(
+            reported_position(&[], invalid, InputStatus::Partial),
+            ParseOutcome::Error(ParseError::InvalidCursor)
+        );
+        assert_eq!(
+            skipped_position(&[], invalid, 0, InputStatus::Final),
+            ParseOutcome::Error(ParseError::InvalidCursor)
+        );
+    }
 
     #[test]
     fn byte_sets_keep_membership_and_finality_across_crates() {

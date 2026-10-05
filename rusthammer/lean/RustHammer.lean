@@ -12,3 +12,4 @@ import RustHammer.SignedBitsProofs
 import RustHammer.IntegerProofs
 import RustHammer.IntRangeProofs
 import RustHammer.ByteSetProofs
+import RustHammer.PositionProofs

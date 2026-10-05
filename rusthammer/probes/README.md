@@ -365,8 +365,27 @@ Both MIR stages translate without a source workaround or additional model.
 The normal Cargo consumer translates direct membership/exclusion, sequencing
 with owned bitmaps, shared parser references, cloning, and the complete API.
 Additional entries return an owned parser from a borrowed construction slice
-and invoke acceptance queries. All 31 consumer entry points Lean type-check.
+and invoke acceptance queries. All 35 consumer entry points Lean type-check.
 Native tests check 32-byte size and parser independence from the source slice.
 All byte-set proof audits list only `propext`, `Classical.choice`,
 and `Quot.sound`. This supported predicate returns an owned boolean; the
 separately recorded borrowed-aggregate callback limitation remains deferred.
+
+## Skipping and position reporting
+
+`SkipBits` and `Tell` share a private length-based cursor advancement helper.
+It splits arbitrary `usize` bit counts into whole bytes and a bounded remainder,
+then checks the remaining byte capacity before advancing. `Tell` advances by
+zero and returns the validated cursor. Neither operation reads input bytes,
+allocates, or forms a machine-sized absolute bit position.
+
+Both promoted and optimized MIR translate using existing scalar models, with
+no new source workaround. The consumer checks dynamic construction, cloning,
+the `bits()` accessor, shared parser references, sequencing with `Tell`, direct
+position reporting, and the complete skip API. All 35 entry points Lean
+type-check. Native tests include machine-limit counts and virtual input lengths;
+the mathematical advancement proof covers every `usize` length/count and both
+finality modes through the public parser contracts. C comparisons are limited
+to representable C positions because of its documented absolute-position issue.
+All 14 public position theorems were axiom-audited; their dependencies are limited
+to `propext`, `Classical.choice`, and `Quot.sound`.

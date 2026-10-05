@@ -264,7 +264,7 @@ The combinators above also need a deliberate primitive and extension inventory:
 | Signed numbers | Implemented and proved: `SignedBits::new(width)` corresponds to `h_bits(width, true)` and returns `i64` for widths 0 through 64. Zero width returns zero after validating the cursor. Nonempty fields use specified two's-complement interpretation; every arithmetic intermediate and cast is proved in bounds. `I8`, `BeI16`, `BeI32`, and `BeI64` now correspond to `h_int*` under default ordering, with native signed outputs and proved lossless narrowing. |
 | Byte/token parsing | Implemented and proved: `Byte` (`h_uint8`) returns `u8`; `BytePattern::new(&pattern)` (`h_token` / `h_literal`) borrows an arbitrary byte pattern and returns that configured slice on success. Input and pattern lifetimes are independent. Both support unaligned starts without allocation. Empty patterns succeed without cursor validation; nonempty patterns compare complete bytes in order. `h_ch` can be a later literal-reader convenience. |
 | Byte sequences | Keep `TakeAligned` for borrowed slices. `Repeat::exact(Byte, count)` now supplies `h_bytes`-style decoded `Vec<u8>` with `alloc`; a named convenience can be added if useful. Never silently align unaligned input. |
-| Skipping and position | `SkipBits` discards a specified number of bits; `Tell` reports the cursor without consuming. Preserve `h_skip` and `h_tell` capabilities, with explicit Rust position units and checked arithmetic. |
+| Skipping and position | Implemented and proved: `SkipBits::new(bits)` discards any `usize` bit count and returns `()`; `Tell` reports the validated `Cursor` without consuming. Both validate even at zero consumption and preserve `h_skip` and `h_tell` capabilities. Skips advance in constant time, classify exhaustion by input finality, and have an infallible `const` constructor and `bits()` accessor. Position reporting avoids an absolute machine bit count; see the [known C overflow issue](rusthammer.md#known-c-issue-absolute-bit-position-overflow). |
 | Recognizing matched input | A bit-span view and `Recognize`/value-with-span operations are useful additions. Settle span invariants and bit-order interaction before promising a borrowed slice for arbitrary bit matches. |
 | Floating-point fields/ranges | Preserve as a later capability; specify bit decoding, NaNs, infinities, rounding where applicable, and available Aeneas models before exporting readers or range helpers. |
 | Bit and byte order | Preserve the capability of `h_with_endianness`. Mixed order within a partially consumed byte needs the cursor design work recorded in the main plan. No nominal wrapper around MSB-only parsing. |
@@ -332,10 +332,15 @@ helpers should represent grammar operations or output needs.
    `const` construction and O(1) membership. They have no lifetime parameter;
    `accepts(byte)` queries the filter. Constructor and bounded-lookup proofs
    connect the bitmap to the original literal set without a bitmap validity
-   invariant. Both MIR stages and all 31 consumer entry
+   invariant. Both MIR stages and all 35 consumer entry
    points pass; 147,456 additional C cases cover every byte and bit offset,
    truncation, empty/full sets, duplicates, and sets longer than 256 entries.
-   Next add skipping/position and match comparisons as specified above.
+   `SkipBits` and `Tell` now add constant-time skipping and cursor reporting,
+   with total cursor-advancement proofs over all machine lengths/counts and
+   both input statuses. Native virtual-length tests cover machine boundaries
+   without allocating input; 118,188 C comparisons cover representable positions.
+   Both MIR stages and all 35 consumer entries pass without a new workaround.
+   Next add match comparisons as specified above.
    Resolve cursor/span/order questions before implementing their affected APIs.
    Plan permutation, recursion, and the other larger capabilities separately.
 

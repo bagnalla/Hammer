@@ -70,6 +70,8 @@ def main():
         "--start-from", "rusthammer::parse_record",
         "--start-from", "rusthammer::Bits::new",
         "--start-from", "rusthammer::Bits::width",
+        "--start-from", "rusthammer::SkipBits::new",
+        "--start-from", "rusthammer::SkipBits::bits",
         "--start-from", "rusthammer::SignedBits::new",
         "--start-from", "rusthammer::SignedBits::width",
         "--start-from", "rusthammer::BytePattern::new",
@@ -148,6 +150,7 @@ def main():
         "ranged_u64", "ranged_pair", "ranged_count", "complete_range",
         "byte_in", "byte_not_in", "byte_set_pair", "complete_byte_set",
         "owned_byte_set", "byte_set_accepts",
+        "skipped_position", "reported_position", "complete_skip", "skip_configuration",
     )
     entry_args = [
         arg for name in entries

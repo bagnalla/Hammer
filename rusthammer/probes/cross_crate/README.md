@@ -28,6 +28,10 @@ sequencing through a shared reference and a clone, and the complete API.
 Native tests cover unaligned reads, empty/duplicate sets, errors, incompleteness,
 and parsers that outlive or are reused after changes to the construction slice.
 An entry returning an owned parser checks that no source-slice lifetime escapes.
+Position entries check dynamic skip construction, cloning and its bit-count
+accessor, sequencing a shared skip parser with `Tell`, direct position reporting,
+and the complete skip API. Native tests cover unaligned starts, skips beyond
+64 bits, exhaustion in both statuses, invalid cursors, and `usize::MAX` counts.
 
 Run `python3 tools/verify.py` from `rusthammer/`. Alongside the library tests and
 proofs, that command:
@@ -36,7 +40,7 @@ proofs, that command:
    the compiler stage available for dependencies, and Lean type-checks it.
 2. Tests this consumer with allocation disabled and enabled.
 3. Extracts the consumer with RustHammer's dependency bodies included and `alloc`
-   enabled, checks that all thirty-one entry points were translated, and Lean
+   enabled, checks that all thirty-five entry points were translated, and Lean
    type-checks the result.
 4. Rejects admitted or opaque project declarations in both extra translations.
 

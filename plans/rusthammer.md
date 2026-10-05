@@ -115,8 +115,29 @@ consumption, decoded outputs, and equivalence for lists denoting the same set. N
 cover every singleton/value pair, independent set/binary-string oracles at all
 bit offsets and truncations, both statuses, raw cursors, bitmap ownership after
 the construction slice changes or is dropped, and composition.
-Both MIR stages and all 31 consumer entry points pass without a new workaround.
-C comparisons add 147,456 byte-set cases; the total primitive corpus is 458,877.
+Both MIR stages and all 35 consumer entry points pass without a new workaround.
+C comparisons add 147,456 byte-set cases.
+
+`SkipBits::new(bits)` and `Tell` are implemented and proved. Skips discard any
+`usize` bit count in constant time without reading input bytes or allocating;
+`Tell` returns the current byte-and-bit `Cursor` without consuming. Both validate
+raw cursors, including zero-length skips; valid `Tell` and zero skips succeed in
+either status, including canonical end-of-input. Nonempty exhaustion returns
+`NeedMore` on partial input or `UnexpectedEnd` on final input. Skip configuration
+is private, with infallible `const` construction and a `const bits()` accessor.
+Both parsers are `Copy`/`Clone`, and their outputs have no borrows.
+
+The private length-based advancement helper has a total Lean contract over all
+`usize` lengths/counts, using unbounded mathematical bit positions. It proves
+all additions, subtractions, divisions, and casts safe, including positions
+whose absolute bit count would exceed `usize`. Native `u128` oracles exercise
+virtual lengths near `usize::MAX` without allocating input. Tests also cover
+truncation, raw cursors, both statuses, dependent counts, parser references,
+lookahead, backtracking, and zero-consumption repetition. Both MIR stages and
+all 35 consumer entries pass without a new workaround. C comparisons add
+118,188 skip/position cases; the total primitive corpus is 577,065. The
+[known C absolute-position overflow](#known-c-issue-absolute-bit-position-overflow)
+remains a separate issue; differential checks use representable C positions.
 
 `Byte` now reads eight bits as `u8`, with a proof that narrowing the numeric
 result is lossless. `BytePattern::new(pattern)` matches arbitrary borrowed byte
@@ -331,8 +352,8 @@ plan. Empty/failing parsers, checked mapping, folding, separated lists, and `Bin
 are implemented and proved, including representative dependent grammars. `Byte`
 and `BytePattern` expand the binary primitives, and signed fields are implemented
 and proved, including fixed-width readers with native Rust integer outputs.
-Inclusive typed ranges and byte sets are also implemented and proved. Next add
-skipping/position and match restrictions from the API plan, with further
+Inclusive typed ranges, byte sets, skipping, and position reporting are also
+implemented and proved. Next add match restrictions from the API plan, with further
 semantic/differential checks.
 CI integration and the
 recorded Aeneas callback investigation are deferred. Configurable byte and bit
@@ -513,6 +534,63 @@ Specify field width, sign extension, byte order, bit order, alignment, padding,
 and end-of-input behavior. Preserve unaligned byte parsing deliberately. Aligned
 payloads can use borrowed slices; unaligned payloads may need a bit view, a span,
 or decoded values.
+
+### Known C issue: absolute bit position overflow
+
+Open C Hammer issue, observed on 2026-10-04 in checkout `a8dc507`. The
+[`h_input_stream_pos` helper](../src/internal.h) converts a byte position to an
+absolute bit count using `size_t` arithmetic:
+
+```c
+(state->pos + state->index) * 8 + state->bit_offset + state->margin
+```
+
+Its addition and multiplication bounds are enforced only by ordinary `assert`
+checks. With assertions enabled, an oversized position aborts the process; with
+`NDEBUG`, the checks disappear and unsigned arithmetic can wrap. The
+[`h_tell` implementation](../src/parsers/seek.c) stores this result in a `uint64_t`
+token, but that widening happens after the `size_t` calculation and cannot repair
+overflow on a 32-bit target.
+
+Multiplication first overflows at byte position `SIZE_MAX / 8 + 1`: 512 MiB with
+32-bit `size_t`, or 2 EiB with 64-bit `size_t`. The current position assertion is
+slightly stricter: it requires `pos + index < SIZE_MAX / 8`, rejecting the byte
+immediately before that overflow boundary as well.
+
+A minimal helper-level reproducer is:
+
+```c
+#include <sys/types.h>
+#include "internal.h"
+#include <stdio.h>
+
+int main(void) {
+    HInputStream stream = {.pos = SIZE_MAX / 8 + 1};
+    printf("%zu\n", h_input_stream_pos(&stream));
+    return 0;
+}
+```
+
+Compile from the repository root with `cc -std=gnu99 -O2 -Isrc`, once with
+`-DNDEBUG` and once without. On the tested 64-bit host, the former prints `0` and
+the latter fails the assertion in `h_input_stream_pos`. This uses a synthetic
+stream state and does not allocate or parse a 2 EiB input. Assertion behavior
+depends on `NDEBUG`, not optimization alone; the current SCons `opt` variant
+adds `-O3` without defining `NDEBUG`.
+
+The C follow-up is checked position/length arithmetic with a defined failure
+path and boundary tests with and without assertions. Audit
+`h_input_stream_length` in the same header, the base-position conversions used
+by `h_seek` (its offset checks happen after those conversions), result-length
+calculation in [packrat parsing](../src/backends/packrat.c), and the separate
+`s->pos * 8 + s->bit_offset` calculation in
+[`h_parse_finish`](../src/hammer.c). The helper reproducer does not constitute a
+full audit of those paths. No C fix has been made as part of RustHammer.
+
+RustHammer should retain byte-and-bit cursors for position reporting and prove
+cursor advancement safe without requiring an absolute bit count to fit in
+`usize`. C differential checks must stay within C's representable range; larger
+positions need independent specifications and boundary checks.
 
 ## Grammar structure and execution
 

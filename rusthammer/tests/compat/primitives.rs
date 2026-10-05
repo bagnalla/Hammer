@@ -5,7 +5,7 @@ mod rusthammer;
 
 use rusthammer::{
     BeI16, BeI32, BeI64, BeU16, BeU32, BeU64, Byte, ByteIn, ByteNotIn, BytePattern, Cursor,
-    IntRange, ParseError, Parser, SignedBits, I8,
+    IntRange, ParseError, Parser, SignedBits, SkipBits, Tell, I8,
 };
 use std::io::{self, BufRead};
 
@@ -37,10 +37,20 @@ fn main() {
     for line in io::stdin().lock().lines() {
         let line = line.unwrap();
         let fields: Vec<_> = line.split_whitespace().collect();
-        let bit = fields[1].parse().unwrap();
+        let offset: usize = fields[1].parse().unwrap();
         let input = unhex(fields[3]);
-        let cursor = Cursor { byte: 0, bit };
-        let result = if fields[0] == "byte" {
+        let cursor = Cursor {
+            byte: offset / 8,
+            bit: (offset % 8) as u8,
+        };
+        let result = if fields[0] == "skip" {
+            SkipBits::new(fields[2].parse().unwrap())
+                .parse(&input, cursor)
+                .map(|(next, ())| (next, 0))
+        } else if fields[0] == "tell" {
+            Tell.parse(&input, cursor)
+                .map(|(next, at)| (next, (at.byte * 8 + usize::from(at.bit)) as i128))
+        } else if fields[0] == "byte" {
             widened(Byte, &input, cursor)
         } else if fields[0] == "in" || fields[0] == "not_in" {
             let bytes = unhex(fields[2]);

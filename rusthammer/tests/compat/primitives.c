@@ -4,6 +4,33 @@
 #include <assert.h>
 #include <string.h>
 
+int compare_position(unsigned tell, size_t bits, const uint8_t *input, size_t input_len,
+                     unsigned offset, size_t *position, size_t *value) {
+    HParser *atom = tell ? h_tell() : h_skip(bits);
+    HParser *leading = offset ? h_skip(offset) : NULL;
+    HParser *parser = leading ? h_right(leading, atom) : atom;
+    HParseResult *result = h_parse(parser, input, input_len);
+    int accepted = result != NULL;
+    if (accepted) {
+        *position = result->bit_length;
+        if (tell) {
+            assert(result->ast != NULL);
+            assert(result->ast->token_type == TT_UINT);
+            *value = (size_t)result->ast->token_data.uint;
+        } else {
+            assert(result->ast == NULL);
+            *value = 0;
+        }
+        h_parse_result_free(result);
+    }
+    if (leading) {
+        h_parser_free(parser);
+        h_parser_free(leading);
+    }
+    h_parser_free(atom);
+    return accepted;
+}
+
 int compare_bytes(unsigned byte_reader, const uint8_t *pattern, size_t pattern_len,
                   const uint8_t *input, size_t input_len, unsigned offset,
                   size_t *position, unsigned *value) {

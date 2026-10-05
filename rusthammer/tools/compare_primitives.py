@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare numeric/byte primitives, ranges, and sets with C Hammer on complete input.
+"""Compare numeric/byte primitives, ranges, sets, and positions with C Hammer.
 
 Requires GCC, rustc, and an already built C Hammer shared library. The ordinary
 Rust/Lean verification command does not require a C build or this optional tool.
@@ -12,6 +12,20 @@ import subprocess
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def position_cases():
+    maximum = (1 << (8 * c.sizeof(c.c_size_t))) - 1
+    counts = [*range(74), 127, 128, 129, 255, 256, 257,
+              maximum // 8, maximum - 1, maximum]
+    for length in [*range(10), 16, 17, 31, 32, 33]:
+        data = bytes((i * 73 + 17) % 256 for i in range(length))
+        # C reaches the start with a leading skip. Keep positions representable
+        # by its absolute bit count; Rust tests/proofs cover larger virtual inputs.
+        for offset in range(8 * length + 1):
+            yield "tell", offset, 0, data
+            for count in counts:
+                yield "skip", offset, count, data
 
 
 def byte_cases():
@@ -148,6 +162,10 @@ def main():
     parse_set = hammer.compare_byte_set
     parse_set.argtypes = parse.argtypes
     parse_set.restype = c.c_int
+    parse_position = hammer.compare_position
+    parse_position.argtypes = [c.c_uint, c.c_size_t, c.c_char_p, c.c_size_t, c.c_uint,
+                               c.POINTER(c.c_size_t), c.POINTER(c.c_size_t)]
+    parse_position.restype = c.c_int
     parse_signed = hammer.compare_signed
     parse_signed.argtypes = [c.c_uint, c.c_char_p, c.c_size_t, c.c_uint,
                             c.POINTER(c.c_size_t), c.POINTER(c.c_int64)]
@@ -166,7 +184,8 @@ def main():
     integer_corpus = list(integer_cases())
     range_corpus = list(range_cases())
     set_corpus = list(byte_set_cases())
-    corpus = byte_corpus + signed_corpus + integer_corpus + range_corpus + set_corpus
+    position_corpus = list(position_cases())
+    corpus = byte_corpus + signed_corpus + integer_corpus + range_corpus + set_corpus + position_corpus
     lines = []
     for kind, offset, config, data in corpus:
         if kind.startswith("range_"):
@@ -181,7 +200,11 @@ def main():
     for case, actual in zip(corpus, results):
         kind, offset, config, data = case
         position = c.c_size_t()
-        if kind == "signed":
+        if kind in ("skip", "tell"):
+            value = c.c_size_t()
+            accepted = parse_position(kind == "tell", config, data, len(data), offset,
+                                      c.byref(position), c.byref(value))
+        elif kind == "signed":
             value = c.c_int64()
             accepted = parse_signed(config, data, len(data), offset, c.byref(position), c.byref(value))
         elif kind in ("in", "not_in"):
@@ -212,7 +235,7 @@ def main():
     print(f"C/Rust primitive comparison passed: {len(corpus)} cases "
           f"({len(byte_corpus)} byte/pattern, {len(signed_corpus)} signed, "
           f"{len(integer_corpus)} fixed-width, {len(range_corpus)} range, "
-          f"{len(set_corpus)} byte-set).")
+          f"{len(set_corpus)} byte-set, {len(position_corpus)} position).")
     print("Acceptance, consumption, and decoded outputs agree.")
 
 
