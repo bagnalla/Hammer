@@ -23,6 +23,7 @@ The prototype supports:
 - `IntRange<P, T>` for inclusive ranges with typed, validated bounds.
 - `Byte` producing `u8` and `BytePattern` matching arbitrary borrowed patterns,
   both supporting unaligned starts without allocation.
+- `ByteIn` and `ByteNotIn` accepting or excluding literal byte sets and returning `u8`.
 - Private numeric and literal configuration, validated by fallible constructors.
 - `Parser<'input>` with an associated `Output` type and explicit input finality.
 - Separate `Success`, `Error`, and `NeedMore` outcomes, with a complete-buffer convenience API.
@@ -65,6 +66,7 @@ cargo run --example fields
 cargo run --example signed_fields
 cargo run --example integers
 cargo run --example ranges
+cargo run --example byte_sets
 cargo run --example bytes
 cargo run --example marker
 cargo run --example record
@@ -253,6 +255,61 @@ against `h_int_range` and `h_ch_range` using valid ordered bounds; Rust rejects
 reversed configuration during construction rather than constructing C's empty
 range parser.
 
+## Byte sets
+
+`ByteIn::new(bytes)` and `ByteNotIn::new(bytes)` correspond to C Hammer's `h_in`
+and `h_not_in`. Each reads one byte and returns its `u8` value, accepting it when
+it belongs to the configured set or lies outside it, respectively. Both reuse
+`Verify` over `Byte`, consuming eight MSB-first bits without implicit alignment.
+
+```rust
+use rusthammer::{ByteIn, ByteNotIn, Cursor, Parser};
+
+const SEPARATOR: ByteIn = ByteIn::new(b",;:");
+let content = ByteNotIn::new(b"\r\n");
+assert!(SEPARATOR.accepts(b';'));
+assert!(!content.accepts(b'\n'));
+assert_eq!(SEPARATOR.parse(b";", Cursor::start()),
+    Ok((Cursor { byte: 1, bit: 0 }, b';')));
+assert_eq!(content.parse(b"x", Cursor::start()),
+    Ok((Cursor { byte: 1, bit: 0 }, b'x')));
+```
+
+These are literal byte sets, with no regular-expression syntax: `b"0-9"` denotes
+the three bytes `0`, `-`, and `9`. Use `b"0123456789"` or `IntRange` over `Byte`
+for ASCII digits. Order and duplicates do not affect membership; embedded zeros,
+all 256 byte values, and slices longer than 256 entries are valid.
+
+Both parsers own a private 32-byte bitmap stored as `[u64; 4]`. Construction
+scans the supplied slice once, setting the bit for each value; lookups use one
+word and one bit mask, taking O(1) time independent of the slice length. No heap
+allocation is needed. Constructors remain infallible `const fn`, so constant
+grammars can build their bitmaps at compile time.
+
+`accepts(byte)` is a `const` query for whether a decoded byte would pass the
+parser's filter; for `ByteNotIn` it returns true for values outside the exclusion
+set. Construction discards the original order and duplicates.
+Neither parser has a lifetime parameter, and both can outlive or be
+reused after changes to their construction slice. Both implement `Copy`/`Clone`;
+copying a parser copies 32 bytes. Parse outputs remain owned `u8` values.
+
+Decoding precedes membership testing. A decoded rejection is recoverable
+`Mismatch`; invalid cursors and insufficient input keep `Byte`'s outcomes.
+Even an empty inclusion set returns `NeedMore` for short partial input and
+`UnexpectedEnd` for short final input. After decoding, empty inclusion rejects
+every byte and empty exclusion accepts every byte.
+
+The [byte-sets example](examples/byte_sets.rs) counts a delimited field without
+library allocation. Native tests cover every singleton/value pair, independent
+binary-string/set oracles at every bit offset and truncation, both input statuses,
+raw cursors, bitmap size/ownership, acceptance queries, and composition. Lean
+proves that construction sets exactly the listed bytes, lookup agrees with bit
+membership, and all indexing, shifts, and loop arithmetic are in bounds. It also
+proves queries, cloning, both parsing APIs, and exact consumption/output
+properties. Both MIR modes and the separate Cargo consumer pass without a new
+Aeneas workaround. The optional C check adds 147,456 cases
+against `h_in` and `h_not_in`, including empty, full, duplicate, and long sets.
+
 ## Bytes and byte patterns
 
 `Byte` corresponds to `h_uint8()`: it consumes eight MSB-first bits and returns
@@ -311,8 +368,9 @@ python3 tools/compare_primitives.py --hammer-library ../build/opt/src/libhammer.
 This check needs GCC and compares complete input at valid starting cursors.
 It does not assert equivalence of streaming interfaces or other C backends.
 The tool also checks signed bit fields and all named fixed-width integer readers.
-It also checks integer and byte ranges, for 311,421 cases in total: 10,561
-byte/pattern, 27,724 signed-field, 134,896 fixed-width, and 138,240 range cases.
+It also checks integer and byte ranges and byte sets, for 458,877 cases in total:
+10,561 byte/pattern, 27,724 signed-field, 134,896 fixed-width, 138,240 range, and
+147,456 byte-set cases.
 Unsigned results retain their full range, including `u64::MAX`, when normalized
 for comparison. C `h_int_range` accepts `int64_t` endpoints even for unsigned
 children and then casts them to `uint64_t` for comparison. The adapter encodes
@@ -1007,6 +1065,24 @@ input. The constructor and accessor preserve the configured slice. An axiom
 audit of the new parser theorems lists only `propext`, `Classical.choice`, and
 `Quot.sound`; physical pointer identity is covered by native tests.
 
+[ByteSetSpec.lean](lean/RustHammer/ByteSetSpec.lean) defines mathematical bitmap
+membership and relates it to literal lists, with exclusion negating membership.
+[ByteSetBitmapProofs.lean](lean/RustHammer/ByteSetBitmapProofs.lean) proves that
+one update adds exactly one member and construction represents precisely the
+processed prefix. The loop terminates by remaining slice length. Lookup proves
+the word index below four and the shift below 64, then connects a one-bit mask
+to mathematical membership.
+
+[ByteSetProofs.lean](lean/RustHammer/ByteSetProofs.lean) proves the public
+constructors, `accepts` queries, and cloning. It reuses `Byte` and `Verify` for
+total parsing of every bitmap in both statuses and the complete API. The
+constructor's `bitmapRepresents` relation connects those contracts to the
+caller's literal list; it is a representation-correctness statement, not a
+validity restriction on bitmaps. Success preserves the decoded value, consumes
+exactly eight bits, and satisfies membership/exclusion. Lists with equal
+membership have equivalent contracts regardless of order or duplicates.
+The axiom audit lists only `propext`, `Classical.choice`, and `Quot.sound`.
+
 [ControlSpec.lean](lean/RustHammer/ControlSpec.lean) defines literal matching,
 ordered choice, optionality, lookahead, end-of-input, and the marker grammar. Its
 [proofs](lean/RustHammer/ControlProofs.lean) reuse the numeric and sequencing
@@ -1142,6 +1218,11 @@ complete-input operations.
 | `read_bit_failure` | Every cursor without a readable bit returns the specified invalid-cursor or end-of-input error. |
 | `bit_spec` | Combines those cases into a total specification of the `Bit` parser for all inputs and raw cursors. |
 | `byte_with_spec`, `byte_spec` | Eight-bit decoding as `u8`, including lossless narrowing, invalid cursors, and exhaustion in both modes. |
+| `byte_set_new_spec`, `byte_in_new_spec`, `byte_not_in_new_spec` | Infallible construction terminates and creates a bitmap representing exactly the supplied literal set, including empty/duplicate sets. |
+| `byte_set_contains_spec`, `byte_in_accepts_spec`, `byte_not_in_accepts_spec` | Bounded bitmap lookup and acceptance queries agree with mathematical membership/exclusion. |
+| `byte_in_bitmap_with_spec`, `byte_not_in_bitmap_with_spec`, `byte_in_spec`, `byte_not_in_spec` | Total parsing for every bitmap preserves byte decoding and finality; `*_final_spec` excludes `NeedMore` on final input. |
+| `byte_in_with_spec`, `byte_not_in_with_spec`, `byte_in_set_spec`, `byte_not_in_set_spec` | Construction's representation relation recovers the original literal-set contract in both APIs. |
+| `byte_set_success`, `byte_set_membership_ext` | Success consumes exactly eight bits with the decoded member/nonmember value; lists with equal membership have equivalent contracts. |
 | `signed_bits_new_spec`, `signed_bits_new_valid`, `signed_bits_width_spec` | Construction rejects precisely widths above 64, establishes the private invariant, and preserves the width. |
 | `sign_extend_spec`, `signed_value_bounds` | Sign extension equals mathematical two's-complement interpretation, all arithmetic/casts are in bounds, and nonempty fields have their specified signed range. |
 | `signed_bits_with_spec`, `signed_bits_final_spec`, `signed_bits_spec` | Total signed decoding for every input/cursor and validated width, including zero width, truncation, and finality. |
@@ -1252,9 +1333,9 @@ Named length/count convenience wrappers remain proposals; their core composition
 is now available.
 
 Expand binary primitives and match restrictions, with semantic and differential
-checks. Fixed-width typed integer readers and inclusive ranges are implemented
-and proved; next add byte sets using `Verify`, then skipping/position and match
-comparisons. Settle cursor/span and bit-order semantics before their affected APIs.
+checks. Fixed-width typed integer readers, inclusive ranges, and byte sets are
+implemented and proved; next add skipping/position and match comparisons.
+Settle cursor/span and bit-order semantics before their affected APIs.
 
 Keep application grammars in examples or proof fixtures as the API is organized;
 the current exported demo types are also recorded for migration in the plan.

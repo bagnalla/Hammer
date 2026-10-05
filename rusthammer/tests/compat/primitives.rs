@@ -4,8 +4,8 @@
 mod rusthammer;
 
 use rusthammer::{
-    BeI16, BeI32, BeI64, BeU16, BeU32, BeU64, Byte, BytePattern, Cursor, IntRange, ParseError,
-    Parser, SignedBits, I8,
+    BeI16, BeI32, BeI64, BeU16, BeU32, BeU64, Byte, ByteIn, ByteNotIn, BytePattern, Cursor,
+    IntRange, ParseError, Parser, SignedBits, I8,
 };
 use std::io::{self, BufRead};
 
@@ -42,6 +42,13 @@ fn main() {
         let cursor = Cursor { byte: 0, bit };
         let result = if fields[0] == "byte" {
             widened(Byte, &input, cursor)
+        } else if fields[0] == "in" || fields[0] == "not_in" {
+            let bytes = unhex(fields[2]);
+            if fields[0] == "in" {
+                widened(ByteIn::new(&bytes), &input, cursor)
+            } else {
+                widened(ByteNotIn::new(&bytes), &input, cursor)
+            }
         } else if fields[0] == "signed" {
             widened(
                 SignedBits::new(fields[2].parse().unwrap()).unwrap(),

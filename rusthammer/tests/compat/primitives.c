@@ -34,6 +34,29 @@ int compare_bytes(unsigned byte_reader, const uint8_t *pattern, size_t pattern_l
     return accepted;
 }
 
+int compare_byte_set(unsigned excluded, const uint8_t *bytes, size_t bytes_len,
+                     const uint8_t *input, size_t input_len, unsigned offset,
+                     size_t *position, unsigned *value) {
+    HParser *atom = excluded ? h_not_in(bytes, bytes_len) : h_in(bytes, bytes_len);
+    HParser *skip = offset ? h_bits(offset, false) : NULL;
+    HParser *parser = skip ? h_right(skip, atom) : atom;
+    HParseResult *result = h_parse(parser, input, input_len);
+    int accepted = result != NULL;
+    if (accepted) {
+        assert(result->ast != NULL);
+        assert(result->ast->token_type == TT_UINT);
+        *position = result->bit_length;
+        *value = (unsigned)result->ast->token_data.uint;
+        h_parse_result_free(result);
+    }
+    if (skip) {
+        h_parser_free(parser);
+        h_parser_free(skip);
+    }
+    h_parser_free(atom);
+    return accepted;
+}
+
 int compare_signed(unsigned width, const uint8_t *input, size_t input_len,
                    unsigned offset, size_t *position, int64_t *value) {
     HParser *atom = h_bits(width, true);

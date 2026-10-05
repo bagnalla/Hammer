@@ -5,10 +5,65 @@
 extern crate alloc;
 
 use rusthammer::{
-    BeI16, BeI32, BeI64, BeU16, BeU32, BeU64, Bind, Bit, Bits, Byte, BytePattern, ConfigError,
-    Cursor, End, FoldRepeat, Ignore, InputStatus, IntRange, Left, Literal, Map, Middle, ParseError,
-    ParseOutcome, Parser, Right, Seq, SignedBits, TakeAligned, TryMap, I8,
+    BeI16, BeI32, BeI64, BeU16, BeU32, BeU64, Bind, Bit, Bits, Byte, ByteIn, ByteNotIn,
+    BytePattern, ConfigError, Cursor, End, FoldRepeat, Ignore, InputStatus, IntRange, Left,
+    Literal, Map, Middle, ParseError, ParseOutcome, Parser, Right, Seq, SignedBits, TakeAligned,
+    TryMap, I8,
 };
+
+pub fn byte_in(
+    bytes: &[u8],
+    input: &[u8],
+    cursor: Cursor,
+    status: InputStatus,
+) -> ParseOutcome<u8> {
+    ByteIn::new(bytes).parse_with(input, cursor, status)
+}
+
+pub fn byte_not_in(
+    bytes: &[u8],
+    input: &[u8],
+    cursor: Cursor,
+    status: InputStatus,
+) -> ParseOutcome<u8> {
+    ByteNotIn::new(bytes).parse_with(input, cursor, status)
+}
+
+/// Independently constructed bitmaps compose through a reference and a clone.
+pub fn byte_set_pair(
+    allowed: &[u8],
+    excluded: &[u8],
+    input: &[u8],
+    status: InputStatus,
+) -> ParseOutcome<(u8, u8)> {
+    let first = ByteIn::new(allowed);
+    let second = ByteNotIn::new(excluded);
+    Seq {
+        first: &first,
+        second: second.clone(),
+    }
+    .parse_with(input, Cursor::start(), status)
+}
+
+pub fn complete_byte_set(
+    parser: &ByteNotIn,
+    input: &[u8],
+    cursor: Cursor,
+) -> Result<(Cursor, u8), ParseError> {
+    parser.parse(input, cursor)
+}
+
+/// The returned parser owns its set and can outlive the construction slice.
+pub fn owned_byte_set(bytes: &[u8]) -> ByteIn {
+    ByteIn::new(bytes)
+}
+
+pub fn byte_set_accepts(allowed: &[u8], excluded: &[u8], byte: u8) -> (bool, bool) {
+    (
+        ByteIn::new(allowed).accepts(byte),
+        ByteNotIn::new(excluded).accepts(byte),
+    )
+}
 
 pub fn ranged_u64(
     input: &[u8],
@@ -342,6 +397,65 @@ pub fn leading_ones(input: &[u8], status: InputStatus) -> ParseOutcome<alloc::ve
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn byte_sets_keep_membership_and_finality_across_crates() {
+        let cursor = Cursor { byte: 0, bit: 1 };
+        assert_eq!(
+            byte_in(&[0x80, 0, 0x80], &[0x40, 0], cursor, InputStatus::Partial),
+            ParseOutcome::Success(Cursor { byte: 1, bit: 1 }, 0x80)
+        );
+        assert_eq!(
+            byte_not_in(&[0x80], &[0x40, 0], cursor, InputStatus::Final),
+            ParseOutcome::Error(ParseError::Mismatch)
+        );
+        for bytes in [&[][..], &[0x80][..]] {
+            assert_eq!(
+                byte_in(bytes, &[0x40], cursor, InputStatus::Partial),
+                ParseOutcome::NeedMore
+            );
+            assert_eq!(
+                byte_not_in(bytes, &[0x40], cursor, InputStatus::Final),
+                ParseOutcome::Error(ParseError::UnexpectedEnd)
+            );
+        }
+        assert_eq!(
+            byte_in(&[], &[], Cursor { byte: 0, bit: 1 }, InputStatus::Partial),
+            ParseOutcome::Error(ParseError::InvalidCursor)
+        );
+    }
+
+    #[test]
+    fn byte_set_outputs_outlive_the_input_sets_and_parser() {
+        let owned = {
+            let mut bytes = [0, 128, 255];
+            let parser = owned_byte_set(&bytes);
+            bytes.fill(1);
+            parser
+        };
+        for byte in 0..=255 {
+            assert_eq!(owned.accepts(byte), byte == 0 || byte == 128 || byte == 255);
+            assert_eq!(
+                byte_set_accepts(&[0, 128, 255], &[0, 128, 255], byte),
+                (owned.accepts(byte), !owned.accepts(byte))
+            );
+        }
+        let output = {
+            let allowed = [0, 255, 0];
+            let excluded = [b'\r', b'\n'];
+            let input = [255, b'x'];
+            byte_set_pair(&allowed, &excluded, &input, InputStatus::Final)
+        };
+        assert_eq!(
+            output,
+            ParseOutcome::Success(Cursor { byte: 2, bit: 0 }, (255, b'x'))
+        );
+        let parser = ByteNotIn::new(b"\r\n");
+        assert_eq!(
+            complete_byte_set(&parser, b"x", Cursor::start()),
+            Ok((Cursor { byte: 1, bit: 0 }, b'x'))
+        );
+    }
 
     #[test]
     fn typed_ranges_keep_bounds_finality_and_rejection_across_crates() {

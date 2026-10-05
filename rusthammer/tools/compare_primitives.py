@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare numeric/byte primitives and ranges with C Hammer on complete input.
+"""Compare numeric/byte primitives, ranges, and sets with C Hammer on complete input.
 
 Requires GCC, rustc, and an already built C Hammer shared library. The ordinary
 Rust/Lean verification command does not require a C build or this optional tool.
@@ -57,6 +57,23 @@ def signed_cases():
                 data = bytes(int(bits[i:i + 8], 2) for i in range(0, len(bits), 8))
                 for length in range(int(offset != 0), len(data) + 1):
                     yield "signed", offset, width, data[:length]
+
+
+def byte_set_cases():
+    sets = (b"", b"\0", b"\xff", b"\0\x80\xff", b"\xff\0\x80\0\xff",
+            b"0-9", b"0123456789", b"\r\n", bytes(range(256)),
+            bytes(reversed(range(256))), bytes(range(0, 256, 2)), b"\0\x80\xff" * 100)
+    for byte_set in sets:
+        for value in range(256):
+            for offset in range(8):
+                bits = "1010101"[:offset] + f"{value:08b}" + "01100101"
+                bits += "0" * (-len(bits) % 8)
+                data = bytes(int(bits[i:i + 8], 2) for i in range(0, len(bits), 8))
+                # Compare only reachable starting cursors; native Rust tests
+                # separately cover raw invalid cursors and partial-input status.
+                for length in range(int(offset != 0), len(data) + 1):
+                    yield "in", offset, byte_set, data[:length]
+                    yield "not_in", offset, byte_set, data[:length]
 
 
 def integer_cases():
@@ -128,6 +145,9 @@ def main():
     parse.argtypes = [c.c_uint, c.c_char_p, c.c_size_t, c.c_char_p, c.c_size_t,
                       c.c_uint, c.POINTER(c.c_size_t), c.POINTER(c.c_uint)]
     parse.restype = c.c_int
+    parse_set = hammer.compare_byte_set
+    parse_set.argtypes = parse.argtypes
+    parse_set.restype = c.c_int
     parse_signed = hammer.compare_signed
     parse_signed.argtypes = [c.c_uint, c.c_char_p, c.c_size_t, c.c_uint,
                             c.POINTER(c.c_size_t), c.POINTER(c.c_int64)]
@@ -145,13 +165,14 @@ def main():
     signed_corpus = list(signed_cases())
     integer_corpus = list(integer_cases())
     range_corpus = list(range_cases())
-    corpus = byte_corpus + signed_corpus + integer_corpus + range_corpus
+    set_corpus = list(byte_set_cases())
+    corpus = byte_corpus + signed_corpus + integer_corpus + range_corpus + set_corpus
     lines = []
     for kind, offset, config, data in corpus:
         if kind.startswith("range_"):
             setting = ':'.join(str(part) for part in config)
         else:
-            setting = (config.hex() or "-") if kind in ("byte", "pattern") else str(config)
+            setting = (config.hex() or "-") if kind in ("byte", "pattern", "in", "not_in") else str(config)
         lines.append(f"{kind} {offset} {setting} {data.hex() or '-'}\n")
     wire = "".join(lines)
     rust = subprocess.run([str(driver)], input=wire, text=True, capture_output=True, check=True)
@@ -163,6 +184,10 @@ def main():
         if kind == "signed":
             value = c.c_int64()
             accepted = parse_signed(config, data, len(data), offset, c.byref(position), c.byref(value))
+        elif kind in ("in", "not_in"):
+            value = c.c_uint()
+            accepted = parse_set(kind == "not_in", config, len(config), data, len(data), offset,
+                                 c.byref(position), c.byref(value))
         elif kind.startswith("range_"):
             width, lower, upper = config
             unsigned_value, signed_value = c.c_uint64(), c.c_int64()
@@ -186,7 +211,8 @@ def main():
         assert actual == expected, (case, actual, expected)
     print(f"C/Rust primitive comparison passed: {len(corpus)} cases "
           f"({len(byte_corpus)} byte/pattern, {len(signed_corpus)} signed, "
-          f"{len(integer_corpus)} fixed-width, {len(range_corpus)} range).")
+          f"{len(integer_corpus)} fixed-width, {len(range_corpus)} range, "
+          f"{len(set_corpus)} byte-set).")
     print("Acceptance, consumption, and decoded outputs agree.")
 
 

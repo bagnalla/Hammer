@@ -23,6 +23,11 @@ Range entries check dynamic unsigned bounds through `u64::MAX`, signed and byte
 range sequencing through a child reference, the complete API, and an owned integer
 newtype with derived ordering and neither `Copy` nor `Clone`. Configuration errors
 remain separate from parsing outcomes.
+Byte-set entries check owned bitmap construction, membership/exclusion queries,
+sequencing through a shared reference and a clone, and the complete API.
+Native tests cover unaligned reads, empty/duplicate sets, errors, incompleteness,
+and parsers that outlive or are reused after changes to the construction slice.
+An entry returning an owned parser checks that no source-slice lifetime escapes.
 
 Run `python3 tools/verify.py` from `rusthammer/`. Alongside the library tests and
 proofs, that command:
@@ -31,7 +36,7 @@ proofs, that command:
    the compiler stage available for dependencies, and Lean type-checks it.
 2. Tests this consumer with allocation disabled and enabled.
 3. Extracts the consumer with RustHammer's dependency bodies included and `alloc`
-   enabled, checks that all twenty-five entry points were translated, and Lean
+   enabled, checks that all thirty-one entry points were translated, and Lean
    type-checks the result.
 4. Rejects admitted or opaque project declarations in both extra translations.
 

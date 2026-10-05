@@ -536,6 +536,151 @@ fixed_integer!(
     }
 );
 
+/// Fixed bitmap over the byte domain, shared by inclusion and exclusion.
+#[derive(Clone, Copy)]
+struct ByteSet {
+    words: [u64; 4],
+}
+
+impl ByteSet {
+    const fn new(bytes: &[u8]) -> Self {
+        let mut words = [0u64; 4];
+        let mut index = 0;
+        while index < bytes.len() {
+            let byte = bytes[index];
+            words[(byte / 64) as usize] |= 1u64 << (byte % 64);
+            index += 1;
+        }
+        Self { words }
+    }
+
+    const fn contains(&self, byte: u8) -> bool {
+        self.words[(byte / 64) as usize] & (1u64 << (byte % 64)) != 0
+    }
+}
+
+/// Read one byte belonging to a set of literal byte values.
+///
+/// Corresponds to Hammer's `h_in`. The set is a byte slice, not a regular
+/// expression: order and duplicates do not affect membership. Construction is
+/// infallible, including for empty sets and embedded zeros, and allocates nothing.
+/// Construction scans the slice once into an owned 32-byte bitmap; membership
+/// takes constant time. The parser does not borrow the slice or preserve its
+/// order and duplicates. Copying a parser copies its bitmap.
+///
+/// Parsing delegates to `Verify` over `Byte`, returning the decoded `u8` and
+/// consuming eight bits on success, even from an unaligned cursor. A decoded
+/// nonmember returns `Mismatch`. Invalid cursors and short input follow `Byte`'s
+/// rules, including `NeedMore` on partial input, even when the set is empty.
+/// The output does not borrow the set, input, or parser.
+///
+/// ```
+/// use rusthammer::{ByteIn, Cursor, Parser};
+/// const SEPARATOR: ByteIn = ByteIn::new(b",;:");
+/// assert!(SEPARATOR.accepts(b';'));
+/// assert_eq!(SEPARATOR.parse(b";", Cursor::start()),
+///     Ok((Cursor { byte: 1, bit: 0 }, b';')));
+/// ```
+///
+/// ```compile_fail,E0616
+/// let hidden = rusthammer::ByteIn::new(b"abc").set;
+/// ```
+#[derive(Clone, Copy)]
+pub struct ByteIn {
+    set: ByteSet,
+}
+
+impl ByteIn {
+    /// Build an owned bitmap of allowed values. Every slice is a valid set.
+    pub const fn new(bytes: &[u8]) -> Self {
+        Self {
+            set: ByteSet::new(bytes),
+        }
+    }
+
+    /// Test whether a decoded byte would be accepted, without reading input.
+    pub const fn accepts(&self, byte: u8) -> bool {
+        self.set.contains(byte)
+    }
+}
+
+impl<'input> Parser<'input> for ByteIn {
+    type Output = u8;
+
+    fn parse_with(
+        &self,
+        input: &'input [u8],
+        cursor: Cursor,
+        status: InputStatus,
+    ) -> ParseOutcome<u8> {
+        Verify {
+            parser: Byte,
+            predicate: |value: &u8| self.accepts(*value),
+        }
+        .parse_with(input, cursor, status)
+    }
+}
+
+/// Read one byte outside a set of literal byte values.
+///
+/// Corresponds to Hammer's `h_not_in`. Like `ByteIn`, construction is infallible
+/// and allocation-free, and parsing uses `Verify` over `Byte`. A decoded member
+/// returns `Mismatch`; success returns the decoded `u8` and consumes eight bits
+/// without implicit alignment. An empty exclusion set accepts any decoded byte.
+/// Short input still returns `NeedMore` on partial input or `UnexpectedEnd` on
+/// final input. The output does not borrow the set, input, or parser.
+/// Construction scans the slice once into an owned 32-byte bitmap; membership
+/// takes constant time. The parser does not borrow the slice or preserve its
+/// order and duplicates. Copying a parser copies its bitmap.
+///
+/// ```
+/// use rusthammer::{ByteNotIn, Cursor, ParseError, Parser};
+/// let content = ByteNotIn::new(b"\r\n");
+/// assert_eq!(content.parse(b"x", Cursor::start()),
+///     Ok((Cursor { byte: 1, bit: 0 }, b'x')));
+/// assert_eq!(content.parse(b"\n", Cursor::start()), Err(ParseError::Mismatch));
+/// ```
+///
+/// ```compile_fail,E0616
+/// let hidden = rusthammer::ByteNotIn::new(b"abc").set;
+/// ```
+#[derive(Clone, Copy)]
+pub struct ByteNotIn {
+    set: ByteSet,
+}
+
+impl ByteNotIn {
+    /// Build an owned bitmap of excluded values. Every slice is a valid set.
+    pub const fn new(bytes: &[u8]) -> Self {
+        Self {
+            set: ByteSet::new(bytes),
+        }
+    }
+
+    /// Test whether a decoded byte would be accepted, without reading input.
+    /// Returns true precisely for bytes outside the configured exclusion set.
+    pub const fn accepts(&self, byte: u8) -> bool {
+        !self.set.contains(byte)
+    }
+}
+
+impl<'input> Parser<'input> for ByteNotIn {
+    type Output = u8;
+
+    fn parse_with(
+        &self,
+        input: &'input [u8],
+        cursor: Cursor,
+        status: InputStatus,
+    ) -> ParseOutcome<u8> {
+        Verify {
+            parser: Byte,
+            predicate: |value: &u8| self.accepts(*value),
+        }
+        .parse_with(input, cursor, status)
+    }
+}
+
 /// Match a borrowed byte pattern, including from an unaligned bit cursor.
 ///
 /// Success returns the configured pattern slice, whose lifetime is independent

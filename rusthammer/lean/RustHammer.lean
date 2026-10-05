@@ -11,3 +11,4 @@ import RustHammer.ByteProofs
 import RustHammer.SignedBitsProofs
 import RustHammer.IntegerProofs
 import RustHammer.IntRangeProofs
+import RustHammer.ByteSetProofs

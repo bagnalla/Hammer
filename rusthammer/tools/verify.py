@@ -74,6 +74,10 @@ def main():
         "--start-from", "rusthammer::SignedBits::width",
         "--start-from", "rusthammer::BytePattern::new",
         "--start-from", "rusthammer::BytePattern::pattern",
+        "--start-from", "rusthammer::ByteIn::new",
+        "--start-from", "rusthammer::ByteIn::accepts",
+        "--start-from", "rusthammer::ByteNotIn::new",
+        "--start-from", "rusthammer::ByteNotIn::accepts",
         "--start-from", "rusthammer::IntRange::new",
         "--start-from", "rusthammer::IntRange::lower",
         "--start-from", "rusthammer::IntRange::upper",
@@ -142,6 +146,8 @@ def main():
         "signed_field", "signed_and_unsigned",
         "integers16", "integers32", "integers64", "complete_i8",
         "ranged_u64", "ranged_pair", "ranged_count", "complete_range",
+        "byte_in", "byte_not_in", "byte_set_pair", "complete_byte_set",
+        "owned_byte_set", "byte_set_accepts",
     )
     entry_args = [
         arg for name in entries

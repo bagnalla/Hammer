@@ -342,7 +342,7 @@ a closure that borrows the endpoints. Both library MIR stages translate this
 generic source without a new workaround. The ordinary Cargo consumer also
 translates dynamic native bounds, signed/byte composition, parser references,
 the complete API, and an integer newtype implementing neither `Copy` nor `Clone`.
-All 25 consumer entry points Lean type-check.
+These consumer entry points Lean type-check.
 
 The generic Lean proof requires comparison contracts as well as a child contract;
 custom `Ord` implementations have the same proof obligations as other user code.
@@ -350,3 +350,23 @@ Native comparison lemmas discharge those obligations by mathematical ordering.
 Constructor, accessor, cloning, filtering, and native-reader proof audits list
 only `propext`, `Classical.choice`, and `Quot.sound`. Native tests also exercise
 owned bounds/output cleanup, outside the functional destructor model.
+
+## Literal byte sets
+
+`ByteIn` and `ByteNotIn` own private 32-byte bitmaps and return owned `u8` values.
+Their `const` constructors set bits in `[u64; 4]` arrays, and their `Verify`
+predicates use bounded word indexing and one-bit masks through `accepts(byte)`.
+The constructor loop's invariant relates the bitmap to the processed slice
+prefix; the lookup proof establishes bounds and mathematical bit membership.
+The parsing proof then reuses byte decoding and predicate filtering. All array
+and scalar operations use existing Aeneas models.
+
+Both MIR stages translate without a source workaround or additional model.
+The normal Cargo consumer translates direct membership/exclusion, sequencing
+with owned bitmaps, shared parser references, cloning, and the complete API.
+Additional entries return an owned parser from a borrowed construction slice
+and invoke acceptance queries. All 31 consumer entry points Lean type-check.
+Native tests check 32-byte size and parser independence from the source slice.
+All byte-set proof audits list only `propext`, `Classical.choice`,
+and `Quot.sound`. This supported predicate returns an owned boolean; the
+separately recorded borrowed-aggregate callback limitation remains deferred.

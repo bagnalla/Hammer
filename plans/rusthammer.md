@@ -96,6 +96,28 @@ Cargo consumer pass, including a non-`Copy`, non-`Clone` newtype. C comparisons
 add 138,240 valid-configuration range cases. The adapter preserves unsigned
 endpoints despite C's signed bound parameters. No new Aeneas workaround is needed.
 
+`ByteIn::new(bytes)` and `ByteNotIn::new(bytes)` now implement `h_in` / `h_not_in`
+through `Verify` over `Byte`. They return `u8` and own private `[u64; 4]` bitmaps,
+using 32 bytes per parser with no lifetime parameter. Infallible `const`
+constructors scan a literal byte slice once; `const accepts(byte)` queries and
+parse-time membership take O(1) time.
+Every slice is valid, including empty, duplicate, full, and long sets, and parser
+values are `Copy`/`Clone`. No allocation or regular-expression interpretation is
+involved. The original slice is not retained, and order/duplicates are discarded.
+Copying a parser copies its 32-byte bitmap.
+Decoding precedes filtering, retaining cursor validation and `NeedMore`/end-of-input
+precedence even for empty sets.
+
+Lean proves construction by a processed-prefix invariant and lookup by bounded
+word indexing and bit masking. It connects the bitmap to mathematical list
+membership and proves acceptance queries, cloning, both parsing APIs, exact
+consumption, decoded outputs, and equivalence for lists denoting the same set. Native tests
+cover every singleton/value pair, independent set/binary-string oracles at all
+bit offsets and truncations, both statuses, raw cursors, bitmap ownership after
+the construction slice changes or is dropped, and composition.
+Both MIR stages and all 31 consumer entry points pass without a new workaround.
+C comparisons add 147,456 byte-set cases; the total primitive corpus is 458,877.
+
 `Byte` now reads eight bits as `u8`, with a proof that narrowing the numeric
 result is lossless. `BytePattern::new(pattern)` matches arbitrary borrowed byte
 sequences at aligned or unaligned positions and returns the configured pattern
@@ -309,8 +331,9 @@ plan. Empty/failing parsers, checked mapping, folding, separated lists, and `Bin
 are implemented and proved, including representative dependent grammars. `Byte`
 and `BytePattern` expand the binary primitives, and signed fields are implemented
 and proved, including fixed-width readers with native Rust integer outputs.
-Inclusive typed ranges are also implemented and proved. Next add byte sets and
-other restrictions from the API plan, with further semantic/differential checks.
+Inclusive typed ranges and byte sets are also implemented and proved. Next add
+skipping/position and match restrictions from the API plan, with further
+semantic/differential checks.
 CI integration and the
 recorded Aeneas callback investigation are deferred. Configurable byte and bit
 order remains unimplemented.

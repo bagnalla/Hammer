@@ -207,7 +207,7 @@ Build these permanent conveniences from the core, rather than separate engines:
 | Length-prefixed aligned bytes | Decode and check a byte length, then construct `TakeAligned`. Preserve the length in the typed output if the application needs it. |
 | Discriminator-based parsing | Decode a tag and select a typed parser branch. This supplies the capability of `h_dispatch`, including an explicit default/rejection branch; retain tag and payload when needed. |
 | Numeric ranges | Implemented and proved: `IntRange::new(parser, lower, upper)` returns `Result<IntRange<P, T>, ConfigError>` and delegates to `Verify`. Inclusive bounds have the output type; private fields and a fallible constructor reject reversed bounds with `InvalidBounds`. Immutable accessors borrow both endpoints. Corresponds to `h_int_range`, and to `h_ch_range` when the child is `Byte`. |
-| Byte sets | Planned: `Verify` over `Byte` implements membership (`h_in`) and exclusion (`h_not_in`). |
+| Byte sets | Implemented and proved: `ByteIn::new(bytes)` (`h_in`) and `ByteNotIn::new(bytes)` (`h_not_in`) use `Verify` over `Byte` and return `u8`. Own private 32-byte bitmaps with O(1) membership, infallible `const` constructors, `const accepts(byte)` queries, and `Copy`/`Clone`. Empty sets and duplicates are valid; decoding always precedes membership testing. |
 | Leading whitespace | Skip repeated ASCII whitespace, then return the following parser's output, corresponding to `h_whitespace`. Specify the ASCII set explicitly instead of importing locale-dependent `isspace` behavior. |
 
 `TryMap` is useful when decoding counts: overflow during conversion to `usize`,
@@ -323,11 +323,19 @@ helpers should represent grammar operations or output needs.
    `IntRange` now adds inclusive typed restrictions by delegating to `Verify`,
    with constructor, ordering, native-reader, and generic compositional proofs.
    Bounds use `Ord`; integer newtypes need neither `Copy` nor `Clone`. Both MIR
-   stages and all 25 consumer entry points pass, and 138,240 additional C cases
+   stages and the Cargo consumer pass, and 138,240 additional C cases
    cover `h_int_range` and `h_ch_range` at every bit offset, including truncation
    and endpoint/extreme values. Native tests separately verify construction-time
-   rejection of reversed bounds. Next add byte sets via `Verify`, then
-   skipping/position and match comparisons as specified above.
+   rejection of reversed bounds. `ByteIn` and `ByteNotIn` now add literal byte
+   membership/exclusion through `Verify`, with total parsing and set-membership
+   proofs. Owned 32-byte bitmaps accept all construction slices, with infallible
+   `const` construction and O(1) membership. They have no lifetime parameter;
+   `accepts(byte)` queries the filter. Constructor and bounded-lookup proofs
+   connect the bitmap to the original literal set without a bitmap validity
+   invariant. Both MIR stages and all 31 consumer entry
+   points pass; 147,456 additional C cases cover every byte and bit offset,
+   truncation, empty/full sets, duplicates, and sets longer than 256 entries.
+   Next add skipping/position and match comparisons as specified above.
    Resolve cursor/span/order questions before implementing their affected APIs.
    Plan permutation, recursion, and the other larger capabilities separately.
 
