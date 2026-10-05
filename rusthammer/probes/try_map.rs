@@ -7,13 +7,13 @@
 #[path = "../src/lib.rs"]
 mod rusthammer;
 
-use rusthammer::{Bit, Cursor, InputStatus, ParseOutcome, Parser, TryMap};
+use rusthammer::{Bit, Cursor, ParseContext, ParseOutcome, Parser, TryMap};
 
 pub struct Flag {
     pub value: bool,
 }
 
-pub fn checked_flag(input: &[u8], expected: bool, status: InputStatus) -> ParseOutcome<Flag> {
+pub fn checked_flag(input: &[u8], expected: bool, context: ParseContext) -> ParseOutcome<Flag> {
     let parser = TryMap {
         parser: Bit,
         map: |value| {
@@ -24,5 +24,5 @@ pub fn checked_flag(input: &[u8], expected: bool, status: InputStatus) -> ParseO
             }
         },
     };
-    parser.parse_with(input, Cursor::start(), status)
+    parser.parse_with(input, Cursor::start(), context)
 }

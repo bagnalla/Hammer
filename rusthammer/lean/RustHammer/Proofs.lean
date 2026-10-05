@@ -11,9 +11,9 @@ theorem read_bit_success (input : Slice U8) (cursor : Cursor)
     read_bit input cursor ⦃ result => Spec.bitSuccess input cursor result ⦄ := by
   have hbitBound : ¬cursor.bit ≥ 8#u8 := by scalar_tac
   have hbyteBound : ¬cursor.byte ≥ input.len := by scalar_tac
-  simp only [read_bit, hbitBound, hbyteBound, ↓reduceIte]
-  step as ⟨byte, hbyteValue⟩
+  simp only [read_bit, read_bit_ordered, hbitBound, hbyteBound, ↓reduceIte]
   step as ⟨shift, hshift⟩
+  step as ⟨byte, hbyteValue⟩
   step as ⟨shifted, hshifted, hshiftedBv⟩
   step as ⟨masked, hmasked, hmaskedBv⟩
   split
@@ -44,9 +44,9 @@ theorem read_bit_failure (input : Slice U8) (cursor : Cursor)
        then ParseError.UnexpectedEnd else ParseError.InvalidCursor) ⦄ := by
   by_cases hbit : cursor.bit ≥ 8#u8
   · have hbad : ¬cursor.bit.val < 8 := by scalar_tac
-    simp [read_bit, hbit, hbad, spec_ok]
+    simp [read_bit, read_bit_ordered, hbit, hbad, spec_ok]
   · have hbyte : cursor.byte ≥ input.len := by scalar_tac
-    simp only [read_bit, hbit, hbyte, ↓reduceIte]
+    simp only [read_bit, read_bit_ordered, hbit, hbyte, ↓reduceIte]
     by_cases heq : cursor.byte = input.len <;>
       by_cases hzero : cursor.bit = 0#u8 <;>
       simp_all [spec_ok]

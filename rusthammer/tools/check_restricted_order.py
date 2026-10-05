@@ -65,16 +65,18 @@ def scope_policy(length, args):
     return None
 
 
-def compare(hammer):
-    adapter = WORK / "c-adapter.so"
+def compare(hammer, driver=None, work=WORK):
+    """Compare this corpus against either the probe or a supplied library driver."""
+    adapter = work / "c-adapter.so"
     # Reuse only the C reader/grammar adapter, not the superseded Rust probe or
     # its unrestricted expected outcomes. Internal C headers need POSIX types.
     run("gcc", "-shared", "-fPIC", "-std=c99", "-D_POSIX_C_SOURCE=200809L",
         "-Wall", "-Wextra", "-Werror", "-isystem", ROOT.parent / "src",
         PROBES / "input_order_c.c", hammer, f"-Wl,-rpath,{hammer.parent}", "-o", adapter)
-    driver = WORK / "driver"
-    run("rustc", "--edition", "2021", "--cfg", "restricted_order_driver", "-D", "warnings",
-        PROBES / "restricted_order.rs", "-o", driver)
+    if driver is None:
+        driver = work / "driver"
+        run("rustc", "--edition", "2021", "--cfg", "restricted_order_driver", "-D", "warnings",
+            PROBES / "restricted_order.rs", "-o", driver)
     library = C.CDLL(str(adapter))
     ptr, outptr = C.POINTER(C.c_uint8), C.POINTER(C.c_uint64)
     library.order_read.argtypes = [ptr, C.c_size_t, C.c_size_t, C.c_uint8, C.c_uint8,

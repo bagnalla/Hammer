@@ -14,7 +14,7 @@ theorem classify_final_spec {α : Type} (result : Spec.ParseResult α) :
 /-- The default complete entry point preserves a final-input contract. -/
 theorem complete_spec {P α : Type} (pi : Parser P α) (parser : P)
     (input : Slice U8) (cursor : Cursor) (contract : Spec.ParseResult α → Prop)
-    (hp : pi.parse_with parser input cursor .Final ⦃ outcome => Spec.completed contract outcome ⦄) :
+    (hp : pi.parse_with parser input cursor ParseContext.FINAL ⦃ outcome => Spec.completed contract outcome ⦄) :
     Parser.parse.default pi parser input cursor ⦃ result => contract result ⦄ := by
   unfold Parser.parse.default
   step with hp as ⟨outcome, houtcome⟩
@@ -26,30 +26,33 @@ theorem complete_spec {P α : Type} (pi : Parser P α) (parser : P)
     simpa [Spec.completedResult, ParseOutcome.into_complete, spec_ok] using hresult
 
 theorem bit_spec (input : Slice U8) (cursor : Cursor) :
-    Bit.Insts.RusthammerParserInputBool.parse_with () input cursor .Final
+    Bit.Insts.RusthammerParserInputBool.parse_with () input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.bitOutcome input cursor) result ⦄ := by
   unfold Bit.Insts.RusthammerParserInputBool.parse_with
-  have hp : read_bit input cursor ⦃ result => Spec.bitOutcome input cursor result ⦄ := by
+  simp only [ParseContext.FINAL, Order.DEFAULT]
+  have hp : read_bit_ordered input cursor .HighFirst ⦃ result => Spec.bitOutcome input cursor result ⦄ := by
     by_cases h : cursor.bit.val < 8 ∧ cursor.byte.val < input.val.length
-    · simpa only [Spec.bitOutcome, if_pos h] using read_bit_success input cursor h.1 h.2
-    · simpa only [Spec.bitOutcome, if_neg h] using read_bit_failure input cursor h
+    · simpa only [read_bit, Spec.bitOutcome, if_pos h] using read_bit_success input cursor h.1 h.2
+    · simpa only [read_bit, Spec.bitOutcome, if_neg h] using read_bit_failure input cursor h
   step with hp as ⟨result, hresult⟩
   step with classify_final_spec result as ⟨outcome, houtcome⟩
   exact ⟨result, hresult, houtcome⟩
 
 theorem bits_spec (parser : Bits) (input : Slice U8) (cursor : Cursor)
     (hconfig : Spec.validBits parser) :
-    Bits.Insts.RusthammerParserInputU64.parse_with parser input cursor .Final
+    Bits.Insts.RusthammerParserInputU64.parse_with parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.bitsOutcome input cursor parser.width) result ⦄ := by
   unfold Bits.Insts.RusthammerParserInputU64.parse_with
+  simp only [ParseContext.FINAL, Order.DEFAULT, read_ordered_bits]
   step with read_bits_spec input cursor parser hconfig as ⟨result, hresult⟩
   step with classify_final_spec result as ⟨outcome, houtcome⟩
   exact ⟨result, hresult, houtcome⟩
 
 theorem take_aligned_parser_spec (parser : TakeAligned) (input : Slice U8) (cursor : Cursor) :
-    TakeAligned.Insts.RusthammerParserInputSharedInputSliceU8.parse_with parser input cursor .Final
+    TakeAligned.Insts.RusthammerParserInputSharedInputSliceU8.parse_with parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.takeAlignedOutcome input cursor parser.count) result ⦄ := by
   unfold TakeAligned.Insts.RusthammerParserInputSharedInputSliceU8.parse_with
+  simp only [ParseContext.FINAL]
   step with take_aligned_spec input cursor parser.count as ⟨result, hresult⟩
   step with classify_final_spec result as ⟨outcome, houtcome⟩
   exact ⟨result, hresult, houtcome⟩
@@ -59,11 +62,11 @@ theorem seq_spec {P Q α β : Type} (pi : Parser P α) (qi : Parser Q β)
     (parser : Seq P Q) (input : Slice U8) (cursor : Cursor)
     (first : Cursor → Spec.ParseResult α → Prop)
     (second : Cursor → Spec.ParseResult β → Prop)
-    (hp : ∀ start, pi.parse_with parser.first input start .Final
+    (hp : ∀ start, pi.parse_with parser.first input start ParseContext.FINAL
       ⦃ result => Spec.completed (first start) result ⦄)
-    (hq : ∀ start, qi.parse_with parser.second input start .Final
+    (hq : ∀ start, qi.parse_with parser.second input start ParseContext.FINAL
       ⦃ result => Spec.completed (second start) result ⦄) :
-    Seq.Insts.RusthammerParserInputPair.parse_with pi qi parser input cursor .Final
+    Seq.Insts.RusthammerParserInputPair.parse_with pi qi parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.sequence first second cursor) result ⦄ := by
   unfold Seq.Insts.RusthammerParserInputPair.parse_with
   step with hp cursor as ⟨outcome, houtcome⟩
@@ -89,11 +92,11 @@ theorem seq_spec {P Q α β : Type} (pi : Parser P α) (qi : Parser Q β)
 theorem map_spec {P F α β : Type} (pi : Parser P α) (fi : core.ops.function.Fn F α β)
     (parser : Map P F) (input : Slice U8) (cursor : Cursor)
     (child : Cursor → Spec.ParseResult α → Prop) (mapping : α → β → Prop)
-    (hp : pi.parse_with parser.parser input cursor .Final
+    (hp : pi.parse_with parser.parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (child cursor) result ⦄)
     (hf : ∀ next value, child cursor (.Ok (next, value)) →
       fi.call parser.map value ⦃ result => mapping value result ⦄) :
-    Map.Insts.RusthammerParser.parse_with pi fi parser input cursor .Final
+    Map.Insts.RusthammerParser.parse_with pi fi parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.map child mapping cursor) result ⦄ := by
   unfold Map.Insts.RusthammerParser.parse_with
   step with hp as ⟨outcome, houtcome⟩
@@ -113,11 +116,11 @@ theorem verify_spec {P F α : Type} (pi : Parser P α) (fi : core.ops.function.F
     (parser : Verify P F) (input : Slice U8) (cursor : Cursor)
     (child : Cursor → Spec.ParseResult α → Prop) (predicate : α → Prop)
     [DecidablePred predicate]
-    (hp : pi.parse_with parser.parser input cursor .Final
+    (hp : pi.parse_with parser.parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (child cursor) result ⦄)
     (hf : ∀ next value, child cursor (.Ok (next, value)) →
       fi.call parser.predicate value ⦃ result => result = decide (predicate value) ⦄) :
-    Verify.Insts.RusthammerParser.parse_with pi fi parser input cursor .Final
+    Verify.Insts.RusthammerParser.parse_with pi fi parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.verify child predicate cursor) result ⦄ := by
   unfold Verify.Insts.RusthammerParser.parse_with
   step with hp as ⟨outcome, houtcome⟩

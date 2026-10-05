@@ -4,11 +4,11 @@
 #[path = "../src/lib.rs"]
 mod rusthammer;
 use rusthammer::{
-    Bind, Bits, Cursor, InputStatus, ParseOutcome, Parser, Repeat, TakeAligned, TryMap,
+    Bind, Bits, Cursor, ParseContext, ParseOutcome, Parser, Repeat, TakeAligned, TryMap,
 };
 extern crate alloc;
 
-pub fn blocks(input: &[u8], status: InputStatus) -> ParseOutcome<alloc::vec::Vec<&[u8]>> {
+pub fn blocks(input: &[u8], context: ParseContext) -> ParseOutcome<alloc::vec::Vec<&[u8]>> {
     let element = TakeAligned { count: 1 };
     Bind {
         parser: TryMap {
@@ -23,5 +23,5 @@ pub fn blocks(input: &[u8], status: InputStatus) -> ParseOutcome<alloc::vec::Vec
         },
         then: |count| Repeat::exact(&element, count),
     }
-    .parse_with(input, Cursor::start(), status)
+    .parse_with(input, Cursor::start(), context)
 }

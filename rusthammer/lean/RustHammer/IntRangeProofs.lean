@@ -68,16 +68,16 @@ theorem int_range_predicate_spec {P T : Type} (pi : Parser P T) (oi : core.cmp.O
 /-- Range validation is exactly Verify with a proved inclusive predicate.
 No extra cursor checks or bound revalidation are inserted at parse time. -/
 theorem int_range_with_spec {P T : Type} (pi : Parser P T) (oi : core.cmp.Ord T)
-    (parser : IntRange P T) (input : Slice U8) (cursor : Cursor) (status : InputStatus)
+    (parser : IntRange P T) (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (child : Cursor → ParseOutcome T → Prop) (le : T → T → Prop) [DecidableRel le]
-    (hp : pi.parse_with parser.parser input cursor status ⦃ result => child cursor result ⦄)
+    (hp : pi.parse_with parser.parser input cursor context ⦃ result => child cursor result ⦄)
     (hle : ∀ a b, oi.partialOrdInst.le a b ⦃ result => result = decide (le a b) ⦄) :
-    IntRange.Insts.RusthammerParser.parse_with pi oi parser input cursor status
+    IntRange.Insts.RusthammerParser.parse_with pi oi parser input cursor context
       ⦃ result => Partial.verify child (Spec.inRange le parser.lower parser.upper) cursor result ⦄ := by
   unfold IntRange.Insts.RusthammerParser.parse_with
   apply verify_with_spec (Shared0P.Insts.RusthammerParser pi)
     (ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1TBool pi oi)
-    { parser := parser.parser, predicate := parser } input cursor status child
+    { parser := parser.parser, predicate := parser } input cursor context child
     (Spec.inRange le parser.lower parser.upper) hp
   intro next value _hvalue
   exact int_range_predicate_spec pi oi parser value le hle
@@ -85,9 +85,9 @@ theorem int_range_with_spec {P T : Type} (pi : Parser P T) (oi : core.cmp.Ord T)
 theorem int_range_final_spec {P T : Type} (pi : Parser P T) (oi : core.cmp.Ord T)
     (parser : IntRange P T) (input : Slice U8) (cursor : Cursor)
     (child : Cursor → Spec.ParseResult T → Prop) (le : T → T → Prop) [DecidableRel le]
-    (hp : pi.parse_with parser.parser input cursor .Final ⦃ result => Spec.completed (child cursor) result ⦄)
+    (hp : pi.parse_with parser.parser input cursor ParseContext.FINAL ⦃ result => Spec.completed (child cursor) result ⦄)
     (hle : ∀ a b, oi.partialOrdInst.le a b ⦃ result => result = decide (le a b) ⦄) :
-    IntRange.Insts.RusthammerParser.parse_with pi oi parser input cursor .Final
+    IntRange.Insts.RusthammerParser.parse_with pi oi parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.intRange child le parser.lower parser.upper cursor) result ⦄ := by
   unfold IntRange.Insts.RusthammerParser.parse_with
   apply verify_spec (Shared0P.Insts.RusthammerParser pi)
@@ -100,7 +100,7 @@ theorem int_range_final_spec {P T : Type} (pi : Parser P T) (oi : core.cmp.Ord T
 theorem int_range_spec {P T : Type} (pi : Parser P T) (oi : core.cmp.Ord T)
     (parser : IntRange P T) (input : Slice U8) (cursor : Cursor)
     (child : Cursor → Spec.ParseResult T → Prop) (le : T → T → Prop) [DecidableRel le]
-    (hp : pi.parse_with parser.parser input cursor .Final ⦃ result => Spec.completed (child cursor) result ⦄)
+    (hp : pi.parse_with parser.parser input cursor ParseContext.FINAL ⦃ result => Spec.completed (child cursor) result ⦄)
     (hle : ∀ a b, oi.partialOrdInst.le a b ⦃ result => result = decide (le a b) ⦄) :
     Parser.parse.default (IntRange.Insts.RusthammerParser pi oi) parser input cursor
       ⦃ result => Spec.intRange child le parser.lower parser.upper cursor result ⦄ := by
@@ -177,13 +177,13 @@ theorem int_range_u8_new_spec {P : Type} (pi : Parser P Std.U8)
 theorem byte_integer_range_with_spec (parser : IntRange Code.Byte Std.U8)
     (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
     IntRange.Insts.RusthammerParser.parse_with Byte.Insts.RusthammerParserInputU8 core.cmp.OrdU8
-      parser input cursor status
+      parser input cursor (Spec.defaultContext status)
       ⦃ result => Partial.verify
         (fun start => Partial.primitive status (Spec.unsignedIntegerOutcome .U8 input start))
         (Spec.inRange (fun a b => a.val ≤ b.val) parser.lower parser.upper) cursor result ⦄ := by
   rcases parser with ⟨⟨⟩, lower, upper⟩
   exact int_range_with_spec Byte.Insts.RusthammerParserInputU8 core.cmp.OrdU8
-    { parser := (), lower, upper } input cursor status _ (fun a b => a.val ≤ b.val)
+    { parser := (), lower, upper } input cursor (Spec.defaultContext status) _ (fun a b => a.val ≤ b.val)
     (byte_integer_with_spec input cursor status)
     (fun a b => (int_range_u8_comparisons a b).1)
 
@@ -197,13 +197,13 @@ theorem int_range_u16_new_spec {P : Type} (pi : Parser P Std.U16)
 theorem be_u16_range_with_spec (parser : IntRange BeU16 Std.U16)
     (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
     IntRange.Insts.RusthammerParser.parse_with BeU16.Insts.RusthammerParserInputU16 core.cmp.OrdU16
-      parser input cursor status
+      parser input cursor (Spec.defaultContext status)
       ⦃ result => Partial.verify
         (fun start => Partial.primitive status (Spec.unsignedIntegerOutcome .U16 input start))
         (Spec.inRange (fun a b => a.val ≤ b.val) parser.lower parser.upper) cursor result ⦄ := by
   rcases parser with ⟨⟨⟩, lower, upper⟩
   exact int_range_with_spec BeU16.Insts.RusthammerParserInputU16 core.cmp.OrdU16
-    { parser := (), lower, upper } input cursor status _ (fun a b => a.val ≤ b.val)
+    { parser := (), lower, upper } input cursor (Spec.defaultContext status) _ (fun a b => a.val ≤ b.val)
     (be_u16_with_spec input cursor status)
     (fun a b => (int_range_u16_comparisons a b).1)
 
@@ -217,13 +217,13 @@ theorem int_range_u32_new_spec {P : Type} (pi : Parser P Std.U32)
 theorem be_u32_range_with_spec (parser : IntRange BeU32 Std.U32)
     (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
     IntRange.Insts.RusthammerParser.parse_with BeU32.Insts.RusthammerParserInputU32 core.cmp.OrdU32
-      parser input cursor status
+      parser input cursor (Spec.defaultContext status)
       ⦃ result => Partial.verify
         (fun start => Partial.primitive status (Spec.unsignedIntegerOutcome .U32 input start))
         (Spec.inRange (fun a b => a.val ≤ b.val) parser.lower parser.upper) cursor result ⦄ := by
   rcases parser with ⟨⟨⟩, lower, upper⟩
   exact int_range_with_spec BeU32.Insts.RusthammerParserInputU32 core.cmp.OrdU32
-    { parser := (), lower, upper } input cursor status _ (fun a b => a.val ≤ b.val)
+    { parser := (), lower, upper } input cursor (Spec.defaultContext status) _ (fun a b => a.val ≤ b.val)
     (be_u32_with_spec input cursor status)
     (fun a b => (int_range_u32_comparisons a b).1)
 
@@ -237,13 +237,13 @@ theorem int_range_u64_new_spec {P : Type} (pi : Parser P Std.U64)
 theorem be_u64_range_with_spec (parser : IntRange BeU64 Std.U64)
     (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
     IntRange.Insts.RusthammerParser.parse_with BeU64.Insts.RusthammerParserInputU64 core.cmp.OrdU64
-      parser input cursor status
+      parser input cursor (Spec.defaultContext status)
       ⦃ result => Partial.verify
         (fun start => Partial.primitive status (Spec.unsignedIntegerOutcome .U64 input start))
         (Spec.inRange (fun a b => a.val ≤ b.val) parser.lower parser.upper) cursor result ⦄ := by
   rcases parser with ⟨⟨⟩, lower, upper⟩
   exact int_range_with_spec BeU64.Insts.RusthammerParserInputU64 core.cmp.OrdU64
-    { parser := (), lower, upper } input cursor status _ (fun a b => a.val ≤ b.val)
+    { parser := (), lower, upper } input cursor (Spec.defaultContext status) _ (fun a b => a.val ≤ b.val)
     (be_u64_with_spec input cursor status)
     (fun a b => (int_range_u64_comparisons a b).1)
 
@@ -257,13 +257,13 @@ theorem int_range_i8_new_spec {P : Type} (pi : Parser P Std.I8)
 theorem i8_range_with_spec (parser : IntRange Code.I8 Std.I8)
     (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
     IntRange.Insts.RusthammerParser.parse_with Code.I8.Insts.RusthammerParserInputI8 core.cmp.OrdI8
-      parser input cursor status
+      parser input cursor (Spec.defaultContext status)
       ⦃ result => Partial.verify
         (fun start => Partial.primitive status (Spec.signedIntegerOutcome .I8 input start))
         (Spec.inRange (fun a b => a.val ≤ b.val) parser.lower parser.upper) cursor result ⦄ := by
   rcases parser with ⟨⟨⟩, lower, upper⟩
   exact int_range_with_spec Code.I8.Insts.RusthammerParserInputI8 core.cmp.OrdI8
-    { parser := (), lower, upper } input cursor status _ (fun a b => a.val ≤ b.val)
+    { parser := (), lower, upper } input cursor (Spec.defaultContext status) _ (fun a b => a.val ≤ b.val)
     (i8_with_spec input cursor status)
     (fun a b => (int_range_i8_comparisons a b).1)
 
@@ -277,13 +277,13 @@ theorem int_range_i16_new_spec {P : Type} (pi : Parser P Std.I16)
 theorem be_i16_range_with_spec (parser : IntRange BeI16 Std.I16)
     (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
     IntRange.Insts.RusthammerParser.parse_with BeI16.Insts.RusthammerParserInputI16 core.cmp.OrdI16
-      parser input cursor status
+      parser input cursor (Spec.defaultContext status)
       ⦃ result => Partial.verify
         (fun start => Partial.primitive status (Spec.signedIntegerOutcome .I16 input start))
         (Spec.inRange (fun a b => a.val ≤ b.val) parser.lower parser.upper) cursor result ⦄ := by
   rcases parser with ⟨⟨⟩, lower, upper⟩
   exact int_range_with_spec BeI16.Insts.RusthammerParserInputI16 core.cmp.OrdI16
-    { parser := (), lower, upper } input cursor status _ (fun a b => a.val ≤ b.val)
+    { parser := (), lower, upper } input cursor (Spec.defaultContext status) _ (fun a b => a.val ≤ b.val)
     (be_i16_with_spec input cursor status)
     (fun a b => (int_range_i16_comparisons a b).1)
 
@@ -297,13 +297,13 @@ theorem int_range_i32_new_spec {P : Type} (pi : Parser P Std.I32)
 theorem be_i32_range_with_spec (parser : IntRange BeI32 Std.I32)
     (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
     IntRange.Insts.RusthammerParser.parse_with BeI32.Insts.RusthammerParserInputI32 core.cmp.OrdI32
-      parser input cursor status
+      parser input cursor (Spec.defaultContext status)
       ⦃ result => Partial.verify
         (fun start => Partial.primitive status (Spec.signedIntegerOutcome .I32 input start))
         (Spec.inRange (fun a b => a.val ≤ b.val) parser.lower parser.upper) cursor result ⦄ := by
   rcases parser with ⟨⟨⟩, lower, upper⟩
   exact int_range_with_spec BeI32.Insts.RusthammerParserInputI32 core.cmp.OrdI32
-    { parser := (), lower, upper } input cursor status _ (fun a b => a.val ≤ b.val)
+    { parser := (), lower, upper } input cursor (Spec.defaultContext status) _ (fun a b => a.val ≤ b.val)
     (be_i32_with_spec input cursor status)
     (fun a b => (int_range_i32_comparisons a b).1)
 
@@ -317,13 +317,13 @@ theorem int_range_i64_new_spec {P : Type} (pi : Parser P Std.I64)
 theorem be_i64_range_with_spec (parser : IntRange BeI64 Std.I64)
     (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
     IntRange.Insts.RusthammerParser.parse_with BeI64.Insts.RusthammerParserInputI64 core.cmp.OrdI64
-      parser input cursor status
+      parser input cursor (Spec.defaultContext status)
       ⦃ result => Partial.verify
         (fun start => Partial.primitive status (Spec.signedIntegerOutcome .I64 input start))
         (Spec.inRange (fun a b => a.val ≤ b.val) parser.lower parser.upper) cursor result ⦄ := by
   rcases parser with ⟨⟨⟩, lower, upper⟩
   exact int_range_with_spec BeI64.Insts.RusthammerParserInputI64 core.cmp.OrdI64
-    { parser := (), lower, upper } input cursor status _ (fun a b => a.val ≤ b.val)
+    { parser := (), lower, upper } input cursor (Spec.defaultContext status) _ (fun a b => a.val ≤ b.val)
     (be_i64_with_spec input cursor status)
     (fun a b => (int_range_i64_comparisons a b).1)
 

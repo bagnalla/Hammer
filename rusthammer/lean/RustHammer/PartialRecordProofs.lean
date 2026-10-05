@@ -52,22 +52,22 @@ private abbrev predicateInst :=
 
 theorem record_header_with_spec (input : Slice U8) (cursor : Cursor) (status : InputStatus)
     (hvalid : Spec.validCursor input cursor) (haligned : cursor.bit.val = 0) :
-    fieldsInst.parse_with fieldsParser input cursor status
+    fieldsInst.parse_with fieldsParser input cursor (Spec.defaultContext status)
       ⦃ outcome => Partial.primitive status (Spec.recordHeaderOutcome input cursor) outcome ⦄ := by
   let bi := Bits.Insts.RusthammerParserInputU64
   have hv (start : Cursor) := bits_with_spec Spec.recordParser.version input start status (by decide)
   have hf (start : Cursor) := bits_with_spec Spec.recordParser.flags input start status (by decide)
   have hl (start : Cursor) := bits_with_spec Spec.recordParser.length input start status (by decide)
-  have htail (start : Cursor) : (Seq.Insts.RusthammerParserInputPair bi bi).parse_with fieldsParser.second input start status
+  have htail (start : Cursor) : (Seq.Insts.RusthammerParserInputPair bi bi).parse_with fieldsParser.second input start (Spec.defaultContext status)
       ⦃ outcome => Partial.primitive status
         (Spec.sequence (fun start => Spec.bitsOutcome input start 5#u8)
           (fun start => Spec.bitsOutcome input start 16#u8) start) outcome ⦄ := by
-    step with seq_with_spec bi bi fieldsParser.second input start status
+    step with seq_with_spec bi bi fieldsParser.second input start (Spec.defaultContext status)
       (fun start => Partial.primitive status (Spec.bitsOutcome input start 5#u8))
       (fun start => Partial.primitive status (Spec.bitsOutcome input start 16#u8)) hf hl
       as ⟨outcome, houtcome⟩
     exact sequence_primitive status _ _ start outcome houtcome
-  step with seq_with_spec bi (Seq.Insts.RusthammerParserInputPair bi bi) fieldsParser input cursor status
+  step with seq_with_spec bi (Seq.Insts.RusthammerParserInputPair bi bi) fieldsParser input cursor (Spec.defaultContext status)
     (fun start => Partial.primitive status (Spec.bitsOutcome input start 3#u8))
     (fun start => Partial.primitive status (Spec.sequence
       (fun start => Spec.bitsOutcome input start 5#u8)
@@ -78,12 +78,12 @@ theorem record_header_with_spec (input : Slice U8) (cursor : Cursor) (status : I
 
 theorem marker_with_spec (parser : Marker) (input : Slice U8) (cursor : Cursor)
     (status : InputStatus) (hconfig : Spec.validMarker parser) :
-    Marker.Insts.RusthammerParserInputU64.parse_with parser input cursor status
+    Marker.Insts.RusthammerParserInputU64.parse_with parser input cursor (Spec.defaultContext status)
       ⦃ result => Partial.markerOutcome input cursor status result ⦄ := by
   let li := Literal.Insts.RusthammerParserInputU64
   let ci := Choice.Insts.RusthammerParser li li
   let alternatives : Choice Literal Literal := Spec.markerParser.first
-  have hchoice (start : Cursor) := choice_with_spec li li alternatives input start status
+  have hchoice (start : Cursor) := choice_with_spec li li alternatives input start (Spec.defaultContext status)
     (fun start => Partial.primitive status (Spec.literalOutcome input start 16#u8 51966#u64))
     (fun start => Partial.primitive status (Spec.literalOutcome input start 8#u8 202#u64))
     (fun start => literal_with_spec _ input start status (by decide))
@@ -91,7 +91,7 @@ theorem marker_with_spec (parser : Marker) (input : Slice U8) (cursor : Cursor)
   unfold Marker.Insts.RusthammerParserInputU64.parse_with
   rw [hconfig]
   step with seq_with_spec ci End.Insts.RusthammerParserInputTuple
-    { first := alternatives, second := () } input cursor status
+    { first := alternatives, second := () } input cursor (Spec.defaultContext status)
     (Partial.choice
       (fun start => Partial.primitive status (Spec.literalOutcome input start 16#u8 51966#u64))
       (fun start => Partial.primitive status (Spec.literalOutcome input start 8#u8 202#u64)))
@@ -111,7 +111,7 @@ theorem marker_with_spec (parser : Marker) (input : Slice U8) (cursor : Cursor)
 /-- A partial body cannot succeed before EOF is confirmed, even with all payload bytes. -/
 theorem record_body_partial_spec (input : Slice U8) (cursor : Cursor) (version flags : U64)
     (count : Usize) (hvalid : Spec.validCursor input cursor) (haligned : cursor.bit.val = 0) :
-    parse_record_body input cursor version flags count .Partial
+    parse_record_body input cursor version flags count (Spec.defaultContext .Partial)
       ⦃ result => Partial.recordBodyOutcome input cursor count result ⦄ := by
   have hparts : cursor.bit.val < 8 ∧ cursor.byte.val ≤ input.val.length ∧
       (cursor.byte.val = input.val.length → cursor.bit.val = 0) := by
@@ -119,7 +119,7 @@ theorem record_body_partial_spec (input : Slice U8) (cursor : Cursor) (version f
     omega
   unfold parse_record_body
   step with seq_with_spec TakeAligned.Insts.RusthammerParserInputSharedInputSliceU8
-    End.Insts.RusthammerParserInputTuple { first := { count }, second := () } input cursor .Partial
+    End.Insts.RusthammerParserInputTuple { first := { count }, second := () } input cursor (Spec.defaultContext .Partial)
     (fun start => Partial.primitive .Partial (Spec.takeAlignedOutcome input start count))
     (fun start => Partial.endOutcome input start .Partial)
     (fun start => take_aligned_with_spec { count } input start .Partial)
@@ -165,7 +165,7 @@ theorem record_body_partial_spec (input : Slice U8) (cursor : Cursor) (version f
 /-- Exact partial-input behavior for all raw cursors and byte buffers. -/
 theorem record_partial_spec (parser : RecordParser) (input : Slice U8) (cursor : Cursor)
     (hconfig : Spec.validRecordParser parser) :
-    RecordParser.Insts.RusthammerParserInputRecord.parse_with parser input cursor .Partial
+    RecordParser.Insts.RusthammerParserInputRecord.parse_with parser input cursor (Spec.defaultContext .Partial)
       ⦃ result => Partial.recordOutcome input cursor result ⦄ := by
   change parser = Spec.recordParser at hconfig
   subst parser
@@ -189,7 +189,7 @@ theorem record_partial_spec (parser : RecordParser) (input : Slice U8) (cursor :
       rcases hchecked with ⟨checkedNext, empty, rfl, _, _, _⟩
       simp only [Partial.primitiveResult, Spec.completedResult]
       step with verify_with_spec fieldsInst predicateInst { parser := fieldsParser, predicate := () }
-        input cursor .Partial
+        input cursor (Spec.defaultContext .Partial)
         (fun start => Partial.primitive .Partial (Spec.recordHeaderOutcome input start))
         Spec.recordHeaderAllowed (record_header_with_spec input cursor .Partial hvalid haligned)
         (fun _ fields _ => record_predicate_spec fields) as ⟨header, hheader⟩

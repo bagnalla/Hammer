@@ -1,5 +1,5 @@
 use rusthammer::{
-    And, ByteIn, ByteNotIn, Choice, Cursor, FoldRepeat, InputStatus, Not, Optional, ParseError,
+    And, ByteIn, ByteNotIn, Choice, Cursor, FoldRepeat, Not, Optional, ParseContext, ParseError,
     ParseOutcome, Parser, Seq,
 };
 use std::collections::BTreeSet;
@@ -10,7 +10,7 @@ fn oracle(
     excluded: bool,
     input: &[u8],
     cursor: Cursor,
-    status: InputStatus,
+    context: ParseContext,
 ) -> ParseOutcome<u8> {
     if cursor.bit >= 8
         || cursor.byte > input.len()
@@ -21,9 +21,9 @@ fn oracle(
     let bits: String = input.iter().map(|byte| format!("{byte:08b}")).collect();
     let position = cursor.byte * 8 + usize::from(cursor.bit);
     let Some(field) = bits.get(position..position + 8) else {
-        return match status {
-            InputStatus::Partial => ParseOutcome::NeedMore,
-            InputStatus::Final => ParseOutcome::Error(ParseError::UnexpectedEnd),
+        return match context.status {
+            rusthammer::InputStatus::Partial => ParseOutcome::NeedMore,
+            rusthammer::InputStatus::Final => ParseOutcome::Error(ParseError::UnexpectedEnd),
         };
     };
     let value = u8::from_str_radix(field, 2).unwrap();
@@ -77,16 +77,16 @@ fn every_byte_and_offset_matches_set_oracle_with_truncation_and_both_statuses() 
                 let cursor = Cursor { byte: 0, bit };
                 for length in 0..=input.len() {
                     let prefix = &input[..length];
-                    for status in [InputStatus::Partial, InputStatus::Final] {
+                    for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
                         assert_eq!(
-                            include.parse_with(prefix, cursor, status),
-                            oracle(&set, false, prefix, cursor, status),
-                            "include {bytes:?}, value={value}, bit={bit}, length={length}, {status:?}"
+                            include.parse_with(prefix, cursor, context),
+                            oracle(&set, false, prefix, cursor, context),
+                            "include {bytes:?}, value={value}, bit={bit}, length={length}, {context:?}"
                         );
                         assert_eq!(
-                            exclude.parse_with(prefix, cursor, status),
-                            oracle(&set, true, prefix, cursor, status),
-                            "exclude {bytes:?}, value={value}, bit={bit}, length={length}, {status:?}"
+                            exclude.parse_with(prefix, cursor, context),
+                            oracle(&set, true, prefix, cursor, context),
+                            "exclude {bytes:?}, value={value}, bit={bit}, length={length}, {context:?}"
                         );
                     }
                 }
@@ -134,21 +134,21 @@ fn arbitrary_cursors_preserve_validation_and_short_input_precedence() {
                 },
             ]);
         for cursor in cursors {
-            for status in [InputStatus::Partial, InputStatus::Final] {
+            for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
                 assert_eq!(
-                    ByteIn::new(bytes).parse_with(&input, cursor, status),
-                    oracle(&set, false, &input, cursor, status)
+                    ByteIn::new(bytes).parse_with(&input, cursor, context),
+                    oracle(&set, false, &input, cursor, context)
                 );
                 assert_eq!(
-                    ByteNotIn::new(bytes).parse_with(&input, cursor, status),
-                    oracle(&set, true, &input, cursor, status)
+                    ByteNotIn::new(bytes).parse_with(&input, cursor, context),
+                    oracle(&set, true, &input, cursor, context)
                 );
             }
         }
     }
     // Even an empty inclusion set waits for a byte before testing membership.
     assert_eq!(
-        ByteIn::new(b"").parse_with(&[], Cursor::start(), InputStatus::Partial),
+        ByteIn::new(b"").parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(
@@ -230,11 +230,11 @@ fn composition_preserves_backtracking_lookahead_and_incompleteness() {
         Ok((Cursor::start(), ()))
     );
     assert_eq!(
-        choice.parse_with(&[], Cursor::start(), InputStatus::Partial),
+        choice.parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(
-        Not { parser: &digit }.parse_with(&[], Cursor::start(), InputStatus::Partial),
+        Not { parser: &digit }.parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     let leading = FoldRepeat::at_least(&digit, 0, || 0usize, |count, _| count + 1);
@@ -243,7 +243,7 @@ fn composition_preserves_backtracking_lookahead_and_incompleteness() {
         Ok((Cursor { byte: 2, bit: 0 }, 2))
     );
     assert_eq!(
-        leading.parse_with(b"12", Cursor::start(), InputStatus::Partial),
+        leading.parse_with(b"12", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
 }

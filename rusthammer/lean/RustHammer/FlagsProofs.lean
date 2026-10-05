@@ -31,7 +31,7 @@ theorem flags_spec (input : Slice U8) (cursor : Cursor) :
   let parser : Map (Seq Unit (Seq Unit Unit)) Unit :=
     { parser := { first := (), second := { first := (), second := () } }, map := () }
   let mi := Map.Insts.RusthammerParser (Seq.Insts.RusthammerParserInputPair bi pair) fi
-  have hfinal : mi.parse_with parser input cursor .Final
+  have hfinal : mi.parse_with parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.flagsOutcome input cursor) result ⦄ := by
     step with map_spec (Seq.Insts.RusthammerParserInputPair bi pair) fi parser
       input cursor (Spec.sequence (Spec.bitOutcome input)

@@ -3,14 +3,16 @@
 
 #[path = "../src/lib.rs"]
 mod rusthammer;
-use rusthammer::{Cursor, FoldRepeat, InputStatus, ParseOutcome, Parser, TakeAligned};
+use rusthammer::{Cursor, FoldRepeat, ParseContext, ParseOutcome, Parser, TakeAligned};
 
 /// Borrowed accumulators also need no cloning or allocation.
-pub fn last_block(input: &[u8], count: usize, status: InputStatus) -> ParseOutcome<&[u8]> {
+pub fn last_block(input: &[u8], count: usize, context: ParseContext) -> ParseOutcome<&[u8]> {
     let empty = &input[..0];
-    FoldRepeat::exact(TakeAligned { count: 1 }, count, || empty, |_previous, byte| byte).parse_with(
-        input,
-        Cursor::start(),
-        status,
+    FoldRepeat::exact(
+        TakeAligned { count: 1 },
+        count,
+        || empty,
+        |_previous, byte| byte,
     )
+    .parse_with(input, Cursor::start(), context)
 }

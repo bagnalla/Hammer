@@ -1,7 +1,7 @@
 use std::cell::{Cell, RefCell};
 
 use rusthammer::{
-    Bits, Choice, Cursor, End, Ignore, InputStatus, Left, Literal, Middle, ParseError,
+    Bits, Choice, Cursor, End, Ignore, Left, Literal, Middle, ParseContext, ParseError,
     ParseOutcome, Parser, Right, Seq, TakeAligned,
 };
 
@@ -25,12 +25,12 @@ fn references_forward_both_methods_including_complete_overrides() {
             &self,
             _: &'input [u8],
             _: Cursor,
-            status: InputStatus,
+            context: ParseContext,
         ) -> ParseOutcome<Self::Output> {
             self.0.set(self.0.get() + 1);
-            match status {
-                InputStatus::Partial => ParseOutcome::NeedMore,
-                InputStatus::Final => ParseOutcome::Error(ParseError::Mismatch),
+            match context.status {
+                rusthammer::InputStatus::Partial => ParseOutcome::NeedMore,
+                rusthammer::InputStatus::Final => ParseOutcome::Error(ParseError::Mismatch),
             }
         }
         fn parse(
@@ -56,7 +56,7 @@ fn references_forward_both_methods_including_complete_overrides() {
     // Generic combinators use parse_with, even when the child overrides parse.
     let ignore = Ignore { parser: &reference };
     assert_eq!(
-        ignore.parse_with(b"abc", Cursor::start(), InputStatus::Partial),
+        ignore.parse_with(b"abc", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(complete(&ignore, b"abc"), Err(ParseError::Mismatch));
@@ -73,9 +73,9 @@ fn one_nonclone_parser_can_be_reused_in_multiple_grammars() {
             &self,
             input: &'input [u8],
             cursor: Cursor,
-            status: InputStatus,
+            context: ParseContext,
         ) -> ParseOutcome<u64> {
-            self.0.parse_with(input, cursor, status)
+            self.0.parse_with(input, cursor, context)
         }
     }
     let byte = Byte(Bits::new(8).unwrap());
@@ -180,10 +180,10 @@ fn selection_matches_a_bit_string_oracle_including_empty_fields() {
                     second: &second,
                 };
                 let end = start + usize::from(first_width) + usize::from(second_width);
-                for status in [InputStatus::Partial, InputStatus::Final] {
+                for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
                     let actual = (
-                        left.parse_with(&input, cursor, status),
-                        right.parse_with(&input, cursor, status),
+                        left.parse_with(&input, cursor, context),
+                        right.parse_with(&input, cursor, context),
                     );
                     if end <= bits.len() {
                         let next = Cursor {
@@ -203,7 +203,7 @@ fn selection_matches_a_bit_string_oracle_including_empty_fields() {
                                 ),
                             )
                         );
-                    } else if status == InputStatus::Partial {
+                    } else if context == ParseContext::PARTIAL {
                         assert_eq!(actual, (ParseOutcome::NeedMore, ParseOutcome::NeedMore));
                     } else {
                         assert_eq!(
@@ -247,9 +247,9 @@ impl<'input> Parser<'input> for BorrowedParser {
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        match (TakeAligned { count: 3 }).parse_with(input, cursor, status) {
+        match (TakeAligned { count: 3 }).parse_with(input, cursor, context) {
             ParseOutcome::Success(next, bytes) => ParseOutcome::Success(next, Borrowed(bytes)),
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
@@ -320,17 +320,17 @@ fn delimiters_and_end_preserve_partial_input_semantics() {
     for end in 0..5 {
         let input = &b"[abc]"[..end];
         assert_eq!(
-            middle.parse_with(input, Cursor::start(), InputStatus::Partial),
+            middle.parse_with(input, Cursor::start(), ParseContext::PARTIAL),
             ParseOutcome::NeedMore
         );
         assert_eq!(complete(&middle, input), Err(ParseError::UnexpectedEnd));
     }
     assert_eq!(
-        middle.parse_with(b"[abc]", Cursor::start(), InputStatus::Partial),
+        middle.parse_with(b"[abc]", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::Success(Cursor { byte: 5, bit: 0 }, Borrowed(b"abc"))
     );
     assert_eq!(
-        complete_parser.parse_with(b"[abc]", Cursor::start(), InputStatus::Partial),
+        complete_parser.parse_with(b"[abc]", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(
@@ -338,11 +338,11 @@ fn delimiters_and_end_preserve_partial_input_semantics() {
         Ok((Cursor { byte: 5, bit: 0 }, Borrowed(b"abc")))
     );
     assert_eq!(
-        complete_parser.parse_with(b"[abc]!", Cursor::start(), InputStatus::Partial),
+        complete_parser.parse_with(b"[abc]!", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::Error(ParseError::TrailingInput)
     );
     assert_eq!(
-        middle.parse_with(b"[abc!", Cursor::start(), InputStatus::Partial),
+        middle.parse_with(b"[abc!", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::Error(ParseError::Mismatch)
     );
 }
@@ -368,7 +368,7 @@ impl Drop for Ticket<'_> {
 struct Stage<'a> {
     id: usize,
     action: Action,
-    visits: &'a RefCell<Vec<(usize, Cursor, InputStatus)>>,
+    visits: &'a RefCell<Vec<(usize, Cursor, ParseContext)>>,
     drops: &'a RefCell<Vec<usize>>,
 }
 impl<'input, 'a> Parser<'input> for Stage<'a> {
@@ -377,9 +377,9 @@ impl<'input, 'a> Parser<'input> for Stage<'a> {
         &self,
         _: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        self.visits.borrow_mut().push((self.id, cursor, status));
+        self.visits.borrow_mut().push((self.id, cursor, context));
         match self.action {
             Action::Success => ParseOutcome::Success(
                 Cursor {
@@ -415,7 +415,7 @@ fn selection_short_circuits_and_drops_each_noncopy_output_once() {
         }
     }
     for (stop, action) in cases {
-        for status in [InputStatus::Partial, InputStatus::Final] {
+        for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
             for selection in 0..3 {
                 let visits = RefCell::new(Vec::new());
                 let drops = RefCell::new(Vec::new());
@@ -433,18 +433,18 @@ fn selection_short_circuits_and_drops_each_noncopy_output_once() {
                         first: &first,
                         second: &second,
                     }
-                    .parse_with(b"abc", Cursor::start(), status),
+                    .parse_with(b"abc", Cursor::start(), context),
                     1 => Right {
                         first: &first,
                         second: &second,
                     }
-                    .parse_with(b"abc", Cursor::start(), status),
+                    .parse_with(b"abc", Cursor::start(), context),
                     _ => Middle {
                         left: &first,
                         parser: &second,
                         right: &third,
                     }
-                    .parse_with(b"abc", Cursor::start(), status),
+                    .parse_with(b"abc", Cursor::start(), context),
                 };
                 let count = if selection == 2 { 3 } else { 2 };
                 let succeeded = stop >= count;
@@ -482,7 +482,7 @@ fn selection_short_circuits_and_drops_each_noncopy_output_once() {
                 assert_eq!(
                     *visits.borrow(),
                     (0..count.min(stop + 1))
-                        .map(|id| (id, Cursor { byte: id, bit: 0 }, status))
+                        .map(|id| (id, Cursor { byte: id, bit: 0 }, context))
                         .collect::<Vec<_>>()
                 );
                 drops.borrow_mut().sort();
@@ -507,7 +507,7 @@ fn ignore_consumes_and_drops_but_never_suppresses_errors_or_incompleteness() {
         actions.push(Action::Error(error));
     }
     for action in actions {
-        for status in [InputStatus::Partial, InputStatus::Final] {
+        for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
             let visits = RefCell::new(Vec::new());
             let drops = RefCell::new(Vec::new());
             let parser = Ignore {
@@ -523,8 +523,8 @@ fn ignore_consumes_and_drops_but_never_suppresses_errors_or_incompleteness() {
                 Action::Error(error) => ParseOutcome::Error(error),
                 Action::NeedMore => ParseOutcome::NeedMore,
             };
-            assert_eq!(parser.parse_with(b"a", Cursor::start(), status), expected);
-            assert_eq!(*visits.borrow(), [(0, Cursor::start(), status)]);
+            assert_eq!(parser.parse_with(b"a", Cursor::start(), context), expected);
+            assert_eq!(*visits.borrow(), [(0, Cursor::start(), context)]);
             assert_eq!(
                 *drops.borrow(),
                 if matches!(action, Action::Success) {
@@ -556,7 +556,7 @@ fn selection_failure_allows_choice_to_retry_at_the_original_bit_cursor() {
         Ok((Cursor { byte: 1, bit: 1 }, 97))
     );
     assert_eq!(
-        parser.parse_with(&input[..2], start, InputStatus::Partial),
+        parser.parse_with(&input[..2], start, ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(
@@ -581,7 +581,7 @@ fn empty_successes_and_invalid_cursors_follow_child_semantics() {
         parser: &empty,
         right: &empty,
     };
-    for status in [InputStatus::Partial, InputStatus::Final] {
+    for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
         for cursor in [
             Cursor::start(),
             Cursor { byte: 1, bit: 0 },
@@ -592,13 +592,13 @@ fn empty_successes_and_invalid_cursors_follow_child_semantics() {
             } else {
                 ParseOutcome::Error(ParseError::InvalidCursor)
             };
-            assert_eq!(left.parse_with(&[], cursor, status), expected);
-            assert_eq!(right.parse_with(&[], cursor, status), expected);
-            assert_eq!(middle.parse_with(&[], cursor, status), expected);
+            assert_eq!(left.parse_with(&[], cursor, context), expected);
+            assert_eq!(right.parse_with(&[], cursor, context), expected);
+            assert_eq!(middle.parse_with(&[], cursor, context), expected);
         }
     }
     assert_eq!(
-        Ignore { parser: End }.parse_with(&[], Cursor::start(), InputStatus::Partial),
+        Ignore { parser: End }.parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(

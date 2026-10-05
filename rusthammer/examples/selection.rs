@@ -1,5 +1,5 @@
 use rusthammer::{
-    Bits, ConfigError, Cursor, End, Ignore, InputStatus, Left, Literal, Middle, ParseOutcome,
+    Bits, ConfigError, Cursor, End, Ignore, Left, Literal, Middle, ParseContext, ParseOutcome,
     Parser, Right, TakeAligned,
 };
 
@@ -31,15 +31,15 @@ fn main() -> Result<(), ConfigError> {
 
     // The closing delimiter is required even though its value is discarded.
     assert_eq!(
-        bracketed.parse_with(b"[abc", Cursor::start(), InputStatus::Partial),
+        bracketed.parse_with(b"[abc", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(
-        bracketed.parse_with(b"[abc]", Cursor::start(), InputStatus::Partial),
+        bracketed.parse_with(b"[abc]", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::Success(Cursor { byte: 5, bit: 0 }, &b"abc"[..])
     );
     assert_eq!(
-        complete.parse_with(b"[abc]", Cursor::start(), InputStatus::Partial),
+        complete.parse_with(b"[abc]", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
 

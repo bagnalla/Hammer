@@ -10,17 +10,17 @@ open Code
 invariant and step contract concern only reachable prefixes and child successes. -/
 theorem repeat_run_with_bounded_spec {P Q A α R : Type} (pi : Parser P α) (qi : Parser Q α)
     (ai : RepeatAccumulator A α R) (parser : P) (following : Q) (min max : Usize) (accumulator : A)
-    (input : Slice U8) (cursor : Cursor) (status : InputStatus)
+    (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (hbounds : min.val ≤ max.val) (child : Nat → Cursor → ParseOutcome α → Prop)
     (invariant : List α → R → Prop)
-    (hp : ∀ count start, repeat_parse pi qi parser following count input start status
+    (hp : ∀ count start, repeat_parse pi qi parser following count input start context
       ⦃ result => child count.val start result ⦄)
     (hi : ai.init accumulator ⦃ result => invariant [] result ⦄)
     (hs : ∀ values next after value state,
       Spec.indexedRepetitions child cursor values next → child values.length next (.Success after value) →
       values.length < max.val → invariant values state →
       ai.step accumulator state value ⦃ result => invariant (values ++ [value]) result ⦄) :
-    repeat_run_with pi qi ai parser following { min, max := some max } accumulator input cursor status
+    repeat_run_with pi qi ai parser following { min, max := some max } accumulator input cursor context
       ⦃ result => Spec.accumulated invariant
         (Spec.boundedIterations child min.val max.val cursor) result ⦄ := by
   unfold repeat_run_with
@@ -75,9 +75,9 @@ theorem repeat_run_with_bounded_spec {P Q A α R : Type} (pi : Parser P α) (qi 
 runs only after progress and representation checks, including the count limit. -/
 theorem repeat_run_with_unbounded_spec {P Q A α R : Type} (pi : Parser P α) (qi : Parser Q α)
     (ai : RepeatAccumulator A α R) (parser : P) (following : Q) (min : Usize) (accumulator : A)
-    (input : Slice U8) (cursor : Cursor) (status : InputStatus)
+    (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (child : Nat → Cursor → ParseOutcome α → Prop) (invariant : List α → R → Prop)
-    (hp : ∀ count start, repeat_parse pi qi parser following count input start status
+    (hp : ∀ count start, repeat_parse pi qi parser following count input start context
       ⦃ result => child count.val start result ⦄)
     (hi : ai.init accumulator ⦃ result => invariant [] result ⦄)
     (hs : ∀ values next after value state,
@@ -85,7 +85,7 @@ theorem repeat_run_with_unbounded_spec {P Q A α R : Type} (pi : Parser P α) (q
       Spec.advancing input (child values.length) next (.Success after value) →
       values.length < Usize.max → invariant values state →
       ai.step accumulator state value ⦃ result => invariant (values ++ [value]) result ⦄) :
-    repeat_run_with pi qi ai parser following { min, max := none } accumulator input cursor status
+    repeat_run_with pi qi ai parser following { min, max := none } accumulator input cursor context
       ⦃ result => Spec.accumulated invariant
         (Spec.unboundedIterations input child min.val cursor) result ⦄ := by
   unfold repeat_run_with

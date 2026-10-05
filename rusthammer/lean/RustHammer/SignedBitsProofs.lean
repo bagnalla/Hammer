@@ -84,7 +84,7 @@ private theorem primitive_ok {α : Type} (status : InputStatus) (next : Cursor) 
 /-- Total signed decoding reuses the unsigned field's safety and termination proof. -/
 theorem signed_bits_with_spec (parser : SignedBits) (input : Slice U8) (cursor : Cursor)
     (status : InputStatus) (hconfig : Spec.validSignedBits parser) :
-    SignedBits.Insts.RusthammerParserInputI64.parse_with parser input cursor status
+    SignedBits.Insts.RusthammerParserInputI64.parse_with parser input cursor (Spec.defaultContext status)
       ⦃ result => Partial.primitive status (Spec.signedBitsOutcome input cursor parser.bits.width) result ⦄ := by
   unfold SignedBits.Insts.RusthammerParserInputI64.parse_with
   step with bits_with_spec parser.bits input cursor status hconfig as ⟨outcome, houtcome⟩
@@ -114,9 +114,9 @@ theorem signed_bits_with_spec (parser : SignedBits) (input : Slice U8) (cursor :
 
 theorem signed_bits_final_spec (parser : SignedBits) (input : Slice U8) (cursor : Cursor)
     (hconfig : Spec.validSignedBits parser) :
-    SignedBits.Insts.RusthammerParserInputI64.parse_with parser input cursor .Final
+    SignedBits.Insts.RusthammerParserInputI64.parse_with parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.signedBitsOutcome input cursor parser.bits.width) result ⦄ := by
-  simpa only [Partial.primitive, Partial.primitiveResult, Spec.completed] using
+  simpa only [ParseContext.FINAL, Partial.primitive, Partial.primitiveResult, Spec.completed] using
     signed_bits_with_spec parser input cursor .Final hconfig
 
 theorem signed_bits_spec (parser : SignedBits) (input : Slice U8) (cursor : Cursor)

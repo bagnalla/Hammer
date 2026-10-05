@@ -3,8 +3,8 @@ mod marker_example;
 
 use marker_example::{parse_marker, Marker};
 use rusthammer::{
-    Bits, Choice, ConfigError, Cursor, End, InputStatus, Literal, ParseError, ParseOutcome, Parser,
-    Seq, TakeAligned,
+    Bits, Choice, ConfigError, Cursor, End, Literal, ParseContext, ParseError, ParseOutcome,
+    Parser, Seq, TakeAligned,
 };
 
 struct MustNotRun;
@@ -12,7 +12,7 @@ struct MustNotRun;
 impl<'input> Parser<'input> for MustNotRun {
     type Output = u64;
 
-    fn parse_with(&self, _: &'input [u8], _: Cursor, _: InputStatus) -> ParseOutcome<u64> {
+    fn parse_with(&self, _: &'input [u8], _: Cursor, _: ParseContext) -> ParseOutcome<u64> {
         panic!("ordered choice evaluated an unreachable branch");
     }
 }

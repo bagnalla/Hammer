@@ -1,5 +1,5 @@
 use rusthammer::{
-    Choice, ConfigError, Cursor, End, InputStatus, Literal, ParseOutcome, Parser, Seq,
+    Choice, ConfigError, Cursor, End, Literal, ParseContext, ParseOutcome, Parser, Seq,
 };
 
 fn main() -> Result<(), ConfigError> {
@@ -16,13 +16,13 @@ fn main() -> Result<(), ConfigError> {
     // Buffering belongs to the caller. Retry with all bytes and the original cursor.
     for chunk in [b'a', b'b'] {
         buffer.push(chunk);
-        let outcome = parser.parse_with(&buffer, start, InputStatus::Partial);
+        let outcome = parser.parse_with(&buffer, start, ParseContext::PARTIAL);
         assert_eq!(outcome, ParseOutcome::NeedMore);
         println!("partial {buffer:?}: {outcome:?}");
     }
 
     // The input source has finished. The same buffer can now establish EOF.
-    let outcome = parser.parse_with(&buffer, start, InputStatus::Final);
+    let outcome = parser.parse_with(&buffer, start, ParseContext::FINAL);
     assert_eq!(
         outcome,
         ParseOutcome::Success(Cursor { byte: 2, bit: 0 }, (0x6162, ()))

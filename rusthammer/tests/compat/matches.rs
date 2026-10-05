@@ -4,7 +4,7 @@
 mod rusthammer;
 
 use rusthammer::{
-    And, ButNot, Cursor, Difference, Epsilon, Fail, InputStatus, Left, Literal, Map, ParseOutcome,
+    And, ButNot, Cursor, Difference, Epsilon, Fail, ParseContext, Left, Literal, Map, ParseOutcome,
     Parser, Right, SkipBits, Xor,
 };
 use std::io::{self, BufRead};
@@ -35,39 +35,39 @@ impl<'input> Parser<'input> for Atom {
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<u64> {
         match self.kind {
             1 => Map {
                 parser: SkipBits::new(usize::from(self.width)),
                 map: |()| 0,
             }
-            .parse_with(input, cursor, status),
+            .parse_with(input, cursor, context),
             5 => Map {
                 parser: Epsilon,
                 map: |()| 0,
             }
-            .parse_with(input, cursor, status),
-            6 => Fail::<u64>::new().parse_with(input, cursor, status),
+            .parse_with(input, cursor, context),
+            6 => Fail::<u64>::new().parse_with(input, cursor, context),
             _ => {
                 let literal = Literal::new(self.width, self.expected).unwrap();
                 match self.kind {
-                    0 => literal.parse_with(input, cursor, status),
+                    0 => literal.parse_with(input, cursor, context),
                     2 => Map {
                         parser: And { parser: literal },
                         map: |()| 0,
                     }
-                    .parse_with(input, cursor, status),
+                    .parse_with(input, cursor, context),
                     3 => Right {
                         first: SkipBits::new(3),
                         second: literal,
                     }
-                    .parse_with(input, cursor, status),
+                    .parse_with(input, cursor, context),
                     4 => Left {
                         first: literal,
                         second: SkipBits::new(3),
                     }
-                    .parse_with(input, cursor, status),
+                    .parse_with(input, cursor, context),
                     _ => panic!("unsupported atom"),
                 }
             }

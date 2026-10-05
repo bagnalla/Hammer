@@ -2,9 +2,8 @@ use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
 use rusthammer::{
-    And, BeU16, ButNot, Byte, ByteIn, BytePattern, Choice, Cursor, Difference, Epsilon, Fail,
-    InputStatus, Map, Not, ParseError, ParseOutcome, Parser, Right, Seq, SkipBits, TakeAligned,
-    Xor,
+    And, BeU16, ButNot, Byte, ByteIn, BytePattern, Choice, Cursor, Difference, Epsilon, Fail, Map,
+    Not, ParseContext, ParseError, ParseOutcome, Parser, Right, Seq, SkipBits, TakeAligned, Xor,
 };
 
 #[derive(Clone, Copy, Debug)]
@@ -83,7 +82,7 @@ impl Drop for Token {
 struct Probe<'a> {
     id: u8,
     outcome: Case,
-    calls: &'a RefCell<Vec<(u8, Cursor, InputStatus)>>,
+    calls: &'a RefCell<Vec<(u8, Cursor, ParseContext)>>,
     drops: Rc<Cell<usize>>,
 }
 
@@ -93,9 +92,9 @@ impl<'input> Parser<'input> for Probe<'_> {
         &self,
         _: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<Token> {
-        self.calls.borrow_mut().push((self.id, cursor, status));
+        self.calls.borrow_mut().push((self.id, cursor, context));
         match self.outcome {
             Case::Success(next) => ParseOutcome::Success(
                 next,
@@ -140,7 +139,7 @@ fn all_outcomes_preserve_order_short_circuiting_and_ownership() {
     for kind in 0..3 {
         for first_case in cases {
             for second_case in cases {
-                for status in [InputStatus::Partial, InputStatus::Final] {
+                for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
                     let cursor = Cursor::start();
                     let calls = RefCell::new(Vec::new());
                     let drops = [Rc::new(Cell::new(0)), Rc::new(Cell::new(0))];
@@ -162,17 +161,17 @@ fn all_outcomes_preserve_order_short_circuiting_and_ownership() {
                             first: &first,
                             second: &second,
                         }
-                        .parse_with(&[], cursor, status),
+                        .parse_with(&[], cursor, context),
                         1 => Difference {
                             first: &first,
                             second: &second,
                         }
-                        .parse_with(&[], cursor, status),
+                        .parse_with(&[], cursor, context),
                         _ => Xor {
                             first: &first,
                             second: &second,
                         }
-                        .parse_with(&[], cursor, status),
+                        .parse_with(&[], cursor, context),
                     };
                     let actual = match &result {
                         ParseOutcome::Success(next, value) => Expected::Success(*next, value.id),
@@ -181,11 +180,11 @@ fn all_outcomes_preserve_order_short_circuiting_and_ownership() {
                     };
                     assert_eq!(
                         actual, expected,
-                        "{kind}: {first_case:?}, {second_case:?}, {status:?}"
+                        "{kind}: {first_case:?}, {second_case:?}, {context:?}"
                     );
-                    let mut expected_calls = vec![(0, cursor, status)];
+                    let mut expected_calls = vec![(0, cursor, context)];
                     if second_called {
-                        expected_calls.push((1, cursor, status));
+                        expected_calls.push((1, cursor, context));
                     }
                     assert_eq!(*calls.borrow(), expected_calls);
                     for (id, case) in [first_case, second_case].into_iter().enumerate() {
@@ -272,14 +271,14 @@ fn partial_input_waits_for_the_second_match_before_accepting() {
     let second = BytePattern::new(b"ab");
     let restricted = ButNot { first, second };
     for outcome in [
-        restricted.parse_with(b"a", Cursor::start(), InputStatus::Partial),
-        Difference { first, second }.parse_with(b"a", Cursor::start(), InputStatus::Partial),
-        Xor { first, second }.parse_with(b"a", Cursor::start(), InputStatus::Partial),
+        restricted.parse_with(b"a", Cursor::start(), ParseContext::PARTIAL),
+        Difference { first, second }.parse_with(b"a", Cursor::start(), ParseContext::PARTIAL),
+        Xor { first, second }.parse_with(b"a", Cursor::start(), ParseContext::PARTIAL),
         Choice {
             first: restricted,
             second: first,
         }
-        .parse_with(b"a", Cursor::start(), InputStatus::Partial),
+        .parse_with(b"a", Cursor::start(), ParseContext::PARTIAL),
     ] {
         assert_eq!(outcome, ParseOutcome::NeedMore);
     }
@@ -292,11 +291,11 @@ fn partial_input_waits_for_the_second_match_before_accepting() {
         Err(ParseError::Mismatch)
     );
     assert_eq!(
-        restricted.parse_with(b"ac", Cursor::start(), InputStatus::Partial),
+        restricted.parse_with(b"ac", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::Success(Cursor { byte: 1, bit: 0 }, &b"a"[..])
     );
     assert_eq!(
-        Not { parser: restricted }.parse_with(b"a", Cursor::start(), InputStatus::Partial),
+        Not { parser: restricted }.parse_with(b"a", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     let rejected_prefix = Right {

@@ -1,6 +1,6 @@
 # RustHammer design and verification plan
 
-Status: verified prototype with match restrictions, skipping/position, byte sets, typed ranges, native integer readers, signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection, 2026-10-04.
+Status: verified prototype with scoped ordering, match restrictions, skipping/position, byte sets, typed ranges, native integer readers, signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection, 2026-10-05.
 
 RustHammer will be a Rust rewrite of Hammer whose parsers can be translated
 through Charon and Aeneas and proved correct in Lean. It should preserve Hammer's
@@ -19,7 +19,7 @@ API, independent of implementation or proof milestones.
 ## Prototype checkpoint
 
 An initial implementation now lives in [rusthammer/](../rusthammer/README.md).
-It includes most-significant-first bit readers, unsigned and signed numeric fields, typed
+It includes configurable bit/byte ordering, unsigned and signed numeric fields, typed
 sequencing, a three-bit header example, and an explicitly aligned borrowed-payload
 parser. The verification command checks Rust tests, regenerates the Aeneas
 translation, and checks Lean proofs with pinned tools.
@@ -63,8 +63,8 @@ fields remain a permanent API alongside fixed-width typed readers.
 `BeU16`, `BeU32`, `BeU64`, `I8`, `BeI16`, `BeI32`, and `BeI64` now return their
 corresponding native Rust integer types; existing `Byte` supplies `u8`. They
 correspond to C's `h_uint*` and `h_int*` under default ordering. The `Be` prefix
-explicitly fixes big-endian interpretation. All read MSB-first at the supplied
-cursor without implicit alignment. They are zero-sized `Copy`/`Clone` values
+explicitly fixes big byte order while inheriting active bit direction. All start
+at the supplied cursor without implicit alignment. They are zero-sized `Copy`/`Clone` values
 with fixed valid widths, so no fallible constructors are needed.
 
 The readers reuse `Bits` and `SignedBits`, with a private macro sharing outcome
@@ -396,15 +396,16 @@ The general-purpose `read_bit`, `read_bits`, and `take_aligned` helpers remain.
 The revised [input, ordering, and span plan](rusthammer-input.md) retains the
 existing `(byte, bit)` cursor and allows bit-direction changes only at byte
 boundaries, including successful scope exit. Byte-order changes and unaligned
-fields remain supported goals. The restricted probe now passes both MIR stages,
-ten native tests, nine Lean theorem audits, and differential checks with C,
-including explicit rejection of unsupported scopes. The earlier unrestricted
-probe remains historical evidence. Next integrate ordering/context and complete
-the library proofs before exposing spans; design permutation and recursion
-separately.
-CI integration and the
-recorded Aeneas callback investigation are deferred. Configurable byte and bit
-order remains unimplemented in the production library.
+fields are supported. Production integration is complete: `ParseContext` carries
+ordering and finality through every built-in combinator, and `WithOrder` enforces
+the scope rule. Numeric decoding, scope guards, and contextual primitive and
+compositional contracts are proved; all default-order application proofs pass.
+Both MIR stages, all 43 Cargo-consumer entries, native tests, and a 25-theorem
+axiom audit pass. C checks give 107,364 agreements plus 2,848 expected scope
+rejections, including 2,064 cases C accepts. No new extraction workaround was
+needed. Both isolated probes remain design evidence. Next implement and prove
+`BitSpan`, `Recognize`, and `WithSpan`; design permutation and recursion separately.
+CI integration and the recorded Aeneas callback investigation are deferred.
 
 ## Requirements and working decisions
 
@@ -486,10 +487,10 @@ pub trait Parser<'input> {
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<Self::Output>;
 
-    // The default implementation invokes parse_with with InputStatus::Final.
+    // The default implementation invokes parse_with with ParseContext::FINAL.
     fn parse(
         &self,
         input: &'input [u8],
@@ -792,7 +793,7 @@ implicit or irrelevant. Budget-dependent failures require special treatment.
 ### Streaming and seeking
 
 Explicit finality and incomplete-input semantics are implemented before adding
-buffering. `parse_with(input, cursor, InputStatus::Partial)` may return
+buffering. `parse_with(input, cursor, ParseContext::PARTIAL)` may return
 `NeedMore` for missing bytes or an unconfirmed EOF. A final invocation never
 returns `NeedMore` for built-in parsers under their child/callback contracts.
 `parse(input, cursor)` is the complete-buffer convenience method and preserves

@@ -1,6 +1,6 @@
 use rusthammer::{
     And, BeI16, BeI32, BeI64, BeU16, BeU32, BeU64, Bits, Byte, Choice, ConfigError, Cursor,
-    InputStatus, IntRange, Map, Not, Optional, ParseError, ParseOutcome, Parser, Seq, SignedBits,
+    IntRange, Map, Not, Optional, ParseContext, ParseError, ParseOutcome, Parser, Seq, SignedBits,
     I8,
 };
 use std::cell::Cell;
@@ -43,7 +43,7 @@ fn oracle(
     signed: bool,
     lower: i128,
     upper: i128,
-    status: InputStatus,
+    context: ParseContext,
 ) -> ParseOutcome<i128> {
     if cursor.bit >= 8
         || cursor.byte > input.len()
@@ -55,9 +55,9 @@ fn oracle(
     let start = 8 * cursor.byte + usize::from(cursor.bit);
     let end = start + width;
     let Some(field) = bits.get(start..end) else {
-        return match status {
-            InputStatus::Partial => ParseOutcome::NeedMore,
-            InputStatus::Final => ParseOutcome::Error(ParseError::UnexpectedEnd),
+        return match context.status {
+            rusthammer::InputStatus::Partial => ParseOutcome::NeedMore,
+            rusthammer::InputStatus::Final => ParseOutcome::Error(ParseError::UnexpectedEnd),
         };
     };
     let raw = if field.is_empty() {
@@ -105,9 +105,9 @@ where
             for byte in (0..=input.len() + 1).chain([usize::MAX]) {
                 for bit in (0..=8).chain([u8::MAX]) {
                     let cursor = Cursor { byte, bit };
-                    for status in [InputStatus::Partial, InputStatus::Final] {
+                    for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
                         assert_eq!(
-                            widen(range.parse_with(&input, cursor, status)),
+                            widen(range.parse_with(&input, cursor, context)),
                             oracle(
                                 &input,
                                 cursor,
@@ -115,7 +115,7 @@ where
                                 signed,
                                 lower.into(),
                                 upper.into(),
-                                status
+                                context
                             )
                         );
                     }
@@ -229,7 +229,7 @@ fn full_integer_extremes_are_accepted_without_bound_conversions() {
 fn short_input_remains_incomplete_even_when_the_prefix_is_out_of_range() {
     let range = IntRange::new(BeU16, 0, 100).unwrap();
     assert_eq!(
-        range.parse_with(&[0xff], Cursor::start(), InputStatus::Partial),
+        range.parse_with(&[0xff], Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(
@@ -262,7 +262,7 @@ fn choice_optionality_and_lookahead_keep_existing_recovery_rules() {
         Ok((Cursor::start(), None))
     );
     assert_eq!(
-        Optional { parser: digit }.parse_with(&[], Cursor::start(), InputStatus::Partial),
+        Optional { parser: digit }.parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(
@@ -289,7 +289,7 @@ struct Stub<'a> {
 }
 impl<'input> Parser<'input> for Stub<'_> {
     type Output = u16;
-    fn parse_with(&self, _: &'input [u8], _: Cursor, _: InputStatus) -> ParseOutcome<u16> {
+    fn parse_with(&self, _: &'input [u8], _: Cursor, _: ParseContext) -> ParseOutcome<u16> {
         self.calls.set(self.calls.get() + 1);
         match &self.outcome {
             ParseOutcome::Success(next, value) => ParseOutcome::Success(*next, *value),
@@ -334,7 +334,7 @@ fn construction_never_parses_and_child_errors_propagate_once() {
         .unwrap();
         assert_eq!(calls.get(), 0);
         assert_eq!(
-            range.parse_with(&[], Cursor::start(), InputStatus::Partial),
+            range.parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
             ParseOutcome::Error(error)
         );
         assert_eq!(calls.replace(0), 1);

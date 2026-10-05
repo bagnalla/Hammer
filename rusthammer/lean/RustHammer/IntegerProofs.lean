@@ -16,7 +16,7 @@ private theorem narrow_unsigned_spec (ty : UScalarTy) (width : U8)
     (input : Slice U8) (cursor : Cursor) (status : InputStatus)
     (hwidth : width.val = ty.numBits) (hconfig : width.val ≤ 64) :
     (do
-      let parsed ← Bits.Insts.RusthammerParserInputU64.parse_with { width } input cursor status
+      let parsed ← Bits.Insts.RusthammerParserInputU64.parse_with { width } input cursor (Spec.defaultContext status)
       match parsed with
       | .Success next value =>
         let narrowed ← lift (UScalar.cast ty value)
@@ -60,7 +60,7 @@ private theorem narrow_signed_spec (ty : IScalarTy) (width : U8)
     (hwidth : width.val = ty.numBits) (hconfig : width.val ≤ 64) :
     (do
       let parsed ← SignedBits.Insts.RusthammerParserInputI64.parse_with
-        { bits := { width } } input cursor status
+        { bits := { width } } input cursor (Spec.defaultContext status)
       match parsed with
       | .Success next value =>
         let narrowed ← lift (IScalar.cast ty value)
@@ -104,19 +104,24 @@ private theorem narrow_signed_spec (ty : IScalarTy) (width : U8)
       by simp only [Spec.signedIntegerOutcome, if_neg hvalid], rfl⟩
 
 theorem be_u16_with_spec (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
-    BeU16.Insts.RusthammerParserInputU16.parse_with () input cursor status
+    BeU16.Insts.RusthammerParserInputU16.parse_with () input cursor (Spec.defaultContext status)
       ⦃ result => Partial.primitive status (Spec.unsignedIntegerOutcome .U16 input cursor) result ⦄ := by
+  unfold BeU16.Insts.RusthammerParserInputU16.parse_with
+  simp only [Spec.default_order_pin]
   exact narrow_unsigned_spec .U16 16#u8 input cursor status rfl (by decide)
 
 theorem be_u32_with_spec (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
-    BeU32.Insts.RusthammerParserInputU32.parse_with () input cursor status
+    BeU32.Insts.RusthammerParserInputU32.parse_with () input cursor (Spec.defaultContext status)
       ⦃ result => Partial.primitive status (Spec.unsignedIntegerOutcome .U32 input cursor) result ⦄ := by
+  unfold BeU32.Insts.RusthammerParserInputU32.parse_with
+  simp only [Spec.default_order_pin]
   exact narrow_unsigned_spec .U32 32#u8 input cursor status rfl (by decide)
 
 theorem be_u64_with_spec (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
-    BeU64.Insts.RusthammerParserInputU64.parse_with () input cursor status
+    BeU64.Insts.RusthammerParserInputU64.parse_with () input cursor (Spec.defaultContext status)
       ⦃ result => Partial.primitive status (Spec.unsignedIntegerOutcome .U64 input cursor) result ⦄ := by
   unfold BeU64.Insts.RusthammerParserInputU64.parse_with
+  simp only [Spec.default_order_pin]
   step with bits_with_spec { width := 64#u8 } input cursor status (by decide) as ⟨outcome, houtcome⟩
   have h : Partial.primitive status (Spec.unsignedIntegerOutcome .U64 input cursor) outcome := by
     simpa only [Partial.primitive, Spec.bitsOutcome, Spec.bitsSuccess, Spec.unsignedIntegerOutcome,
@@ -124,24 +129,29 @@ theorem be_u64_with_spec (input : Slice U8) (cursor : Cursor) (status : InputSta
   cases outcome <;> simpa only [spec_ok] using h
 
 theorem i8_with_spec (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
-    Code.I8.Insts.RusthammerParserInputI8.parse_with () input cursor status
+    Code.I8.Insts.RusthammerParserInputI8.parse_with () input cursor (Spec.defaultContext status)
       ⦃ result => Partial.primitive status (Spec.signedIntegerOutcome .I8 input cursor) result ⦄ := by
   exact narrow_signed_spec .I8 8#u8 input cursor status rfl (by decide)
 
 theorem be_i16_with_spec (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
-    BeI16.Insts.RusthammerParserInputI16.parse_with () input cursor status
+    BeI16.Insts.RusthammerParserInputI16.parse_with () input cursor (Spec.defaultContext status)
       ⦃ result => Partial.primitive status (Spec.signedIntegerOutcome .I16 input cursor) result ⦄ := by
+  unfold BeI16.Insts.RusthammerParserInputI16.parse_with
+  simp only [Spec.default_order_pin]
   exact narrow_signed_spec .I16 16#u8 input cursor status rfl (by decide)
 
 theorem be_i32_with_spec (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
-    BeI32.Insts.RusthammerParserInputI32.parse_with () input cursor status
+    BeI32.Insts.RusthammerParserInputI32.parse_with () input cursor (Spec.defaultContext status)
       ⦃ result => Partial.primitive status (Spec.signedIntegerOutcome .I32 input cursor) result ⦄ := by
+  unfold BeI32.Insts.RusthammerParserInputI32.parse_with
+  simp only [Spec.default_order_pin]
   exact narrow_signed_spec .I32 32#u8 input cursor status rfl (by decide)
 
 theorem be_i64_with_spec (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
-    BeI64.Insts.RusthammerParserInputI64.parse_with () input cursor status
+    BeI64.Insts.RusthammerParserInputI64.parse_with () input cursor (Spec.defaultContext status)
       ⦃ result => Partial.primitive status (Spec.signedIntegerOutcome .I64 input cursor) result ⦄ := by
   unfold BeI64.Insts.RusthammerParserInputI64.parse_with
+  simp only [Spec.default_order_pin]
   step with signed_bits_with_spec { bits := { width := 64#u8 } } input cursor status (by decide)
     as ⟨outcome, houtcome⟩
   have h : Partial.primitive status (Spec.signedIntegerOutcome .I64 input cursor) outcome := by
@@ -151,15 +161,15 @@ theorem be_i64_with_spec (input : Slice U8) (cursor : Cursor) (status : InputSta
 
 /-- The existing byte reader is the unsigned eight-bit member of this family. -/
 theorem byte_integer_with_spec (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
-    Byte.Insts.RusthammerParserInputU8.parse_with () input cursor status
+    Byte.Insts.RusthammerParserInputU8.parse_with () input cursor (Spec.defaultContext status)
       ⦃ result => Partial.primitive status (Spec.unsignedIntegerOutcome .U8 input cursor) result ⦄ := by
   simpa only [Partial.primitive, Spec.byteOutcome, Spec.byteSuccess, Spec.unsignedIntegerOutcome,
     Spec.unsignedIntegerSuccess, UScalarTy.U8_numBits_eq] using byte_with_spec input cursor status
 
 theorem be_u16_final_spec (input : Slice U8) (cursor : Cursor) :
-    BeU16.Insts.RusthammerParserInputU16.parse_with () input cursor .Final
+    BeU16.Insts.RusthammerParserInputU16.parse_with () input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.unsignedIntegerOutcome .U16 input cursor) result ⦄ := by
-  simpa only [Partial.primitive, Partial.primitiveResult, Spec.completed] using
+  simpa only [ParseContext.FINAL, Partial.primitive, Partial.primitiveResult, Spec.completed] using
     be_u16_with_spec input cursor .Final
 
 theorem be_u16_spec (input : Slice U8) (cursor : Cursor) :
@@ -169,9 +179,9 @@ theorem be_u16_spec (input : Slice U8) (cursor : Cursor) :
     (Spec.unsignedIntegerOutcome .U16 input cursor) (be_u16_final_spec input cursor)
 
 theorem be_u32_final_spec (input : Slice U8) (cursor : Cursor) :
-    BeU32.Insts.RusthammerParserInputU32.parse_with () input cursor .Final
+    BeU32.Insts.RusthammerParserInputU32.parse_with () input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.unsignedIntegerOutcome .U32 input cursor) result ⦄ := by
-  simpa only [Partial.primitive, Partial.primitiveResult, Spec.completed] using
+  simpa only [ParseContext.FINAL, Partial.primitive, Partial.primitiveResult, Spec.completed] using
     be_u32_with_spec input cursor .Final
 
 theorem be_u32_spec (input : Slice U8) (cursor : Cursor) :
@@ -181,9 +191,9 @@ theorem be_u32_spec (input : Slice U8) (cursor : Cursor) :
     (Spec.unsignedIntegerOutcome .U32 input cursor) (be_u32_final_spec input cursor)
 
 theorem be_u64_final_spec (input : Slice U8) (cursor : Cursor) :
-    BeU64.Insts.RusthammerParserInputU64.parse_with () input cursor .Final
+    BeU64.Insts.RusthammerParserInputU64.parse_with () input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.unsignedIntegerOutcome .U64 input cursor) result ⦄ := by
-  simpa only [Partial.primitive, Partial.primitiveResult, Spec.completed] using
+  simpa only [ParseContext.FINAL, Partial.primitive, Partial.primitiveResult, Spec.completed] using
     be_u64_with_spec input cursor .Final
 
 theorem be_u64_spec (input : Slice U8) (cursor : Cursor) :
@@ -193,9 +203,9 @@ theorem be_u64_spec (input : Slice U8) (cursor : Cursor) :
     (Spec.unsignedIntegerOutcome .U64 input cursor) (be_u64_final_spec input cursor)
 
 theorem i8_final_spec (input : Slice U8) (cursor : Cursor) :
-    Code.I8.Insts.RusthammerParserInputI8.parse_with () input cursor .Final
+    Code.I8.Insts.RusthammerParserInputI8.parse_with () input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.signedIntegerOutcome .I8 input cursor) result ⦄ := by
-  simpa only [Partial.primitive, Partial.primitiveResult, Spec.completed] using
+  simpa only [ParseContext.FINAL, Partial.primitive, Partial.primitiveResult, Spec.completed] using
     i8_with_spec input cursor .Final
 
 theorem i8_spec (input : Slice U8) (cursor : Cursor) :
@@ -205,9 +215,9 @@ theorem i8_spec (input : Slice U8) (cursor : Cursor) :
     (Spec.signedIntegerOutcome .I8 input cursor) (i8_final_spec input cursor)
 
 theorem be_i16_final_spec (input : Slice U8) (cursor : Cursor) :
-    BeI16.Insts.RusthammerParserInputI16.parse_with () input cursor .Final
+    BeI16.Insts.RusthammerParserInputI16.parse_with () input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.signedIntegerOutcome .I16 input cursor) result ⦄ := by
-  simpa only [Partial.primitive, Partial.primitiveResult, Spec.completed] using
+  simpa only [ParseContext.FINAL, Partial.primitive, Partial.primitiveResult, Spec.completed] using
     be_i16_with_spec input cursor .Final
 
 theorem be_i16_spec (input : Slice U8) (cursor : Cursor) :
@@ -217,9 +227,9 @@ theorem be_i16_spec (input : Slice U8) (cursor : Cursor) :
     (Spec.signedIntegerOutcome .I16 input cursor) (be_i16_final_spec input cursor)
 
 theorem be_i32_final_spec (input : Slice U8) (cursor : Cursor) :
-    BeI32.Insts.RusthammerParserInputI32.parse_with () input cursor .Final
+    BeI32.Insts.RusthammerParserInputI32.parse_with () input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.signedIntegerOutcome .I32 input cursor) result ⦄ := by
-  simpa only [Partial.primitive, Partial.primitiveResult, Spec.completed] using
+  simpa only [ParseContext.FINAL, Partial.primitive, Partial.primitiveResult, Spec.completed] using
     be_i32_with_spec input cursor .Final
 
 theorem be_i32_spec (input : Slice U8) (cursor : Cursor) :
@@ -229,9 +239,9 @@ theorem be_i32_spec (input : Slice U8) (cursor : Cursor) :
     (Spec.signedIntegerOutcome .I32 input cursor) (be_i32_final_spec input cursor)
 
 theorem be_i64_final_spec (input : Slice U8) (cursor : Cursor) :
-    BeI64.Insts.RusthammerParserInputI64.parse_with () input cursor .Final
+    BeI64.Insts.RusthammerParserInputI64.parse_with () input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.signedIntegerOutcome .I64 input cursor) result ⦄ := by
-  simpa only [Partial.primitive, Partial.primitiveResult, Spec.completed] using
+  simpa only [ParseContext.FINAL, Partial.primitive, Partial.primitiveResult, Spec.completed] using
     be_i64_with_spec input cursor .Final
 
 theorem be_i64_spec (input : Slice U8) (cursor : Cursor) :

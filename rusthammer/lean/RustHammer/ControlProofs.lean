@@ -13,8 +13,9 @@ theorem recoverable_spec (error : ParseError) :
 
 /-- End rejects all remaining bits and malformed cursors, without consuming input. -/
 theorem end_spec (input : Slice U8) (cursor : Cursor) :
-    End.Insts.RusthammerParserInputTuple.parse_with () input cursor .Final
+    End.Insts.RusthammerParserInputTuple.parse_with () input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.endOutcome input cursor) result ⦄ := by
+  simp only [ParseContext.FINAL]
   unfold Spec.completed
   by_cases hvalid : Spec.validCursor input cursor
   · have hparts := hvalid
@@ -98,9 +99,10 @@ theorem literal_value_spec (parser : Literal) :
 /-- Validated literal matching refines numeric decoding, including every input error. -/
 theorem literal_decode_spec (parser : Literal) (input : Slice U8) (cursor : Cursor)
     (hconfig : Spec.validLiteral parser) :
-    read_literal input cursor parser
+    read_literal input cursor parser Order.DEFAULT
       ⦃ result => Spec.literalOutcome input cursor parser.bits.width parser.value result ⦄ := by
   unfold read_literal Spec.literalOutcome
+  simp only [read_ordered_bits, Order.DEFAULT]
   step with read_bits_spec input cursor parser.bits hconfig.1 as ⟨numeric, hnumeric⟩
   cases numeric with
   | Err error =>
@@ -121,9 +123,10 @@ theorem literal_decode_spec (parser : Literal) (input : Slice U8) (cursor : Curs
 
 theorem literal_spec (parser : Literal) (input : Slice U8) (cursor : Cursor)
     (hconfig : Spec.validLiteral parser) :
-    Literal.Insts.RusthammerParserInputU64.parse_with parser input cursor .Final
+    Literal.Insts.RusthammerParserInputU64.parse_with parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.literalOutcome input cursor parser.bits.width parser.value) result ⦄ := by
   unfold Literal.Insts.RusthammerParserInputU64.parse_with
+  simp only [ParseContext.FINAL]
   step with literal_decode_spec parser input cursor hconfig as ⟨result, hresult⟩
   step with classify_final_spec result as ⟨outcome, houtcome⟩
   exact ⟨result, hresult, houtcome⟩
@@ -132,9 +135,9 @@ theorem literal_spec (parser : Literal) (input : Slice U8) (cursor : Cursor)
 theorem choice_spec {P Q α : Type} (pi : Parser P α) (qi : Parser Q α)
     (parser : Choice P Q) (input : Slice U8) (cursor : Cursor)
     (first second : Cursor → Spec.ParseResult α → Prop)
-    (hp : ∀ start, pi.parse_with parser.first input start .Final ⦃ result => Spec.completed (first start) result ⦄)
-    (hq : ∀ start, qi.parse_with parser.second input start .Final ⦃ result => Spec.completed (second start) result ⦄) :
-    Choice.Insts.RusthammerParser.parse_with pi qi parser input cursor .Final
+    (hp : ∀ start, pi.parse_with parser.first input start ParseContext.FINAL ⦃ result => Spec.completed (first start) result ⦄)
+    (hq : ∀ start, qi.parse_with parser.second input start ParseContext.FINAL ⦃ result => Spec.completed (second start) result ⦄) :
+    Choice.Insts.RusthammerParser.parse_with pi qi parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.choice first second cursor) result ⦄ := by
   unfold Choice.Insts.RusthammerParser.parse_with
   step with hp cursor as ⟨outcome, houtcome⟩
@@ -210,7 +213,7 @@ theorem marker_new_valid (parser : Marker)
 /-- The constructed example implements its ordered grammar for every input and cursor. -/
 theorem marker_parser_spec (parser : Marker) (input : Slice U8) (cursor : Cursor)
     (hconfig : Spec.validMarker parser) :
-    Marker.Insts.RusthammerParserInputU64.parse_with parser input cursor .Final
+    Marker.Insts.RusthammerParserInputU64.parse_with parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.markerOutcome input cursor) result ⦄ := by
   let li := Literal.Insts.RusthammerParserInputU64
   let ci := Choice.Insts.RusthammerParser li li
@@ -251,9 +254,9 @@ theorem marker_spec (input : Slice U8) (cursor : Cursor) (parser : Marker)
 values after partial rejection and successful values that borrow from the input. -/
 theorem optional_spec {P α : Type} (pi : Parser P α) (parser : Optional P)
     (input : Slice U8) (cursor : Cursor) (child : Cursor → Spec.ParseResult α → Prop)
-    (hp : pi.parse_with parser.parser input cursor .Final
+    (hp : pi.parse_with parser.parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (child cursor) result ⦄) :
-    Optional.Insts.RusthammerParserInputOption.parse_with pi parser input cursor .Final
+    Optional.Insts.RusthammerParserInputOption.parse_with pi parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.optional child cursor) result ⦄ := by
   unfold Optional.Insts.RusthammerParserInputOption.parse_with
   step with hp as ⟨outcome, houtcome⟩
@@ -280,9 +283,9 @@ theorem optional_spec {P α : Type} (pi : Parser P α) (parser : Optional P)
 regardless of the child's output type or how far it advanced. -/
 theorem and_spec {P α : Type} (pi : Parser P α) (parser : Code.And P)
     (input : Slice U8) (cursor : Cursor) (child : Cursor → Spec.ParseResult α → Prop)
-    (hp : pi.parse_with parser.parser input cursor .Final
+    (hp : pi.parse_with parser.parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (child cursor) result ⦄) :
-    Code.And.Insts.RusthammerParserInputTuple.parse_with pi parser input cursor .Final
+    Code.And.Insts.RusthammerParserInputTuple.parse_with pi parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.and child cursor) result ⦄ := by
   unfold Code.And.Insts.RusthammerParserInputTuple.parse_with
   step with hp as ⟨outcome, houtcome⟩
@@ -300,9 +303,9 @@ theorem and_spec {P α : Type} (pi : Parser P α) (parser : Code.And P)
 No progress assumption is needed for a child that succeeds without consuming input. -/
 theorem not_spec {P α : Type} (pi : Parser P α) (parser : Code.Not P)
     (input : Slice U8) (cursor : Cursor) (child : Cursor → Spec.ParseResult α → Prop)
-    (hp : pi.parse_with parser.parser input cursor .Final
+    (hp : pi.parse_with parser.parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (child cursor) result ⦄) :
-    Code.Not.Insts.RusthammerParserInputTuple.parse_with pi parser input cursor .Final
+    Code.Not.Insts.RusthammerParserInputTuple.parse_with pi parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.not child cursor) result ⦄ := by
   unfold Code.Not.Insts.RusthammerParserInputTuple.parse_with
   step with hp as ⟨outcome, houtcome⟩

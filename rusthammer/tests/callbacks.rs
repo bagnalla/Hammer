@@ -1,7 +1,7 @@
 use std::cell::Cell;
 
 use rusthammer::{
-    Bit, Bits, Choice, Cursor, InputStatus, Map, ParseError, ParseOutcome, Parser, TakeAligned,
+    Bit, Bits, Choice, Cursor, Map, ParseContext, ParseError, ParseOutcome, Parser, TakeAligned,
     Verify,
 };
 
@@ -10,7 +10,7 @@ struct Reject(ParseError);
 impl<'input> Parser<'input> for Reject {
     type Output = bool;
 
-    fn parse_with(&self, _: &'input [u8], _: Cursor, _: InputStatus) -> ParseOutcome<bool> {
+    fn parse_with(&self, _: &'input [u8], _: Cursor, _: ParseContext) -> ParseOutcome<bool> {
         ParseOutcome::Error(self.0)
     }
 }

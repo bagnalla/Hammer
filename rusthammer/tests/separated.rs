@@ -1,8 +1,8 @@
 #[cfg(feature = "alloc")]
 use rusthammer::SepBy;
 use rusthammer::{
-    Bits, Choice, ConfigError, Cursor, End, Epsilon, FoldSepBy, Ignore, InputStatus, Left, Literal,
-    Map, Optional, ParseError, ParseOutcome, Parser, Seq, TakeAligned,
+    Bits, Choice, ConfigError, Cursor, End, Epsilon, FoldSepBy, Ignore, Left, Literal, Map,
+    Optional, ParseContext, ParseError, ParseOutcome, Parser, Seq, TakeAligned,
 };
 use std::cell::Cell;
 use std::rc::Rc;
@@ -18,7 +18,7 @@ fn literal(byte: u8) -> Literal {
 struct MustNotRun;
 impl<'input> Parser<'input> for MustNotRun {
     type Output = ();
-    fn parse_with(&self, _: &'input [u8], _: Cursor, _: InputStatus) -> ParseOutcome<()> {
+    fn parse_with(&self, _: &'input [u8], _: Cursor, _: ParseContext) -> ParseOutcome<()> {
         panic!("parser must not run")
     }
 }
@@ -68,7 +68,7 @@ fn expected_letters(
     input: &[u8],
     min: usize,
     max: Option<usize>,
-    status: InputStatus,
+    context: ParseContext,
 ) -> ParseOutcome<usize> {
     let matched = input
         .iter()
@@ -80,7 +80,7 @@ fn expected_letters(
     let next = byte_cursor(if count == 0 { 0 } else { 2 * count - 1 });
     if max == Some(count) {
         ParseOutcome::Success(next, count)
-    } else if matched == input.len() && status == InputStatus::Partial {
+    } else if matched == input.len() && context == ParseContext::PARTIAL {
         ParseOutcome::NeedMore
     } else if count < min {
         ParseOutcome::Error(if matched == input.len() {
@@ -115,12 +115,12 @@ fn exhaustive_small_languages_match_for_all_bound_modes_and_input_finalities() {
                         }
                         None => FoldSepBy::at_least(literal(b'a'), literal(b','), min, init, fold),
                     };
-                    for status in [InputStatus::Final, InputStatus::Partial] {
-                        let expected = expected_letters(&input, min, max, status);
+                    for context in [ParseContext::FINAL, ParseContext::PARTIAL] {
+                        let expected = expected_letters(&input, min, max, context);
                         assert_eq!(
-                            parser.parse_with(&input, Cursor::start(), status),
+                            parser.parse_with(&input, Cursor::start(), context),
                             expected,
-                            "input={input:?} min={min} max={max:?} status={status:?}"
+                            "input={input:?} min={min} max={max:?} context={context:?}"
                         );
                         #[cfg(feature = "alloc")]
                         {
@@ -138,7 +138,7 @@ fn exhaustive_small_languages_match_for_all_bound_modes_and_input_finalities() {
                                 ParseOutcome::NeedMore => ParseOutcome::NeedMore,
                             };
                             assert_eq!(
-                                collecting.parse_with(&input, Cursor::start(), status),
+                                collecting.parse_with(&input, Cursor::start(), context),
                                 expected
                             );
                         }
@@ -166,14 +166,14 @@ fn zero_cap_and_invalid_unbounded_start_skip_the_right_operations() {
         byte: usize::MAX,
         bit: 255,
     };
-    for status in [InputStatus::Final, InputStatus::Partial] {
+    for context in [ParseContext::FINAL, ParseContext::PARTIAL] {
         assert_eq!(
-            parser.parse_with(&[], cursor, status),
+            parser.parse_with(&[], cursor, context),
             ParseOutcome::Success(cursor, 7)
         );
         #[cfg(feature = "alloc")]
         assert_eq!(
-            SepBy::exact(MustNotRun, MustNotRun, 0).parse_with(&[], cursor, status),
+            SepBy::exact(MustNotRun, MustNotRun, 0).parse_with(&[], cursor, context),
             ParseOutcome::Success(cursor, vec![])
         );
     }
@@ -200,7 +200,7 @@ fn exact_one_never_calls_a_separator_and_unit_items_are_counted() {
     };
     let parser = FoldSepBy::exact(item, MustNotRun, 1, || 0, |n, ()| n + 1);
     assert_eq!(
-        parser.parse_with(b"a,", Cursor::start(), InputStatus::Partial),
+        parser.parse_with(b"a,", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::Success(byte_cursor(1), 1)
     );
     #[cfg(feature = "alloc")]
@@ -228,11 +228,11 @@ fn trailing_separator_is_rolled_back_and_retry_uses_a_fresh_accumulator() {
         },
     );
     assert_eq!(
-        parser.parse_with(b"a,", Cursor::start(), InputStatus::Partial),
+        parser.parse_with(b"a,", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(
-        parser.parse_with(b"a,a!", Cursor::start(), InputStatus::Partial),
+        parser.parse_with(b"a,a!", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::Success(byte_cursor(3), 2)
     );
     assert_eq!((init_calls.get(), step_calls.get()), (2, 3));
@@ -262,7 +262,7 @@ fn both_separator_prefixes_and_item_prefixes_roll_back_as_one_attempt() {
         Ok((byte_cursor(1), 1))
     );
     assert_eq!(
-        parser.parse_with(b"a,", Cursor::start(), InputStatus::Partial),
+        parser.parse_with(b"a,", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     let item = Seq {
@@ -275,7 +275,7 @@ fn both_separator_prefixes_and_item_prefixes_roll_back_as_one_attempt() {
         Ok((byte_cursor(2), 1))
     );
     assert_eq!(
-        parser.parse_with(b"ab,a", Cursor::start(), InputStatus::Partial),
+        parser.parse_with(b"ab,a", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     #[cfg(feature = "alloc")]
@@ -299,7 +299,7 @@ struct Controlled<'a> {
 }
 impl<'input> Parser<'input> for Controlled<'_> {
     type Output = ();
-    fn parse_with(&self, _: &'input [u8], cursor: Cursor, _: InputStatus) -> ParseOutcome<()> {
+    fn parse_with(&self, _: &'input [u8], cursor: Cursor, _: ParseContext) -> ParseOutcome<()> {
         self.calls.set(self.calls.get() + 1);
         if self.first_item && cursor == Cursor::start() {
             ParseOutcome::Success(byte_cursor(1), ())
@@ -363,7 +363,7 @@ fn errors_and_need_more_from_either_stage_respect_minimum_and_short_circuit() {
                         Some(e) => ParseOutcome::Error(e),
                     };
                     assert_eq!(
-                        parser.parse_with(b"x", Cursor::start(), InputStatus::Partial),
+                        parser.parse_with(b"x", Cursor::start(), ParseContext::PARTIAL),
                         expected
                     );
                     assert_eq!(
@@ -382,7 +382,7 @@ fn errors_and_need_more_from_either_stage_respect_minimum_and_short_circuit() {
                             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
                         };
                         assert_eq!(
-                            parser.parse_with(b"x", Cursor::start(), InputStatus::Partial),
+                            parser.parse_with(b"x", Cursor::start(), ParseContext::PARTIAL),
                             expected
                         );
                     }
@@ -478,7 +478,7 @@ fn bit_items_and_separators_cross_byte_boundaries() {
     let separator = Literal::new(2, 3).unwrap();
     let parser = FoldSepBy::exact(item, separator, 3, || 0u64, |n, bits| n * 8 + bits);
     assert_eq!(
-        parser.parse_with(&input, Cursor::start(), InputStatus::Partial),
+        parser.parse_with(&input, Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::Success(Cursor { byte: 1, bit: 5 }, 0o527)
     );
     #[cfg(feature = "alloc")]
@@ -556,9 +556,9 @@ impl<'input, P: Parser<'input>> Parser<'input> for Tracked<P> {
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        match self.parser.parse_with(input, cursor, status) {
+        match self.parser.parse_with(input, cursor, context) {
             ParseOutcome::Success(next, value) => ParseOutcome::Success(
                 next,
                 Token {
@@ -574,11 +574,11 @@ impl<'input, P: Parser<'input>> Parser<'input> for Tracked<P> {
 
 #[test]
 fn owned_items_separators_and_accumulators_are_dropped_on_each_exit_path() {
-    for (min, max, status, success) in [
-        (1, None, InputStatus::Final, true),
-        (1, None, InputStatus::Partial, false),
-        (3, None, InputStatus::Final, false),
-        (2, Some(2), InputStatus::Partial, true),
+    for (min, max, context, success) in [
+        (1, None, ParseContext::FINAL, true),
+        (1, None, ParseContext::PARTIAL, false),
+        (3, None, ParseContext::FINAL, false),
+        (2, Some(2), ParseContext::PARTIAL, true),
     ] {
         let item_drops = Rc::new(Cell::new(0));
         let separator_drops = Rc::new(Cell::new(0));
@@ -603,13 +603,13 @@ fn owned_items_separators_and_accumulators_are_dropped_on_each_exit_path() {
             Some(max) => FoldSepBy::new(&item, &separator, min, max, init, fold).unwrap(),
             None => FoldSepBy::at_least(&item, &separator, min, init, fold),
         };
-        let result = parser.parse_with(b"a,b,", Cursor::start(), status);
+        let result = parser.parse_with(b"a,b,", Cursor::start(), context);
         match &result {
             ParseOutcome::Success(next, state) => {
                 assert!(success);
                 assert_eq!((*next, state.value), (byte_cursor(3), 3));
             }
-            ParseOutcome::NeedMore => assert_eq!(status, InputStatus::Partial),
+            ParseOutcome::NeedMore => assert_eq!(context, ParseContext::PARTIAL),
             ParseOutcome::Error(error) => assert_eq!(*error, ParseError::UnexpectedEnd),
         }
         assert_eq!(
@@ -627,7 +627,7 @@ fn owned_items_separators_and_accumulators_are_dropped_on_each_exit_path() {
                 None => SepBy::at_least(&item, &separator, min),
             };
             let input = *b"a,b,";
-            let result = parser.parse_with(&input, Cursor::start(), status);
+            let result = parser.parse_with(&input, Cursor::start(), context);
             if let ParseOutcome::Success(next, values) = &result {
                 assert!(success);
                 assert_eq!(*next, byte_cursor(3));

@@ -14,6 +14,12 @@ immutable ordering/finality context, and require aligned entry and successful
 exit only when a scope changes bit direction. Byte-order-only scopes and nested
 same-direction scopes delegate without imposing alignment.
 
+The library now implements and proves this restricted ordering model, including
+numeric decoding and the separate Cargo consumer. See the
+[production evidence](../../plans/rusthammer-input.md#production-implementation-and-evidence).
+This probe remains an isolated record of the preceding design check, including
+span experiments that are not yet part of the public API.
+
 From `rusthammer/`, with the pinned tools and Lean dependencies:
 
 ```sh
@@ -48,9 +54,10 @@ including 2,064 inputs C accepts. It reuses the historical C adapter, with new
 Rust code, expected outcomes, and corpus classification. These are complete-input
 comparisons; partial behavior is tested natively.
 
-The reader's numeric correctness, physical span geometry, and application
-grammars are not yet proved. The standalone optimized-MIR check does not replace
-the Cargo-consumer check during production migration. This probe remains outside
+This probe does not prove its reader's numeric correctness, physical span
+geometry, or concrete application grammars. The production library has its own
+numeric-reader proofs and Cargo-consumer checks; span proofs remain future work.
+This probe remains outside
 the library and its normal verification command; all build/proof artifacts go
 under ignored `target/restricted-order/`.
 

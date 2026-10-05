@@ -2,7 +2,7 @@
 #[cfg(rusthammer_verify)]
 use crate as rusthammer;
 use rusthammer::{
-    Bits, ConfigError, Cursor, End, InputStatus, ParseError, ParseOutcome, Parser, Seq,
+    Bits, ConfigError, Cursor, End, ParseContext, ParseError, ParseOutcome, Parser, Seq,
     TakeAligned, Verify,
 };
 
@@ -62,10 +62,10 @@ impl<'input> Parser<'input> for RecordParser {
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
         // An empty aligned read validates the cursor and alignment without advancing.
-        match (TakeAligned { count: 0 }).parse_with(input, cursor, status) {
+        match (TakeAligned { count: 0 }).parse_with(input, cursor, context) {
             ParseOutcome::NeedMore => return ParseOutcome::NeedMore,
             ParseOutcome::Error(error) => return ParseOutcome::Error(error),
             ParseOutcome::Success(_, _) => {}
@@ -82,12 +82,12 @@ impl<'input> Parser<'input> for RecordParser {
                 fields.0 == 1 && fields.1 .1 <= MAX_RECORD_PAYLOAD
             },
         };
-        match header.parse_with(input, cursor, status) {
+        match header.parse_with(input, cursor, context) {
             ParseOutcome::NeedMore => return ParseOutcome::NeedMore,
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
             ParseOutcome::Success(next, (version, (flags, length))) => {
                 // The verified bound fits usize on every supported Rust target.
-                parse_record_body(input, next, version, flags, length as usize, status)
+                parse_record_body(input, next, version, flags, length as usize, context)
             }
         }
     }
@@ -99,13 +99,13 @@ fn parse_record_body(
     version: u64,
     flags: u64,
     count: usize,
-    status: InputStatus,
+    context: ParseContext,
 ) -> ParseOutcome<Record<'_>> {
     let body = Seq {
         first: TakeAligned { count },
         second: End,
     };
-    match body.parse_with(input, cursor, status) {
+    match body.parse_with(input, cursor, context) {
         ParseOutcome::NeedMore => return ParseOutcome::NeedMore,
         ParseOutcome::Error(error) => ParseOutcome::Error(error),
         ParseOutcome::Success(end, (payload, ())) => ParseOutcome::Success(

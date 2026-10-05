@@ -8,6 +8,14 @@ open flags_example
 
 abbrev ParseResult (α : Type) := core.result.Result (Cursor × α) ParseError
 
+/-- Existing format contracts use the default numeric order. -/
+abbrev defaultContext (status : InputStatus) : ParseContext :=
+  { order := Order.DEFAULT, status }
+
+@[simp] theorem default_order_pin :
+    ({ bit := Order.DEFAULT.bit, byte := ByteOrder.Big } : Order) = Order.DEFAULT := by
+  simp [Order.DEFAULT]
+
 /-- Embed a complete parsing result in the three-outcome interface. -/
 def completedResult {α : Type} : ParseResult α → ParseOutcome α
   | .Ok (next, value) => .Success next value

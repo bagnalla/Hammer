@@ -1,5 +1,5 @@
 use rusthammer::{
-    And, Byte, BytePattern, Choice, Cursor, InputStatus, Not, Optional, ParseError, ParseOutcome,
+    And, Byte, BytePattern, Choice, Cursor, Not, Optional, ParseContext, ParseError, ParseOutcome,
     Parser, Seq,
 };
 
@@ -12,7 +12,7 @@ fn pattern_oracle<'p>(
     pattern: &'p [u8],
     input: &[u8],
     cursor: Cursor,
-    status: InputStatus,
+    context: ParseContext,
 ) -> ParseOutcome<&'p [u8]> {
     if pattern.is_empty() {
         return ParseOutcome::Success(cursor, pattern);
@@ -27,9 +27,9 @@ fn pattern_oracle<'p>(
     let mut position = cursor.byte * 8 + usize::from(cursor.bit);
     for expected in pattern {
         let Some(field) = bits.get(position..position + 8) else {
-            return match status {
-                InputStatus::Partial => ParseOutcome::NeedMore,
-                InputStatus::Final => ParseOutcome::Error(ParseError::UnexpectedEnd),
+            return match context.status {
+                rusthammer::InputStatus::Partial => ParseOutcome::NeedMore,
+                rusthammer::InputStatus::Final => ParseOutcome::Error(ParseError::UnexpectedEnd),
             };
         };
         if field != format!("{expected:08b}") {
@@ -56,7 +56,7 @@ fn byte_exhausts_two_byte_inputs_at_every_offset() {
             let next = Cursor { byte: 1, bit };
             assert_eq!(Byte.parse(&input, cursor), Ok((next, expected)));
             assert_eq!(
-                Byte.parse_with(&input, cursor, InputStatus::Partial),
+                Byte.parse_with(&input, cursor, ParseContext::PARTIAL),
                 ParseOutcome::Success(next, expected)
             );
         }
@@ -65,7 +65,7 @@ fn byte_exhausts_two_byte_inputs_at_every_offset() {
 
 #[test]
 fn byte_checks_cursor_before_input_exhaustion() {
-    for status in [InputStatus::Partial, InputStatus::Final] {
+    for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
         for cursor in [
             Cursor { byte: 0, bit: 8 },
             Cursor { byte: 1, bit: 1 },
@@ -76,17 +76,17 @@ fn byte_checks_cursor_before_input_exhaustion() {
             },
         ] {
             assert_eq!(
-                Byte.parse_with(&[0], cursor, status),
+                Byte.parse_with(&[0], cursor, context),
                 ParseOutcome::Error(ParseError::InvalidCursor)
             );
         }
         for bit in 1..8 {
-            let expected = match status {
-                InputStatus::Partial => ParseOutcome::NeedMore,
-                InputStatus::Final => ParseOutcome::Error(ParseError::UnexpectedEnd),
+            let expected = match context.status {
+                rusthammer::InputStatus::Partial => ParseOutcome::NeedMore,
+                rusthammer::InputStatus::Final => ParseOutcome::Error(ParseError::UnexpectedEnd),
             };
             assert_eq!(
-                Byte.parse_with(&[0], Cursor { byte: 0, bit }, status),
+                Byte.parse_with(&[0], Cursor { byte: 0, bit }, context),
                 expected
             );
         }
@@ -96,7 +96,7 @@ fn byte_checks_cursor_before_input_exhaustion() {
         Err(ParseError::UnexpectedEnd)
     );
     assert_eq!(
-        Byte.parse_with(&[0], Cursor { byte: 1, bit: 0 }, InputStatus::Partial),
+        Byte.parse_with(&[0], Cursor { byte: 1, bit: 0 }, ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
 }
@@ -129,11 +129,11 @@ fn patterns_match_binary_string_oracle_at_every_cursor() {
                     if mutation < len {
                         pattern[mutation] ^= 0x80;
                     }
-                    for status in [InputStatus::Partial, InputStatus::Final] {
+                    for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
                         assert_eq!(
-                            BytePattern::new(&pattern).parse_with(&input, cursor, status),
-                            pattern_oracle(&pattern, &input, cursor, status),
-                            "pattern={pattern:?}, cursor={cursor:?}, status={status:?}"
+                            BytePattern::new(&pattern).parse_with(&input, cursor, context),
+                            pattern_oracle(&pattern, &input, cursor, context),
+                            "pattern={pattern:?}, cursor={cursor:?}, context={context:?}"
                         );
                     }
                     if mutation < len {
@@ -173,9 +173,9 @@ fn empty_pattern_is_empty_success_even_at_invalid_cursors() {
             bit: u8::MAX,
         },
     ] {
-        for status in [InputStatus::Partial, InputStatus::Final] {
+        for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
             assert_eq!(
-                parser.parse_with(&[], cursor, status),
+                parser.parse_with(&[], cursor, context),
                 ParseOutcome::Success(cursor, &[][..])
             );
         }
@@ -211,11 +211,11 @@ fn long_patterns_and_embedded_zeros_are_supported() {
 fn partial_patterns_distinguish_mismatch_from_incomplete_bytes() {
     let parser = BytePattern::new(b"ab");
     assert_eq!(
-        parser.parse_with(b"x", Cursor::start(), InputStatus::Partial),
+        parser.parse_with(b"x", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::Error(ParseError::Mismatch)
     );
     assert_eq!(
-        parser.parse_with(b"a", Cursor::start(), InputStatus::Partial),
+        parser.parse_with(b"a", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(
@@ -224,7 +224,7 @@ fn partial_patterns_distinguish_mismatch_from_incomplete_bytes() {
     );
     // Incomplete individual bytes are not compared bit by bit.
     assert_eq!(
-        parser.parse_with(&[0xff], Cursor { byte: 0, bit: 1 }, InputStatus::Partial),
+        parser.parse_with(&[0xff], Cursor { byte: 0, bit: 1 }, ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     let pattern = [0xab, 0xcd];
@@ -233,12 +233,12 @@ fn partial_patterns_distinguish_mismatch_from_incomplete_bytes() {
     let cursor = Cursor { byte: 0, bit: 1 };
     for len in 1..3 {
         assert_eq!(
-            parser.parse_with(&input[..len], cursor, InputStatus::Partial),
+            parser.parse_with(&input[..len], cursor, ParseContext::PARTIAL),
             ParseOutcome::NeedMore
         );
     }
     assert_eq!(
-        parser.parse_with(&input, cursor, InputStatus::Partial),
+        parser.parse_with(&input, cursor, ParseContext::PARTIAL),
         ParseOutcome::Success(Cursor { byte: 2, bit: 1 }, &pattern[..])
     );
 }
@@ -252,7 +252,7 @@ fn pattern_choice_lookahead_and_typed_sequence_preserve_semantics() {
         second: short,
     };
     assert_eq!(
-        choice.parse_with(b"a", Cursor::start(), InputStatus::Partial),
+        choice.parse_with(b"a", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(
@@ -264,7 +264,7 @@ fn pattern_choice_lookahead_and_typed_sequence_preserve_semantics() {
         Ok((Cursor { byte: 1, bit: 0 }, &b"a"[..]))
     );
     assert_eq!(
-        Optional { parser: long }.parse_with(b"a", Cursor::start(), InputStatus::Partial),
+        Optional { parser: long }.parse_with(b"a", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(

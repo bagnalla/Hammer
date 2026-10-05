@@ -11,6 +11,20 @@ AENEAS_REV = "557eff83ecef5083b98a52a94ca7fae63d6c1dab"
 CHARON_REV = "c8f15d7d658c86a95658f71ad99cddd4be002e04"
 ROOT = Path(__file__).resolve().parents[1]
 
+ORDER_THEOREMS = (
+    "RustHammer.Ordering.unsigned_default",
+    "RustHammer.Proofs.read_ordered_bits_spec",
+    "RustHammer.Proofs.read_bit_ordered_spec",
+    *(f"RustHammer.Ordering.{name}" for name in (
+        "with_order_spec", "with_order_blocked", "scope_success_aligned",
+        "bits_with_spec", "bit_with_spec", "literal_with_spec", "signed_bits_with_spec",
+        "byte_with_spec", "i8_with_spec", "be_u16_with_spec", "be_u32_with_spec",
+        "be_u64_with_spec", "be_i16_with_spec", "be_i32_with_spec", "be_i64_with_spec",
+        "byte_pattern_with_spec", "byte_in_with_spec", "byte_not_in_with_spec",
+        "take_aligned_with_spec", "skip_bits_with_spec", "tell_with_spec", "end_with_spec",
+    )),
+)
+
 
 def output(*args, cwd=None):
     return subprocess.check_output(args, cwd=cwd, text=True).strip()
@@ -27,6 +41,21 @@ def translate(aeneas, llbc, destination, namespace):
         "-namespace", namespace, "-abort-on-error", "-warnings-as-errors",
         "-no-progress-bar", llbc,
     )
+
+
+def audit_ordering_proofs():
+    audit = ROOT / "target" / "ordering-axioms.lean"
+    audit.write_text("import RustHammer.OrderParserProofs\n" + "".join(
+        f"#print axioms {name}\n" for name in ORDER_THEOREMS
+    ))
+    result = output("lake", "env", "lean", "-DwarningAsError=true", audit, cwd=ROOT / "lean")
+    audits = re.findall(r"'([^']+)' depends on axioms: \[([^]]*)\]", result)
+    if {name for name, _ in audits} != set(ORDER_THEOREMS):
+        raise RuntimeError(f"missing ordering proof axiom audit:\n{result}")
+    for name, axioms in audits:
+        if set(filter(None, map(str.strip, axioms.split(",")))) - {"propext", "Classical.choice", "Quot.sound"}:
+            raise RuntimeError(f"unexpected axioms in {name}: {axioms}")
+    print(f"Ordering axiom audit: {len(audits)} theorems use only standard Lean axioms.", flush=True)
 
 
 def main():
@@ -66,6 +95,7 @@ def main():
         "--start-from", "rusthammer::flags_example::parse_flags",
         "--start-from", "rusthammer::take_aligned",
         "--start-from", "rusthammer::read_bits",
+        "--start-from", "rusthammer::ParseContext::PARTIAL",
         "--start-from", "rusthammer::marker_example::parse_marker",
         "--start-from", "rusthammer::record_example::parse_record",
         "--start-from", "rusthammer::Bits::new",
@@ -156,6 +186,7 @@ def main():
         "skipped_position", "reported_position", "complete_skip", "skip_configuration",
         "restricted_payload", "difference_pattern", "exclusive_patterns", "exclusive_value",
         "complete_matches",
+        "ordered_fields", "scoped_payload", "scoped_pattern",
     )
     entry_args = [
         arg for name in entries
@@ -185,6 +216,7 @@ def main():
         if re.search(r"\b(?:sorry|admit)\b|^\s*(?:axiom|opaque)\s", path.read_text(), re.M):
             parser.error(f"unproved or opaque declaration in {path}")
     run("lake", "build", cwd=ROOT / "lean")
+    audit_ordering_proofs()
     for path in compatibility_files:
         run("lake", "env", "lean", "-DwarningAsError=true", path, cwd=ROOT / "lean")
 

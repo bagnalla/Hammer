@@ -86,15 +86,15 @@ private theorem count_prefix_decode (input : Slice U8) (cursor : Cursor) (status
 
 /-- Checked decoding and the cast are total, including all invalid/truncated inputs. -/
 theorem count_prefix_with_spec (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
-    countInst.parse_with () input cursor status
+    countInst.parse_with () input cursor (Spec.defaultContext status)
       ⦃ result => Spec.countPrefix input cursor status result ⦄ := by
-  change dependent_examples.CountPrefix.Insts.RusthammerParserInputUsize.parse_with () input cursor status
+  change dependent_examples.CountPrefix.Insts.RusthammerParserInputUsize.parse_with () input cursor (Spec.defaultContext status)
     ⦃ result => Spec.countPrefix input cursor status result ⦄
   unfold dependent_examples.CountPrefix.Insts.RusthammerParserInputUsize.parse_with
   step with fixed_bits_spec 8#u8 (by decide) as ⟨configured, hconfigured⟩
   simp only [hconfigured]
   step with try_map_with_spec Bits.Insts.RusthammerParserInputU64 checkInst
-    { parser := { width := 8#u8 }, map := () } input cursor status
+    { parser := { width := 8#u8 }, map := () } input cursor (Spec.defaultContext status)
     (fun start => Partial.primitive status (Spec.bitsOutcome input start 8#u8)) checkedCount
     (bits_with_spec { width := 8#u8 } input cursor status (by decide))
     (fun _ value _ => checked_count_spec value) as ⟨outcome, houtcome⟩
@@ -103,11 +103,11 @@ theorem count_prefix_with_spec (input : Slice U8) (cursor : Cursor) (status : In
 /-- The extracted application uses the generic Bind contract, with a proven
 factory and the already verified borrowed-payload parser. -/
 theorem dependent_payload_spec (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
-    dependent_examples.payload input cursor status
+    dependent_examples.payload input cursor (Spec.defaultContext status)
       ⦃ result => Spec.dependentPayload input cursor status result ⦄ := by
   unfold dependent_examples.payload
   apply bind_with_spec countInst payloadFactory TakeAligned.Insts.RusthammerParserInputSharedInputSliceU8
-    { parser := (), «then» := () } input cursor status
+    { parser := (), «then» := () } input cursor (Spec.defaultContext status)
     (fun start => Spec.countPrefix input start status)
     (fun count start => Partial.primitive status (Spec.takeAlignedOutcome input start count))
     (fun count parser => parser = { count }) (count_prefix_with_spec input cursor status)
@@ -118,13 +118,13 @@ theorem dependent_payload_spec (input : Slice U8) (cursor : Cursor) (status : In
     exact take_aligned_with_spec { count := value } input next status
 
 theorem dependent_fields_spec (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
-    dependent_examples.fields input cursor status
+    dependent_examples.fields input cursor (Spec.defaultContext status)
       ⦃ result => Spec.dependentFields input cursor status result ⦄ := by
   unfold dependent_examples.fields
   step with fixed_bits_spec 4#u8 (by decide) as ⟨configured, hconfigured⟩
   simp only [hconfigured]
   apply bind_with_spec countInst fieldsFactory (Repeat.Insts.RusthammerParserInputVec Bits.Insts.RusthammerParserInputU64)
-    { parser := (), «then» := { width := 4#u8 } } input cursor status
+    { parser := (), «then» := { width := 4#u8 } } input cursor (Spec.defaultContext status)
     (fun start => Spec.countPrefix input start status)
     (fun count start => Spec.repeatN
       (fun pos => Partial.primitive status (Spec.bitsOutcome input pos 4#u8)) count.val start)
@@ -135,7 +135,7 @@ theorem dependent_fields_spec (input : Slice U8) (cursor : Cursor) (status : Inp
       Repeat.exact, RepeatBounds.exact, spec_ok]
   · intro next count child _ hc
     subst child
-    exact repeat_exact_with_spec Bits.Insts.RusthammerParserInputU64 { width := 4#u8 } count input next status
+    exact repeat_exact_with_spec Bits.Insts.RusthammerParserInputU64 { width := 4#u8 } count input next (Spec.defaultContext status)
       (fun pos => Partial.primitive status (Spec.bitsOutcome input pos 4#u8))
       (fun pos => bits_with_spec { width := 4#u8 } input pos status (by decide))
 

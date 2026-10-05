@@ -38,6 +38,11 @@ borrowed alternatives or an owned, non-`Clone` application enum built through
 `Map`. They cover shared parser references, cloning, and all three default
 complete methods. Native tests check equal/unequal lengths, partial input,
 constructor errors, enum variants, and borrow identity/lifetimes.
+Ordering entries check all four orders through unsigned, signed, and named
+`Be` readers; a borrowed payload followed by a low-first scope and an outer
+integer; and a pattern borrow returned through a scope. They cover context
+propagation, restored order, partial input, and parser references/cloning.
+All entries now pass `ParseContext` through the ordinary dependency interface.
 
 Run `python3 tools/verify.py` from `rusthammer/`. Alongside the library tests and
 proofs, that command:
@@ -46,7 +51,7 @@ proofs, that command:
    the compiler stage available for dependencies, and Lean type-checks it.
 2. Tests this consumer with allocation disabled and enabled.
 3. Extracts the consumer with RustHammer's dependency bodies included and `alloc`
-   enabled, checks that all forty entry points were translated, and Lean
+   enabled, checks that all 43 entry points were translated, and Lean
    type-checks the result.
 4. Rejects admitted or opaque project declarations in both extra translations.
 

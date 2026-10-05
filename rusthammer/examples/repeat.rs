@@ -1,5 +1,5 @@
 use rusthammer::{
-    Bits, ConfigError, Cursor, End, InputStatus, Literal, ParseOutcome, Parser, Repeat, Seq,
+    Bits, ConfigError, Cursor, End, Literal, ParseContext, ParseOutcome, Parser, Repeat, Seq,
 };
 
 fn main() -> Result<(), ConfigError> {
@@ -13,7 +13,7 @@ fn main() -> Result<(), ConfigError> {
 
     println!(
         "partial first byte: {:?}",
-        fields.parse_with(&input[..1], Cursor::start(), InputStatus::Partial)
+        fields.parse_with(&input[..1], Cursor::start(), ParseContext::PARTIAL)
     );
 
     // The same combinator accepts a runtime count read from the input.
@@ -39,12 +39,12 @@ fn main() -> Result<(), ConfigError> {
 
     // Meeting the minimum does not establish where a partial list stops.
     assert_eq!(
-        bounded.parse_with(b"aa", Cursor::start(), InputStatus::Partial),
+        bounded.parse_with(b"aa", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     // Reaching the maximum does: no fourth child is attempted.
     assert_eq!(
-        bounded.parse_with(b"aaa", Cursor::start(), InputStatus::Partial),
+        bounded.parse_with(b"aaa", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::Success(Cursor { byte: 3, bit: 0 }, vec![97; 3])
     );
 
@@ -55,7 +55,7 @@ fn main() -> Result<(), ConfigError> {
     assert_eq!(unbounded.max(), None);
     println!("unbounded values: {values:?}; next: {next:?}");
     assert_eq!(
-        unbounded.parse_with(b"aaaa", Cursor::start(), InputStatus::Partial),
+        unbounded.parse_with(b"aaaa", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     Ok(())

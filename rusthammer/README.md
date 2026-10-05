@@ -12,8 +12,8 @@ what is implemented today.
 The prototype supports:
 
 - A cursor with a byte index and a bit offset, passed separately from the input.
-- Reading one bit in most-significant-first order, including crossing into the
-  next byte without implicit alignment.
+- Reading bits from either end of each byte and independent big/little byte order.
+- `WithOrder` scopes, with aligned entry and successful exit when bit direction changes.
 - Unsigned numeric fields of 0 through 64 bits, producing `u64` values and
   supporting unaligned starts and byte-boundary crossing.
 - Signed two's-complement fields of 0 through 64 bits, producing `i64` with
@@ -26,7 +26,7 @@ The prototype supports:
 - `ByteIn` and `ByteNotIn` accepting or excluding literal byte sets and returning `u8`.
 - `SkipBits` discarding arbitrary bit counts and `Tell` reporting a validated cursor.
 - Private numeric and literal configuration, validated by fallible constructors.
-- `Parser<'input>` with an associated `Output` type and explicit input finality.
+- `Parser<'input>` with an associated `Output` type and explicit ordering/finality context.
 - Separate `Success`, `Error`, and `NeedMore` outcomes, with a complete-buffer convenience API.
 - `Seq<P, Q>`, which returns a typed pair and propagates child errors.
 - `Bind<P, F>`, whose factory uses a parsed value to configure the next parser.
@@ -68,6 +68,7 @@ cargo test --no-default-features
 cargo test --features alloc
 cargo run --example flags
 cargo run --example fields
+cargo run --example ordering
 cargo run --example signed_fields
 cargo run --example integers
 cargo run --example ranges
@@ -98,14 +99,15 @@ Flags { urgent: true, encrypted: false, compressed: true }; next cursor: Cursor 
 The `fields` example sequences a 3-bit version and a 13-bit length from `[0xa1,
 0x34]`, returning `(5u64, 308u64)` and cursor `{ byte: 2, bit: 0 }`.
 
-`Bits::new(width)` constructs an MSB-first unsigned reader, returning
+`Bits::new(width)` constructs an unsigned reader using the active order, returning
 `Result<Bits, ConfigError>`. Widths above 64 produce `ConfigError::InvalidWidth`
 before any input is supplied. The resulting parser can be reused through
 `parser.parse(input, cursor)` or `read_bits(input, cursor, &parser)`.
 A zero-width field returns zero without consuming input, including at end-of-input;
 an invalid cursor is still rejected. `Byte` reads the same eight bits as
 `Bits::new(8)` and returns `u8`. `SignedBits::new(width)` reads those bits as a
-signed `i64`. Configurable byte or bit order remains future work.
+signed `i64`. `parse()` and `read_bits()` use high-first bits and big byte order;
+`parse_with()` takes explicit settings, as described below.
 
 For example, a grammar builder can propagate construction errors with `?`:
 
@@ -190,12 +192,11 @@ named integer primitives under its default ordering:
 
 These are zero-sized, `Copy` and `Clone` parser values. Use them directly; their
 widths are always valid, so they have no fallible constructor or configuration.
-`Be` explicitly means big-endian. All readers consume MSB-first bits at the
-supplied cursor, including unaligned fields, and never insert alignment padding.
+`Be` explicitly pins big byte order and inherits the active bit direction.
+Readers start at the supplied cursor, including unaligned fields, and never insert alignment padding.
 They consume exactly their output type's bit width and use two's-complement
 interpretation for signed outputs. Invalid cursors return `InvalidCursor`; short
 input returns `NeedMore` in partial mode or `UnexpectedEnd` in final mode.
-Configurable bit/byte order remains future work.
 
 ```rust
 use rusthammer::{BeI16, BeU16, Cursor, Parser, Seq};
@@ -267,7 +268,7 @@ range parser.
 `ByteIn::new(bytes)` and `ByteNotIn::new(bytes)` correspond to C Hammer's `h_in`
 and `h_not_in`. Each reads one byte and returns its `u8` value, accepting it when
 it belongs to the configured set or lies outside it, respectively. Both reuse
-`Verify` over `Byte`, consuming eight MSB-first bits without implicit alignment.
+`Verify` over `Byte`, consuming a contextual eight-bit field without implicit alignment.
 
 ```rust
 use rusthammer::{ByteIn, ByteNotIn, Cursor, Parser};
@@ -356,13 +357,13 @@ tests compare against independent `u128` position arithmetic, including virtual
 lengths near `usize::MAX` without allocating input. They also cover both statuses,
 all bit offsets, truncation, invalid cursors, zero counts, parser references,
 dependent counts, lookahead, backtracking, and repetition. Both MIR modes and
-all 40 consumer entry points translate and Lean type-check without a new
+all 43 consumer entry points translate and Lean type-check without a new
 workaround. The C comparison adds 118,188 cases for `h_skip` and `h_tell` at
 representable positions, including canonical end-of-input and large skip counts.
 
 ## Bytes and byte patterns
 
-`Byte` corresponds to `h_uint8()`: it consumes eight MSB-first bits and returns
+`Byte` corresponds to `h_uint8()`: it consumes an eight-bit field in the active order and returns
 `u8`, including from an unaligned cursor. `BytePattern::new(pattern)` corresponds
 to `h_token` / `h_literal` matching arbitrary byte sequences, including embedded
 zeros and patterns longer than 64 bits. Every slice is a valid configuration, so
@@ -428,14 +429,87 @@ children and then casts them to `uint64_t` for comparison. The adapter encodes
 unsigned endpoints modulo `2^64` to preserve that interpretation; Rust keeps
 native typed endpoints throughout.
 
+## Bit and byte order
+
+`Order` has two independent settings: `BitOrder::{HighFirst, LowFirst}` controls
+which end of each byte is consumed, and `ByteOrder::{Big, Little}` controls the
+numeric significance of successive byte fragments. `Order::DEFAULT` is high
+first and big. Each fragment keeps its ordinary numeric bit significance:
+reading all eight bits of `0x96` yields `0x96` in every order. Reading three bits
+first yields `4` in high-first order or `6` in low-first order.
+
+Fields are split at physical byte boundaries. Big byte order puts earlier
+fragments above later ones; little byte order puts them below. This also applies
+to unaligned fields and widths that are not multiples of eight. `Bits`,
+`SignedBits`, `Literal`, `Byte`, `I8`, byte patterns, and byte sets use the active
+order. The named `Be*` readers pin big byte order while retaining bit direction.
+`SkipBits`, `Tell`, `TakeAligned`, and `End` keep their position-based behavior.
+
+`WithOrder { parser, order }` overrides order for its child and preserves
+finality. A **change of bit direction requires aligned entry and successful
+exit**. An unaligned boundary returns fatal `Unaligned`; an invalid cursor takes
+precedence. No padding is inserted. Child errors and `NeedMore` propagate
+unchanged. Byte-order-only changes and nested same-direction scopes can start
+and finish within a byte without extra validation.
+
+For example, finish the low-first byte before returning to the enclosing order:
+
+```rust
+use rusthammer::{BeU16, BitOrder, Bits, ByteOrder, Cursor, Order, Parser, Seq, WithOrder};
+
+let parser = Seq {
+    first: WithOrder {
+        order: Order { bit: BitOrder::LowFirst, byte: ByteOrder::Little },
+        parser: Seq { first: Bits::new(3).unwrap(), second: Bits::new(5).unwrap() },
+    },
+    second: BeU16,
+};
+assert_eq!(parser.parse(&[0x96, 0x12, 0x34], Cursor::start()),
+    Ok((Cursor { byte: 3, bit: 0 }, ((6, 18), 0x1234))));
+```
+
+The [ordering example](examples/ordering.rs) also retries this grammar after
+partial input. `parse()` and the public `read_bit()` / `read_bits()` helpers use
+default order. For explicit order, use `parse_with(input, cursor, context)`.
+`Cursor.bit` counts consumed bits; a saved partial-byte cursor must be resumed
+with its original bit direction. The bare cursor does not store that direction.
+
+The [ordering specification](lean/RustHammer/OrderSpec.lean) defines values by
+physical fragments using unbounded arithmetic. Its
+[mathematical lemmas](lean/RustHammer/OrderMath.lean) connect default order to the
+previous binary-value specification. The [reader proofs](lean/RustHammer/OrderProofs.lean)
+cover values, exact consumption, truncation, invalid cursors, termination, and
+arithmetic bounds. [Parser contracts](lean/RustHammer/OrderParserProofs.lean)
+cover all orders and finalities, and [scope contracts](lean/RustHammer/OrderScopeProofs.lean)
+require child behavior only when the entry guard permits a call. Generic
+composition, repetition, folding, and match contracts now accept the full
+context; existing default-order application proofs still pass. The verification
+command audits 25 ordering theorems for only standard Lean axioms.
+
+Native tests use an independent physical-bit oracle and cover nested scopes,
+lookahead, borrowing, and exactly-once cleanup of discarded outputs. Both MIR
+stages and the separate Cargo consumer pass without a new extraction workaround.
+To compare the library against C Hammer's direct backend, run:
+
+```sh
+python3 tools/compare_ordering.py --hammer-lib ../build/opt/src/libhammer.so
+```
+
+There are 107,364 agreements (101,060 fields and 6,304 nested grammars), plus
+2,848 expected scope rejections, including 2,064 cases C accepts. Those rejections
+are the intentional restriction on direction changes, documented in the
+[input plan](../plans/rusthammer-input.md). The comparison uses complete input;
+native tests and Lean contracts also cover partial input.
+
 ## Partial input and finality
 
 `parser.parse(input, cursor)` retains the complete-buffer API and returns
-`Result<(Cursor, Output), ParseError>`. Use `parser.parse_with(input, cursor, status)`
+`Result<(Cursor, Output), ParseError>`. Use `parser.parse_with(input, cursor, context)`
 when more bytes might arrive:
 
 ```rust
 pub enum InputStatus { Partial, Final }
+pub struct ParseContext { pub order: Order, pub status: InputStatus }
 pub enum ParseOutcome<T> {
     Success(Cursor, T),
     Error(ParseError),
@@ -443,8 +517,10 @@ pub enum ParseOutcome<T> {
 }
 ```
 
-`Partial` says the buffer may grow; `Final` says no more bytes will be supplied for
-this parse. A parser can succeed on partial input as soon as its grammar is
+`ParseContext::PARTIAL` and `ParseContext::FINAL` use the default numeric order.
+For another order, construct `ParseContext { order, status }`.
+`InputStatus::Partial` says the buffer may grow; `InputStatus::Final` says no more
+bytes will be supplied for this parse. A parser can succeed on partial input as soon as its grammar is
 satisfied. For example, a byte reader can return its byte while more bytes may
 still arrive. `End` needs finality as well as an empty remaining buffer.
 
@@ -457,7 +533,8 @@ still arrive. `End` needs finality as well as an empty remaining buffer.
 | `End` at the buffer boundary | `NeedMore` | Success |
 | Invalid cursor or alignment | Error | Error |
 
-All combinators pass the status to their children. `NeedMore` propagates without
+Combinators pass the context to their children; `WithOrder` overrides order while
+preserving finality. `NeedMore` propagates without
 selecting alternatives, deciding absence, inverting lookahead, or invoking the
 callback for that child. Final-input contracts prove that built-in compositions
 return success or error, assuming their child and callback contracts.
@@ -465,7 +542,7 @@ return success or error, assuming their child and callback contracts.
 This increment supplies the semantics needed for future streaming. Parsers do
 not retain chunks or save execution state. On `NeedMore`, accumulate bytes in the
 caller and retry with the **whole accumulated buffer and original cursor**. If
-the source ends, retry with `Final`, even if no new bytes arrived. See the runnable
+the source ends, retry with final status and the same order, even if no new bytes arrived. See the runnable
 [input-status example](examples/input_status.rs).
 
 A retry reparses the prefix and can rerun callbacks from previously successful
@@ -481,7 +558,7 @@ more input. The record similarly checks its constraints after reading the full
 three-byte header.
 
 Custom parser implementations now implement `parse_with` and must honor the
-finality contract. The default `parse` calls it with `Final`; defensively, an
+finality contract. The default `parse` calls it with `ParseContext::FINAL`; defensively, an
 unexpected `NeedMore` from a custom parser becomes `UnexpectedEnd`. The built-in
 proofs rule out that case rather than relying on this conversion. The free
 `read_bit`, `read_bits`, and `take_aligned` library helpers remain complete-input
@@ -1495,14 +1572,10 @@ is now available.
 
 Fixed-width typed integer readers, inclusive ranges, byte sets, `SkipBits`,
 `Tell`, `ButNot`, `Difference`, and `Xor` are implemented and proved, with
-semantic and differential checks. The revised [input plan](../plans/rusthammer-input.md)
-retains `(byte, bit)` and restricts changes of bit direction to aligned scope
-entry and successful exit. Byte-order changes and unaligned fields remain
-supported goals. The [restricted probe](probes/README.md#restricted-ordering-scopes)
-now passes both MIR stages, native/differential checks, and Lean scope contracts.
-Next implement ordering/context in the library and complete its proofs before
-exposing spans. The unrestricted-order probe records the earlier design;
-production ordering remains unimplemented.
+semantic and differential checks. Scoped ordering and its context interface are
+also implemented and proved; see the [input plan](../plans/rusthammer-input.md).
+Next add `BitSpan`, `Recognize`, and `WithSpan` with physical-boundary and
+borrowed-view contracts. The isolated probes remain as design/extraction evidence.
 Design permutation and recursion separately.
 
 Keep future application grammars in shared example/proof-support source. The

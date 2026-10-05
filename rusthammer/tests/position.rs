@@ -1,5 +1,5 @@
 use rusthammer::{
-    And, Bind, Byte, Choice, Cursor, End, Epsilon, FoldRepeat, InputStatus, Left, Not, Optional,
+    And, Bind, Byte, Choice, Cursor, End, Epsilon, FoldRepeat, Left, Not, Optional, ParseContext,
     ParseError, ParseOutcome, Parser, Right, Seq, SkipBits, Tell,
 };
 
@@ -22,10 +22,12 @@ fn advance(length: usize, cursor: Cursor, bits: usize) -> Result<Cursor, ParseEr
     }
 }
 
-fn expected<T>(result: Result<(Cursor, T), ParseError>, status: InputStatus) -> ParseOutcome<T> {
+fn expected<T>(result: Result<(Cursor, T), ParseError>, context: ParseContext) -> ParseOutcome<T> {
     match result {
         Ok((next, value)) => ParseOutcome::Success(next, value),
-        Err(ParseError::UnexpectedEnd) if status == InputStatus::Partial => ParseOutcome::NeedMore,
+        Err(ParseError::UnexpectedEnd) if context == ParseContext::PARTIAL => {
+            ParseOutcome::NeedMore
+        }
         Err(error) => ParseOutcome::Error(error),
     }
 }
@@ -40,10 +42,10 @@ fn every_offset_and_truncation_agree_with_wide_arithmetic() {
                     let cursor = Cursor { byte, bit };
                     let tell = advance(length, cursor, 0).map(|next| (next, next));
                     assert_eq!(Tell.parse(&input, cursor), tell);
-                    for status in [InputStatus::Partial, InputStatus::Final] {
+                    for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
                         assert_eq!(
-                            Tell.parse_with(&input, cursor, status),
-                            expected(tell, status)
+                            Tell.parse_with(&input, cursor, context),
+                            expected(tell, context)
                         );
                     }
                     for bits in (0..=145).chain([256, usize::MAX / 8, usize::MAX - 1, usize::MAX]) {
@@ -54,10 +56,10 @@ fn every_offset_and_truncation_agree_with_wide_arithmetic() {
                             result,
                             "{length} {cursor:?} {bits}"
                         );
-                        for status in [InputStatus::Partial, InputStatus::Final] {
+                        for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
                             assert_eq!(
-                                parser.parse_with(&input, cursor, status),
-                                expected(result, status)
+                                parser.parse_with(&input, cursor, context),
+                                expected(result, context)
                             );
                         }
                     }
@@ -99,11 +101,11 @@ fn partial_skips_retry_and_preserve_backtracking_and_lookahead() {
         second: Tell,
     };
     assert_eq!(
-        parser.parse_with(&[0], start, InputStatus::Partial),
+        parser.parse_with(&[0], start, ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(
-        parser.parse_with(&[0, 0], start, InputStatus::Partial),
+        parser.parse_with(&[0, 0], start, ParseContext::PARTIAL),
         ParseOutcome::Success(Cursor { byte: 2, bit: 0 }, Cursor { byte: 2, bit: 0 })
     );
     assert_eq!(
@@ -125,7 +127,7 @@ fn partial_skips_retry_and_preserve_backtracking_and_lookahead() {
         Ok((Cursor::start(), ()))
     );
     assert_eq!(
-        choice.parse_with(&[0], Cursor::start(), InputStatus::Partial),
+        choice.parse_with(&[0], Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(
@@ -135,7 +137,7 @@ fn partial_skips_retry_and_preserve_backtracking_and_lookahead() {
     assert_eq!(And { parser: &skip }.parse(&[0, 0], start), Ok((start, ())));
     assert_eq!(Not { parser: &skip }.parse(&[0], start), Ok((start, ())));
     assert_eq!(
-        Not { parser: &skip }.parse_with(&[0], start, InputStatus::Partial),
+        Not { parser: &skip }.parse_with(&[0], start, ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(
@@ -164,7 +166,7 @@ fn zero_consumption_is_visible_to_repetition() {
         Ok((Cursor { byte: 4, bit: 0 }, 4))
     );
     assert_eq!(
-        bytes.parse_with(&[0; 4], Cursor::start(), InputStatus::Partial),
+        bytes.parse_with(&[0; 4], Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
 }

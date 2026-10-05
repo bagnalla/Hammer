@@ -1,7 +1,7 @@
 //! Small count-prefixed formats, shared by examples, native tests, and extraction.
 #[cfg(rusthammer_verify)]
 use crate as rusthammer;
-use rusthammer::{Bind, Bits, Cursor, InputStatus, ParseOutcome, Parser, TakeAligned, TryMap};
+use rusthammer::{Bind, Bits, Cursor, ParseContext, ParseOutcome, Parser, TakeAligned, TryMap};
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
@@ -26,7 +26,7 @@ impl<'input> Parser<'input> for CountPrefix {
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<usize> {
         TryMap {
             parser: fixed_bits(8),
@@ -39,18 +39,18 @@ impl<'input> Parser<'input> for CountPrefix {
                 }
             },
         }
-        .parse_with(input, cursor, status)
+        .parse_with(input, cursor, context)
     }
 }
 
 /// Read the count, then return exactly that many aligned bytes, borrowing the input.
 /// This parses a prefix; compose with `End` when the format forbids trailing bytes.
-pub fn payload(input: &[u8], cursor: Cursor, status: InputStatus) -> ParseOutcome<&[u8]> {
+pub fn payload(input: &[u8], cursor: Cursor, context: ParseContext) -> ParseOutcome<&[u8]> {
     Bind {
         parser: CountPrefix,
         then: |count| TakeAligned { count },
     }
-    .parse_with(input, cursor, status)
+    .parse_with(input, cursor, context)
 }
 
 /// Read the count, then collect that many four-bit numbers in order.
@@ -58,12 +58,12 @@ pub fn payload(input: &[u8], cursor: Cursor, status: InputStatus) -> ParseOutcom
 pub fn fields(
     input: &[u8],
     cursor: Cursor,
-    status: InputStatus,
+    context: ParseContext,
 ) -> ParseOutcome<alloc::vec::Vec<u64>> {
     let element = fixed_bits(4);
     Bind {
         parser: CountPrefix,
         then: |count| rusthammer::Repeat::exact(element, count),
     }
-    .parse_with(input, cursor, status)
+    .parse_with(input, cursor, context)
 }

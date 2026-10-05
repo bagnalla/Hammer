@@ -1,13 +1,14 @@
 # RustHammer input, ordering, and spans
 
-Status: revised design decision, 2026-10-04; restricted probe checked 2026-10-05.
+Status: restricted ordering implemented and proved, 2026-10-05; spans remain planned.
 This document extends the
 [main plan](rusthammer.md) and [combinator plan](rusthammer-combinators.md).
-The production library still uses its existing MSB-first interface. The
-[restricted probe](#restricted-probe-and-evidence) checks the scope contract
-below. The earlier unrestricted-order probe is retained as historical evidence.
+The production library implements the context and scope contract below, with
+numeric-reader and compositional proofs. The
+[restricted probe](#restricted-probe-and-evidence) records the preceding design
+check. The earlier unrestricted-order probe is retained as historical evidence.
 
-**RustHammer will allow bit-direction changes only at byte boundaries.** Keep
+**RustHammer allows bit-direction changes only at byte boundaries.** Keep
 big/little byte order, both fixed bit directions, and fields crossing byte
 boundaries. Exclude arbitrary switches between the high and low ends of one
 partially consumed byte. This is an intentional API restriction, not a
@@ -120,8 +121,9 @@ A span that escapes its context stores the necessary direction explicitly.
 the current both-big default. Explicit partial parsing supplies a context;
 retry after `NeedMore` uses the original cursor and order with the accumulated
 input. Finality may change from partial to final. The associated output type
-and input lifetimes are unchanged. Migrate `parse_with` coherently without
-adding temporary public adapters.
+and input lifetimes are unchanged. `parse_with` now accepts `ParseContext` in
+place of `InputStatus`; there are no temporary public adapters. `Order::DEFAULT`
+and `ParseContext::{FINAL, PARTIAL}` supply the default order explicitly.
 
 ### Position and progress
 
@@ -139,9 +141,9 @@ interpretation of partial-byte endpoints.
 
 Existing match-length comparison, strict forward-progress checks, and the
 termination measure `8 * input.len() - position(cursor)` can therefore retain
-their arithmetic structure. Their contracts must carry the context and its
-ordering discipline; this is not a claim that all existing proofs transfer
-without edits. Arbitrary custom parser behavior still needs its own contract.
+their arithmetic structure. Their generic contracts now carry the full context;
+the existing application theorems retain default order. Arbitrary custom parser
+behavior still needs its own contract.
 
 ## Ordering scopes
 
@@ -263,6 +265,58 @@ conversion.
 `WithSpan<P>` would return `(P::Output, BitSpan<'input>)`. Implement them after
 the restricted input model and its contracts are established.
 
+## Production implementation and evidence
+
+The library now implements `BitOrder`, `ByteOrder`, `Order`, `ParseContext`, and
+`WithOrder`, with the retained `(byte, bit)` cursor. All built-in composition,
+selection, repetition, folding, lookahead, and match combinators forward the
+full context. `Bits`, signed fields, literals, bytes, patterns, and byte sets
+decode using it. Named `Be*` readers pin big byte order while inheriting bit
+direction; positional primitives keep their previous behavior. The public
+complete-input helpers retain default order.
+
+The fragment reader reuses the existing contiguous high-first decoder for
+each selected physical fragment, then combines fragments according to byte
+order. High-first/big fields keep the existing whole-field path. Private helpers
+factor fragment selection, cursor advancement, and bounded accumulation; no new
+extraction workaround is needed.
+
+The [specification](../rusthammer/lean/RustHammer/OrderSpec.lean) expresses numeric
+values with unbounded arithmetic over physical fragments.
+[Reader proofs](../rusthammer/lean/RustHammer/OrderProofs.lean) establish decoded
+values, exact consumption, invalid-cursor and exhaustion behavior, termination,
+and arithmetic safety. [Parser proofs](../rusthammer/lean/RustHammer/OrderParserProofs.lean)
+cover every order and finality, including signed/native narrowing, literals,
+patterns, and byte sets. [Scope proofs](../rusthammer/lean/RustHammer/OrderScopeProofs.lean)
+cover both guards, context propagation, and same-direction transparency without
+assuming a child contract when entry is rejected. Generic combinator theorems
+accept arbitrary contexts; all existing default-order format proofs are retained.
+The verification runner audits 25 ordering theorems for only `propext`,
+`Classical.choice`, and `Quot.sound`.
+
+Ten dedicated native tests cover widths 0 through 64, all four orders and both
+finalities, independent physical-bit and signed-value oracles, all reader
+families, nested scopes, lookahead placement, borrowed outputs, entry call
+counts, and exactly-once destruction after exit rejection. All previous native
+tests pass with and without allocation. Promoted and optimized library MIR and
+all 43 separate Cargo-consumer entries translate and Lean type-check. Three new
+consumer entries exercise ordered typed fields, a borrowed payload crossing a
+scope boundary, and a configured pattern borrow.
+
+Run the full verification and optional C comparison from `rusthammer/`:
+
+```sh
+python3 tools/verify.py
+python3 tools/compare_ordering.py --hammer-lib /absolute/path/to/libhammer.so
+```
+
+The actual library matches the probe's differential results: **107,364 C
+agreements** and **2,848 expected scope rejections**, including 2,064 that C
+accepts. The comparison uses the same independent event/bit-count model and
+corpus classification. See the [runnable example](../rusthammer/examples/ordering.rs)
+for scoped fields and a partial-input retry. Span geometry and recognition APIs
+remain the next increment; no public span type is introduced by this work.
+
 ## Restricted probe and evidence
 
 [`restricted_order.rs`](../rusthammer/probes/restricted_order.rs) exercises
@@ -283,8 +337,8 @@ The runner checks tool pins, Rust formatting/native tests, both promoted and
 optimized MIR, generated Lean modules, and the same handwritten proofs against
 both translations. It rejects admitted/opaque project declarations and checks
 the printed axiom lists for all nine theorems. Build and proof artifacts go
-under ignored `target/restricted-order/`. The normal library verification and
-separate Cargo consumer remain required when integrating this code.
+under ignored `target/restricted-order/`. These probe checks are separate from
+the production verification and Cargo-consumer checks above.
 
 Evidence:
 
@@ -317,9 +371,9 @@ Evidence:
 The proof coverage is deliberately focused. The probe's numeric reader,
 physical span geometry, and concrete application grammars do not yet have
 full correctness theorems. Rust lifetime checking and native pointer/drop
-tests supply evidence outside the functional scope contracts. Integration
-must complete the reader/combinator proofs and preserve the existing default
-application theorems.
+tests supply evidence outside the functional scope contracts. The production
+integration above supplies its own reader/combinator proofs and preserves the
+existing default application theorems; physical span proofs remain future work.
 
 ## Earlier unrestricted probe
 
@@ -346,22 +400,18 @@ verification as though all of those cases should still be accepted.
    and successful-exit guards, nested same-direction scopes, unaligned byte-order
    changes, lookahead, errors/`NeedMore`, and escaped span direction. Both MIR
    stages and the generic scope proofs pass.
-2. **Next: integrate context and fragment decoding** into the actual library with the
-   guarded `WithOrder` behavior. Reuse existing cursor advancement, match-length,
-   and progress arithmetic. Complete numeric-reader and compositional proofs,
-   preserve default-format theorems, and update examples/tests coherently.
-   Run full local verification and the separate Cargo-consumer extraction.
-   Differential checks compare admitted cases with C and separately assert
-   the intentional rejection of unsupported scope transitions.
-3. Add the intended span/recognition APIs with bounds, physical-interval,
+2. **Production ordering complete.** Context and guarded `WithOrder` are integrated
+   with numeric-reader and compositional proofs, default-format theorems,
+   examples, and tests. Both MIR stages and the separate Cargo consumer pass;
+   differential checks distinguish agreements from intentional rejections.
+3. **Next: add the intended span/recognition APIs** with bounds, physical-interval,
    borrowing, consumed-length, and raw-byte-view proofs. Expose only durable,
    implemented operations.
 
 This removes the two-ended cursor invariant, its non-injective position mapping,
 and the need for a separate physical-progress relation. Context plumbing,
-fragment decoding, and scope integration still need work in the production
-library. The restricted probe proves its generic guards; it does not complete
-the production reader/combinator migration.
+fragment decoding, and scope integration are now implemented and proved in the
+production library. Span operations will build on this restricted model.
 
 Permutation, recursion, live streaming, seeking, memoization, and additional
 backends remain separate designs. CI and the older callback investigation remain

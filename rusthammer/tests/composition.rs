@@ -1,7 +1,7 @@
 use std::cell::Cell;
 
 use rusthammer::{
-    Bit, Bits, Choice, Cursor, End, Epsilon, Fail, InputStatus, Map, Not, Optional, ParseError,
+    Bit, Bits, Choice, Cursor, End, Epsilon, Fail, Map, Not, Optional, ParseContext, ParseError,
     ParseOutcome, Parser, Seq, TakeAligned, TryMap,
 };
 
@@ -17,9 +17,9 @@ fn epsilon_preserves_any_raw_cursor_in_both_modes() {
                 bit: u8::MAX,
             },
         ] {
-            for status in [InputStatus::Partial, InputStatus::Final] {
+            for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
                 assert_eq!(
-                    Epsilon.parse_with(input, cursor, status),
+                    Epsilon.parse_with(input, cursor, context),
                     ParseOutcome::Success(cursor, ())
                 );
             }
@@ -28,7 +28,7 @@ fn epsilon_preserves_any_raw_cursor_in_both_modes() {
     }
     // Empty success does not wait for end-of-input confirmation.
     assert_eq!(
-        End.parse_with(&[], Cursor::start(), InputStatus::Partial),
+        End.parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
 }
@@ -51,10 +51,10 @@ fn fail_is_copyable_without_output_bounds_and_always_rejects() {
                 bit: u8::MAX,
             },
         ] {
-            for status in [InputStatus::Partial, InputStatus::Final] {
+            for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
                 for grammar in [&parser, &copied, &default] {
                     assert!(matches!(
-                        grammar.parse_with(input, cursor, status),
+                        grammar.parse_with(input, cursor, context),
                         ParseOutcome::Error(ParseError::Mismatch)
                     ));
                     assert!(matches!(
@@ -93,7 +93,7 @@ fn empty_and_failing_grammars_compose_with_control_flow() {
         Optional {
             parser: Fail::<bool>::new()
         }
-        .parse_with(&[], Cursor::start(), InputStatus::Partial),
+        .parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::Success(Cursor::start(), None)
     );
     assert_eq!(
@@ -122,21 +122,21 @@ fn empty_and_failing_grammars_compose_with_control_flow() {
 fn repetition_handles_empty_success_and_definite_rejection() {
     use rusthammer::Repeat;
 
-    for status in [InputStatus::Partial, InputStatus::Final] {
+    for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
         assert_eq!(
-            Repeat::exact(Epsilon, 3).parse_with(&[], Cursor::start(), status),
+            Repeat::exact(Epsilon, 3).parse_with(&[], Cursor::start(), context),
             ParseOutcome::Success(Cursor::start(), vec![(); 3])
         );
         assert_eq!(
-            Repeat::at_least(Epsilon, 0).parse_with(&[], Cursor::start(), status),
+            Repeat::at_least(Epsilon, 0).parse_with(&[], Cursor::start(), context),
             ParseOutcome::Error(ParseError::NonProgress)
         );
         assert_eq!(
-            Repeat::at_least(Fail::<bool>::new(), 0).parse_with(&[], Cursor::start(), status),
+            Repeat::at_least(Fail::<bool>::new(), 0).parse_with(&[], Cursor::start(), context),
             ParseOutcome::Success(Cursor::start(), vec![])
         );
         assert_eq!(
-            Repeat::at_least(Fail::<bool>::new(), 1).parse_with(&[], Cursor::start(), status),
+            Repeat::at_least(Fail::<bool>::new(), 1).parse_with(&[], Cursor::start(), context),
             ParseOutcome::Error(ParseError::Mismatch)
         );
     }
@@ -148,13 +148,13 @@ fn checked_integer_conversion_preserves_consumption_and_rejects_overflow() {
         parser: Bits::new(9).unwrap(),
         map: u8::try_from,
     };
-    for status in [InputStatus::Partial, InputStatus::Final] {
+    for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
         assert_eq!(
-            parser.parse_with(&[0x7f, 0x80], Cursor::start(), status),
+            parser.parse_with(&[0x7f, 0x80], Cursor::start(), context),
             ParseOutcome::Success(Cursor { byte: 1, bit: 1 }, 255)
         );
         assert_eq!(
-            parser.parse_with(&[0x80, 0x00], Cursor::start(), status),
+            parser.parse_with(&[0x80, 0x00], Cursor::start(), context),
             ParseOutcome::Error(ParseError::Mismatch)
         );
     }
@@ -173,7 +173,7 @@ fn checked_mapping_skips_callbacks_after_every_child_error_and_need_more() {
     struct Reject(ParseError);
     impl<'input> Parser<'input> for Reject {
         type Output = bool;
-        fn parse_with(&self, _: &'input [u8], _: Cursor, _: InputStatus) -> ParseOutcome<bool> {
+        fn parse_with(&self, _: &'input [u8], _: Cursor, _: ParseContext) -> ParseOutcome<bool> {
             ParseOutcome::Error(self.0)
         }
     }
@@ -193,9 +193,9 @@ fn checked_mapping_skips_callbacks_after_every_child_error_and_need_more() {
             parser: Reject(error),
             map: unused,
         };
-        for status in [InputStatus::Partial, InputStatus::Final] {
+        for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
             assert_eq!(
-                parser.parse_with(&[], Cursor::start(), status),
+                parser.parse_with(&[], Cursor::start(), context),
                 ParseOutcome::Error(error)
             );
         }
@@ -206,7 +206,7 @@ fn checked_mapping_skips_callbacks_after_every_child_error_and_need_more() {
         map: unused,
     };
     assert_eq!(
-        parser.parse_with(&[], Cursor::start(), InputStatus::Partial),
+        parser.parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(
@@ -244,7 +244,7 @@ fn checked_mapping_calls_once_and_is_copyable_with_nonclone_outputs_and_errors()
     );
     assert_eq!(calls.get(), 2);
     assert_eq!(
-        parser.parse_with(&[], Cursor::start(), InputStatus::Partial),
+        parser.parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(calls.get(), 2);
@@ -260,9 +260,9 @@ fn conversion_rejection_allows_choice_to_retry_at_the_original_cursor() {
         },
         second: Bit,
     };
-    for status in [InputStatus::Partial, InputStatus::Final] {
+    for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
         assert_eq!(
-            parser.parse_with(&[0x50], Cursor { byte: 0, bit: 1 }, status),
+            parser.parse_with(&[0x50], Cursor { byte: 0, bit: 1 }, context),
             ParseOutcome::Success(Cursor { byte: 0, bit: 2 }, true)
         );
     }
@@ -277,7 +277,7 @@ fn conversion_rejection_allows_choice_to_retry_at_the_original_cursor() {
         },
     };
     assert_eq!(
-        wait.parse_with(&[0x80], Cursor::start(), InputStatus::Partial),
+        wait.parse_with(&[0x80], Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
 }

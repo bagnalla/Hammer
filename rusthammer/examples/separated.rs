@@ -1,5 +1,5 @@
 use rusthammer::{
-    ConfigError, Cursor, End, FoldSepBy, InputStatus, Left, Literal, ParseError, ParseOutcome,
+    ConfigError, Cursor, End, FoldSepBy, Left, Literal, ParseContext, ParseError, ParseOutcome,
     Parser,
 };
 
@@ -14,7 +14,7 @@ fn main() -> Result<(), ConfigError> {
     // On partial input the next item might still arrive. Retry from the original
     // cursor with the accumulated buffer; each call initializes its own count.
     assert_eq!(
-        count.parse_with(b"a,", Cursor::start(), InputStatus::Partial),
+        count.parse_with(b"a,", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(
@@ -34,7 +34,7 @@ fn main() -> Result<(), ConfigError> {
     // Exact counts finish without probing a further separator, even on partial input.
     let pair = FoldSepBy::exact(item, separator, 2, || 0usize, |n, _| n + 1);
     assert_eq!(
-        pair.parse_with(b"a,a,", Cursor::start(), InputStatus::Partial),
+        pair.parse_with(b"a,a,", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::Success(Cursor { byte: 3, bit: 0 }, 2)
     );
 

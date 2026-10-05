@@ -1,6 +1,6 @@
 use core::fmt::Debug;
 use rusthammer::{
-    BeI16, BeI32, BeI64, BeU16, BeU32, BeU64, Byte, Choice, Cursor, InputStatus, Optional,
+    BeI16, BeI32, BeI64, BeU16, BeU32, BeU64, Byte, Choice, Cursor, Optional, ParseContext,
     ParseError, ParseOutcome, Parser, Seq, Verify, I8,
 };
 
@@ -11,7 +11,7 @@ fn oracle(
     cursor: Cursor,
     width: usize,
     signed: bool,
-    status: InputStatus,
+    context: ParseContext,
 ) -> ParseOutcome<i128> {
     if cursor.bit >= 8
         || cursor.byte > input.len()
@@ -23,9 +23,9 @@ fn oracle(
     let start = cursor.byte * 8 + usize::from(cursor.bit);
     let end = start + width;
     let Some(field) = text.get(start..end) else {
-        return match status {
-            InputStatus::Partial => ParseOutcome::NeedMore,
-            InputStatus::Final => ParseOutcome::Error(ParseError::UnexpectedEnd),
+        return match context.status {
+            rusthammer::InputStatus::Partial => ParseOutcome::NeedMore,
+            rusthammer::InputStatus::Final => ParseOutcome::Error(ParseError::UnexpectedEnd),
         };
     };
     let unsigned = i128::from_str_radix(field, 2).unwrap();
@@ -68,14 +68,14 @@ where
             for byte in (0..=input.len() + 1).chain([usize::MAX]) {
                 for bit in (0..=8).chain([u8::MAX]) {
                     let cursor = Cursor { byte, bit };
-                    for status in [InputStatus::Partial, InputStatus::Final] {
+                    for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
                         assert_eq!(
-                            widen(parser.parse_with(input, cursor, status)),
-                            oracle(input, cursor, width, signed, status),
-                            "input={input:?}, cursor={cursor:?}, status={status:?}"
+                            widen(parser.parse_with(input, cursor, context)),
+                            oracle(input, cursor, width, signed, context),
+                            "input={input:?}, cursor={cursor:?}, context={context:?}"
                         );
                     }
-                    let expected = match oracle(input, cursor, width, signed, InputStatus::Final) {
+                    let expected = match oracle(input, cursor, width, signed, ParseContext::FINAL) {
                         ParseOutcome::Success(next, value) => Ok((next, value)),
                         ParseOutcome::Error(error) => Err(error),
                         ParseOutcome::NeedMore => unreachable!(),
@@ -153,9 +153,9 @@ where
                 .collect();
             let cursor = Cursor { byte: 1, bit };
             let next = Cursor { byte: N + 1, bit };
-            for status in [InputStatus::Partial, InputStatus::Final] {
+            for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
                 assert_eq!(
-                    copied.parse_with(&input, cursor, status),
+                    copied.parse_with(&input, cursor, context),
                     ParseOutcome::Success(next, decode(*field))
                 );
             }
@@ -212,7 +212,7 @@ fn typed_sequence_retries_from_its_original_cursor() {
     let input = [0x12, 0x34, 0xff, 0xfd];
     for length in 0..input.len() {
         assert_eq!(
-            parser.parse_with(&input[..length], Cursor::start(), InputStatus::Partial),
+            parser.parse_with(&input[..length], Cursor::start(), ParseContext::PARTIAL),
             ParseOutcome::NeedMore
         );
         assert_eq!(
@@ -223,7 +223,7 @@ fn typed_sequence_retries_from_its_original_cursor() {
     let typed: (Cursor, (u16, i16)) = parser.parse(&input, Cursor::start()).unwrap();
     assert_eq!(typed, (Cursor { byte: 4, bit: 0 }, (0x1234, -3)));
     assert_eq!(
-        parser.parse_with(&input, Cursor::start(), InputStatus::Partial),
+        parser.parse_with(&input, Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::Success(typed.0, typed.1)
     );
 }
@@ -247,7 +247,7 @@ fn typed_predicates_and_recovery_keep_existing_control_semantics() {
         Ok((Cursor::start(), None))
     );
     assert_eq!(
-        optional.parse_with(&[1, 2], Cursor::start(), InputStatus::Partial),
+        optional.parse_with(&[1, 2], Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(

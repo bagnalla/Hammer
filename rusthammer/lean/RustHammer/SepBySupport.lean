@@ -27,20 +27,20 @@ theorem separated_tail_of_right {α β : Type} (item : Cursor → ParseOutcome �
       exact ⟨middle, ignored, hseparator, hchild⟩
 
 theorem separated_attempt_spec {P S α β : Type} (pi : Parser P α) (si : Parser S β)
-    (parser : P) (separator : S) (count : Usize) (input : Slice U8) (cursor : Cursor) (status : InputStatus)
+    (parser : P) (separator : S) (count : Usize) (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (item : Cursor → ParseOutcome α → Prop) (sep : Cursor → ParseOutcome β → Prop)
-    (hp : ∀ start, pi.parse_with parser input start status ⦃ result => item start result ⦄)
-    (hs : ∀ start, si.parse_with separator input start status ⦃ result => sep start result ⦄) :
+    (hp : ∀ start, pi.parse_with parser input start context ⦃ result => item start result ⦄)
+    (hs : ∀ start, si.parse_with separator input start context ⦃ result => sep start result ⦄) :
     repeat_parse pi (Right.Insts.RusthammerParser (Shared0P.Insts.RusthammerParser si)
       (Shared0P.Insts.RusthammerParser pi)) parser { first := separator, second := parser }
-      count input cursor status ⦃ result => Spec.separatedAttempt item sep count.val cursor result ⦄ := by
+      count input cursor context ⦃ result => Spec.separatedAttempt item sep count.val cursor result ⦄ := by
   unfold repeat_parse
   by_cases hzero : count = 0#usize
   · simpa [hzero, Spec.separatedAttempt] using hp cursor
   · have hn : count.val ≠ 0 := by scalar_tac
     simp only [hzero, ↓reduceIte, Spec.separatedAttempt, hn]
     step with right_with_spec (Shared0P.Insts.RusthammerParser si) (Shared0P.Insts.RusthammerParser pi)
-      { first := separator, second := parser } input cursor status sep item hs hp as ⟨outcome, houtcome⟩
+      { first := separator, second := parser } input cursor context sep item hs hp as ⟨outcome, houtcome⟩
     exact separated_tail_of_right item sep cursor outcome houtcome
 
 /-- Complete-input child contracts make incomplete separator/item attempts impossible. -/

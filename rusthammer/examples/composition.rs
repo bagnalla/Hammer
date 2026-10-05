@@ -1,5 +1,6 @@
 use rusthammer::{
-    Bits, ConfigError, Cursor, Epsilon, Fail, InputStatus, ParseError, ParseOutcome, Parser, TryMap,
+    Bits, ConfigError, Cursor, Epsilon, Fail, ParseContext, ParseError, ParseOutcome, Parser,
+    TryMap,
 };
 
 #[derive(Debug, PartialEq)]
@@ -9,7 +10,7 @@ enum Mode {
 }
 
 // A checked conversion constructs a typed value only for supported encodings.
-fn decode_mode(input: &[u8], status: InputStatus) -> ParseOutcome<Mode> {
+fn decode_mode(input: &[u8], context: ParseContext) -> ParseOutcome<Mode> {
     let mode = TryMap {
         parser: Bits::new(8).unwrap(),
         map: |value| match value {
@@ -18,23 +19,23 @@ fn decode_mode(input: &[u8], status: InputStatus) -> ParseOutcome<Mode> {
             _ => Err(()),
         },
     };
-    mode.parse_with(input, Cursor::start(), status)
+    mode.parse_with(input, Cursor::start(), context)
 }
 
 fn main() -> Result<(), ConfigError> {
     assert_eq!(
-        decode_mode(&[1], InputStatus::Final),
+        decode_mode(&[1], ParseContext::FINAL),
         ParseOutcome::Success(Cursor { byte: 1, bit: 0 }, Mode::Read)
     );
     assert_eq!(
-        decode_mode(&[3], InputStatus::Final),
+        decode_mode(&[3], ParseContext::FINAL),
         ParseOutcome::Error(ParseError::Mismatch)
     );
     assert_eq!(
-        decode_mode(&[], InputStatus::Partial),
+        decode_mode(&[], ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
-    println!("mode: {:?}", decode_mode(&[2], InputStatus::Final));
+    println!("mode: {:?}", decode_mode(&[2], ParseContext::FINAL));
 
     // Narrow a nine-bit wire field with a standard checked integer conversion.
     let byte = TryMap {
@@ -52,7 +53,7 @@ fn main() -> Result<(), ConfigError> {
 
     // These grammars never read input, even on a partial buffer.
     assert_eq!(
-        Epsilon.parse_with(&[], Cursor::start(), InputStatus::Partial),
+        Epsilon.parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::Success(Cursor::start(), ())
     );
     assert_eq!(

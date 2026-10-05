@@ -1,7 +1,7 @@
 #![cfg(feature = "alloc")]
 
 use rusthammer::{
-    And, Bits, Choice, ConfigError, Cursor, End, InputStatus, Literal, Map, Not, Optional,
+    And, Bits, Choice, ConfigError, Cursor, End, Literal, Map, Not, Optional, ParseContext,
     ParseError, ParseOutcome, Parser, Repeat, Seq, TakeAligned,
 };
 use std::cell::Cell;
@@ -11,7 +11,7 @@ struct MustNotRun;
 impl<'input> Parser<'input> for MustNotRun {
     type Output = ();
 
-    fn parse_with(&self, _: &'input [u8], _: Cursor, _: InputStatus) -> ParseOutcome<()> {
+    fn parse_with(&self, _: &'input [u8], _: Cursor, _: ParseContext) -> ParseOutcome<()> {
         panic!("zero repetitions must not invoke the child")
     }
 }
@@ -85,7 +85,7 @@ fn bounded_numeric_repetition_matches_an_independent_bit_string_oracle() {
                         ParseOutcome::NeedMore
                     };
                     assert_eq!(
-                        parser.parse_with(&input, start, InputStatus::Partial),
+                        parser.parse_with(&input, start, ParseContext::PARTIAL),
                         partial
                     );
                 }
@@ -110,13 +110,13 @@ fn a_rejected_attempt_restores_its_starting_bit_cursor() {
             3,
         )
         .unwrap();
-        for status in [InputStatus::Partial, InputStatus::Final] {
+        for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
             let expected = if min == 1 {
                 ParseOutcome::Success(Cursor { byte: 0, bit: 4 }, vec![(2, 1)])
             } else {
                 ParseOutcome::Error(ParseError::Mismatch)
             };
-            assert_eq!(parser.parse_with(&input, start, status), expected);
+            assert_eq!(parser.parse_with(&input, start, context), expected);
         }
     }
 }
@@ -136,10 +136,10 @@ fn reaching_the_maximum_does_not_attempt_another_child() {
         2,
     )
     .unwrap();
-    for status in [InputStatus::Partial, InputStatus::Final] {
+    for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
         calls.set(0);
         assert_eq!(
-            parser.parse_with(&[], Cursor::start(), status),
+            parser.parse_with(&[], Cursor::start(), context),
             ParseOutcome::Success(Cursor::start(), vec![(); 2])
         );
         assert_eq!(calls.get(), 2);
@@ -154,7 +154,7 @@ fn stopping_distinguishes_rejection_fatal_errors_and_incompleteness() {
     }
     impl<'input> Parser<'input> for StopAfterTwo<'_> {
         type Output = ();
-        fn parse_with(&self, _: &'input [u8], cursor: Cursor, _: InputStatus) -> ParseOutcome<()> {
+        fn parse_with(&self, _: &'input [u8], cursor: Cursor, _: ParseContext) -> ParseOutcome<()> {
             self.calls.set(self.calls.get() + 1);
             match self.calls.get() {
                 1 | 2 => ParseOutcome::Success(cursor, ()),
@@ -195,7 +195,7 @@ fn stopping_distinguishes_rejection_fatal_errors_and_incompleteness() {
                 None => ParseOutcome::NeedMore,
             };
             assert_eq!(
-                parser.parse_with(&[], Cursor::start(), InputStatus::Partial),
+                parser.parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
                 expected
             );
             assert_eq!(calls.get(), 3);
@@ -214,7 +214,7 @@ fn bounded_borrowed_outputs_are_kept_on_recoverable_stopping() {
     assert_eq!(values[0].as_ptr(), input[1..].as_ptr());
     assert_eq!(values[1].as_ptr(), input[3..].as_ptr());
     assert_eq!(
-        parser.parse_with(&input, start, InputStatus::Partial),
+        parser.parse_with(&input, start, ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
 }
@@ -243,7 +243,7 @@ fn bounded_owned_values_survive_success_and_are_dropped_on_incompleteness() {
     drop(values);
     assert_eq!(drops.get(), 2);
     assert!(matches!(
-        parser.parse_with(&[1, 2], Cursor::start(), InputStatus::Partial),
+        parser.parse_with(&[1, 2], Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     ));
     assert_eq!(drops.get(), 4);
@@ -298,9 +298,9 @@ fn zero_repetitions_do_not_call_the_child_or_validate_the_cursor() {
             bit: 255,
         },
     ] {
-        for status in [InputStatus::Partial, InputStatus::Final] {
+        for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
             assert_eq!(
-                parser.parse_with(&[], cursor, status),
+                parser.parse_with(&[], cursor, context),
                 ParseOutcome::Success(cursor, vec![])
             );
         }
@@ -339,13 +339,13 @@ fn numeric_repetition_matches_an_independent_bit_string_oracle() {
                     };
                     assert_eq!(parser.parse(&input, start), Ok((next, values.clone())));
                     assert_eq!(
-                        parser.parse_with(&input, start, InputStatus::Partial),
+                        parser.parse_with(&input, start, ParseContext::PARTIAL),
                         ParseOutcome::Success(next, values)
                     );
                 } else {
                     assert_eq!(parser.parse(&input, start), Err(ParseError::UnexpectedEnd));
                     assert_eq!(
-                        parser.parse_with(&input, start, InputStatus::Partial),
+                        parser.parse_with(&input, start, ParseContext::PARTIAL),
                         ParseOutcome::NeedMore
                     );
                 }
@@ -360,7 +360,7 @@ fn borrowed_values_preserve_order_boundaries_and_identity() {
     let start = Cursor { byte: 1, bit: 0 };
     let parser = Repeat::exact(TakeAligned { count: 2 }, 3);
     let ParseOutcome::Success(next, values) =
-        parser.parse_with(&input, start, InputStatus::Partial)
+        parser.parse_with(&input, start, ParseContext::PARTIAL)
     else {
         panic!("expected borrowed prefix")
     };
@@ -400,11 +400,11 @@ fn owned_values_are_moved_and_dropped_on_early_exit() {
         },
         3,
     );
-    for status in [InputStatus::Partial, InputStatus::Final] {
-        let outcome = parser.parse_with(&[1, 2], Cursor::start(), status);
-        match status {
-            InputStatus::Partial => assert!(matches!(outcome, ParseOutcome::NeedMore)),
-            InputStatus::Final => assert!(matches!(
+    for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
+        let outcome = parser.parse_with(&[1, 2], Cursor::start(), context);
+        match context.status {
+            rusthammer::InputStatus::Partial => assert!(matches!(outcome, ParseOutcome::NeedMore)),
+            rusthammer::InputStatus::Final => assert!(matches!(
                 outcome,
                 ParseOutcome::Error(ParseError::UnexpectedEnd)
             )),
@@ -430,7 +430,7 @@ fn every_child_error_stops_repetition_and_is_preserved() {
     }
     impl<'input> Parser<'input> for FailAfterTwo<'_> {
         type Output = ();
-        fn parse_with(&self, _: &'input [u8], cursor: Cursor, _: InputStatus) -> ParseOutcome<()> {
+        fn parse_with(&self, _: &'input [u8], cursor: Cursor, _: ParseContext) -> ParseOutcome<()> {
             self.calls.set(self.calls.get() + 1);
             match self.calls.get() {
                 1 | 2 => ParseOutcome::Success(cursor, ()),
@@ -448,7 +448,7 @@ fn every_child_error_stops_repetition_and_is_preserved() {
         ParseError::NonProgress,
         ParseError::CountOverflow,
     ] {
-        for status in [InputStatus::Partial, InputStatus::Final] {
+        for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
             let calls = Cell::new(0);
             let parser = Repeat::exact(
                 FailAfterTwo {
@@ -458,7 +458,7 @@ fn every_child_error_stops_repetition_and_is_preserved() {
                 5,
             );
             assert_eq!(
-                parser.parse_with(&[], Cursor::start(), status),
+                parser.parse_with(&[], Cursor::start(), context),
                 ParseOutcome::Error(error)
             );
             assert_eq!(calls.get(), 3);
@@ -475,7 +475,7 @@ fn huge_counts_can_reject_before_allocating_for_the_count() {
             Err(ParseError::UnexpectedEnd)
         );
         assert_eq!(
-            parser.parse_with(input, Cursor::start(), InputStatus::Partial),
+            parser.parse_with(input, Cursor::start(), ParseContext::PARTIAL),
             ParseOutcome::NeedMore
         );
     }
@@ -528,7 +528,7 @@ fn choice_and_optionality_retry_at_the_original_bit_cursor() {
         Ok((Cursor { byte: 0, bit: 6 }, vec![5]))
     );
     assert_eq!(
-        parser.parse_with(&input[..1], start, InputStatus::Partial),
+        parser.parse_with(&input[..1], start, ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(
@@ -540,7 +540,7 @@ fn choice_and_optionality_retry_at_the_original_bit_cursor() {
     };
     assert_eq!(optional.parse(&input, start), Ok((start, None)));
     assert_eq!(
-        optional.parse_with(&input[..1], start, InputStatus::Partial),
+        optional.parse_with(&input[..1], start, ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
 }
@@ -553,12 +553,12 @@ fn repeated_end_and_lookahead_honor_finality() {
         Ok((Cursor::start(), vec![(); 3]))
     );
     assert_eq!(
-        parser.parse_with(&[], Cursor::start(), InputStatus::Partial),
+        parser.parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     let negative = Not { parser };
     assert_eq!(
-        negative.parse_with(&[], Cursor::start(), InputStatus::Partial),
+        negative.parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(
@@ -574,7 +574,7 @@ fn completed_count_does_not_require_final_input_but_end_does() {
         second: End,
     };
     assert_eq!(
-        parser.parse_with(&[1, 2], Cursor::start(), InputStatus::Partial),
+        parser.parse_with(&[1, 2], Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(
@@ -660,7 +660,7 @@ fn unbounded_numeric_repetition_matches_a_bit_string_oracle() {
                 };
                 assert_eq!(parser.parse(&input, start), expected);
                 assert_eq!(
-                    parser.parse_with(&input, start, InputStatus::Partial),
+                    parser.parse_with(&input, start, ParseContext::PARTIAL),
                     ParseOutcome::NeedMore
                 );
             }
@@ -706,7 +706,7 @@ fn hammer_many_and_many1_cases_including_partial_stopping() {
                 }
             };
             assert_eq!(
-                parser.parse_with(input, Cursor::start(), InputStatus::Partial),
+                parser.parse_with(input, Cursor::start(), ParseContext::PARTIAL),
                 partial
             );
         }
@@ -725,13 +725,13 @@ fn unbounded_rejection_restores_the_start_of_the_attempt() {
             },
             min,
         );
-        for status in [InputStatus::Partial, InputStatus::Final] {
+        for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
             let expected = if min == 1 {
                 ParseOutcome::Success(Cursor { byte: 0, bit: 4 }, vec![(2, 1)])
             } else {
                 ParseOutcome::Error(ParseError::Mismatch)
             };
-            assert_eq!(parser.parse_with(&input, start, status), expected);
+            assert_eq!(parser.parse_with(&input, start, context), expected);
         }
     }
 }
@@ -739,12 +739,12 @@ fn unbounded_rejection_restores_the_start_of_the_attempt() {
 #[test]
 fn unbounded_empty_success_is_fatal_even_after_the_minimum() {
     for min in [0, 1, 3] {
-        for status in [InputStatus::Partial, InputStatus::Final] {
+        for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
             assert_eq!(
                 Repeat::at_least(Bits::new(0).unwrap(), min).parse_with(
                     &[],
                     Cursor::start(),
-                    status
+                    context
                 ),
                 ParseOutcome::Error(ParseError::NonProgress)
             );
@@ -771,7 +771,7 @@ fn unbounded_empty_success_is_fatal_even_after_the_minimum() {
         Err(ParseError::NonProgress)
     );
     assert_eq!(
-        end.parse_with(&[], Cursor::start(), InputStatus::Partial),
+        end.parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
 }
@@ -788,9 +788,9 @@ fn unbounded_invalid_initial_cursors_skip_the_child() {
             bit: 255,
         },
     ] {
-        for status in [InputStatus::Partial, InputStatus::Final] {
+        for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
             assert_eq!(
-                parser.parse_with(&[0], cursor, status),
+                parser.parse_with(&[0], cursor, context),
                 ParseOutcome::Error(ParseError::InvalidCursor)
             );
         }
@@ -802,7 +802,7 @@ fn unbounded_success_cursors_must_be_valid_and_strictly_forward() {
     struct Jump(Cursor);
     impl<'input> Parser<'input> for Jump {
         type Output = ();
-        fn parse_with(&self, _: &'input [u8], _: Cursor, _: InputStatus) -> ParseOutcome<()> {
+        fn parse_with(&self, _: &'input [u8], _: Cursor, _: ParseContext) -> ParseOutcome<()> {
             ParseOutcome::Success(self.0, ())
         }
     }
@@ -821,9 +821,9 @@ fn unbounded_success_cursors_must_be_valid_and_strictly_forward() {
             ParseError::InvalidCursor,
         ),
     ] {
-        for status in [InputStatus::Partial, InputStatus::Final] {
+        for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
             assert_eq!(
-                Repeat::at_least(Jump(after), 0).parse_with(&[0, 0], start, status),
+                Repeat::at_least(Jump(after), 0).parse_with(&[0, 0], start, context),
                 ParseOutcome::Error(error)
             );
         }
@@ -840,44 +840,44 @@ fn repetition_progress_and_count_errors_are_fatal_in_control_combinators() {
     struct Fail(ParseError);
     impl<'input> Parser<'input> for Fail {
         type Output = ();
-        fn parse_with(&self, _: &'input [u8], _: Cursor, _: InputStatus) -> ParseOutcome<()> {
+        fn parse_with(&self, _: &'input [u8], _: Cursor, _: ParseContext) -> ParseOutcome<()> {
             ParseOutcome::Error(self.0)
         }
     }
     for error in [ParseError::NonProgress, ParseError::CountOverflow] {
         assert!(!error.is_recoverable());
-        for status in [InputStatus::Partial, InputStatus::Final] {
+        for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
             assert_eq!(
                 Choice {
                     first: Fail(error),
                     second: MustNotRun
                 }
-                .parse_with(&[], Cursor::start(), status),
+                .parse_with(&[], Cursor::start(), context),
                 ParseOutcome::Error(error)
             );
             assert_eq!(
                 Optional {
                     parser: Fail(error)
                 }
-                .parse_with(&[], Cursor::start(), status),
+                .parse_with(&[], Cursor::start(), context),
                 ParseOutcome::Error(error)
             );
             assert_eq!(
                 And {
                     parser: Fail(error)
                 }
-                .parse_with(&[], Cursor::start(), status),
+                .parse_with(&[], Cursor::start(), context),
                 ParseOutcome::Error(error)
             );
             assert_eq!(
                 Not {
                     parser: Fail(error)
                 }
-                .parse_with(&[], Cursor::start(), status),
+                .parse_with(&[], Cursor::start(), context),
                 ParseOutcome::Error(error)
             );
             assert_eq!(
-                Repeat::at_least(Fail(error), 0).parse_with(&[], Cursor::start(), status),
+                Repeat::at_least(Fail(error), 0).parse_with(&[], Cursor::start(), context),
                 ParseOutcome::Error(error)
             );
         }
@@ -894,7 +894,7 @@ fn unbounded_borrowed_values_preserve_identity_and_finality() {
     assert_eq!(values[0].as_ptr(), input.as_ptr());
     assert_eq!(values[1].as_ptr(), input[2..].as_ptr());
     assert_eq!(
-        parser.parse_with(&input, Cursor::start(), InputStatus::Partial),
+        parser.parse_with(&input, Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
 }

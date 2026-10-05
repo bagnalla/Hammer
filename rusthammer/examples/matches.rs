@@ -1,6 +1,6 @@
 use rusthammer::{
-    BeU16, ButNot, ByteIn, BytePattern, Cursor, Difference, InputStatus, Map, ParseOutcome, Parser,
-    Right, Xor,
+    BeU16, ButNot, ByteIn, BytePattern, Cursor, Difference, Map, ParseContext, ParseOutcome,
+    Parser, Right, Xor,
 };
 
 #[derive(Debug, PartialEq, Eq)]
@@ -53,7 +53,7 @@ fn main() {
         second: BytePattern::new(b"ab"),
     };
     assert_eq!(
-        prefix.parse_with(b"a", Cursor::start(), InputStatus::Partial),
+        prefix.parse_with(b"a", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(prefix.parse(b"a", Cursor::start()).unwrap().1, b"a");

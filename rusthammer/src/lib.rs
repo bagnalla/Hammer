@@ -1,7 +1,8 @@
 //! Small, experimental parsing core for translation and verification with Aeneas.
 //!
-//! This prototype reads bits most-significant first. It does not yet implement
-//! Hammer's configurable bit order, chunk buffering, recursion, or compiled backends.
+//! Bit and byte ordering are configurable. Changes of bit direction require
+//! byte-aligned scope boundaries. Chunk buffering, recursion, and compiled
+//! backends are not implemented.
 //!
 //! Parser values implement `Clone` and `Copy` when their stored children and
 //! callbacks do. Parsed outputs need neither trait. For example, a copied grammar
@@ -60,7 +61,8 @@ extern crate alloc;
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
 
-/// A byte index and a bit offset measured from the most-significant bit.
+/// A byte index and the number of bits consumed in that byte.
+/// The active bit direction determines which end those bits were consumed from.
 ///
 /// Input-reading primitives validate cursors against their input. The canonical
 /// end cursor is `(input.len(), 0)`; other positions beyond the input are invalid.
@@ -178,13 +180,13 @@ impl<'input> Parser<'input> for SkipBits {
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<()> {
         let result = match advance_cursor(input.len(), cursor, self.bits) {
             Ok(next) => Ok((next, ())),
             Err(error) => Err(error),
         };
-        status.classify(result)
+        context.status.classify(result)
     }
 }
 
@@ -210,7 +212,7 @@ impl<'input> Parser<'input> for Tell {
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        _status: InputStatus,
+        _context: ParseContext,
     ) -> ParseOutcome<Cursor> {
         match advance_cursor(input.len(), cursor, 0) {
             Ok(next) => ParseOutcome::Success(next, next),
@@ -267,6 +269,59 @@ pub enum InputStatus {
     Final,
 }
 
+/// Which end of each physical byte is consumed first. Fragment bits retain
+/// their ordinary numeric significance; `LowFirst` does not reverse them.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum BitOrder {
+    HighFirst,
+    LowFirst,
+}
+
+/// The significance of successive physical-byte fragments of a numeric field.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ByteOrder {
+    Big,
+    Little,
+}
+
+/// Independent bit direction and byte-fragment significance.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Order {
+    pub bit: BitOrder,
+    pub byte: ByteOrder,
+}
+
+impl Order {
+    pub const DEFAULT: Self = Self {
+        bit: BitOrder::HighFirst,
+        byte: ByteOrder::Big,
+    };
+}
+
+/// Immutable interpretation settings passed to every child parser.
+///
+/// A partial-byte cursor must be resumed with its original bit direction.
+/// To retry `NeedMore`, keep the order and original cursor, supply accumulated
+/// input, and update finality if the input is now complete.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ParseContext {
+    pub order: Order,
+    pub status: InputStatus,
+}
+
+impl ParseContext {
+    /// Complete input, with high-first bits and big byte order.
+    pub const FINAL: Self = Self {
+        order: Order::DEFAULT,
+        status: InputStatus::Final,
+    };
+    /// Extendable input, with high-first bits and big byte order.
+    pub const PARTIAL: Self = Self {
+        order: Order::DEFAULT,
+        status: InputStatus::Partial,
+    };
+}
+
 /// Parsing can finish, reject input, or await more input (or an end-of-input signal).
 /// `NeedMore` has no committed cursor or output: retry with the accumulated buffer
 /// at the original cursor. No input is retained by the parser.
@@ -318,7 +373,7 @@ impl<T> ParseOutcome<T> {
 pub trait Parser<'input> {
     type Output;
 
-    /// Parse with explicit input finality. Implementations must propagate
+    /// Parse with explicit ordering and input finality. Implementations must propagate
     /// `NeedMore` before trying alternatives or deciding absence. On final input,
     /// they must return success or a parse error, never `NeedMore`.
     ///
@@ -330,10 +385,11 @@ pub trait Parser<'input> {
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<Self::Output>;
 
-    /// Parse a complete buffer. Built-in combinators use this default unchanged;
+    /// Parse a complete buffer with high-first bits and big byte order.
+    /// Built-in combinators use this default unchanged;
     /// parser references forward any override from their underlying parser.
     /// A custom implementation's unexpected `NeedMore` becomes `UnexpectedEnd`.
     fn parse(
@@ -341,7 +397,7 @@ pub trait Parser<'input> {
         input: &'input [u8],
         cursor: Cursor,
     ) -> Result<(Cursor, Self::Output), ParseError> {
-        self.parse_with(input, cursor, InputStatus::Final)
+        self.parse_with(input, cursor, ParseContext::FINAL)
             .into_complete()
     }
 }
@@ -355,9 +411,9 @@ impl<'input, P: Parser<'input>> Parser<'input> for &P {
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        P::parse_with(*self, input, cursor, status)
+        P::parse_with(*self, input, cursor, context)
     }
 
     fn parse(
@@ -372,6 +428,14 @@ impl<'input, P: Parser<'input>> Parser<'input> for &P {
 /// Read one bit, advancing into the next byte after its least-significant bit.
 /// All cursor values are checked; malformed input is an ordinary error.
 pub fn read_bit(input: &[u8], cursor: Cursor) -> Result<(Cursor, bool), ParseError> {
+    read_bit_ordered(input, cursor, BitOrder::HighFirst)
+}
+
+fn read_bit_ordered(
+    input: &[u8],
+    cursor: Cursor,
+    order: BitOrder,
+) -> Result<(Cursor, bool), ParseError> {
     if cursor.bit >= 8 {
         return Err(ParseError::InvalidCursor);
     }
@@ -383,7 +447,11 @@ pub fn read_bit(input: &[u8], cursor: Cursor) -> Result<(Cursor, bool), ParseErr
         };
     }
 
-    let value = ((input[cursor.byte] >> (7 - cursor.bit)) & 1) != 0;
+    let shift = match order {
+        BitOrder::HighFirst => 7 - cursor.bit,
+        BitOrder::LowFirst => cursor.bit,
+    };
+    let value = ((input[cursor.byte] >> shift) & 1) != 0;
     let next = if cursor.bit == 7 {
         Cursor {
             byte: cursor.byte + 1,
@@ -408,13 +476,15 @@ impl<'input> Parser<'input> for Bit {
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<bool> {
-        status.classify(read_bit(input, cursor))
+        context
+            .status
+            .classify(read_bit_ordered(input, cursor, context.order.bit))
     }
 }
 
-/// Read an unsigned, most-significant-first field of 0 through 64 bits.
+/// Read an unsigned field of 0 through 64 bits using the active ordering.
 ///
 /// Fields may start inside a byte and cross byte boundaries. Zero-width fields
 /// return zero without consuming input, including at canonical end-of-input.
@@ -452,13 +522,16 @@ impl<'input> Parser<'input> for Bits {
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<u64> {
-        status.classify(read_bits(input, cursor, self))
+        context
+            .status
+            .classify(read_ordered_bits(input, cursor, self, context.order))
     }
 }
 
-/// Parse using an already validated numeric field, without implicit alignment.
+/// Read a validated field with high-first bits and big byte order, without
+/// implicit alignment. Use `Bits::parse_with` for explicit ordering/finality.
 pub fn read_bits(input: &[u8], cursor: Cursor, parser: &Bits) -> Result<(Cursor, u64), ParseError> {
     if cursor.bit >= 8
         || cursor.byte > input.len()
@@ -483,7 +556,177 @@ pub fn read_bits(input: &[u8], cursor: Cursor, parser: &Bits) -> Result<(Cursor,
     Ok((next, value))
 }
 
-/// Read a signed, MSB-first two's-complement field of 0 through 64 bits as `i64`.
+// The public read_bits helper retains its explicit default-order semantics.
+// Reuse it for physical fragments so the contiguous-bit decoder and its bounds
+// proof are shared. The default order can decode the whole field directly.
+fn read_ordered_bits(
+    input: &[u8],
+    cursor: Cursor,
+    parser: &Bits,
+    order: Order,
+) -> Result<(Cursor, u64), ParseError> {
+    if let Order {
+        bit: BitOrder::HighFirst,
+        byte: ByteOrder::Big,
+    } = order
+    {
+        return read_bits(input, cursor, parser);
+    }
+    read_fragments(input, cursor, parser.width, order)
+}
+
+fn fragment_offset(bit: u8, take: u8, order: BitOrder) -> u8 {
+    match order {
+        BitOrder::HighFirst => bit,
+        BitOrder::LowFirst => 8 - bit - take,
+    }
+}
+
+fn append_fragment(value: u64, fragment: u64, done: u8, take: u8, order: ByteOrder) -> u64 {
+    match order {
+        ByteOrder::Big => value * (1u64 << take) + fragment,
+        ByteOrder::Little => value + fragment * (1u64 << done),
+    }
+}
+
+fn advance_fragment(cursor: Cursor, take: u8) -> Cursor {
+    let bit = cursor.bit + take;
+    if bit == 8 {
+        Cursor {
+            byte: cursor.byte + 1,
+            bit: 0,
+        }
+    } else {
+        Cursor {
+            byte: cursor.byte,
+            bit,
+        }
+    }
+}
+
+fn read_fragments(
+    input: &[u8],
+    cursor: Cursor,
+    width: u8,
+    order: Order,
+) -> Result<(Cursor, u64), ParseError> {
+    if cursor.bit >= 8
+        || cursor.byte > input.len()
+        || (cursor.byte == input.len() && cursor.bit != 0)
+    {
+        return Err(ParseError::InvalidCursor);
+    }
+    let mut next = cursor;
+    let mut remaining = width;
+    let mut value = 0;
+    while remaining != 0 {
+        if next.byte == input.len() {
+            return Err(ParseError::UnexpectedEnd);
+        }
+        let available = 8 - next.bit;
+        let take = if remaining < available {
+            remaining
+        } else {
+            available
+        };
+        let bit = fragment_offset(next.bit, take, order.bit);
+        let fragment = match read_bits(
+            input,
+            Cursor {
+                byte: next.byte,
+                bit,
+            },
+            &Bits { width: take },
+        ) {
+            Ok((_, fragment)) => fragment,
+            Err(error) => return Err(error),
+        };
+        value = append_fragment(value, fragment, width - remaining, take, order.byte);
+        next = advance_fragment(next, take);
+        remaining -= take;
+    }
+    Ok((next, value))
+}
+
+/// Override a child's bit and byte order, preserving input finality.
+///
+/// A change of bit direction requires a valid, byte-aligned starting cursor
+/// and successful ending cursor. Invalid bounds take precedence over `Unaligned`.
+/// Entry rejection skips the child; exit rejection discards its output. Child
+/// errors and `NeedMore` propagate unchanged. No padding is inserted.
+/// A scope that keeps bit direction delegates without extra cursor checks,
+/// so byte-order-only changes can start and finish within a byte.
+///
+/// ```
+/// use rusthammer::{BeU16, BitOrder, Bits, ByteOrder, Cursor, Order, Parser, Seq, WithOrder};
+/// let parser = Seq {
+///     first: WithOrder {
+///         order: Order { bit: BitOrder::LowFirst, byte: ByteOrder::Little },
+///         parser: Seq { first: Bits::new(3).unwrap(), second: Bits::new(5).unwrap() },
+///     },
+///     second: BeU16,
+/// };
+/// assert_eq!(parser.parse(&[0x96, 0x12, 0x34], Cursor::start()),
+///     Ok((Cursor { byte: 3, bit: 0 }, ((6, 18), 0x1234))));
+/// ```
+#[derive(Clone, Copy)]
+pub struct WithOrder<P> {
+    pub parser: P,
+    pub order: Order,
+}
+
+fn scope_boundary_error(length: usize, cursor: Cursor) -> Option<ParseError> {
+    if cursor.bit >= 8 || cursor.byte > length || (cursor.byte == length && cursor.bit != 0) {
+        Some(ParseError::InvalidCursor)
+    } else if cursor.bit != 0 {
+        Some(ParseError::Unaligned)
+    } else {
+        None
+    }
+}
+
+fn finish_order_scope<T>(length: usize, changed: bool, result: ParseOutcome<T>) -> ParseOutcome<T> {
+    if !changed {
+        return result;
+    }
+    match result {
+        ParseOutcome::Success(next, value) => match scope_boundary_error(length, next) {
+            Some(error) => ParseOutcome::Error(error),
+            None => ParseOutcome::Success(next, value),
+        },
+        ParseOutcome::Error(error) => ParseOutcome::Error(error),
+        ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+    }
+}
+
+impl<'input, P: Parser<'input>> Parser<'input> for WithOrder<P> {
+    type Output = P::Output;
+
+    fn parse_with(
+        &self,
+        input: &'input [u8],
+        cursor: Cursor,
+        context: ParseContext,
+    ) -> ParseOutcome<Self::Output> {
+        let changed = self.order.bit != context.order.bit;
+        if changed {
+            if let Some(error) = scope_boundary_error(input.len(), cursor) {
+                return ParseOutcome::Error(error);
+            }
+        }
+        let result = self.parser.parse_with(
+            input,
+            cursor,
+            ParseContext {
+                order: self.order,
+                status: context.status,
+            },
+        );
+        finish_order_scope(input.len(), changed, result)
+    }
+}
+
+/// Read a two's-complement field of 0 through 64 bits using the active ordering.
 ///
 /// Fields may start inside a byte and cross byte boundaries. Width zero returns
 /// zero without consuming input, but still validates the cursor, just like `Bits`.
@@ -527,9 +770,9 @@ impl<'input> Parser<'input> for SignedBits {
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<i64> {
-        match self.bits.parse_with(input, cursor, status) {
+        match self.bits.parse_with(input, cursor, context) {
             ParseOutcome::Success(next, value) => {
                 ParseOutcome::Success(next, sign_extend(value, self.bits.width))
             }
@@ -556,7 +799,7 @@ fn sign_extend(value: u64, width: u8) -> i64 {
     }
 }
 
-/// Read eight MSB-first bits as a `u8`, including from an unaligned cursor.
+/// Read an eight-bit field as a `u8` using the active ordering, even unaligned.
 #[derive(Clone, Copy)]
 pub struct Byte;
 
@@ -567,9 +810,9 @@ impl<'input> Parser<'input> for Byte {
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<u8> {
-        match (Bits { width: 8 }).parse_with(input, cursor, status) {
+        match (Bits { width: 8 }).parse_with(input, cursor, context) {
             // An eight-bit field is always representable as a byte.
             ParseOutcome::Success(next, value) => ParseOutcome::Success(next, value as u8),
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
@@ -582,7 +825,7 @@ impl<'input> Parser<'input> for Byte {
 // establishes that each value fits its output type, so every cast is lossless.
 // A private macro keeps the outcome propagation identical for all readers.
 macro_rules! fixed_integer {
-    ($(#[$doc:meta])* $name:ident, $output:ty, $field:expr) => {
+    ($(#[$doc:meta])* $name:ident, $output:ty, $field:expr, $pin_big:literal) => {
         $(#[$doc])*
         #[derive(Clone, Copy)]
         pub struct $name;
@@ -594,9 +837,12 @@ macro_rules! fixed_integer {
                 &self,
                 input: &'input [u8],
                 cursor: Cursor,
-                status: InputStatus,
+                context: ParseContext,
             ) -> ParseOutcome<$output> {
-                match ($field).parse_with(input, cursor, status) {
+                let context = if $pin_big {
+                    ParseContext { order: Order { bit: context.order.bit, byte: ByteOrder::Big }, status: context.status }
+                } else { context };
+                match ($field).parse_with(input, cursor, context) {
                     ParseOutcome::Success(next, value) => ParseOutcome::Success(next, value as $output),
                     ParseOutcome::Error(error) => ParseOutcome::Error(error),
                     ParseOutcome::NeedMore => ParseOutcome::NeedMore,
@@ -609,7 +855,7 @@ macro_rules! fixed_integer {
 fixed_integer!(
     /// Read a big-endian 16-bit unsigned integer as `u16`.
     ///
-    /// Reads MSB-first from the supplied cursor, without implicit alignment.
+    /// Pins big byte order and inherits bit direction, without implicit alignment.
     /// This zero-sized parser has no configuration to validate.
     ///
     /// ```
@@ -622,31 +868,34 @@ fixed_integer!(
     /// ```
     BeU16,
     u16,
-    Bits { width: 16 }
+    Bits { width: 16 },
+    true
 );
 
 fixed_integer!(
     /// Read a big-endian 32-bit unsigned integer as `u32`.
     ///
-    /// Reads MSB-first from the supplied cursor, without implicit alignment.
+    /// Pins big byte order and inherits bit direction, without implicit alignment.
     /// This zero-sized parser has no configuration to validate.
     BeU32,
     u32,
-    Bits { width: 32 }
+    Bits { width: 32 },
+    true
 );
 
 fixed_integer!(
     /// Read a big-endian 64-bit unsigned integer as `u64`.
     ///
-    /// Reads MSB-first from the supplied cursor, without implicit alignment.
+    /// Pins big byte order and inherits bit direction, without implicit alignment.
     /// This zero-sized parser has no configuration to validate.
     BeU64,
     u64,
-    Bits { width: 64 }
+    Bits { width: 64 },
+    true
 );
 
 fixed_integer!(
-    /// Read eight MSB-first bits as a two's-complement `i8`.
+    /// Read an eight-bit field as a two's-complement `i8` using the active ordering.
     ///
     /// Reads from the supplied cursor, without implicit alignment.
     /// This zero-sized parser has no configuration to validate.
@@ -654,43 +903,47 @@ fixed_integer!(
     i8,
     SignedBits {
         bits: Bits { width: 8 }
-    }
+    },
+    false
 );
 
 fixed_integer!(
     /// Read a big-endian 16-bit two's-complement integer as `i16`.
     ///
-    /// Reads MSB-first from the supplied cursor, without implicit alignment.
+    /// Pins big byte order and inherits bit direction, without implicit alignment.
     /// This zero-sized parser has no configuration to validate.
     BeI16,
     i16,
     SignedBits {
         bits: Bits { width: 16 }
-    }
+    },
+    true
 );
 
 fixed_integer!(
     /// Read a big-endian 32-bit two's-complement integer as `i32`.
     ///
-    /// Reads MSB-first from the supplied cursor, without implicit alignment.
+    /// Pins big byte order and inherits bit direction, without implicit alignment.
     /// This zero-sized parser has no configuration to validate.
     BeI32,
     i32,
     SignedBits {
         bits: Bits { width: 32 }
-    }
+    },
+    true
 );
 
 fixed_integer!(
     /// Read a big-endian 64-bit two's-complement integer as `i64`.
     ///
-    /// Reads MSB-first from the supplied cursor, without implicit alignment.
+    /// Pins big byte order and inherits bit direction, without implicit alignment.
     /// This zero-sized parser has no configuration to validate.
     BeI64,
     i64,
     SignedBits {
         bits: Bits { width: 64 }
-    }
+    },
+    true
 );
 
 /// Fixed bitmap over the byte domain, shared by inclusion and exclusion.
@@ -768,13 +1021,13 @@ impl<'input> Parser<'input> for ByteIn {
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<u8> {
         Verify {
             parser: Byte,
             predicate: |value: &u8| self.accepts(*value),
         }
-        .parse_with(input, cursor, status)
+        .parse_with(input, cursor, context)
     }
 }
 
@@ -828,13 +1081,13 @@ impl<'input> Parser<'input> for ByteNotIn {
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<u8> {
         Verify {
             parser: Byte,
             predicate: |value: &u8| self.accepts(*value),
         }
-        .parse_with(input, cursor, status)
+        .parse_with(input, cursor, context)
     }
 }
 
@@ -882,12 +1135,12 @@ impl<'input, 'pattern> Parser<'input> for BytePattern<'pattern> {
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
         // Keep the returned pattern borrow outside the matching loop. The pinned
         // Aeneas cannot join the loop's borrow contexts when it returns the slice.
         // See probes/pattern_loop_borrow.rs and the accompanying probe notes.
-        match match_byte_pattern(self.pattern, input, cursor, status) {
+        match match_byte_pattern(self.pattern, input, cursor, context) {
             ParseOutcome::Success(next, ()) => ParseOutcome::Success(next, self.pattern),
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
@@ -899,12 +1152,12 @@ fn match_byte_pattern(
     pattern: &[u8],
     input: &[u8],
     cursor: Cursor,
-    status: InputStatus,
+    context: ParseContext,
 ) -> ParseOutcome<()> {
     let mut next = cursor;
     let mut index = 0;
     while index < pattern.len() {
-        match Byte.parse_with(input, next, status) {
+        match Byte.parse_with(input, next, context) {
             ParseOutcome::Success(after, value) => {
                 if value != pattern[index] {
                     return ParseOutcome::Error(ParseError::Mismatch);
@@ -919,7 +1172,7 @@ fn match_byte_pattern(
     ParseOutcome::Success(next, ())
 }
 
-/// Match an MSB-first numeric field against an expected value.
+/// Match a numeric field in the active order against an expected value.
 ///
 /// Construction checks that width is at most 64 and value fits that width.
 /// The only valid zero-width literal is zero. Parsing does not recheck these
@@ -969,9 +1222,11 @@ impl<'input> Parser<'input> for Literal {
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<u64> {
-        status.classify(read_literal(input, cursor, self))
+        context
+            .status
+            .classify(read_literal(input, cursor, self, context.order))
     }
 }
 
@@ -979,8 +1234,9 @@ fn read_literal(
     input: &[u8],
     cursor: Cursor,
     parser: &Literal,
+    order: Order,
 ) -> Result<(Cursor, u64), ParseError> {
-    match read_bits(input, cursor, &parser.bits) {
+    match read_ordered_bits(input, cursor, &parser.bits, order) {
         Err(error) => Err(error),
         Ok((next, value)) => {
             if value == parser.value {
@@ -1005,7 +1261,7 @@ impl<'input> Parser<'input> for End {
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<()> {
         if cursor.bit >= 8
             || cursor.byte > input.len()
@@ -1014,7 +1270,7 @@ impl<'input> Parser<'input> for End {
             return ParseOutcome::Error(ParseError::InvalidCursor);
         }
         if cursor.byte == input.len() {
-            match status {
+            match context.status {
                 InputStatus::Final => ParseOutcome::Success(cursor, ()),
                 InputStatus::Partial => ParseOutcome::NeedMore,
             }
@@ -1033,7 +1289,7 @@ pub struct Epsilon;
 impl<'input> Parser<'input> for Epsilon {
     type Output = ();
 
-    fn parse_with(&self, _: &'input [u8], cursor: Cursor, _: InputStatus) -> ParseOutcome<()> {
+    fn parse_with(&self, _: &'input [u8], cursor: Cursor, _: ParseContext) -> ParseOutcome<()> {
         ParseOutcome::Success(cursor, ())
     }
 }
@@ -1071,7 +1327,7 @@ impl<T> Clone for Fail<T> {
 impl<'input, T> Parser<'input> for Fail<T> {
     type Output = T;
 
-    fn parse_with(&self, _: &'input [u8], _: Cursor, _: InputStatus) -> ParseOutcome<T> {
+    fn parse_with(&self, _: &'input [u8], _: Cursor, _: ParseContext) -> ParseOutcome<T> {
         ParseOutcome::Error(ParseError::Mismatch)
     }
 }
@@ -1091,17 +1347,20 @@ impl<'input, P: Parser<'input>, Q: Parser<'input>> Parser<'input> for Seq<P, Q> 
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        match self.first.parse_with(input, cursor, status) {
+        match self.first.parse_with(input, cursor, context) {
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
-            ParseOutcome::Success(next, first) => match self.second.parse_with(input, next, status)
-            {
-                ParseOutcome::NeedMore => ParseOutcome::NeedMore,
-                ParseOutcome::Error(error) => ParseOutcome::Error(error),
-                ParseOutcome::Success(end, second) => ParseOutcome::Success(end, (first, second)),
-            },
+            ParseOutcome::Success(next, first) => {
+                match self.second.parse_with(input, next, context) {
+                    ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+                    ParseOutcome::Error(error) => ParseOutcome::Error(error),
+                    ParseOutcome::Success(end, second) => {
+                        ParseOutcome::Success(end, (first, second))
+                    }
+                }
+            }
         }
     }
 }
@@ -1109,7 +1368,7 @@ impl<'input, P: Parser<'input>, Q: Parser<'input>> Parser<'input> for Seq<P, Q> 
 /// Use a parsed value to construct the next parser, returning that parser's output.
 ///
 /// `then` takes ownership of the first output and runs exactly once after success.
-/// Its parser runs at that success cursor with the same input and finality. Errors
+/// Its parser runs at that success cursor with the same input and context. Errors
 /// and `NeedMore` from either stage propagate unchanged; a first-stage failure
 /// skips the factory. Outputs and the constructed parser need neither `Copy` nor
 /// `Clone`. Copying this combinator depends only on its stored parser and factory.
@@ -1154,11 +1413,11 @@ where
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        match self.parser.parse_with(input, cursor, status) {
+        match self.parser.parse_with(input, cursor, context) {
             ParseOutcome::Success(next, value) => {
-                (self.then)(value).parse_with(input, next, status)
+                (self.then)(value).parse_with(input, next, context)
             }
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
@@ -1182,13 +1441,13 @@ impl<'input, P: Parser<'input>, Q: Parser<'input>> Parser<'input> for Left<P, Q>
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
         let sequence = Seq {
             first: &self.first,
             second: &self.second,
         };
-        match sequence.parse_with(input, cursor, status) {
+        match sequence.parse_with(input, cursor, context) {
             // Keep tuple destructuring separate for Aeneas dependency extraction;
             // see InputStatus::classify and probes/cross_crate/README.md.
             ParseOutcome::Success(next, values) => {
@@ -1217,13 +1476,13 @@ impl<'input, P: Parser<'input>, Q: Parser<'input>> Parser<'input> for Right<P, Q
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
         let sequence = Seq {
             first: &self.first,
             second: &self.second,
         };
-        match sequence.parse_with(input, cursor, status) {
+        match sequence.parse_with(input, cursor, context) {
             // Keep tuple destructuring separate for Aeneas dependency extraction;
             // see InputStatus::classify and probes/cross_crate/README.md.
             ParseOutcome::Success(next, values) => {
@@ -1255,7 +1514,7 @@ impl<'input, L: Parser<'input>, P: Parser<'input>, R: Parser<'input>> Parser<'in
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
         let sequence = Seq {
             first: &self.left,
@@ -1264,7 +1523,7 @@ impl<'input, L: Parser<'input>, P: Parser<'input>, R: Parser<'input>> Parser<'in
                 second: &self.right,
             },
         };
-        match sequence.parse_with(input, cursor, status) {
+        match sequence.parse_with(input, cursor, context) {
             // Keep tuple destructuring separate for Aeneas dependency extraction;
             // see InputStatus::classify and probes/cross_crate/README.md.
             ParseOutcome::Success(next, values) => {
@@ -1292,9 +1551,9 @@ impl<'input, P: Parser<'input>> Parser<'input> for Ignore<P> {
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<()> {
-        match self.parser.parse_with(input, cursor, status) {
+        match self.parser.parse_with(input, cursor, context) {
             ParseOutcome::Success(next, _) => ParseOutcome::Success(next, ()),
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
@@ -1765,9 +2024,9 @@ impl<'input, P: Parser<'input>> Parser<'input> for Repeat<P> {
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        repeat_run(&self.parser, self.bounds, &Collect, input, cursor, status)
+        repeat_run(&self.parser, self.bounds, &Collect, input, cursor, context)
     }
 }
 
@@ -1782,9 +2041,9 @@ where
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<R> {
-        repeat_run(&self.parser, self.bounds, self, input, cursor, status)
+        repeat_run(&self.parser, self.bounds, self, input, cursor, context)
     }
 }
 
@@ -1794,13 +2053,13 @@ fn repeat_run<'input, P, A>(
     accumulator: &A,
     input: &'input [u8],
     cursor: Cursor,
-    status: InputStatus,
+    context: ParseContext,
 ) -> ParseOutcome<A::Output>
 where
     P: Parser<'input>,
     A: RepeatAccumulator<P::Output>,
 {
-    repeat_run_with(parser, parser, bounds, accumulator, input, cursor, status)
+    repeat_run_with(parser, parser, bounds, accumulator, input, cursor, context)
 }
 
 #[cfg(feature = "alloc")]
@@ -1810,7 +2069,7 @@ impl<'input, P: Parser<'input>, S: Parser<'input>> Parser<'input> for SepBy<P, S
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
         let following = Right {
             first: &self.separator,
@@ -1823,7 +2082,7 @@ impl<'input, P: Parser<'input>, S: Parser<'input>> Parser<'input> for SepBy<P, S
             &Collect,
             input,
             cursor,
-            status,
+            context,
         )
     }
 }
@@ -1840,7 +2099,7 @@ where
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<R> {
         let following = Right {
             first: &self.separator,
@@ -1853,7 +2112,7 @@ where
             self,
             input,
             cursor,
-            status,
+            context,
         )
     }
 }
@@ -1865,16 +2124,16 @@ fn repeat_parse<'input, P, Q>(
     count: usize,
     input: &'input [u8],
     cursor: Cursor,
-    status: InputStatus,
+    context: ParseContext,
 ) -> ParseOutcome<P::Output>
 where
     P: Parser<'input>,
     Q: Parser<'input, Output = P::Output>,
 {
     if count == 0 {
-        parser.parse_with(input, cursor, status)
+        parser.parse_with(input, cursor, context)
     } else {
-        following.parse_with(input, cursor, status)
+        following.parse_with(input, cursor, context)
     }
 }
 
@@ -1888,7 +2147,7 @@ fn repeat_run_with<'input, P, Q, A>(
     accumulator: &A,
     input: &'input [u8],
     cursor: Cursor,
-    status: InputStatus,
+    context: ParseContext,
 ) -> ParseOutcome<A::Output>
 where
     P: Parser<'input>,
@@ -1908,7 +2167,7 @@ where
         if !repeat_below_max(count, bounds.max) {
             return ParseOutcome::Success(next, values);
         }
-        match repeat_parse(parser, following, count, input, next, status) {
+        match repeat_parse(parser, following, count, input, next, context) {
             ParseOutcome::Success(after, value) => {
                 if unbounded {
                     if let Err(error) = repeat_progress(input, next, after) {
@@ -1956,9 +2215,9 @@ where
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        match self.parser.parse_with(input, cursor, status) {
+        match self.parser.parse_with(input, cursor, context) {
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
             ParseOutcome::Success(next, value) => ParseOutcome::Success(next, (self.map)(value)),
@@ -1992,9 +2251,9 @@ where
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        match self.parser.parse_with(input, cursor, status) {
+        match self.parser.parse_with(input, cursor, context) {
             ParseOutcome::Success(next, value) => match (self.map)(value) {
                 Ok(mapped) => ParseOutcome::Success(next, mapped),
                 // Keep `_error`: unlike `_`, it moves the payload out of Result.
@@ -2031,9 +2290,9 @@ where
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        match self.parser.parse_with(input, cursor, status) {
+        match self.parser.parse_with(input, cursor, context) {
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
             ParseOutcome::Success(next, value) => {
@@ -2125,13 +2384,13 @@ where
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<T> {
         Verify {
             parser: &self.parser,
             predicate: |value: &T| self.lower <= *value && *value <= self.upper,
         }
-        .parse_with(input, cursor, status)
+        .parse_with(input, cursor, context)
     }
 }
 
@@ -2159,14 +2418,14 @@ where
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        match self.first.parse_with(input, cursor, status) {
+        match self.first.parse_with(input, cursor, context) {
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
             ParseOutcome::Success(next, value) => ParseOutcome::Success(next, value),
             ParseOutcome::Error(error) => {
                 if error.is_recoverable() {
-                    self.second.parse_with(input, cursor, status)
+                    self.second.parse_with(input, cursor, context)
                 } else {
                     ParseOutcome::Error(error)
                 }
@@ -2188,17 +2447,17 @@ fn restrict_match<'input, P, Q>(
     second: &Q,
     input: &'input [u8],
     cursor: Cursor,
-    status: InputStatus,
+    context: ParseContext,
     allow_equal: bool,
 ) -> ParseOutcome<P::Output>
 where
     P: Parser<'input>,
     Q: Parser<'input>,
 {
-    match first.parse_with(input, cursor, status) {
+    match first.parse_with(input, cursor, context) {
         ParseOutcome::NeedMore => ParseOutcome::NeedMore,
         ParseOutcome::Error(error) => ParseOutcome::Error(error),
-        ParseOutcome::Success(next, value) => match second.parse_with(input, cursor, status) {
+        ParseOutcome::Success(next, value) => match second.parse_with(input, cursor, context) {
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
             ParseOutcome::Error(error) => {
                 if error.is_recoverable() {
@@ -2258,9 +2517,9 @@ where
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        restrict_match(&self.first, &self.second, input, cursor, status, false)
+        restrict_match(&self.first, &self.second, input, cursor, context, false)
     }
 }
 
@@ -2287,9 +2546,9 @@ where
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        restrict_match(&self.first, &self.second, input, cursor, status, true)
+        restrict_match(&self.first, &self.second, input, cursor, context, true)
     }
 }
 
@@ -2328,19 +2587,19 @@ where
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        match self.first.parse_with(input, cursor, status) {
+        match self.first.parse_with(input, cursor, context) {
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
             ParseOutcome::Error(error) => {
                 if error.is_recoverable() {
-                    self.second.parse_with(input, cursor, status)
+                    self.second.parse_with(input, cursor, context)
                 } else {
                     ParseOutcome::Error(error)
                 }
             }
             ParseOutcome::Success(next, value) => {
-                match self.second.parse_with(input, cursor, status) {
+                match self.second.parse_with(input, cursor, context) {
                     ParseOutcome::NeedMore => ParseOutcome::NeedMore,
                     ParseOutcome::Success(_other_cursor, _other_value) => {
                         ParseOutcome::Error(ParseError::Mismatch)
@@ -2376,9 +2635,9 @@ impl<'input, P: Parser<'input>> Parser<'input> for Optional<P> {
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        match self.parser.parse_with(input, cursor, status) {
+        match self.parser.parse_with(input, cursor, context) {
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
             ParseOutcome::Success(next, value) => ParseOutcome::Success(next, Some(value)),
             ParseOutcome::Error(error) => {
@@ -2409,9 +2668,9 @@ impl<'input, P: Parser<'input>> Parser<'input> for And<P> {
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<()> {
-        match self.parser.parse_with(input, cursor, status) {
+        match self.parser.parse_with(input, cursor, context) {
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
             ParseOutcome::Success(_, _) => ParseOutcome::Success(cursor, ()),
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
@@ -2436,9 +2695,9 @@ impl<'input, P: Parser<'input>> Parser<'input> for Not<P> {
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<()> {
-        match self.parser.parse_with(input, cursor, status) {
+        match self.parser.parse_with(input, cursor, context) {
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
             ParseOutcome::Success(_, _) => ParseOutcome::Error(ParseError::Mismatch),
             ParseOutcome::Error(error) => {
@@ -2468,9 +2727,11 @@ impl<'input> Parser<'input> for TakeAligned {
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        status: InputStatus,
+        context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        status.classify(take_aligned(input, cursor, self.count))
+        context
+            .status
+            .classify(take_aligned(input, cursor, self.count))
     }
 }
 

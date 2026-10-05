@@ -96,7 +96,7 @@ theorem record_fields_decode (input : Slice U8) (cursor : Cursor)
 
 theorem record_header_fields_spec (input : Slice U8) (cursor : Cursor)
     (hvalid : Spec.validCursor input cursor) (haligned : cursor.bit.val = 0) :
-    fieldsInst.parse_with fieldsParser input cursor .Final
+    fieldsInst.parse_with fieldsParser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.recordHeaderOutcome input cursor) result ⦄ := by
   let bi := Bits.Insts.RusthammerParserInputU64
   have hv (start : Cursor) := bits_spec Spec.recordParser.version input start (by decide)
@@ -126,7 +126,7 @@ theorem record_predicate_spec (fields : Spec.HeaderFields) :
 /-- The private payload helper has no configuration assumption on the requested count. -/
 theorem record_body_spec (input : Slice U8) (cursor : Cursor) (version flags : U64) (count : Usize)
     (hvalid : Spec.validCursor input cursor) (haligned : cursor.bit.val = 0) :
-    parse_record_body input cursor version flags count .Final
+    parse_record_body input cursor version flags count ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.recordBodyOutcome input cursor version flags count) result ⦄ := by
   have hparts : cursor.bit.val < 8 ∧ cursor.byte.val ≤ input.val.length ∧
       (cursor.byte.val = input.val.length → cursor.bit.val = 0) := by
@@ -177,7 +177,7 @@ theorem record_body_spec (input : Slice U8) (cursor : Cursor) (version flags : U
 /-- The complete parser satisfies the format contract for all inputs and raw cursors. -/
 theorem record_parser_spec (parser : RecordParser) (input : Slice U8) (cursor : Cursor)
     (hconfig : Spec.validRecordParser parser) :
-    RecordParser.Insts.RusthammerParserInputRecord.parse_with parser input cursor .Final
+    RecordParser.Insts.RusthammerParserInputRecord.parse_with parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.recordOutcome input cursor) result ⦄ := by
   change parser = Spec.recordParser at hconfig
   subst parser

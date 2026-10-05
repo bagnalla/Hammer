@@ -1,5 +1,5 @@
 use rusthammer::{
-    Bit, Bits, ConfigError, Cursor, Epsilon, FoldRepeat, InputStatus, Literal, Map, ParseError,
+    Bit, Bits, ConfigError, Cursor, Epsilon, FoldRepeat, Literal, Map, ParseContext, ParseError,
     ParseOutcome, Parser, Seq, TakeAligned,
 };
 use std::cell::Cell;
@@ -7,7 +7,7 @@ use std::cell::Cell;
 struct MustNotRun;
 impl<'input> Parser<'input> for MustNotRun {
     type Output = ();
-    fn parse_with(&self, _: &'input [u8], _: Cursor, _: InputStatus) -> ParseOutcome<()> {
+    fn parse_with(&self, _: &'input [u8], _: Cursor, _: ParseContext) -> ParseOutcome<()> {
         panic!("child must not run")
     }
 }
@@ -88,7 +88,7 @@ fn numeric_folding_matches_an_independent_bit_string_oracle() {
                         ParseOutcome::NeedMore
                     };
                     assert_eq!(
-                        parser.parse_with(&input, cursor, InputStatus::Partial),
+                        parser.parse_with(&input, cursor, ParseContext::PARTIAL),
                         partial
                     );
                 }
@@ -112,9 +112,9 @@ fn zero_maximum_initializes_once_and_preserves_even_an_invalid_cursor() {
         byte: usize::MAX,
         bit: 255,
     };
-    for status in [InputStatus::Partial, InputStatus::Final] {
+    for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
         assert_eq!(
-            parser.parse_with(&[], cursor, status),
+            parser.parse_with(&[], cursor, context),
             ParseOutcome::Success(cursor, ())
         );
     }
@@ -172,7 +172,7 @@ fn rejected_composite_attempt_rolls_back_without_folding_its_partial_output() {
     );
     assert_eq!(steps.get(), 1);
     assert_eq!(
-        parser.parse_with(&[5, 0xff, 6], Cursor::start(), InputStatus::Partial),
+        parser.parse_with(&[5, 0xff, 6], Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(steps.get(), 2);
@@ -184,7 +184,7 @@ struct FirstThen {
 }
 impl<'input> Parser<'input> for FirstThen {
     type Output = bool;
-    fn parse_with(&self, _: &'input [u8], cursor: Cursor, _: InputStatus) -> ParseOutcome<bool> {
+    fn parse_with(&self, _: &'input [u8], cursor: Cursor, _: ParseContext) -> ParseOutcome<bool> {
         if cursor == Cursor::start() {
             ParseOutcome::Success(Cursor { byte: 0, bit: 1 }, true)
         } else {
@@ -229,8 +229,8 @@ fn minimum_fatal_errors_and_incompleteness_share_the_collection_rules() {
                     }
                     Some(e) => ParseOutcome::Error(e),
                 };
-                for status in [InputStatus::Partial, InputStatus::Final] {
-                    assert_eq!(parser.parse_with(&[0], Cursor::start(), status), expected);
+                for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
+                    assert_eq!(parser.parse_with(&[0], Cursor::start(), context), expected);
                 }
                 assert_eq!(calls.get(), 2);
             }
@@ -242,11 +242,11 @@ fn minimum_fatal_errors_and_incompleteness_share_the_collection_rules() {
 fn unbounded_folding_stops_at_rejection_but_propagates_partial_exhaustion() {
     let parser = FoldRepeat::at_least(Literal::new(1, 1).unwrap(), 0, || 0usize, |n, _| n + 1);
     assert_eq!(
-        parser.parse_with(&[0xc0], Cursor::start(), InputStatus::Partial),
+        parser.parse_with(&[0xc0], Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::Success(Cursor { byte: 0, bit: 2 }, 2)
     );
     assert_eq!(
-        parser.parse_with(&[0xff], Cursor::start(), InputStatus::Partial),
+        parser.parse_with(&[0xff], Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(
@@ -254,7 +254,7 @@ fn unbounded_folding_stops_at_rejection_but_propagates_partial_exhaustion() {
         Ok((Cursor { byte: 1, bit: 0 }, 8))
     );
     assert_eq!(
-        parser.parse_with(&[], Cursor::start(), InputStatus::Partial),
+        parser.parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(parser.parse(&[], Cursor::start()), Ok((Cursor::start(), 0)));
@@ -263,7 +263,7 @@ fn unbounded_folding_stops_at_rejection_but_propagates_partial_exhaustion() {
 struct Jump(Cursor);
 impl<'input> Parser<'input> for Jump {
     type Output = ();
-    fn parse_with(&self, _: &'input [u8], _: Cursor, _: InputStatus) -> ParseOutcome<()> {
+    fn parse_with(&self, _: &'input [u8], _: Cursor, _: ParseContext) -> ParseOutcome<()> {
         ParseOutcome::Success(self.0, ())
     }
 }
@@ -313,10 +313,10 @@ fn sum_owned<'a>(mut state: Owned<'a>, value: Borrowed<'_, '_>) -> Owned<'a> {
 
 #[test]
 fn non_clone_outputs_and_accumulators_are_moved_and_dropped_on_every_outcome() {
-    for (count, status) in [
-        (2, InputStatus::Final),
-        (3, InputStatus::Final),
-        (3, InputStatus::Partial),
+    for (count, context) in [
+        (2, ParseContext::FINAL),
+        (3, ParseContext::FINAL),
+        (3, ParseContext::PARTIAL),
     ] {
         let output_drops = Cell::new(0);
         let state_drops = Cell::new(0);
@@ -336,7 +336,7 @@ fn non_clone_outputs_and_accumulators_are_moved_and_dropped_on_every_outcome() {
             },
             sum_owned,
         );
-        let outcome = parser.parse_with(&[2, 3], Cursor::start(), status);
+        let outcome = parser.parse_with(&[2, 3], Cursor::start(), context);
         assert_eq!(output_drops.get(), 2);
         match outcome {
             ParseOutcome::Success(next, state) => {
@@ -351,7 +351,7 @@ fn non_clone_outputs_and_accumulators_are_moved_and_dropped_on_every_outcome() {
                 assert_eq!(error, ParseError::UnexpectedEnd);
             }
             ParseOutcome::NeedMore => {
-                assert_eq!((count, status), (3, InputStatus::Partial));
+                assert_eq!((count, context), (3, ParseContext::PARTIAL));
             }
         }
         assert_eq!(state_drops.get(), 1);

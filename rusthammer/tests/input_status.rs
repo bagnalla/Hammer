@@ -10,16 +10,16 @@ use record_example::RecordParser;
 use std::cell::Cell;
 
 use rusthammer::{
-    And, Bit, Bits, Choice, Cursor, End, InputStatus, Literal, Map, Not, Optional, ParseError,
+    And, Bit, Bits, Choice, Cursor, End, Literal, Map, Not, Optional, ParseContext, ParseError,
     ParseOutcome, Parser, Seq, TakeAligned, Verify,
 };
-use InputStatus::{Final, Partial};
+
 use ParseOutcome::{Error, NeedMore, Success};
 
 struct MustNotRun;
 impl<'input> Parser<'input> for MustNotRun {
     type Output = u64;
-    fn parse_with(&self, _: &'input [u8], _: Cursor, _: InputStatus) -> ParseOutcome<u64> {
+    fn parse_with(&self, _: &'input [u8], _: Cursor, _: ParseContext) -> ParseOutcome<u64> {
         panic!("incompleteness must stop this branch");
     }
 }
@@ -27,35 +27,38 @@ impl<'input> Parser<'input> for MustNotRun {
 #[test]
 fn primitives_distinguish_nonfinal_exhaustion_from_final_truncation() {
     let start = Cursor::start();
-    assert_eq!(Bit.parse_with(&[], start, Partial), NeedMore);
+    assert_eq!(Bit.parse_with(&[], start, ParseContext::PARTIAL), NeedMore);
     assert_eq!(
-        Bit.parse_with(&[], start, Final),
+        Bit.parse_with(&[], start, ParseContext::FINAL),
         Error(ParseError::UnexpectedEnd)
     );
     let bits = Bits::new(8).unwrap();
     let cursor = Cursor { byte: 0, bit: 7 };
-    assert_eq!(bits.parse_with(&[1], cursor, Partial), NeedMore);
     assert_eq!(
-        bits.parse_with(&[1], cursor, Final),
-        Error(ParseError::UnexpectedEnd)
-    );
-    assert_eq!(
-        bits.parse_with(&[1, 0], cursor, Partial),
-        Success(Cursor { byte: 1, bit: 7 }, 0x80)
-    );
-    assert_eq!(
-        TakeAligned { count: usize::MAX }.parse_with(&[1], start, Partial),
+        bits.parse_with(&[1], cursor, ParseContext::PARTIAL),
         NeedMore
     );
     assert_eq!(
-        TakeAligned { count: usize::MAX }.parse_with(&[1], start, Final),
+        bits.parse_with(&[1], cursor, ParseContext::FINAL),
+        Error(ParseError::UnexpectedEnd)
+    );
+    assert_eq!(
+        bits.parse_with(&[1, 0], cursor, ParseContext::PARTIAL),
+        Success(Cursor { byte: 1, bit: 7 }, 0x80)
+    );
+    assert_eq!(
+        TakeAligned { count: usize::MAX }.parse_with(&[1], start, ParseContext::PARTIAL),
+        NeedMore
+    );
+    assert_eq!(
+        TakeAligned { count: usize::MAX }.parse_with(&[1], start, ParseContext::FINAL),
         Error(ParseError::UnexpectedEnd)
     );
 }
 
 #[test]
 fn invalid_cursors_and_alignment_remain_errors_on_partial_input() {
-    for status in [Partial, Final] {
+    for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
         for cursor in [
             Cursor { byte: 0, bit: 8 },
             Cursor { byte: 1, bit: 1 },
@@ -65,15 +68,15 @@ fn invalid_cursors_and_alignment_remain_errors_on_partial_input() {
             },
         ] {
             assert_eq!(
-                Bit.parse_with(&[0], cursor, status),
+                Bit.parse_with(&[0], cursor, context),
                 Error(ParseError::InvalidCursor)
             );
             assert_eq!(
-                Bits::new(0).unwrap().parse_with(&[0], cursor, status),
+                Bits::new(0).unwrap().parse_with(&[0], cursor, context),
                 Error(ParseError::InvalidCursor)
             );
             assert_eq!(
-                End.parse_with(&[0], cursor, status),
+                End.parse_with(&[0], cursor, context),
                 Error(ParseError::InvalidCursor)
             );
         }
@@ -82,14 +85,14 @@ fn invalid_cursors_and_alignment_remain_errors_on_partial_input() {
             Optional {
                 parser: TakeAligned { count: 0 }
             }
-            .parse_with(&[0], cursor, status),
+            .parse_with(&[0], cursor, context),
             Error(ParseError::Unaligned)
         );
         assert_eq!(
             Not {
                 parser: TakeAligned { count: 0 }
             }
-            .parse_with(&[0], cursor, status),
+            .parse_with(&[0], cursor, context),
             Error(ParseError::Unaligned)
         );
     }
@@ -102,24 +105,30 @@ fn choice_waits_before_selecting_a_shorter_alternative() {
         second: Literal::new(8, 0x61).unwrap(),
     };
     let start = Cursor::start();
-    assert_eq!(parser.parse_with(b"a", start, Partial), NeedMore);
     assert_eq!(
-        parser.parse_with(b"a", start, Final),
+        parser.parse_with(b"a", start, ParseContext::PARTIAL),
+        NeedMore
+    );
+    assert_eq!(
+        parser.parse_with(b"a", start, ParseContext::FINAL),
         Success(Cursor { byte: 1, bit: 0 }, 0x61)
     );
     assert_eq!(
-        parser.parse_with(b"ab", start, Partial),
+        parser.parse_with(b"ab", start, ParseContext::PARTIAL),
         Success(Cursor { byte: 2, bit: 0 }, 0x6162)
     );
     assert_eq!(
-        parser.parse_with(b"ac", start, Partial),
+        parser.parse_with(b"ac", start, ParseContext::PARTIAL),
         Success(Cursor { byte: 1, bit: 0 }, 0x61)
     );
     let guarded = Choice {
         first: Bits::new(16).unwrap(),
         second: MustNotRun,
     };
-    assert_eq!(guarded.parse_with(b"a", start, Partial), NeedMore);
+    assert_eq!(
+        guarded.parse_with(b"a", start, ParseContext::PARTIAL),
+        NeedMore
+    );
 }
 
 #[test]
@@ -127,47 +136,47 @@ fn optionality_and_lookahead_preserve_incompleteness() {
     let ab = Literal::new(16, 0x6162).unwrap();
     let start = Cursor::start();
     assert_eq!(
-        Optional { parser: ab }.parse_with(b"a", start, Partial),
+        Optional { parser: ab }.parse_with(b"a", start, ParseContext::PARTIAL),
         NeedMore
     );
     assert_eq!(
-        And { parser: ab }.parse_with(b"a", start, Partial),
+        And { parser: ab }.parse_with(b"a", start, ParseContext::PARTIAL),
         NeedMore
     );
     assert_eq!(
-        Not { parser: ab }.parse_with(b"a", start, Partial),
+        Not { parser: ab }.parse_with(b"a", start, ParseContext::PARTIAL),
         NeedMore
     );
     assert_eq!(
-        Optional { parser: ab }.parse_with(b"a", start, Final),
+        Optional { parser: ab }.parse_with(b"a", start, ParseContext::FINAL),
         Success(start, None)
     );
     assert_eq!(
-        And { parser: ab }.parse_with(b"a", start, Final),
+        And { parser: ab }.parse_with(b"a", start, ParseContext::FINAL),
         Error(ParseError::UnexpectedEnd)
     );
     assert_eq!(
-        Not { parser: ab }.parse_with(b"a", start, Final),
+        Not { parser: ab }.parse_with(b"a", start, ParseContext::FINAL),
         Success(start, ())
     );
     assert_eq!(
-        Optional { parser: ab }.parse_with(b"ab", start, Partial),
+        Optional { parser: ab }.parse_with(b"ab", start, ParseContext::PARTIAL),
         Success(Cursor { byte: 2, bit: 0 }, Some(0x6162))
     );
     assert_eq!(
-        And { parser: ab }.parse_with(b"ab", start, Partial),
+        And { parser: ab }.parse_with(b"ab", start, ParseContext::PARTIAL),
         Success(start, ())
     );
     assert_eq!(
-        Not { parser: ab }.parse_with(b"ab", start, Partial),
+        Not { parser: ab }.parse_with(b"ab", start, ParseContext::PARTIAL),
         Error(ParseError::Mismatch)
     );
     assert_eq!(
-        Optional { parser: ab }.parse_with(b"ac", start, Partial),
+        Optional { parser: ab }.parse_with(b"ac", start, ParseContext::PARTIAL),
         Success(start, None)
     );
     assert_eq!(
-        Not { parser: ab }.parse_with(b"ac", start, Partial),
+        Not { parser: ab }.parse_with(b"ac", start, ParseContext::PARTIAL),
         Success(start, ())
     );
 }
@@ -180,7 +189,7 @@ fn sequence_and_callbacks_stop_on_need_more() {
             first: Bits::new(8).unwrap(),
             second: MustNotRun
         }
-        .parse_with(&[], start, Partial),
+        .parse_with(&[], start, ParseContext::PARTIAL),
         NeedMore
     );
     assert_eq!(
@@ -188,7 +197,7 @@ fn sequence_and_callbacks_stop_on_need_more() {
             first: Bits::new(8).unwrap(),
             second: Bits::new(8).unwrap()
         }
-        .parse_with(b"a", start, Partial),
+        .parse_with(b"a", start, ParseContext::PARTIAL),
         NeedMore
     );
     let calls = Cell::new(0);
@@ -206,15 +215,21 @@ fn sequence_and_callbacks_stop_on_need_more() {
             true
         },
     };
-    assert_eq!(mapped.parse_with(b"a", start, Partial), NeedMore);
-    assert_eq!(verified.parse_with(b"a", start, Partial), NeedMore);
+    assert_eq!(
+        mapped.parse_with(b"a", start, ParseContext::PARTIAL),
+        NeedMore
+    );
+    assert_eq!(
+        verified.parse_with(b"a", start, ParseContext::PARTIAL),
+        NeedMore
+    );
     assert_eq!(calls.get(), 0);
     assert!(matches!(
-        mapped.parse_with(b"ab", start, Partial),
+        mapped.parse_with(b"ab", start, ParseContext::PARTIAL),
         Success(_, 0x6162)
     ));
     assert!(matches!(
-        verified.parse_with(b"ab", start, Partial),
+        verified.parse_with(b"ab", start, ParseContext::PARTIAL),
         Success(_, 0x6162)
     ));
     assert_eq!(calls.get(), 2);
@@ -223,36 +238,41 @@ fn sequence_and_callbacks_stop_on_need_more() {
 #[test]
 fn end_requires_finality_but_empty_parsers_can_finish_early() {
     let start = Cursor::start();
-    assert_eq!(End.parse_with(&[], start, Partial), NeedMore);
-    assert_eq!(End.parse_with(&[], start, Final), Success(start, ()));
+    assert_eq!(End.parse_with(&[], start, ParseContext::PARTIAL), NeedMore);
     assert_eq!(
-        End.parse_with(&[0], start, Partial),
+        End.parse_with(&[], start, ParseContext::FINAL),
+        Success(start, ())
+    );
+    assert_eq!(
+        End.parse_with(&[0], start, ParseContext::PARTIAL),
         Error(ParseError::TrailingInput)
     );
     assert_eq!(
-        Not { parser: End }.parse_with(&[], start, Partial),
+        Not { parser: End }.parse_with(&[], start, ParseContext::PARTIAL),
         NeedMore
     );
     assert_eq!(
-        Optional { parser: End }.parse_with(&[], start, Partial),
+        Optional { parser: End }.parse_with(&[], start, ParseContext::PARTIAL),
         NeedMore
     );
     assert_eq!(
-        Bits::new(0).unwrap().parse_with(&[], start, Partial),
+        Bits::new(0)
+            .unwrap()
+            .parse_with(&[], start, ParseContext::PARTIAL),
         Success(start, 0)
     );
     assert_eq!(
         Optional {
             parser: Bits::new(0).unwrap()
         }
-        .parse_with(&[], start, Partial),
+        .parse_with(&[], start, ParseContext::PARTIAL),
         Success(start, Some(0))
     );
     assert_eq!(
         Not {
             parser: Bits::new(0).unwrap()
         }
-        .parse_with(&[], start, Partial),
+        .parse_with(&[], start, ParseContext::PARTIAL),
         Error(ParseError::Mismatch)
     );
 }
@@ -264,7 +284,7 @@ fn partial_success_can_borrow_a_finished_prefix() {
         parser: TakeAligned { count: 2 },
     };
     let Success(next, Some(payload)) =
-        parser.parse_with(&input, Cursor { byte: 1, bit: 0 }, Partial)
+        parser.parse_with(&input, Cursor { byte: 1, bit: 0 }, ParseContext::PARTIAL)
     else {
         panic!("expected prefix success")
     };
@@ -277,18 +297,21 @@ fn partial_success_can_borrow_a_finished_prefix() {
 fn marker_waits_for_both_alternative_resolution_and_end_of_input() {
     let parser = Marker::new().unwrap();
     for input in [&[][..], &[0xca][..], &[0xca, 0xfe][..]] {
-        assert_eq!(parser.parse_with(input, Cursor::start(), Partial), NeedMore);
+        assert_eq!(
+            parser.parse_with(input, Cursor::start(), ParseContext::PARTIAL),
+            NeedMore
+        );
     }
     assert_eq!(
-        parser.parse_with(&[0xca], Cursor::start(), Final),
+        parser.parse_with(&[0xca], Cursor::start(), ParseContext::FINAL),
         Success(Cursor { byte: 1, bit: 0 }, 0xca)
     );
     assert_eq!(
-        parser.parse_with(&[0xca, 0xfe], Cursor::start(), Final),
+        parser.parse_with(&[0xca, 0xfe], Cursor::start(), ParseContext::FINAL),
         Success(Cursor { byte: 2, bit: 0 }, 0xcafe)
     );
     assert_eq!(
-        parser.parse_with(&[0xca, 0xfe, 0], Cursor::start(), Partial),
+        parser.parse_with(&[0xca, 0xfe, 0], Cursor::start(), ParseContext::PARTIAL),
         Error(ParseError::TrailingInput)
     );
 }
@@ -302,17 +325,17 @@ fn records_can_be_retried_at_every_chunk_boundary() {
         let start = Cursor { byte: 1, bit: 0 };
         for available in 1..=input.len() {
             assert_eq!(
-                parser.parse_with(&input[..available], start, Partial),
+                parser.parse_with(&input[..available], start, ParseContext::PARTIAL),
                 NeedMore
             );
             if available < input.len() {
                 assert_eq!(
-                    parser.parse_with(&input[..available], start, Final),
+                    parser.parse_with(&input[..available], start, ParseContext::FINAL),
                     Error(ParseError::UnexpectedEnd)
                 );
             }
         }
-        let Success(next, record) = parser.parse_with(&input, start, Final) else {
+        let Success(next, record) = parser.parse_with(&input, start, ParseContext::FINAL) else {
             panic!("expected complete record")
         };
         assert_eq!(
@@ -328,15 +351,15 @@ fn records_can_be_retried_at_every_chunk_boundary() {
         assert_eq!(record.payload.as_ptr(), input[4..].as_ptr());
     }
     assert_eq!(
-        parser.parse_with(&[0, 0, 0], Cursor::start(), Partial),
+        parser.parse_with(&[0, 0, 0], Cursor::start(), ParseContext::PARTIAL),
         Error(ParseError::Mismatch)
     );
     assert_eq!(
-        parser.parse_with(&[0x20, 4, 1], Cursor::start(), Partial),
+        parser.parse_with(&[0x20, 4, 1], Cursor::start(), ParseContext::PARTIAL),
         Error(ParseError::Mismatch)
     );
     assert_eq!(
-        parser.parse_with(&[0x20, 0, 0, 1], Cursor::start(), Partial),
+        parser.parse_with(&[0x20, 0, 0, 1], Cursor::start(), ParseContext::PARTIAL),
         Error(ParseError::TrailingInput)
     );
 }
