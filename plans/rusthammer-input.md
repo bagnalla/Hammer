@@ -262,8 +262,11 @@ Avoid an unchecked scalar `usize` bit length; retain positions or use a checked
 conversion.
 
 `Recognize<P>` would discard the child's value and return the span;
-`WithSpan<P>` would return `(P::Output, BitSpan<'input>)`. Implement them after
-the restricted input model and its contracts are established.
+`WithSpan<P>` would return `(P::Output, BitSpan<'input>)`. Restricted ordering and
+the backend boundary are established; this family is the next increment.
+Constructor/accessor signatures and wrapper validation precedence still need to
+be specified before implementation. Build the wrappers through `Grammar` and
+backend-generic `Eval`, retaining the child's backend state and context rules.
 
 ## Production implementation and evidence
 

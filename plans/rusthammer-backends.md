@@ -29,10 +29,9 @@ The chosen boundary and later backend work are:
    Ordinary memoization and left-recursion growth need separate correctness
    arguments. Do not describe the first as an implementation of the second.
 
-Establish and validate the execution boundary now, before spans and more
-combinators increase the migration cost. Memoization, its output ownership
-policy, rule identity, and recursion are deferred; choosing them is not a
-prerequisite for finishing this refactor or continuing combinator work. Measure
+The execution boundary is implemented and verified before adding spans and more
+combinators. Memoization, its output ownership policy, rule identity, and recursion
+are deferred; choosing them is not a prerequisite for continuing combinator work. Measure
 representative grammars to guide their priority. No temporary public `Memo`,
 prototype backend, or grammar-builder API is added for the experiments below.
 

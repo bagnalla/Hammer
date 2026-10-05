@@ -1,6 +1,6 @@
 # RustHammer design and verification plan
 
-Status: verified prototype with scoped ordering, match restrictions, skipping/position, byte sets, typed ranges, native integer readers, signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection, 2026-10-05.
+Status: verified prototype with an explicit backend execution boundary, scoped ordering, match restrictions, skipping/position, byte sets, typed ranges, native integer readers, signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection, 2026-10-05.
 
 RustHammer will be a Rust rewrite of Hammer whose parsers can be translated
 through Charon and Aeneas and proved correct in Lean. It should preserve Hammer's
@@ -15,6 +15,119 @@ their Hammer counterparts, and implementation order. Detailed compatibility work
 and additional core combinators remain unfinished; the prototype is not a complete
 replacement for C Hammer. Public features must have an intended role in the final
 API, independent of implementation or proof milestones.
+
+## Resume here
+
+Current implementation checkpoint: `fd50771` (`Separate RustHammer grammar from
+backend execution`), on `rusthammer-dev`. `origin` is
+`git@github.com:bagnalla/Hammer.git`; `upstream` is the original Hammer repository.
+Check `git status` and recent history before continuing; this checkpoint records
+verified implementation, not a promise that the working tree has no later edits.
+The C project remains at the repository root, the Rust crate is in `rusthammer/`,
+and its Lean project is in `rusthammer/lean/`.
+
+Use this section for current status; the detailed checkpoint below also records
+earlier increments and their then-current test counts. Read the companion plans
+according to the work being resumed:
+
+| Document | Context to carry forward |
+| --- | --- |
+| [Backend plan](rusthammer-backends.md) | The implemented execution boundary, its verification evidence, and the separate future memoization/recursion design. |
+| [Input plan](rusthammer-input.md#matched-input-spans) | The next proposed APIs: `BitSpan`, `Recognize`, and `WithSpan`, their physical-bit meaning, and the permanent ordering restriction. |
+| [Combinator plan](rusthammer-combinators.md) | Implemented and proposed families, Hammer counterparts, and the rule against temporary public APIs. |
+| [Prototype README](../rusthammer/README.md) | Current usage, source/proof map, verification commands, and proof-model limits. |
+| [Compatibility probes](../rusthammer/probes/README.md) | Supported source forms and minimized failures for the pinned extraction tools. Some diagnostic probes intentionally fail. |
+
+### Completed boundary and retained decisions
+
+`Grammar<'input>` defines a backend-independent output type;
+`Eval<'input, Backend>` executes it with a mutable backend. Every child call uses
+`eval` with that same backend, including loops, lookahead, and `Bind` results.
+`Parser` is a blanket convenience trait for `Eval<Direct>`; custom parsers
+implement `Grammar` and `Eval`, with no independent `parse` override or silent
+fallback to direct execution. Backtracking restores the cursor, not backend
+bookkeeping. Borrowed input and immutable ordering/finality context remain
+separate from mutable execution state.
+
+Keep typed outputs, static dispatch, `no_std` with optional `alloc`, and private
+fields with validated constructors for constrained configurations. Parser
+`Copy`/`Clone` support does not impose those traits on outputs. Only `Direct` is
+a production interpreter. Typed memo tables and recursion in private probes are
+feasibility evidence; cached-output ownership, rule identity, general recursive
+lowering, and left-recursion semantics remain unresolved production work.
+
+Retain `(byte, bit)` cursors. A scope changing bit direction requires byte-aligned
+entry and successful exit; arbitrary direction changes within one byte are
+intentionally excluded. Partial input distinguishes `NeedMore` from rejection,
+but currently retries the accumulated buffer rather than retaining a streaming
+continuation. Do not reopen these decisions as missing prerequisites for spans.
+
+### Next increment
+
+Implement the span/recognition family from the
+[input plan](rusthammer-input.md#matched-input-spans). First settle the durable
+constructor/accessor signatures and write the independent span contract. Preserve
+valid, forward endpoints and the enclosing bit direction; distinguish physical
+source-bit geometry from decoding order, and expose a raw byte view only for
+aligned endpoints. Define wrapper validation/error precedence for custom children
+as part of that contract. Do not introduce an unchecked absolute `usize` bit
+length. An iterator is optional and needs its own stated ordering if exposed.
+
+Then implement through `Grammar` and backend-generic `Eval`, with native tests,
+generic Lean contracts, and separate-Cargo-consumer coverage for borrowed output.
+The restricted-order probe contains span experiments, not a finished production
+API or a proof of span geometry. Extend the actual library and its proofs.
+
+Memoization, recursion, permutation, seeking, live streaming, deferred effects,
+and other engines remain separate increments. CI and investigation of the older
+borrowed-callback limitation remain deferred at the user's request. Revisit
+[eager literal rejection](#deferred-eager-literal-rejection) before implementing
+streaming buffering/resumption. Packrat remains an intended capability;
+representative grammar measurements should guide its priority and cache design.
+
+### Verification and proof maintenance
+
+From `rusthammer/`, run `python3 tools/verify.py` after a production increment.
+It checks formatting and both allocation configurations, regenerates the
+promoted-MIR Lean module, extracts the library at optimized MIR and an ordinary
+Cargo consumer, builds all proofs, and checks for admitted/opaque project
+declarations. The checkpoint above passes all these checks: 44 consumer entry
+points, 19/22 consumer tests without/with `alloc`, and 31 ordering/backend theorem
+axiom audits. `python3 tools/check_backend_memo.py` also passes; it separately
+checks the private cache probe when relevant backend or tool changes are made.
+For a proof-only edit, `lake build` from `rusthammer/lean/` checks existing Lean
+files without regenerating them.
+
+Use the pinned Rust `nightly-2026-09-17`, Lean `v4.31.0`, and the
+[Aeneas/Charon revisions](#aeneas-compatibility-evidence) enforced by the runner.
+The local extraction checkout is `~/source/aeneas/`, including its `charon/`
+subdirectory; `~/source/nom/` is a design reference. Updating to an unpinned tool
+revision is a separate compatibility task.
+
+Edit Rust to change generated behavior; do not hand-edit
+[`Rusthammer.lean`](../rusthammer/lean/RustHammer/Rusthammer.lean).
+[`DirectState.lean`](../rusthammer/lean/RustHammer/DirectState.lean),
+[`Direct.lean`](../rusthammer/lean/RustHammer/Direct.lean), and
+[`DirectEquations.lean`](../rusthammer/lean/RustHammer/DirectEquations.lean) are
+handwritten proof adapters that specialize the actual extracted evaluators to
+`Direct` and project away its unit state. Their historical `RusthammerParser`
+names do not describe a second Rust interface. Add corresponding views/equations
+when new combinators need them; keep projection functions as `def`, since making
+them reducible causes inverse rewrite loops. The existing application contracts
+and the generic stateful sequencing/choice proofs remain checked against the
+extracted implementation, without project axioms.
+
+New constructors/accessors and downstream fixtures may need explicit extraction
+roots in [`verify.py`](../rusthammer/tools/verify.py). Shared application source
+lives in `examples/support/`; private `rusthammer_verify` modules expose it to
+extraction without adding application formats to the public API. Preserve source
+comments explaining Aeneas workarounds. In particular, the latest migration moves
+two zero-capture closures into nongeneric helpers to avoid an uninferable backend
+type argument; see the [minimal reproduction](../rusthammer/probes/backend_closure.rs).
+That issue, recursive trait-dictionary cycles, partial-enum cleanup, and the
+older borrowed-callback limitation are distinct. The probe notes explain their
+passing forms and known limits; no scratch script under `target/` is required to
+continue development.
 
 ## Prototype checkpoint
 
@@ -429,7 +542,7 @@ The established requirements are:
   and proof stages must not introduce temporary public combinators.
 - Use the local Hammer, Aeneas, and nom checkouts to inform the design.
 
-The following are proposed choices to validate during implementation:
+The prototype follows these implementation choices:
 
 - Use static dispatch and concrete combinator types for ordinary Rust grammars.
 - Keep grammar structure available for analysis and compilation where supported.
@@ -442,7 +555,7 @@ The following are proposed choices to validate during implementation:
 - Stage implementation and proofs within the intended API; keep experiments and
   application-specific proof fixtures outside the general-purpose public API.
 
-Exact Rust API syntax, crate organization, release scope, and compatibility
+Remaining API signatures, release packaging, release scope, and compatibility
 guarantees remain open. Source compatibility with the C API and preservation of
 every historical behavior are not established requirements.
 
@@ -1075,9 +1188,8 @@ values, and consumption after normalizing intentional output-representation
 differences. Resolve disagreements against the specification. Testing supplements
 the proofs and helps identify missing assumptions.
 
-The first application should be small enough to prove completely. An NTP-style
-header can supply representative bit fields, but a complete NTP or DNS parser is
-not required for this milestone.
+The bounded record example already supplies the first verified application.
+A complete NTP or DNS parser is not a prerequisite for the next core increment.
 
 ## Open decisions
 
@@ -1100,15 +1212,14 @@ not required for this milestone.
 - What is the ownership model for streaming output and runtime recursive grammars?
 - Which handwritten parser extensions and callback patterns will be supported by
   the reusable verification contracts?
-- Where will the Rust crate and Lean project live, and are C or other language
-  bindings needed later?
+- Are C or other language bindings needed later?
 
 Resolve interface questions using small Lean-checked examples before expanding
 the implementation. The prototype now provides a verified record parser and
 reusable primitive, sequencing, choice, mapping, predicate, optionality, lookahead,
 finite/unbounded repetition, parser-reference, output-selection, empty/failing
 grammar, checked-mapping, folding, separated-list, and `Bind` contracts, plus
-verified dependent-format examples. Next expand the binary primitives and other
-durable families in the companion API plan.
+verified dependent-format examples. The backend boundary is complete; next add
+the span/recognition family specified in the input plan.
 Continue focused semantic and differential checks. CI and the Aeneas callback
 investigation remain deferred.
