@@ -2160,6 +2160,189 @@ where
     }
 }
 
+// Both matches start at the same cursor. Ordering their normalized endpoints
+// compares consumed bits without an absolute bit count or subtraction.
+fn match_length_allows(first: Cursor, second: Cursor, allow_equal: bool) -> bool {
+    first.byte > second.byte
+        || (first.byte == second.byte
+            && (first.bit > second.bit || (allow_equal && first.bit == second.bit)))
+}
+
+fn restrict_match<'input, P, Q>(
+    first: &P,
+    second: &Q,
+    input: &'input [u8],
+    cursor: Cursor,
+    status: InputStatus,
+    allow_equal: bool,
+) -> ParseOutcome<P::Output>
+where
+    P: Parser<'input>,
+    Q: Parser<'input>,
+{
+    match first.parse_with(input, cursor, status) {
+        ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+        ParseOutcome::Error(error) => ParseOutcome::Error(error),
+        ParseOutcome::Success(next, value) => match second.parse_with(input, cursor, status) {
+            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+            ParseOutcome::Error(error) => {
+                if error.is_recoverable() {
+                    ParseOutcome::Success(next, value)
+                } else {
+                    ParseOutcome::Error(error)
+                }
+            }
+            ParseOutcome::Success(other, _other_value) => {
+                if match_length_allows(next, other, allow_equal) {
+                    ParseOutcome::Success(next, value)
+                } else {
+                    ParseOutcome::Error(ParseError::Mismatch)
+                }
+            }
+        },
+    }
+}
+
+/// Keep the first match if the second rejects or matches strictly fewer bits.
+///
+/// Corresponds to Hammer's `h_butnot`. Run `first`, then on success run `second`
+/// from the original cursor. Recoverable second-child rejection accepts the
+/// first value and cursor; two successes accept only when the first is longer.
+/// Otherwise return `Mismatch`. Every attempted child's fatal error or
+/// `NeedMore` propagates. The second output is discarded and may have any type.
+///
+/// Cursor validation is delegated to children, as with `Choice`. Endpoints are
+/// ordered by byte index, then bit offset; normalized forward matches therefore
+/// compare exact consumed bit lengths, without overflowing a bit count. Custom
+/// parsers must respect that cursor convention. Speculative effects are not undone.
+///
+/// ```
+/// use rusthammer::{ButNot, ByteIn, BytePattern, Cursor, Parser};
+/// let digit_except_six = ButNot {
+///     first: ByteIn::new(b"0123456789"),
+///     second: BytePattern::new(b"6"),
+/// };
+/// assert_eq!(digit_except_six.parse(b"7", Cursor::start()),
+///     Ok((Cursor { byte: 1, bit: 0 }, b'7')));
+/// assert!(digit_except_six.parse(b"6", Cursor::start()).is_err());
+/// ```
+#[derive(Clone, Copy)]
+pub struct ButNot<P, Q> {
+    pub first: P,
+    pub second: Q,
+}
+
+impl<'input, P, Q> Parser<'input> for ButNot<P, Q>
+where
+    P: Parser<'input>,
+    Q: Parser<'input>,
+{
+    type Output = P::Output;
+
+    fn parse_with(
+        &self,
+        input: &'input [u8],
+        cursor: Cursor,
+        status: InputStatus,
+    ) -> ParseOutcome<Self::Output> {
+        restrict_match(&self.first, &self.second, input, cursor, status, false)
+    }
+}
+
+/// Keep the first match if the second rejects or matches no more bits.
+///
+/// Corresponds to Hammer's `h_difference`. This has `ButNot`'s evaluation order,
+/// output, cursor, error, and incompleteness rules, but also accepts equal-length
+/// successes. Both children run from the original cursor. Their outputs may have
+/// different types. This operation is not ordinary language-set subtraction.
+#[derive(Clone, Copy)]
+pub struct Difference<P, Q> {
+    pub first: P,
+    pub second: Q,
+}
+
+impl<'input, P, Q> Parser<'input> for Difference<P, Q>
+where
+    P: Parser<'input>,
+    Q: Parser<'input>,
+{
+    type Output = P::Output;
+
+    fn parse_with(
+        &self,
+        input: &'input [u8],
+        cursor: Cursor,
+        status: InputStatus,
+    ) -> ParseOutcome<Self::Output> {
+        restrict_match(&self.first, &self.second, input, cursor, status, true)
+    }
+}
+
+/// Accept exactly one of two matches, returning that child's value and cursor.
+///
+/// Corresponds to Hammer's `h_xor`. Run `first`; on success or recoverable
+/// rejection, run `second` from the original cursor. Two successes return
+/// `Mismatch`, regardless of their lengths. Two recoverable rejections return
+/// the second error. Fatal errors and `NeedMore` from attempted children
+/// propagate immediately. Cursor validation is delegated to children, and
+/// speculative effects are not undone.
+///
+/// Both children must produce the same type. Use `Map` to put different kinds
+/// of values into an application enum, as with `Choice`. Outputs need neither
+/// `Copy` nor `Clone`; copying this parser requires only copyable children.
+///
+/// ```compile_fail
+/// use rusthammer::{BeU16, Byte, Cursor, Parser, Xor};
+/// let parser = Xor { first: Byte, second: BeU16 };
+/// let _ = parser.parse(&[0, 1], Cursor::start());
+/// ```
+#[derive(Clone, Copy)]
+pub struct Xor<P, Q> {
+    pub first: P,
+    pub second: Q,
+}
+
+impl<'input, P, Q> Parser<'input> for Xor<P, Q>
+where
+    P: Parser<'input>,
+    Q: Parser<'input, Output = P::Output>,
+{
+    type Output = P::Output;
+
+    fn parse_with(
+        &self,
+        input: &'input [u8],
+        cursor: Cursor,
+        status: InputStatus,
+    ) -> ParseOutcome<Self::Output> {
+        match self.first.parse_with(input, cursor, status) {
+            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+            ParseOutcome::Error(error) => {
+                if error.is_recoverable() {
+                    self.second.parse_with(input, cursor, status)
+                } else {
+                    ParseOutcome::Error(error)
+                }
+            }
+            ParseOutcome::Success(next, value) => {
+                match self.second.parse_with(input, cursor, status) {
+                    ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+                    ParseOutcome::Success(_other_cursor, _other_value) => {
+                        ParseOutcome::Error(ParseError::Mismatch)
+                    }
+                    ParseOutcome::Error(error) => {
+                        if error.is_recoverable() {
+                            ParseOutcome::Success(next, value)
+                        } else {
+                            ParseOutcome::Error(error)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 /// Parse an optional value, preserving `NeedMore` on partial input.
 ///
 /// Success preserves the child's cursor and wraps its output in `Some`.

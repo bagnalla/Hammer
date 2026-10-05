@@ -41,7 +41,7 @@ values. Only collecting operations require the optional `alloc` feature.
 | Folding repetition | `FoldRepeat<P, I, F>` produces an accumulator `R`. | Implemented and proved. Same count and stopping rules as `Repeat`; initialize a fresh accumulator and update it with each output. Supports allocation-free counting, discarding, checksums, and application accumulators. No C wrapper is required to justify this separate output policy. |
 | Separated repetition | `SepBy<P, S>` produces `Vec<A>` with `alloc`; `FoldSepBy<P, S, I, F>` produces an accumulator without library allocation. | Implemented and proved. One count policy covers `h_sepBy` and `h_sepBy1`, as well as finite limits. Parse the first item, then separator/item pairs; discard separator outputs. |
 | Value-dependent sequencing | `Bind<P, F>` produces the output of the parser selected or constructed from `A`. | Implemented and proved. Corresponds to `h_bind`. Run the first child, move its value into the factory, then run the resulting parser at the next cursor. |
-| Match restrictions | `ButNot<P, Q>` and `Difference<P, Q>` preserve `A`; `Xor<P, Q>` requires a common output type. | Separate semantics from ordered choice and lookahead. Compare matches starting at the same cursor; see below. |
+| Match restrictions | `ButNot<P, Q>` and `Difference<P, Q>` preserve `A`; `Xor<P, Q>` requires a common output type. | Implemented and proved; correspond to `h_butnot`, `h_difference`, and `h_xor`. Compare matches starting at the same cursor; see below. |
 
 Output selection moves retained values and drops the others without requiring
 `Copy` or `Clone`. The implemented helpers use `Seq` over shared references and
@@ -225,7 +225,8 @@ outer input. Do not introduce a count-only public stand-in for that operation.
 
 ## Match restrictions and permutation
 
-The [C implementations](../src/parsers/) make these distinctions:
+The implemented and proved Rust operations preserve these distinctions from the
+[C implementations](../src/parsers/):
 
 | Operation | Success condition |
 | --- | --- |
@@ -240,9 +241,24 @@ after a first success or recoverable rejection. Propagate `NeedMore` and fatal
 errors from attempted children; when both `Xor` children reject, return the second
 rejection, and when both succeed return `Mismatch`.
 
+The two length restrictions share one private driver, differing only on equal
+lengths. Their children may have unrelated outputs; the second output is discarded.
+`Xor` has `Choice`'s common-output constraint. Applications can use `Map` to
+construct their own enums; no automatic sum-output variant is introduced.
+Parser values are `Copy`/`Clone` when their children are, without output bounds.
+
 For the forward cursor model, compare consumed bit spans, not output sizes or
-rounded byte counts. Audit correspondence with C's `token_length` in differential
-tests. Arbitrary seeking and mixed bit-order scopes need a separate treatment.
+rounded byte counts. C's `token_length` returns `HParseResult.bit_length`.
+Rust orders byte-and-bit endpoints directly, without absolute machine bit counts
+or subtraction. Lean proves equivalence to mathematical consumed lengths for
+normalized forward matches. As with `Choice`, children retain responsibility for
+cursor validation; speculative effects in custom parsers are not rolled back.
+The optional C comparison agrees on 1,879,635 complete-input cases, including
+lookahead, discarded prefixes/suffixes, zero/equal/unequal lengths, all bit
+offsets, nonzero byte starts, and truncation. Native tests and compositional
+proofs separately cover partial input and fatal errors. Both MIR stages and all
+40 consumer entries pass, including enum-mapped alternatives and borrowed outputs.
+Arbitrary seeking and mixed bit-order scopes need a separate treatment.
 In particular, `ButNot` and `Difference` cannot be replaced by sequencing with
 `Not(q)`: they may accept when both children succeed.
 
@@ -307,7 +323,7 @@ helpers should represent grammar operations or output needs.
    both input modes, checked counts, factory invocation, cursor rollback, borrowed
    identity, and owned output/parser cleanup. Application proofs cover the actual
    shared example source. Named length/count helpers remain planned conveniences.
-5. **Expand binary vocabulary and restrictions (in progress).** `Byte` and
+5. **Expand binary vocabulary and restrictions (initial set complete).** `Byte` and
    `BytePattern` are implemented and proved, including arbitrary patterns,
    unaligned starts, both input modes, empty patterns, and independent output
    lifetimes. Both MIR stages and the normal Cargo consumer pass; optional
@@ -332,15 +348,21 @@ helpers should represent grammar operations or output needs.
    `const` construction and O(1) membership. They have no lifetime parameter;
    `accepts(byte)` queries the filter. Constructor and bounded-lookup proofs
    connect the bitmap to the original literal set without a bitmap validity
-   invariant. Both MIR stages and all 35 consumer entry
+   invariant. Both MIR stages and all 40 consumer entry
    points pass; 147,456 additional C cases cover every byte and bit offset,
    truncation, empty/full sets, duplicates, and sets longer than 256 entries.
    `SkipBits` and `Tell` now add constant-time skipping and cursor reporting,
    with total cursor-advancement proofs over all machine lengths/counts and
    both input statuses. Native virtual-length tests cover machine boundaries
    without allocating input; 118,188 C comparisons cover representable positions.
-   Both MIR stages and all 35 consumer entries pass without a new workaround.
-   Next add match comparisons as specified above.
+   Both MIR stages and all 40 consumer entries pass without a new workaround.
+   `ButNot`, `Difference`, and `Xor` now implement the match contracts above.
+   Generic Lean proofs cover both statuses, the complete API, selected outputs
+   and cursors, short-circuiting, and overflow-free length comparison. All 22
+   public match theorems were axiom-audited. Native tests cover every outcome
+   combination, ownership, borrowing, and independent bit-length oracles;
+   1,879,635 additional C cases agree. Both MIR stages and all 40 consumer entries
+   pass without a new workaround.
    Resolve cursor/span/order questions before implementing their affected APIs.
    Plan permutation, recursion, and the other larger capabilities separately.
 

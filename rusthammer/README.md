@@ -36,6 +36,7 @@ The prototype supports:
   and `Verify<P, F>` for predicates.
 - `Epsilon` for empty success and `Fail<T>` for definite rejection with a chosen output type.
 - `Choice<P, Q>`, which tries ordered alternatives with the same output type.
+- `ButNot<P, Q>` and `Difference<P, Q>` for match-length restrictions, and `Xor<P, Q>` for exclusive alternatives.
 - `Optional<P>` for optional typed values, and `And<P>` / `Not<P>` for lookahead.
 - Exact, bounded, and unbounded `Repeat<P>` collecting typed outputs, with optional `alloc`.
 - `FoldRepeat<P, I, F>` folding those same repetitions into an owned accumulator without library allocation.
@@ -71,6 +72,7 @@ cargo run --example byte_sets
 cargo run --example position
 cargo run --example bytes
 cargo run --example marker
+cargo run --example matches
 cargo run --example record
 cargo run --example lookahead
 cargo run --example input_status
@@ -351,7 +353,7 @@ tests compare against independent `u128` position arithmetic, including virtual
 lengths near `usize::MAX` without allocating input. They also cover both statuses,
 all bit offsets, truncation, invalid cursors, zero counts, parser references,
 dependent counts, lookahead, backtracking, and repetition. Both MIR modes and
-all 35 consumer entry points translate and Lean type-check without a new
+all 40 consumer entry points translate and Lean type-check without a new
 workaround. The C comparison adds 118,188 cases for `h_skip` and `h_tell` at
 representable positions, including canonical end-of-input and large skip counts.
 
@@ -609,6 +611,75 @@ longer branch is truncated, `[0xca, 0xfe]` succeeds immediately, and extra input
 is rejected. Tests also cover partial-consumption rollback, borrowed alternative
 outputs, branch short-circuiting, error propagation, and every pair of expected
 and actual byte values for literal matching.
+
+## Match restrictions and exclusive alternatives
+
+`ButNot`, `Difference`, and `Xor` correspond to C Hammer's `h_butnot`,
+`h_difference`, and `h_xor`. All have public `first` and `second` children, run
+attempted children from the same original cursor, and require no allocation.
+
+| Operation | Success condition | Returned output and cursor |
+| --- | --- | --- |
+| `ButNot` | First succeeds; second rejects recoverably or consumes strictly fewer bits. | First child's. |
+| `Difference` | First succeeds; second rejects recoverably or consumes no more bits. | First child's. |
+| `Xor` | One child succeeds and the other rejects recoverably. | Successful child's. |
+
+Equal-length successes therefore reject with `ButNot`, accept with `Difference`,
+and reject with `Xor`. `Difference` follows Hammer's length comparison, not
+ordinary language-set subtraction. The restriction parsers cannot be replaced
+by `Not` followed by a sequence: they can accept when both children succeed.
+
+```rust
+use rusthammer::{ButNot, ByteIn, BytePattern, Cursor, Parser};
+
+let digit_except_six = ButNot {
+    first: ByteIn::new(b"0123456789"),
+    second: BytePattern::new(b"6"),
+};
+assert_eq!(digit_except_six.parse(b"7", Cursor::start()),
+    Ok((Cursor { byte: 1, bit: 0 }, b'7')));
+assert!(digit_except_six.parse(b"6", Cursor::start()).is_err());
+```
+
+`ButNot` and `Difference` allow unrelated child output types; the second output
+is discarded. `Xor` requires a common output type, as `Choice` does. The
+[matches example](examples/matches.rs) uses `Map` to put a digit and a tagged
+16-bit word into an application enum. Outputs need neither `Copy` nor `Clone`.
+Each combinator implements those traits when its stored children do, and can
+also be reused through a shared reference. Input and pattern borrows are preserved.
+
+First-child rejection short-circuits `ButNot` and `Difference`. `Xor` runs the
+second child after a first success or recoverable rejection; two recoverable
+rejections return the second error, and two successes return `Mismatch`
+regardless of their lengths. Any attempted child's fatal error or `NeedMore`
+propagates immediately. In particular, `ButNot` or `Xor` of patterns `a` and `ab`
+returns `NeedMore` on partial `a`, but accepts `a` on final input. Incompleteness
+is not evidence that the other grammar rejects.
+
+The two length restrictions share a private implementation. It orders byte and
+bit endpoints directly, avoiding an absolute machine bit count or subtraction.
+For normalized forward matches from a common start, Lean proves this is exactly
+consumed-bit ordering. Discarded input still counts; lookahead consumes zero.
+Cursor validation is delegated to children, as with `Choice`; custom parsers
+must respect the cursor convention for that consumed-length interpretation.
+Speculative effects in custom parsers or callbacks are not rolled back.
+
+Native tests cover every combination of success, all error variants, and
+`NeedMore`, including call order, original cursors, ownership/drop counts,
+borrowing, bit-level lengths, empty matches, and machine-limit endpoints.
+Both MIR stages and the separate Cargo consumer pass without a new workaround.
+The optional C comparison checks 1,879,635 complete-input cases, including
+literal/skip/lookahead children, discarded prefixes/suffixes, all bit offsets,
+nonzero byte starts, truncation, and equal/unequal match lengths:
+
+```sh
+python3 tools/compare_matches.py --hammer-library ../build/opt/src/libhammer.so
+```
+
+It requires a built C shared library and GCC, like the primitive comparison.
+Acceptance, consumption, and selected outputs agree on this corpus; it does
+not establish streaming or backend equivalence. Rust-specific error categories,
+incompleteness, and output types are checked separately by tests and proofs.
 
 ## Optionality and lookahead
 
@@ -1146,6 +1217,18 @@ contract, for arbitrary output types; they cover every success and error case.
 Additional lemmas establish unchanged cursors for absent optional values and
 successful lookahead.
 
+[MatchSpec.lean](lean/RustHammer/MatchSpec.lean) specifies the three match
+operations using child-outcome relations and mathematical endpoint ordering.
+[MatchProofs.lean](lean/RustHammer/MatchProofs.lean) proves generic contracts for
+both input statuses, final-input exclusion of `NeedMore` under complete child
+contracts, and the default complete API. Success properties identify the retained
+child value and cursor. Short-circuit laws require no contract or termination
+assumption for an uncalled second child. Endpoint ordering agrees with unbounded
+consumed-bit lengths for normalized forward matches, without a machine-position
+bound. All 22 public theorems were axiom-audited; they depend only on `propext`,
+`Classical.choice`, and `Quot.sound`. Native tests cover physical borrow identity
+and destructors, which are outside these value-based contracts.
+
 [SelectionSpec.lean](lean/RustHammer/SelectionSpec.lean) defines output selection
 by composing the existing sequencing and mapping relations with tuple projections.
 Its [proofs](lean/RustHammer/SelectionProofs.lean) establish reference forwarding
@@ -1324,6 +1407,12 @@ complete-input operations.
 | `end_spec` | End-of-input accepts exactly the valid end cursor and consumes nothing. |
 | `choice_spec` | Ordered choice preserves child specifications and retries only recoverable failures at the original cursor. |
 | `choice_first_success`, `choice_first_fatal` | Success and fatal errors propagate without any termination or correctness assumption about the second child. |
+| `but_not_with_spec`, `difference_with_spec`, `xor_with_spec` | Generic match restrictions and exclusive alternatives preserve child contracts, errors, and incompleteness in both statuses. |
+| `but_not_final_spec`, `difference_final_spec`, `xor_final_spec` | Complete child contracts exclude `NeedMore` and establish the final-input relation. |
+| `but_not_spec`, `difference_spec`, `xor_spec` | The default complete API satisfies the corresponding match contract. |
+| `match_endpoint_order_bits`, `match_endpoint_order_consumption` | Endpoint ordering equals mathematical bit-position and consumed-length ordering for normalized forward matches. |
+| `match_restriction_success`, `xor_success` | Success preserves the selected child value/cursor and has the specified other-child rejection or length relation. |
+| `restrict_match_first_error`, `restrict_match_first_more`, `xor_first_fatal`, `xor_first_more` | Short-circuit paths make no assumptions about the uncalled second child. |
 | `optional_spec`, `and_spec`, `not_spec` | Optionality and lookahead preserve arbitrary child contracts, with the specified outputs, consumption, and error categories. |
 | `optional_absent_cursor`, `and_success_cursor`, `not_success_cursor` | Optional absence and successful lookahead preserve the exact starting cursor. |
 | `marker_new_spec`, `marker_new_valid` | Marker construction always succeeds and establishes the exact intended grammar. |
@@ -1391,10 +1480,10 @@ shared count, stopping, and progress rules and proofs.
 Named length/count convenience wrappers remain proposals; their core composition
 is now available.
 
-Expand binary primitives and match restrictions, with semantic and differential
-checks. Fixed-width typed integer readers, inclusive ranges, and byte sets are
-implemented and proved, as are `SkipBits` and `Tell`; next add match comparisons.
-Settle cursor/span and bit-order semantics before their affected APIs.
+Fixed-width typed integer readers, inclusive ranges, byte sets, `SkipBits`,
+`Tell`, `ButNot`, `Difference`, and `Xor` are implemented and proved, with
+semantic and differential checks. Settle cursor/span and bit-order semantics
+before their affected APIs, and design permutation and recursion separately.
 
 Keep application grammars in examples or proof fixtures as the API is organized;
 the current exported demo types are also recorded for migration in the plan.

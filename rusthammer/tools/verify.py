@@ -151,6 +151,8 @@ def main():
         "byte_in", "byte_not_in", "byte_set_pair", "complete_byte_set",
         "owned_byte_set", "byte_set_accepts",
         "skipped_position", "reported_position", "complete_skip", "skip_configuration",
+        "restricted_payload", "difference_pattern", "exclusive_patterns", "exclusive_value",
+        "complete_matches",
     )
     entry_args = [
         arg for name in entries

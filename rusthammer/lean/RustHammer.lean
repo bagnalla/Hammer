@@ -13,3 +13,4 @@ import RustHammer.IntegerProofs
 import RustHammer.IntRangeProofs
 import RustHammer.ByteSetProofs
 import RustHammer.PositionProofs
+import RustHammer.MatchProofs

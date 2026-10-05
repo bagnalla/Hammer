@@ -1,6 +1,6 @@
 # RustHammer design and verification plan
 
-Status: verified prototype with typed ranges, native integer readers, signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection, 2026-10-04.
+Status: verified prototype with match restrictions, skipping/position, byte sets, typed ranges, native integer readers, signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection, 2026-10-04.
 
 RustHammer will be a Rust rewrite of Hammer whose parsers can be translated
 through Charon and Aeneas and proved correct in Lean. It should preserve Hammer's
@@ -115,7 +115,7 @@ consumption, decoded outputs, and equivalence for lists denoting the same set. N
 cover every singleton/value pair, independent set/binary-string oracles at all
 bit offsets and truncations, both statuses, raw cursors, bitmap ownership after
 the construction slice changes or is dropped, and composition.
-Both MIR stages and all 35 consumer entry points pass without a new workaround.
+Both MIR stages and all 40 consumer entry points pass without a new workaround.
 C comparisons add 147,456 byte-set cases.
 
 `SkipBits::new(bits)` and `Tell` are implemented and proved. Skips discard any
@@ -134,10 +134,39 @@ whose absolute bit count would exceed `usize`. Native `u128` oracles exercise
 virtual lengths near `usize::MAX` without allocating input. Tests also cover
 truncation, raw cursors, both statuses, dependent counts, parser references,
 lookahead, backtracking, and zero-consumption repetition. Both MIR stages and
-all 35 consumer entries pass without a new workaround. C comparisons add
+all 40 consumer entries pass without a new workaround. C comparisons add
 118,188 skip/position cases; the total primitive corpus is 577,065. The
 [known C absolute-position overflow](#known-c-issue-absolute-bit-position-overflow)
 remains a separate issue; differential checks use representable C positions.
+
+`ButNot`, `Difference`, and `Xor` are implemented and proved, preserving the
+respective `h_butnot`, `h_difference`, and `h_xor` match semantics. Both children
+start at the original cursor. The first two keep the first output: a second
+recoverable rejection accepts it; two successes require a strictly longer first
+match for `ButNot` or an equal/longer one for `Difference`. `Xor` requires exactly
+one success, returning that child's output/cursor. Attempted fatal errors and
+`NeedMore` propagate, and first-child rejection short-circuits the two restrictions.
+`Xor` tries its second child after success or recoverable rejection and reports
+the second error when both reject recoverably.
+
+The length restrictions share one private implementation using lexicographic
+byte-and-bit endpoint ordering. Lean connects that total comparison to
+unbounded consumed-bit lengths for normalized forward matches, including
+positions beyond a machine bit count. Cursor validation is delegated to children.
+The second output can have any type; `Xor` instead shares `Choice`'s common-output
+constraint, with application enums supplied through `Map`. Outputs need neither
+`Copy` nor `Clone`; parser values have those traits when their children do.
+
+The generic proofs cover both input statuses, the complete API, retained values
+and cursors, and short-circuit paths without unused-child assumptions. All 22
+public match theorems were axiom-audited and use only standard Lean axioms.
+Native tests cover the full outcome cross-product, exact call/drop counts,
+borrow identity, partial retries, bit lengths, and machine-limit endpoints.
+Both MIR stages and all 40 separate-crate entries pass without a new workaround,
+including unlike child outputs and enum-mapped alternatives. The optional
+[C comparison](../rusthammer/tools/compare_matches.py) agrees on 1,879,635
+complete-input cases, including lookahead and discarded prefixes/suffixes.
+This does not assert streaming or other-backend equivalence.
 
 `Byte` now reads eight bits as `u8`, with a proof that narrowing the numeric
 result is lossless. `BytePattern::new(pattern)` matches arbitrary borrowed byte
@@ -352,9 +381,10 @@ plan. Empty/failing parsers, checked mapping, folding, separated lists, and `Bin
 are implemented and proved, including representative dependent grammars. `Byte`
 and `BytePattern` expand the binary primitives, and signed fields are implemented
 and proved, including fixed-width readers with native Rust integer outputs.
-Inclusive typed ranges, byte sets, skipping, and position reporting are also
-implemented and proved. Next add match restrictions from the API plan, with further
-semantic/differential checks.
+Inclusive typed ranges, byte sets, skipping, position reporting, and match
+restrictions are also implemented and proved, with semantic/differential checks.
+Next audit the remaining exported application fixtures and design cursor/span/order
+semantics, permutation, and recursion before introducing their public APIs.
 CI integration and the
 recorded Aeneas callback investigation are deferred. Configurable byte and bit
 order remains unimplemented.

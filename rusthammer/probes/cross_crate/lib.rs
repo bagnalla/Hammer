@@ -5,11 +5,98 @@
 extern crate alloc;
 
 use rusthammer::{
-    BeI16, BeI32, BeI64, BeU16, BeU32, BeU64, Bind, Bit, Bits, Byte, ByteIn, ByteNotIn,
-    BytePattern, ConfigError, Cursor, End, FoldRepeat, Ignore, InputStatus, IntRange, Left,
-    Literal, Map, Middle, ParseError, ParseOutcome, Parser, Right, Seq, SignedBits, SkipBits,
-    TakeAligned, Tell, TryMap, I8,
+    BeI16, BeI32, BeI64, BeU16, BeU32, BeU64, Bind, Bit, Bits, ButNot, Byte, ByteIn, ByteNotIn,
+    BytePattern, ConfigError, Cursor, Difference, End, FoldRepeat, Ignore, InputStatus, IntRange,
+    Left, Literal, Map, Middle, ParseError, ParseOutcome, Parser, Right, Seq, SignedBits, SkipBits,
+    TakeAligned, Tell, TryMap, Xor, I8,
 };
+
+pub fn restricted_payload(
+    input: &[u8],
+    count: usize,
+    width: u8,
+    status: InputStatus,
+) -> Result<ParseOutcome<&[u8]>, ConfigError> {
+    let parser = ButNot {
+        first: TakeAligned { count },
+        second: Bits::new(width)?,
+    };
+    Ok(parser.clone().parse_with(input, Cursor::start(), status))
+}
+
+pub fn difference_pattern<'pattern>(
+    pattern: &'pattern [u8],
+    input: &[u8],
+    status: InputStatus,
+) -> ParseOutcome<&'pattern [u8]> {
+    let first = BytePattern::new(pattern);
+    Difference {
+        first: &first,
+        second: Byte,
+    }
+    .clone()
+    .parse_with(input, Cursor::start(), status)
+}
+
+pub fn exclusive_patterns<'pattern>(
+    first: &'pattern [u8],
+    second: &'pattern [u8],
+    input: &[u8],
+    status: InputStatus,
+) -> ParseOutcome<&'pattern [u8]> {
+    Xor {
+        first: BytePattern::new(first),
+        second: BytePattern::new(second),
+    }
+    .clone()
+    .parse_with(input, Cursor::start(), status)
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum ExclusiveValue {
+    Digit(u8),
+    Word(u16),
+}
+
+/// Different child values explicitly mapped into an owned, non-Clone enum.
+pub fn exclusive_value(input: &[u8], status: InputStatus) -> ParseOutcome<ExclusiveValue> {
+    Xor {
+        first: Map {
+            parser: ByteIn::new(b"0123456789"),
+            map: |digit| ExclusiveValue::Digit(digit),
+        },
+        second: Map {
+            parser: Right {
+                first: BytePattern::new(b"#"),
+                second: BeU16,
+            },
+            map: |word| ExclusiveValue::Word(word),
+        },
+    }
+    .parse_with(input, Cursor::start(), status)
+}
+
+pub fn complete_matches(input: &[u8]) -> [Result<(Cursor, u8), ParseError>; 3] {
+    let first = ByteIn::new(b"ab");
+    let second = ByteIn::new(b"b");
+    [
+        ButNot {
+            first: &first,
+            second: &second,
+        }
+        .parse(input, Cursor::start()),
+        Difference {
+            first: &first,
+            second: &second,
+        }
+        .parse(input, Cursor::start()),
+        Xor {
+            first: &first,
+            second: &second,
+        }
+        .parse(input, Cursor::start()),
+    ]
+}
 
 pub fn skipped_position(
     input: &[u8],
@@ -431,6 +518,71 @@ pub fn leading_ones(input: &[u8], status: InputStatus) -> ParseOutcome<alloc::ve
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn matches_keep_borrows_types_lengths_and_finality_across_crates() {
+        let input = [1, 2];
+        let ParseOutcome::Success(next, payload) =
+            restricted_payload(&input, 2, 8, InputStatus::Final).unwrap()
+        else {
+            panic!("expected payload");
+        };
+        assert_eq!(next, Cursor { byte: 2, bit: 0 });
+        assert!(core::ptr::eq(payload, &input[..]));
+        assert_eq!(
+            restricted_payload(&input, 1, 8, InputStatus::Final),
+            Ok(ParseOutcome::Error(ParseError::Mismatch))
+        );
+        assert_eq!(
+            restricted_payload(&input, 1, 24, InputStatus::Partial),
+            Ok(ParseOutcome::NeedMore)
+        );
+        assert_eq!(
+            restricted_payload(&input, 1, 65, InputStatus::Final),
+            Err(ConfigError::InvalidWidth)
+        );
+        let pattern = *b"a";
+        let parsed = {
+            let input = *b"a";
+            difference_pattern(&pattern, &input, InputStatus::Final)
+        };
+        let ParseOutcome::Success(_, matched) = parsed else {
+            panic!("expected pattern");
+        };
+        assert!(core::ptr::eq(matched, &pattern[..]));
+        assert_eq!(
+            exclusive_patterns(b"a", b"ab", b"a", InputStatus::Partial),
+            ParseOutcome::NeedMore
+        );
+        assert_eq!(
+            exclusive_patterns(b"a", b"ab", b"a", InputStatus::Final),
+            ParseOutcome::Success(Cursor { byte: 1, bit: 0 }, &b"a"[..])
+        );
+        assert_eq!(
+            exclusive_patterns(b"a", b"ab", b"ab", InputStatus::Final),
+            ParseOutcome::Error(ParseError::Mismatch)
+        );
+        assert_eq!(
+            exclusive_value(b"5", InputStatus::Final),
+            ParseOutcome::Success(Cursor { byte: 1, bit: 0 }, ExclusiveValue::Digit(b'5'))
+        );
+        assert_eq!(
+            exclusive_value(b"#\x12\x34", InputStatus::Final),
+            ParseOutcome::Success(Cursor { byte: 3, bit: 0 }, ExclusiveValue::Word(0x1234))
+        );
+        assert_eq!(
+            exclusive_value(b"#\x12", InputStatus::Partial),
+            ParseOutcome::NeedMore
+        );
+        assert_eq!(
+            complete_matches(b"b"),
+            [
+                Err(ParseError::Mismatch),
+                Ok((Cursor { byte: 1, bit: 0 }, b'b')),
+                Err(ParseError::Mismatch)
+            ]
+        );
+    }
 
     #[test]
     fn positions_and_dynamic_skips_cross_crate_boundaries() {

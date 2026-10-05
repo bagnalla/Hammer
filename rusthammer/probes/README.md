@@ -365,7 +365,7 @@ Both MIR stages translate without a source workaround or additional model.
 The normal Cargo consumer translates direct membership/exclusion, sequencing
 with owned bitmaps, shared parser references, cloning, and the complete API.
 Additional entries return an owned parser from a borrowed construction slice
-and invoke acceptance queries. All 35 consumer entry points Lean type-check.
+and invoke acceptance queries. All 40 consumer entry points Lean type-check.
 Native tests check 32-byte size and parser independence from the source slice.
 All byte-set proof audits list only `propext`, `Classical.choice`,
 and `Quot.sound`. This supported predicate returns an owned boolean; the
@@ -382,10 +382,32 @@ allocates, or forms a machine-sized absolute bit position.
 Both promoted and optimized MIR translate using existing scalar models, with
 no new source workaround. The consumer checks dynamic construction, cloning,
 the `bits()` accessor, shared parser references, sequencing with `Tell`, direct
-position reporting, and the complete skip API. All 35 entry points Lean
+position reporting, and the complete skip API. All 40 entry points Lean
 type-check. Native tests include machine-limit counts and virtual input lengths;
 the mathematical advancement proof covers every `usize` length/count and both
 finality modes through the public parser contracts. C comparisons are limited
 to representable C positions because of its documented absolute-position issue.
 All 14 public position theorems were axiom-audited; their dependencies are limited
 to `propext`, `Classical.choice`, and `Quot.sound`.
+
+## Match restrictions and exclusive alternatives
+
+`ButNot` and `Difference` share a private driver; their only difference is
+whether equal-length successes accept. Endpoint comparison uses byte and bit
+coordinates without absolute machine bit arithmetic. `Xor` retains either
+child's owned value while requiring recoverable rejection by the other child.
+All attempted errors/incompleteness follow the existing control-flow policy.
+
+The ordinary library roots translate at promoted and optimized MIR without a
+new workaround. Five additional consumer entries bring the total to 40, all
+Lean type-checked. They exercise unrelated child types, independent input/pattern
+borrows, references, cloning, all three complete methods, and `Map` callbacks
+constructing an owned, non-`Clone` application enum for `Xor`.
+
+The compositional Lean proofs cover both statuses, the complete API, retained
+outputs/cursors, short-circuiting without unused-child assumptions, and the
+equivalence of normalized endpoint ordering to mathematical consumed-bit
+ordering. All 22 public match theorems were axiom-audited, using only `propext`,
+`Classical.choice`, and `Quot.sound`. Native tests separately cover drop behavior
+and pointer identity. The C direct-backend comparison agrees on 1,879,635
+complete-input cases; this is not a streaming or backend-equivalence proof.
