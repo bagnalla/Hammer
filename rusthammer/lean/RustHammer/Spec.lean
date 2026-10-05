@@ -1,4 +1,4 @@
-import RustHammer.Rusthammer
+import RustHammer.DirectEquations
 
 open Aeneas Aeneas.Std
 

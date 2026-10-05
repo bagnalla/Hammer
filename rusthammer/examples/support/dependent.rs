@@ -1,7 +1,9 @@
 //! Small count-prefixed formats, shared by examples, native tests, and extraction.
 #[cfg(rusthammer_verify)]
 use crate as rusthammer;
-use rusthammer::{Bind, Bits, Cursor, ParseContext, ParseOutcome, Parser, TakeAligned, TryMap};
+use rusthammer::{
+    Bind, Bits, Cursor, Eval, Grammar, ParseContext, ParseOutcome, Parser, TakeAligned, TryMap,
+};
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
@@ -20,26 +22,35 @@ fn fixed_bits(width: u8) -> Bits {
 #[derive(Clone, Copy)]
 pub struct CountPrefix;
 
-impl<'input> Parser<'input> for CountPrefix {
+impl<'input> Grammar<'input> for CountPrefix {
     type Output = usize;
-    fn parse_with(
+}
+
+// Construct this closure outside the lifetime/backend-generic method: the pinned
+// Aeneas cannot infer its unused Backend argument. See probes/backend_closure.rs.
+fn count_parser() -> TryMap<Bits, impl Fn(u64) -> Result<usize, ()>> {
+    TryMap {
+        parser: fixed_bits(8),
+        // The format limit also establishes representability on Rust targets.
+        map: |count| {
+            if count <= 64 {
+                Ok(count as usize)
+            } else {
+                Err(())
+            }
+        },
+    }
+}
+
+impl<'input, Backend> Eval<'input, Backend> for CountPrefix {
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
     ) -> ParseOutcome<usize> {
-        TryMap {
-            parser: fixed_bits(8),
-            // The format limit also establishes representability on Rust targets.
-            map: |count| {
-                if count <= 64 {
-                    Ok(count as usize)
-                } else {
-                    Err(())
-                }
-            },
-        }
-        .parse_with(input, cursor, context)
+        count_parser().eval(backend, input, cursor, context)
     }
 }
 

@@ -8,8 +8,8 @@ open Code
 
 /-- Factory and second-parser contracts are needed only for reachable first
 successes. The factory's invariant can express validated configuration or borrowing. -/
-theorem bind_with_spec {P F Q α β : Type} (pi : Parser P α)
-    (fi : core.ops.function.Fn F α Q) (qi : Parser Q β)
+theorem bind_with_spec {P F Q α β : Type} (pi : DirectParser P α)
+    (fi : core.ops.function.Fn F α Q) (qi : DirectParser Q β)
     (parser : Bind P F) (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (first : Cursor → ParseOutcome α → Prop) (second : α → Cursor → ParseOutcome β → Prop)
     (constructed : α → Q → Prop)
@@ -20,7 +20,7 @@ theorem bind_with_spec {P F Q α β : Type} (pi : Parser P α)
       qi.parse_with child input next context ⦃ result => second value next result ⦄) :
     Bind.Insts.RusthammerParser.parse_with pi fi qi parser input cursor context
       ⦃ result => Partial.bind first second cursor result ⦄ := by
-  unfold Bind.Insts.RusthammerParser.parse_with
+  rw [Bind.Insts.RusthammerParser.parse_with_eq]
   step with hp as ⟨parsed, hparsed⟩
   cases parsed with
   | NeedMore => simp only [spec_ok]; exact ⟨.NeedMore, hparsed, rfl⟩
@@ -30,8 +30,8 @@ theorem bind_with_spec {P F Q α β : Type} (pi : Parser P α)
     step with hq next value child hparsed hchild as ⟨outcome, houtcome⟩
     exact ⟨.Success next value, hparsed, houtcome⟩
 
-theorem bind_final_spec {P F Q α β : Type} (pi : Parser P α)
-    (fi : core.ops.function.Fn F α Q) (qi : Parser Q β)
+theorem bind_final_spec {P F Q α β : Type} (pi : DirectParser P α)
+    (fi : core.ops.function.Fn F α Q) (qi : DirectParser Q β)
     (parser : Bind P F) (input : Slice U8) (cursor : Cursor)
     (first : Cursor → Spec.ParseResult α → Prop) (second : α → Cursor → Spec.ParseResult β → Prop)
     (constructed : α → Q → Prop)
@@ -42,7 +42,7 @@ theorem bind_final_spec {P F Q α β : Type} (pi : Parser P α)
       qi.parse_with child input next ParseContext.FINAL ⦃ result => Spec.completed (second value next) result ⦄) :
     Bind.Insts.RusthammerParser.parse_with pi fi qi parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.bind first second cursor) result ⦄ := by
-  unfold Bind.Insts.RusthammerParser.parse_with
+  rw [Bind.Insts.RusthammerParser.parse_with_eq]
   step with hp as ⟨outcome, houtcome⟩
   rcases houtcome with ⟨parsed, hparsed, rfl⟩
   cases parsed with
@@ -57,8 +57,8 @@ theorem bind_final_spec {P F Q α β : Type} (pi : Parser P α)
     rcases hcompleted with ⟨result, hresult, houtcome⟩
     exact ⟨result, ⟨.Ok (next, value), hparsed, hresult⟩, houtcome⟩
 
-theorem bind_spec {P F Q α β : Type} (pi : Parser P α)
-    (fi : core.ops.function.Fn F α Q) (qi : Parser Q β)
+theorem bind_spec {P F Q α β : Type} (pi : DirectParser P α)
+    (fi : core.ops.function.Fn F α Q) (qi : DirectParser Q β)
     (parser : Bind P F) (input : Slice U8) (cursor : Cursor)
     (first : Cursor → Spec.ParseResult α → Prop) (second : α → Cursor → Spec.ParseResult β → Prop)
     (constructed : α → Q → Prop)
@@ -67,30 +67,30 @@ theorem bind_spec {P F Q α β : Type} (pi : Parser P α)
       fi.call parser.then value ⦃ result => constructed value result ⦄)
     (hq : ∀ next value child, first cursor (.Ok (next, value)) → constructed value child →
       qi.parse_with child input next ParseContext.FINAL ⦃ result => Spec.completed (second value next) result ⦄) :
-    Parser.parse.default (Bind.Insts.RusthammerParser pi fi qi) parser input cursor
+    DirectParser.parse (Bind.Insts.RusthammerParser pi fi qi) parser input cursor
       ⦃ result => Spec.bind first second cursor result ⦄ :=
   complete_spec (Bind.Insts.RusthammerParser pi fi qi) parser input cursor
     (Spec.bind first second cursor)
     (bind_final_spec pi fi qi parser input cursor first second constructed hp hf hq)
 
 /-- Skipping a factory needs no assumption about it or any constructed parser. -/
-theorem bind_first_error {P F Q α β : Type} (pi : Parser P α)
-    (fi : core.ops.function.Fn F α Q) (qi : Parser Q β)
+theorem bind_first_error {P F Q α β : Type} (pi : DirectParser P α)
+    (fi : core.ops.function.Fn F α Q) (qi : DirectParser Q β)
     (parser : Bind P F) (input : Slice U8) (cursor : Cursor) (context : ParseContext) (error : ParseError)
     (hp : pi.parse_with parser.parser input cursor context ⦃ result => result = .Error error ⦄) :
     Bind.Insts.RusthammerParser.parse_with pi fi qi parser input cursor context
       ⦃ result => result = .Error error ⦄ := by
-  unfold Bind.Insts.RusthammerParser.parse_with
+  rw [Bind.Insts.RusthammerParser.parse_with_eq]
   step with hp as ⟨parsed, hparsed⟩
   simp [hparsed, spec_ok]
 
-theorem bind_first_need_more {P F Q α β : Type} (pi : Parser P α)
-    (fi : core.ops.function.Fn F α Q) (qi : Parser Q β)
+theorem bind_first_need_more {P F Q α β : Type} (pi : DirectParser P α)
+    (fi : core.ops.function.Fn F α Q) (qi : DirectParser Q β)
     (parser : Bind P F) (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (hp : pi.parse_with parser.parser input cursor context ⦃ result => result = .NeedMore ⦄) :
     Bind.Insts.RusthammerParser.parse_with pi fi qi parser input cursor context
       ⦃ result => result = .NeedMore ⦄ := by
-  unfold Bind.Insts.RusthammerParser.parse_with
+  rw [Bind.Insts.RusthammerParser.parse_with_eq]
   step with hp as ⟨parsed, hparsed⟩
   simp [hparsed, spec_ok]
 

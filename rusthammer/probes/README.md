@@ -6,6 +6,89 @@ mapping probe includes the actual library source to exercise a concrete callback
 The `cross_crate` fixture instead uses a normal Cargo dependency and is checked
 by the local verification command.
 
+## Backend interpretation and typed memo tables
+
+[`backend_memo.rs`](backend_memo.rs) checks the proposed
+[backend boundary](../../plans/rusthammer-backends.md) privately. It separates a
+grammar's output type from its interpreter, threads one mutable backend through
+sequence/choice/map, and uses typed tables for numeric and borrowed outputs.
+A map outside a cached rule constructs a non-`Clone` final value. A second fixture
+replays independent input and configured-pattern borrows. Recursive calls use a
+shared ordinary function with separate cache-policy operations.
+
+Run from `rusthammer/`:
+
+```sh
+python3 tools/check_backend_memo.py
+```
+
+The runner checks native tests, both promoted and optimized library MIR, and a
+[normal Cargo consumer](backend_memo/consumer/lib.rs), then Lean type-checks all
+three translations and rejects admitted/opaque project declarations. The probe
+uses linear table searches, a manually declared rule schema, and a fatal
+active-entry diagnostic. It is not a production packrat engine and does not
+establish left-recursion support, general rule lowering, linear complexity,
+or backend correctness proofs. All artifacts stay under ignored `target/`.
+
+The initial recursive trait arrangement failed: a generic body received the
+rule's own interpreter implementation and called it recursively, making a trait
+implementation dependency cycle. The minimized
+[`backend_recursive_trait.rs`](backend_recursive_trait.rs) needs no memo table
+or borrowed value and reproduces `Could not find: trait_impl_id` in extraction.
+To reproduce with the pinned tools:
+
+```sh
+mkdir -p target/backend-recursive-trait
+~/source/aeneas/charon/bin/charon rustc --preset=aeneas --sysroot default \
+  --start-from backend_recursive_trait::run \
+  --dest-file target/backend-recursive-trait/backend_recursive_trait.llbc -- \
+  --crate-type lib --edition 2021 probes/backend_recursive_trait.rs
+~/source/aeneas/bin/aeneas -backend lean -dest target/backend-recursive-trait \
+  -abort-on-error -warnings-as-errors -no-progress-bar \
+  target/backend-recursive-trait/backend_recursive_trait.llbc
+```
+
+The second command is expected to fail. The passing probe avoids this dictionary
+cycle; no Aeneas patch or disabled check is used. Establishing a general recursive
+grammar representation that respects this boundary is still a design gate.
+
+## Closures inside lifetime-generic evaluators
+
+[`backend_closure.rs`](backend_closure.rs) isolates a Lean inference failure seen
+when migrating `CountPrefix` and `RecordParser` to the backend interface. A
+zero-capture closure inside a method generic over an input lifetime and backend
+type retains an unused `Backend` parameter in the generated definitions. Aeneas
+replaces the closure argument by `()` in the `FnMut` / `FnOnce` adapters without
+supplying that type argument, so Lean reports
+`don't know how to synthesize implicit argument Backend`.
+
+With the pinned tools, `generic` extracts successfully at both promoted and
+optimized MIR but fails Lean type-checking. `fixed` constructs the same closure
+in a nongeneric helper and passes extraction and Lean type-checking at both
+stages. Removing the input lifetime from the minimized evaluator also passes;
+this is a particular source-shape limitation, not a ban on generic callbacks.
+
+From `rusthammer/`:
+
+```sh
+mkdir -p target/backend-closure
+~/source/aeneas/charon/bin/charon rustc --preset=aeneas --sysroot default \
+  --mir promoted --start-from backend_closure::generic \
+  --dest-file target/backend-closure/backend_closure.llbc -- \
+  --crate-type lib --edition 2021 probes/backend_closure.rs
+~/source/aeneas/bin/aeneas -backend lean -dest target/backend-closure \
+  -abort-on-error -warnings-as-errors -no-progress-bar \
+  target/backend-closure/backend_closure.llbc
+cd lean
+lake env lean -DwarningAsError=true ../target/backend-closure/BackendClosure.lean
+```
+
+The final command is expected to fail. Change `generic` to `fixed` for the
+passing form, or `promoted` to `optimized` for the other MIR stage. Production
+uses helper functions with comments explaining this constraint; its full proof
+suite and ordinary Cargo consumer pass. This probe is separate from the older
+borrowed-record callback issue and from recursive trait dictionary cycles.
+
 ## Restricted ordering scopes
 
 [`restricted_order.rs`](restricted_order.rs) checks the current

@@ -2,7 +2,8 @@
 #[cfg(rusthammer_verify)]
 use crate as rusthammer;
 use rusthammer::{
-    Choice, ConfigError, Cursor, End, Literal, ParseContext, ParseError, ParseOutcome, Parser, Seq,
+    Choice, ConfigError, Cursor, End, Eval, Grammar, Literal, ParseContext, ParseError,
+    ParseOutcome, Parser, Seq,
 };
 
 /// A complete marker is either the two bytes `CA FE` or the single byte `CA`.
@@ -33,16 +34,19 @@ impl Marker {
     }
 }
 
-impl<'input> Parser<'input> for Marker {
+impl<'input> Grammar<'input> for Marker {
     type Output = u64;
+}
 
-    fn parse_with(
+impl<'input, Backend> Eval<'input, Backend> for Marker {
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
     ) -> ParseOutcome<u64> {
-        match self.parser.parse_with(input, cursor, context) {
+        match self.parser.eval(backend, input, cursor, context) {
             ParseOutcome::Success(next, (value, ())) => ParseOutcome::Success(next, value),
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,

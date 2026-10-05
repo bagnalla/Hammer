@@ -23,7 +23,7 @@ theorem end_spec (input : Slice U8) (cursor : Cursor) :
     have hbit : ¬cursor.bit ≥ 8#u8 := by scalar_tac
     have hbyte : ¬cursor.byte > input.len := by scalar_tac
     simp only [Spec.endOutcome, if_pos hvalid,
-      End.Insts.RusthammerParserInputTuple.parse_with, hbit, hbyte, ↓reduceIte]
+      End.Insts.RusthammerParserInputTuple.parse_with_eq, hbit, hbyte, ↓reduceIte]
     by_cases heq : cursor.byte = input.len
     · have hzero : cursor.bit = 0#u8 := by scalar_tac
       have hend : Spec.position cursor = 8 * input.val.length := by
@@ -38,12 +38,12 @@ theorem end_spec (input : Slice U8) (cursor : Cursor) :
     unfold Spec.validCursor Spec.position at hparts
     simp only [Spec.endOutcome, if_neg hvalid]
     by_cases hbit : cursor.bit ≥ 8#u8
-    · simp [End.Insts.RusthammerParserInputTuple.parse_with, hbit, spec_ok, Spec.completedResult]
+    · simp [End.Insts.RusthammerParserInputTuple.parse_with_eq, hbit, spec_ok, Spec.completedResult]
     · by_cases hbyte : cursor.byte > input.len
-      · simp [End.Insts.RusthammerParserInputTuple.parse_with, hbit, hbyte, spec_ok, Spec.completedResult]
+      · simp [End.Insts.RusthammerParserInputTuple.parse_with_eq, hbit, hbyte, spec_ok, Spec.completedResult]
       · have heq : cursor.byte = input.len := by scalar_tac
         have hnonzero : cursor.bit ≠ 0#u8 := by scalar_tac
-        simp [End.Insts.RusthammerParserInputTuple.parse_with, hbit, heq, hnonzero, spec_ok, Spec.completedResult]
+        simp [End.Insts.RusthammerParserInputTuple.parse_with_eq, hbit, heq, hnonzero, spec_ok, Spec.completedResult]
 
 /-- Construction validates the width and then the literal's representability. -/
 theorem literal_new_spec (width : U8) (value : U64) :
@@ -125,21 +125,21 @@ theorem literal_spec (parser : Literal) (input : Slice U8) (cursor : Cursor)
     (hconfig : Spec.validLiteral parser) :
     Literal.Insts.RusthammerParserInputU64.parse_with parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.literalOutcome input cursor parser.bits.width parser.value) result ⦄ := by
-  unfold Literal.Insts.RusthammerParserInputU64.parse_with
+  rw [Literal.Insts.RusthammerParserInputU64.parse_with_eq]
   simp only [ParseContext.FINAL]
   step with literal_decode_spec parser input cursor hconfig as ⟨result, hresult⟩
   step with classify_final_spec result as ⟨outcome, houtcome⟩
   exact ⟨result, hresult, houtcome⟩
 
 /-- Ordered choice preserves its children's contracts and restarts at the original cursor. -/
-theorem choice_spec {P Q α : Type} (pi : Parser P α) (qi : Parser Q α)
+theorem choice_spec {P Q α : Type} (pi : DirectParser P α) (qi : DirectParser Q α)
     (parser : Choice P Q) (input : Slice U8) (cursor : Cursor)
     (first second : Cursor → Spec.ParseResult α → Prop)
     (hp : ∀ start, pi.parse_with parser.first input start ParseContext.FINAL ⦃ result => Spec.completed (first start) result ⦄)
     (hq : ∀ start, qi.parse_with parser.second input start ParseContext.FINAL ⦃ result => Spec.completed (second start) result ⦄) :
     Choice.Insts.RusthammerParser.parse_with pi qi parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.choice first second cursor) result ⦄ := by
-  unfold Choice.Insts.RusthammerParser.parse_with
+  rw [Choice.Insts.RusthammerParser.parse_with_eq]
   step with hp cursor as ⟨outcome, houtcome⟩
   rcases houtcome with ⟨left, hleft, rfl⟩
   cases left with
@@ -223,7 +223,7 @@ theorem marker_parser_spec (parser : Marker) (input : Slice U8) (cursor : Cursor
     (fun start => Spec.literalOutcome input start 8#u8 202#u64)
     (fun start => literal_spec _ input start (by decide))
     (fun start => literal_spec _ input start (by decide))
-  unfold Marker.Insts.RusthammerParserInputU64.parse_with
+  rw [Marker.Insts.RusthammerParserInputU64.parse_with_eq]
   rw [hconfig]
   step with seq_spec ci End.Insts.RusthammerParserInputTuple
     { first := alternatives, second := () } input cursor
@@ -252,13 +252,13 @@ theorem marker_spec (input : Slice U8) (cursor : Cursor) (parser : Marker)
 
 /-- Optionality is a total transformation of the child's contract, including absent
 values after partial rejection and successful values that borrow from the input. -/
-theorem optional_spec {P α : Type} (pi : Parser P α) (parser : Optional P)
+theorem optional_spec {P α : Type} (pi : DirectParser P α) (parser : Optional P)
     (input : Slice U8) (cursor : Cursor) (child : Cursor → Spec.ParseResult α → Prop)
     (hp : pi.parse_with parser.parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (child cursor) result ⦄) :
     Optional.Insts.RusthammerParserInputOption.parse_with pi parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.optional child cursor) result ⦄ := by
-  unfold Optional.Insts.RusthammerParserInputOption.parse_with
+  rw [Optional.Insts.RusthammerParserInputOption.parse_with_eq]
   step with hp as ⟨outcome, houtcome⟩
   rcases houtcome with ⟨parsed, hparsed, rfl⟩
   cases parsed with
@@ -281,13 +281,13 @@ theorem optional_spec {P α : Type} (pi : Parser P α) (parser : Optional P)
 
 /-- Positive lookahead preserves every error and restores the cursor on success,
 regardless of the child's output type or how far it advanced. -/
-theorem and_spec {P α : Type} (pi : Parser P α) (parser : Code.And P)
+theorem and_spec {P α : Type} (pi : DirectParser P α) (parser : Code.And P)
     (input : Slice U8) (cursor : Cursor) (child : Cursor → Spec.ParseResult α → Prop)
     (hp : pi.parse_with parser.parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (child cursor) result ⦄) :
     Code.And.Insts.RusthammerParserInputTuple.parse_with pi parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.and child cursor) result ⦄ := by
-  unfold Code.And.Insts.RusthammerParserInputTuple.parse_with
+  rw [Code.And.Insts.RusthammerParserInputTuple.parse_with_eq]
   step with hp as ⟨outcome, houtcome⟩
   rcases houtcome with ⟨parsed, hparsed, rfl⟩
   cases parsed with
@@ -301,13 +301,13 @@ theorem and_spec {P α : Type} (pi : Parser P α) (parser : Code.And P)
 
 /-- Negative lookahead reverses match/rejection while preserving fatal errors.
 No progress assumption is needed for a child that succeeds without consuming input. -/
-theorem not_spec {P α : Type} (pi : Parser P α) (parser : Code.Not P)
+theorem not_spec {P α : Type} (pi : DirectParser P α) (parser : Code.Not P)
     (input : Slice U8) (cursor : Cursor) (child : Cursor → Spec.ParseResult α → Prop)
     (hp : pi.parse_with parser.parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (child cursor) result ⦄) :
     Code.Not.Insts.RusthammerParserInputTuple.parse_with pi parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.not child cursor) result ⦄ := by
-  unfold Code.Not.Insts.RusthammerParserInputTuple.parse_with
+  rw [Code.Not.Insts.RusthammerParserInputTuple.parse_with_eq]
   step with hp as ⟨outcome, houtcome⟩
   rcases houtcome with ⟨parsed, hparsed, rfl⟩
   cases parsed with

@@ -33,6 +33,9 @@ theorem flags_spec (input : Slice U8) (cursor : Cursor) :
   let mi := Map.Insts.RusthammerParser (Seq.Insts.RusthammerParserInputPair bi pair) fi
   have hfinal : mi.parse_with parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.flagsOutcome input cursor) result ⦄ := by
+    change Map.Insts.RusthammerParser.parse_with
+      (Seq.Insts.RusthammerParserInputPair bi pair) fi parser input cursor ParseContext.FINAL
+        ⦃ result => Spec.completed (Spec.flagsOutcome input cursor) result ⦄
     step with map_spec (Seq.Insts.RusthammerParserInputPair bi pair) fi parser
       input cursor (Spec.sequence (Spec.bitOutcome input)
         (Spec.sequence (Spec.bitOutcome input) (Spec.bitOutcome input))) mapping hfields hf

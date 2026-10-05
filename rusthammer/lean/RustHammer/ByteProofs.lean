@@ -14,7 +14,7 @@ private theorem primitive_ok {α : Type} (status : InputStatus) (next : Cursor) 
 theorem byte_with_spec (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
     Byte.Insts.RusthammerParserInputU8.parse_with () input cursor (Spec.defaultContext status)
       ⦃ result => Partial.primitive status (Spec.byteOutcome input cursor) result ⦄ := by
-  unfold Byte.Insts.RusthammerParserInputU8.parse_with
+  rw [Byte.Insts.RusthammerParserInputU8.parse_with_eq]
   step with bits_with_spec { width := 8#u8 } input cursor status (by decide) as ⟨outcome, houtcome⟩
   rcases houtcome with ⟨parsed, hparsed, rfl⟩
   by_cases hvalid : Spec.validCursor input cursor
@@ -39,10 +39,11 @@ theorem byte_with_spec (input : Slice U8) (cursor : Cursor) (status : InputStatu
     all_goals exact ⟨.Err .InvalidCursor, by simp only [Spec.byteOutcome, if_neg hvalid], rfl⟩
 
 theorem byte_spec (input : Slice U8) (cursor : Cursor) :
-    Parser.parse.default Byte.Insts.RusthammerParserInputU8 () input cursor
+    DirectParser.parse Byte.Insts.RusthammerParserInputU8 () input cursor
       ⦃ result => Spec.byteOutcome input cursor result ⦄ := by
   apply complete_spec
-  simpa only [ParseContext.FINAL, Partial.primitive, Partial.primitiveResult, Spec.completed] using
+  simpa only [Byte.Insts.RusthammerParserInputU8.parse_with, ParseContext.FINAL,
+    Spec.defaultContext, Partial.primitive, Partial.primitiveResult, Spec.completed] using
     byte_with_spec input cursor .Final
 
 theorem byte_pattern_new_spec (pattern : Slice U8) :
@@ -56,15 +57,19 @@ theorem byte_pattern_pattern_spec (parser : BytePattern) :
 /-- The loop terminates by the remaining pattern length. Its continuation
 invariant relates the remaining suffix to the entire mathematical pattern. -/
 theorem match_byte_pattern_spec (pattern input : Slice U8) (cursor : Cursor) (status : InputStatus) :
-    match_byte_pattern pattern input cursor (Spec.defaultContext status)
+    DirectRun.match_byte_pattern pattern input cursor (Spec.defaultContext status)
       ⦃ result => Spec.matchBytes input status pattern.val cursor result ⦄ := by
-  unfold match_byte_pattern match_byte_pattern_loop
-  apply loop.spec_decr_nat (fun state => pattern.val.length - state.2.val)
-    (fun (next, index) => index.val ≤ pattern.val.length ∧
+  rw [DirectRun.match_byte_pattern_eq]
+  unfold DirectRun.match_byte_pattern_loop
+  apply direct_projection_spec
+  unfold match_byte_pattern_loop
+  apply loop.spec_decr_nat (fun state => pattern.val.length - state.2.2.val)
+    (fun (_, next, index) => index.val ≤ pattern.val.length ∧
       ∀ outcome, Spec.matchBytes input status (pattern.val.drop index.val) next outcome →
         Spec.matchBytes input status pattern.val cursor outcome)
-  · rintro ⟨next, index⟩ ⟨hindex, hcont⟩
+  · rintro ⟨⟨⟩, next, index⟩ ⟨hindex, hcont⟩
     unfold match_byte_pattern_loop.body
+    simp only [Byte.Insts.RusthammerParserInputU8.parse_with_lift, Std.bind_assoc, bind_ok]
     by_cases hlt : index < pattern.len
     · have hlen : index.val < pattern.val.length := by scalar_tac
       have hdrop : pattern.val.drop index.val =
@@ -111,7 +116,7 @@ theorem byte_pattern_with_spec (parser : BytePattern) (input : Slice U8)
     (cursor : Cursor) (status : InputStatus) :
     BytePattern.Insts.RusthammerParserInputSharedPatternSliceU8.parse_with parser input cursor (Spec.defaultContext status)
       ⦃ result => Spec.bytePatternOutcome input status parser.pattern cursor result ⦄ := by
-  unfold BytePattern.Insts.RusthammerParserInputSharedPatternSliceU8.parse_with
+  rw [BytePattern.Insts.RusthammerParserInputSharedPatternSliceU8.parse_with_eq]
   step with match_byte_pattern_spec parser.pattern input cursor status as ⟨outcome, houtcome⟩
   cases outcome <;> simp only [spec_ok, Spec.bytePatternOutcome]
   · exact ⟨trivial, houtcome⟩
@@ -213,7 +218,7 @@ theorem byte_pattern_final_spec (parser : BytePattern) (input : Slice U8) (curso
   | NeedMore => exact False.elim (match_bytes_final_not_more input parser.pattern.val cursor houtcome)
 
 theorem byte_pattern_spec (parser : BytePattern) (input : Slice U8) (cursor : Cursor) :
-    Parser.parse.default BytePattern.Insts.RusthammerParserInputSharedPatternSliceU8 parser input cursor
+    DirectParser.parse BytePattern.Insts.RusthammerParserInputSharedPatternSliceU8 parser input cursor
       ⦃ result => Spec.bytePatternComplete input parser.pattern cursor result ⦄ := by
   exact complete_spec BytePattern.Insts.RusthammerParserInputSharedPatternSliceU8 parser input cursor
     (Spec.bytePatternComplete input parser.pattern cursor) (byte_pattern_final_spec parser input cursor)

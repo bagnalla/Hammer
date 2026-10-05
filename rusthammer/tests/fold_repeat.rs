@@ -2,12 +2,22 @@ use rusthammer::{
     Bit, Bits, ConfigError, Cursor, Epsilon, FoldRepeat, Literal, Map, ParseContext, ParseError,
     ParseOutcome, Parser, Seq, TakeAligned,
 };
+use rusthammer::{Eval, Grammar};
 use std::cell::Cell;
 
 struct MustNotRun;
-impl<'input> Parser<'input> for MustNotRun {
+impl<'input> Grammar<'input> for MustNotRun {
     type Output = ();
-    fn parse_with(&self, _: &'input [u8], _: Cursor, _: ParseContext) -> ParseOutcome<()> {
+}
+
+impl<'input, Backend> Eval<'input, Backend> for MustNotRun {
+    fn eval(
+        &self,
+        _: &mut Backend,
+        _: &'input [u8],
+        _: Cursor,
+        _: ParseContext,
+    ) -> ParseOutcome<()> {
         panic!("child must not run")
     }
 }
@@ -182,9 +192,18 @@ fn rejected_composite_attempt_rolls_back_without_folding_its_partial_output() {
 struct FirstThen {
     error: Option<ParseError>,
 }
-impl<'input> Parser<'input> for FirstThen {
+impl<'input> Grammar<'input> for FirstThen {
     type Output = bool;
-    fn parse_with(&self, _: &'input [u8], cursor: Cursor, _: ParseContext) -> ParseOutcome<bool> {
+}
+
+impl<'input, Backend> Eval<'input, Backend> for FirstThen {
+    fn eval(
+        &self,
+        _: &mut Backend,
+        _: &'input [u8],
+        cursor: Cursor,
+        _: ParseContext,
+    ) -> ParseOutcome<bool> {
         if cursor == Cursor::start() {
             ParseOutcome::Success(Cursor { byte: 0, bit: 1 }, true)
         } else {
@@ -261,9 +280,18 @@ fn unbounded_folding_stops_at_rejection_but_propagates_partial_exhaustion() {
 }
 
 struct Jump(Cursor);
-impl<'input> Parser<'input> for Jump {
+impl<'input> Grammar<'input> for Jump {
     type Output = ();
-    fn parse_with(&self, _: &'input [u8], _: Cursor, _: ParseContext) -> ParseOutcome<()> {
+}
+
+impl<'input, Backend> Eval<'input, Backend> for Jump {
+    fn eval(
+        &self,
+        _: &mut Backend,
+        _: &'input [u8],
+        _: Cursor,
+        _: ParseContext,
+    ) -> ParseOutcome<()> {
         ParseOutcome::Success(self.0, ())
     }
 }

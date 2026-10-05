@@ -86,7 +86,7 @@ theorem finish_order_scope_spec {α : Type} (length : Usize) (changed : Bool) (c
 
 /-- Total generic scope contract with exact error precedence, successful-exit
 validation, unchanged finality, and unchanged outcomes when direction is kept. -/
-theorem with_order_spec {P α : Type} (inst : Parser P α) (parser : WithOrder P)
+theorem with_order_spec {P α : Type} (inst : DirectParser P α) (parser : WithOrder P)
     (input : Slice U8) (cursor : Cursor) (ctx : ParseContext)
     (child : ParseOutcome α → Prop)
     (hp : (parser.order.bit = ctx.order.bit ∨ guard input.len cursor = none) →
@@ -94,7 +94,7 @@ theorem with_order_spec {P α : Type} (inst : Parser P α) (parser : WithOrder P
         ⦃ result => child result ⦄) :
     WithOrder.Insts.RusthammerParser.parse_with inst parser input cursor ctx
       ⦃ result => scope input.len (decide (parser.order.bit ≠ ctx.order.bit)) cursor child result ⦄ := by
-  unfold WithOrder.Insts.RusthammerParser.parse_with
+  rw [WithOrder.Insts.RusthammerParser.parse_with_eq]
   step with bit_order_ne_spec parser.order.bit ctx.order.bit as ⟨changed, hchanged⟩
   by_cases hsame : parser.order.bit = ctx.order.bit
   · have hc : changed = false := by simp [hchanged, hsame]
@@ -115,7 +115,7 @@ theorem with_order_spec {P α : Type} (inst : Parser P α) (parser : WithOrder P
         from ⟨result, hresult, houtcome⟩)
 
 /-- Rejected entries need no assumption about the uncalled parser. -/
-theorem with_order_blocked {P α : Type} (inst : Parser P α) (parser : WithOrder P)
+theorem with_order_blocked {P α : Type} (inst : DirectParser P α) (parser : WithOrder P)
     (input : Slice U8) (cursor : Cursor) (ctx : ParseContext) (error : ParseError)
     (hchanged : parser.order.bit ≠ ctx.order.bit) (hguard : guard input.len cursor = some error) :
     WithOrder.Insts.RusthammerParser.parse_with inst parser input cursor ctx

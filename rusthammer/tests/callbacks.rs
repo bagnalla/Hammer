@@ -1,3 +1,4 @@
+use rusthammer::{Eval, Grammar};
 use std::cell::Cell;
 
 use rusthammer::{
@@ -7,10 +8,18 @@ use rusthammer::{
 
 struct Reject(ParseError);
 
-impl<'input> Parser<'input> for Reject {
+impl<'input> Grammar<'input> for Reject {
     type Output = bool;
+}
 
-    fn parse_with(&self, _: &'input [u8], _: Cursor, _: ParseContext) -> ParseOutcome<bool> {
+impl<'input, Backend> Eval<'input, Backend> for Reject {
+    fn eval(
+        &self,
+        _: &mut Backend,
+        _: &'input [u8],
+        _: Cursor,
+        _: ParseContext,
+    ) -> ParseOutcome<bool> {
         ParseOutcome::Error(self.0)
     }
 }

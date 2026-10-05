@@ -1,6 +1,55 @@
 //! Extraction regression fixture using RustHammer as an ordinary Cargo dependency.
 #![no_std]
 
+struct Counter {
+    calls: u8,
+}
+
+struct Counted<P>(P);
+
+impl<'input, P: rusthammer::Grammar<'input>> rusthammer::Grammar<'input> for Counted<P> {
+    type Output = P::Output;
+}
+
+// This custom parser deliberately has no Eval<Direct> implementation.
+impl<'input, P: rusthammer::Eval<'input, Counter>> rusthammer::Eval<'input, Counter>
+    for Counted<P>
+{
+    fn eval(
+        &self,
+        backend: &mut Counter,
+        input: &'input [u8],
+        cursor: rusthammer::Cursor,
+        context: rusthammer::ParseContext,
+    ) -> rusthammer::ParseOutcome<Self::Output> {
+        if backend.calls < u8::MAX {
+            backend.calls += 1;
+        }
+        self.0.eval(backend, input, cursor, context)
+    }
+}
+
+/// Borrowed output escapes a local backend after lookahead and dependent parsing.
+pub fn backend_payload(input: &[u8], context: ParseContext) -> (ParseOutcome<&[u8]>, u8) {
+    use rusthammer::Eval;
+    let parser = Right {
+        first: rusthammer::And {
+            parser: Counted(rusthammer::Byte),
+        },
+        second: Bind {
+            parser: Counted(rusthammer::Byte),
+            then: |count: u8| {
+                Counted(TakeAligned {
+                    count: count as usize,
+                })
+            },
+        },
+    };
+    let mut backend = Counter { calls: 0 };
+    let outcome = parser.eval(&mut backend, input, Cursor::start(), context);
+    (outcome, backend.calls)
+}
+
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
@@ -575,6 +624,29 @@ pub fn leading_ones(input: &[u8], context: ParseContext) -> ParseOutcome<alloc::
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn backend_state_and_borrowed_output_survive_nested_calls() {
+        let input = [2, b'a', b'b'];
+        let (outcome, calls) = super::backend_payload(&input, super::ParseContext::FINAL);
+        assert_eq!(calls, 3);
+        match outcome {
+            super::ParseOutcome::Success(next, bytes) => {
+                assert_eq!(next.byte, 3);
+                assert_eq!(bytes.as_ptr(), input[1..].as_ptr());
+                assert_eq!(bytes, b"ab");
+            }
+            _ => panic!("expected success"),
+        }
+        assert_eq!(
+            super::backend_payload(&input[..2], super::ParseContext::PARTIAL),
+            (super::ParseOutcome::NeedMore, 3)
+        );
+        assert_eq!(
+            super::backend_payload(&[], super::ParseContext::PARTIAL),
+            (super::ParseOutcome::NeedMore, 1)
+        );
+    }
+
     use super::*;
 
     #[test]

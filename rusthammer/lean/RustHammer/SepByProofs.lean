@@ -93,7 +93,7 @@ theorem fold_sep_by_max_spec {P S I F : Type} (parser : FoldSepBy P S I F) :
 
 /-- Bounded lists retain only items and roll back whole rejected separator/item
 attempts. Finite empty successes are allowed; the item count bounds execution. -/
-theorem sep_by_with_spec {P S α β : Type} (pi : Parser P α) (si : Parser S β)
+theorem sep_by_with_spec {P S α β : Type} (pi : DirectParser P α) (si : DirectParser S β)
     (parser : SepBy P S) (max : Usize) (hmax : parser.bounds.max = some max)
     (input : Slice U8) (cursor : Cursor) (context : ParseContext) (hconfig : Spec.validSepBy parser)
     (item : Cursor → ParseOutcome α → Prop) (sep : Cursor → ParseOutcome β → Prop)
@@ -103,7 +103,7 @@ theorem sep_by_with_spec {P S α β : Type} (pi : Parser P α) (si : Parser S β
       ⦃ result => Spec.boundedSepBy item sep parser.bounds.min.val max.val cursor result ⦄ := by
   have hb : parser.bounds = { min := parser.bounds.min, max := some max } := by
     cases h : parser.bounds; simp_all
-  unfold SepBy.Insts.RusthammerParserInputVec.parse_with
+  rw [SepBy.Insts.RusthammerParserInputVec.parse_with_eq]
   rw [hb]
   step with repeat_run_with_bounded_spec pi
     (Right.Insts.RusthammerParser (Shared0P.Insts.RusthammerParser si) (Shared0P.Insts.RusthammerParser pi)) (Collect.Insts.RusthammerRepeatAccumulatorAVec α)
@@ -121,7 +121,7 @@ theorem sep_by_with_spec {P S α β : Type} (pi : Parser P α) (si : Parser S β
 
 /-- Progress is checked for the first item and then each complete pair, without
 requiring the separator and following item to advance separately. -/
-theorem sep_by_unbounded_with_spec {P S α β : Type} (pi : Parser P α) (si : Parser S β)
+theorem sep_by_unbounded_with_spec {P S α β : Type} (pi : DirectParser P α) (si : DirectParser S β)
     (parser : SepBy P S) (hmax : parser.bounds.max = none)
     (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (item : Cursor → ParseOutcome α → Prop) (sep : Cursor → ParseOutcome β → Prop)
@@ -131,7 +131,7 @@ theorem sep_by_unbounded_with_spec {P S α β : Type} (pi : Parser P α) (si : P
       ⦃ result => Spec.unboundedSepBy input item sep parser.bounds.min.val cursor result ⦄ := by
   have hb : parser.bounds = { min := parser.bounds.min, max := none } := by
     cases h : parser.bounds; simp_all
-  unfold SepBy.Insts.RusthammerParserInputVec.parse_with
+  rw [SepBy.Insts.RusthammerParserInputVec.parse_with_eq]
   rw [hb]
   step with repeat_run_with_unbounded_spec pi
     (Right.Insts.RusthammerParser (Shared0P.Insts.RusthammerParser si) (Shared0P.Insts.RusthammerParser pi)) (Collect.Insts.RusthammerRepeatAccumulatorAVec α)
@@ -149,7 +149,7 @@ theorem sep_by_unbounded_with_spec {P S α β : Type} (pi : Parser P α) (si : P
 
 /-- Folding uses precisely the same item sequence and stopping specification as
 collection; neither rejected attempts nor separator values enter the fold. -/
-theorem fold_sep_by_with_spec {P S I F α β R : Type} (pi : Parser P α) (si : Parser S β)
+theorem fold_sep_by_with_spec {P S I F α β R : Type} (pi : DirectParser P α) (si : DirectParser S β)
     (ii : core.ops.function.Fn I Unit R) (fi : core.ops.function.Fn F (R × α) R)
     (parser : FoldSepBy P S I F) (max : Usize) (hmax : parser.bounds.max = some max)
     (input : Slice U8) (cursor : Cursor) (context : ParseContext) (hconfig : Spec.validFoldSepBy parser)
@@ -167,7 +167,7 @@ theorem fold_sep_by_with_spec {P S I F α β R : Type} (pi : Parser P α) (si : 
       ⦃ result => Spec.boundedFoldSepBy item sep initial fold parser.bounds.min.val max.val cursor result ⦄ := by
   have hb : parser.bounds = { min := parser.bounds.min, max := some max } := by
     cases h : parser.bounds; simp_all
-  unfold FoldSepBy.Insts.RusthammerParser.parse_with
+  rw [FoldSepBy.Insts.RusthammerParser.parse_with_eq]
   rw [hb]
   apply repeat_run_with_bounded_spec pi
     (Right.Insts.RusthammerParser (Shared0P.Insts.RusthammerParser si) (Shared0P.Insts.RusthammerParser pi)) (FoldSepBy.Insts.RusthammerRepeatAccumulator P S ii fi)
@@ -183,7 +183,7 @@ theorem fold_sep_by_with_spec {P S I F α β R : Type} (pi : Parser P α) (si : 
     step with hf values next after value state hprefix hchild hlen hstate as ⟨following, hfollowing⟩
     exact Spec.folds.append hstate hfollowing
 
-theorem fold_sep_by_unbounded_with_spec {P S I F α β R : Type} (pi : Parser P α) (si : Parser S β)
+theorem fold_sep_by_unbounded_with_spec {P S I F α β R : Type} (pi : DirectParser P α) (si : DirectParser S β)
     (ii : core.ops.function.Fn I Unit R) (fi : core.ops.function.Fn F (R × α) R)
     (parser : FoldSepBy P S I F) (hmax : parser.bounds.max = none)
     (input : Slice U8) (cursor : Cursor) (context : ParseContext)
@@ -201,7 +201,7 @@ theorem fold_sep_by_unbounded_with_spec {P S I F α β R : Type} (pi : Parser P 
       ⦃ result => Spec.unboundedFoldSepBy input item sep initial fold parser.bounds.min.val cursor result ⦄ := by
   have hb : parser.bounds = { min := parser.bounds.min, max := none } := by
     cases h : parser.bounds; simp_all
-  unfold FoldSepBy.Insts.RusthammerParser.parse_with
+  rw [FoldSepBy.Insts.RusthammerParser.parse_with_eq]
   rw [hb]
   apply repeat_run_with_unbounded_spec pi
     (Right.Insts.RusthammerParser (Shared0P.Insts.RusthammerParser si) (Shared0P.Insts.RusthammerParser pi)) (FoldSepBy.Insts.RusthammerRepeatAccumulator P S ii fi)
@@ -216,7 +216,7 @@ theorem fold_sep_by_unbounded_with_spec {P S I F α β R : Type} (pi : Parser P 
     step with hf values next after value state hprefix hchild hlen hstate as ⟨following, hfollowing⟩
     exact Spec.folds.append hstate hfollowing
 
-theorem sep_by_final_spec {P S α β : Type} (pi : Parser P α) (si : Parser S β)
+theorem sep_by_final_spec {P S α β : Type} (pi : DirectParser P α) (si : DirectParser S β)
     (parser : SepBy P S) (max : Usize) (hmax : parser.bounds.max = some max)
     (input : Slice U8) (cursor : Cursor) (hconfig : Spec.validSepBy parser)
     (item : Cursor → Spec.ParseResult α → Prop) (sep : Cursor → Spec.ParseResult β → Prop)
@@ -233,19 +233,19 @@ theorem sep_by_final_spec {P S α β : Type} (pi : Parser P α) (si : Parser S �
     rcases houtcome with ⟨values, next, _, _, hincomplete⟩
     exact (separated_attempt_complete_not_need_more item sep values.length next hincomplete).elim
 
-theorem sep_by_spec {P S α β : Type} (pi : Parser P α) (si : Parser S β)
+theorem sep_by_spec {P S α β : Type} (pi : DirectParser P α) (si : DirectParser S β)
     (parser : SepBy P S) (max : Usize) (hmax : parser.bounds.max = some max)
     (input : Slice U8) (cursor : Cursor) (hconfig : Spec.validSepBy parser)
     (item : Cursor → Spec.ParseResult α → Prop) (sep : Cursor → Spec.ParseResult β → Prop)
     (hp : ∀ start, pi.parse_with parser.parser input start ParseContext.FINAL ⦃ result => Spec.completed (item start) result ⦄)
     (hs : ∀ start, si.parse_with parser.separator input start ParseContext.FINAL ⦃ result => Spec.completed (sep start) result ⦄) :
-    Parser.parse.default (SepBy.Insts.RusthammerParserInputVec pi si) parser input cursor
+    DirectParser.parse (SepBy.Insts.RusthammerParserInputVec pi si) parser input cursor
       ⦃ result => Spec.boundedSepByComplete item sep parser.bounds.min.val max.val cursor result ⦄ := by
   exact complete_spec (SepBy.Insts.RusthammerParserInputVec pi si) parser input cursor
     (Spec.boundedSepByComplete item sep parser.bounds.min.val max.val cursor)
     (sep_by_final_spec pi si parser max hmax input cursor hconfig item sep hp hs)
 
-theorem sep_by_unbounded_final_spec {P S α β : Type} (pi : Parser P α) (si : Parser S β)
+theorem sep_by_unbounded_final_spec {P S α β : Type} (pi : DirectParser P α) (si : DirectParser S β)
     (parser : SepBy P S) (hmax : parser.bounds.max = none)
     (input : Slice U8) (cursor : Cursor)
     (item : Cursor → Spec.ParseResult α → Prop) (sep : Cursor → Spec.ParseResult β → Prop)
@@ -265,19 +265,19 @@ theorem sep_by_unbounded_final_spec {P S α β : Type} (pi : Parser P α) (si : 
       exact (separated_attempt_complete_not_need_more item sep values.length next hincomplete).elim
     · simp [Spec.unboundedSepBy, Spec.collectedValues, Spec.unboundedIterations, hv] at houtcome
 
-theorem sep_by_unbounded_spec {P S α β : Type} (pi : Parser P α) (si : Parser S β)
+theorem sep_by_unbounded_spec {P S α β : Type} (pi : DirectParser P α) (si : DirectParser S β)
     (parser : SepBy P S) (hmax : parser.bounds.max = none)
     (input : Slice U8) (cursor : Cursor)
     (item : Cursor → Spec.ParseResult α → Prop) (sep : Cursor → Spec.ParseResult β → Prop)
     (hp : ∀ start, pi.parse_with parser.parser input start ParseContext.FINAL ⦃ result => Spec.completed (item start) result ⦄)
     (hs : ∀ start, si.parse_with parser.separator input start ParseContext.FINAL ⦃ result => Spec.completed (sep start) result ⦄) :
-    Parser.parse.default (SepBy.Insts.RusthammerParserInputVec pi si) parser input cursor
+    DirectParser.parse (SepBy.Insts.RusthammerParserInputVec pi si) parser input cursor
       ⦃ result => Spec.unboundedSepByComplete input item sep parser.bounds.min.val cursor result ⦄ := by
   exact complete_spec (SepBy.Insts.RusthammerParserInputVec pi si) parser input cursor
     (Spec.unboundedSepByComplete input item sep parser.bounds.min.val cursor)
     (sep_by_unbounded_final_spec pi si parser hmax input cursor item sep hp hs)
 
-theorem fold_sep_by_complete_spec {P S I F α β R : Type} (pi : Parser P α) (si : Parser S β)
+theorem fold_sep_by_complete_spec {P S I F α β R : Type} (pi : DirectParser P α) (si : DirectParser S β)
     (ii : core.ops.function.Fn I Unit R) (fi : core.ops.function.Fn F (R × α) R)
     (parser : FoldSepBy P S I F) (min max : Nat) (input : Slice U8) (cursor : Cursor)
     (item : Cursor → Spec.ParseResult α → Prop) (sep : Cursor → Spec.ParseResult β → Prop)
@@ -285,10 +285,12 @@ theorem fold_sep_by_complete_spec {P S I F α β R : Type} (pi : Parser P α) (s
     (hp : FoldSepBy.Insts.RusthammerParser.parse_with pi si ii fi parser input cursor ParseContext.FINAL
       ⦃ result => Spec.boundedFoldSepBy (fun start => Spec.completed (item start))
         (fun start => Spec.completed (sep start)) initial fold min max cursor result ⦄) :
-    Parser.parse.default (FoldSepBy.Insts.RusthammerParser pi si ii fi) parser input cursor
+    DirectParser.parse (FoldSepBy.Insts.RusthammerParser pi si ii fi) parser input cursor
       ⦃ result => Spec.boundedFoldSepByComplete item sep initial fold min max cursor result ⦄ := by
   apply complete_spec (FoldSepBy.Insts.RusthammerParser pi si ii fi) parser input cursor
     (Spec.boundedFoldSepByComplete item sep initial fold min max cursor)
+  change FoldSepBy.Insts.RusthammerParser.parse_with pi si ii fi parser input cursor ParseContext.FINAL
+    ⦃ outcome => _ ⦄
   step with hp as ⟨outcome, houtcome⟩
   cases outcome with
   | Success next state => exact ⟨.Ok (next, state), houtcome, rfl⟩
@@ -297,7 +299,7 @@ theorem fold_sep_by_complete_spec {P S I F α β R : Type} (pi : Parser P α) (s
     rcases houtcome with ⟨values, next, _, _, hincomplete⟩
     exact (separated_attempt_complete_not_need_more item sep values.length next hincomplete).elim
 
-theorem fold_sep_by_unbounded_complete_spec {P S I F α β R : Type} (pi : Parser P α) (si : Parser S β)
+theorem fold_sep_by_unbounded_complete_spec {P S I F α β R : Type} (pi : DirectParser P α) (si : DirectParser S β)
     (ii : core.ops.function.Fn I Unit R) (fi : core.ops.function.Fn F (R × α) R)
     (parser : FoldSepBy P S I F) (min : Nat) (input : Slice U8) (cursor : Cursor)
     (item : Cursor → Spec.ParseResult α → Prop) (sep : Cursor → Spec.ParseResult β → Prop)
@@ -305,10 +307,12 @@ theorem fold_sep_by_unbounded_complete_spec {P S I F α β R : Type} (pi : Parse
     (hp : FoldSepBy.Insts.RusthammerParser.parse_with pi si ii fi parser input cursor ParseContext.FINAL
       ⦃ result => Spec.unboundedFoldSepBy input (fun start => Spec.completed (item start))
         (fun start => Spec.completed (sep start)) initial fold min cursor result ⦄) :
-    Parser.parse.default (FoldSepBy.Insts.RusthammerParser pi si ii fi) parser input cursor
+    DirectParser.parse (FoldSepBy.Insts.RusthammerParser pi si ii fi) parser input cursor
       ⦃ result => Spec.unboundedFoldSepByComplete input item sep initial fold min cursor result ⦄ := by
   apply complete_spec (FoldSepBy.Insts.RusthammerParser pi si ii fi) parser input cursor
     (Spec.unboundedFoldSepByComplete input item sep initial fold min cursor)
+  change FoldSepBy.Insts.RusthammerParser.parse_with pi si ii fi parser input cursor ParseContext.FINAL
+    ⦃ outcome => _ ⦄
   step with hp as ⟨outcome, houtcome⟩
   cases outcome with
   | Success next state => exact ⟨.Ok (next, state), houtcome, rfl⟩

@@ -44,11 +44,13 @@ theorem byte_in_bitmap_with_spec (parser : ByteIn) (input : Slice U8)
     (cursor : Cursor) (status : InputStatus) :
     ByteIn.Insts.RusthammerParserInputU8.parse_with parser input cursor (Spec.defaultContext status)
       ⦃ result => Spec.bitmapOutcome input status parser.set false cursor result ⦄ := by
-  unfold ByteIn.Insts.RusthammerParserInputU8.parse_with
+  rw [ByteIn.Insts.RusthammerParserInputU8.parse_with_eq]
   apply verify_with_spec Byte.Insts.RusthammerParserInputU8
     ParserInputByteInU8.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool
     { parser := (), predicate := parser } input cursor (Spec.defaultContext status) _
-    (Spec.bitmapPredicate parser.set false) (byte_with_spec input cursor status)
+    (Spec.bitmapPredicate parser.set false) (by
+      simpa only [Byte.Insts.RusthammerParserInputU8.parse_with] using
+        byte_with_spec input cursor status)
   intro next value _hvalue
   exact byte_in_predicate_spec parser value
 
@@ -64,18 +66,19 @@ theorem byte_in_with_spec (parser : ByteIn) (bytes : List U8)
 theorem byte_in_final_spec (parser : ByteIn) (input : Slice U8) (cursor : Cursor) :
     ByteIn.Insts.RusthammerParserInputU8.parse_with parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.bitmapComplete input parser.set false cursor) result ⦄ := by
-  unfold ByteIn.Insts.RusthammerParserInputU8.parse_with
+  rw [ByteIn.Insts.RusthammerParserInputU8.parse_with_eq]
   apply verify_spec Byte.Insts.RusthammerParserInputU8
     ParserInputByteInU8.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool
     { parser := (), predicate := parser } input cursor _
     (Spec.bitmapPredicate parser.set false)
-  · simpa only [ParseContext.FINAL, Partial.primitive, Partial.primitiveResult, Spec.completed] using
+  · simpa only [Byte.Insts.RusthammerParserInputU8.parse_with,
+      Spec.defaultContext, ParseContext.FINAL, Partial.primitive, Partial.primitiveResult, Spec.completed] using
       byte_with_spec input cursor .Final
   · intro next value _hvalue
     exact byte_in_predicate_spec parser value
 
 theorem byte_in_spec (parser : ByteIn) (input : Slice U8) (cursor : Cursor) :
-    Parser.parse.default ByteIn.Insts.RusthammerParserInputU8 parser input cursor
+    DirectParser.parse ByteIn.Insts.RusthammerParserInputU8 parser input cursor
       ⦃ result => Spec.bitmapComplete input parser.set false cursor result ⦄ := by
   exact complete_spec ByteIn.Insts.RusthammerParserInputU8 parser input cursor
     (Spec.bitmapComplete input parser.set false cursor)
@@ -83,7 +86,7 @@ theorem byte_in_spec (parser : ByteIn) (input : Slice U8) (cursor : Cursor) :
 
 theorem byte_in_set_spec (parser : ByteIn) (bytes : List U8)
     (hrep : Spec.bitmapRepresents parser.set bytes) (input : Slice U8) (cursor : Cursor) :
-    Parser.parse.default ByteIn.Insts.RusthammerParserInputU8 parser input cursor
+    DirectParser.parse ByteIn.Insts.RusthammerParserInputU8 parser input cursor
       ⦃ result => Spec.byteSetComplete input bytes false cursor result ⦄ := by
   simpa only [Spec.bitmapComplete, bitmap_predicate_of_represents parser.set bytes false hrep] using
     byte_in_spec parser input cursor
@@ -115,11 +118,13 @@ theorem byte_not_in_bitmap_with_spec (parser : ByteNotIn) (input : Slice U8)
     (cursor : Cursor) (status : InputStatus) :
     ByteNotIn.Insts.RusthammerParserInputU8.parse_with parser input cursor (Spec.defaultContext status)
       ⦃ result => Spec.bitmapOutcome input status parser.set true cursor result ⦄ := by
-  unfold ByteNotIn.Insts.RusthammerParserInputU8.parse_with
+  rw [ByteNotIn.Insts.RusthammerParserInputU8.parse_with_eq]
   apply verify_with_spec Byte.Insts.RusthammerParserInputU8
     ParserInputByteNotInU8.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool
     { parser := (), predicate := parser } input cursor (Spec.defaultContext status) _
-    (Spec.bitmapPredicate parser.set true) (byte_with_spec input cursor status)
+    (Spec.bitmapPredicate parser.set true) (by
+      simpa only [Byte.Insts.RusthammerParserInputU8.parse_with] using
+        byte_with_spec input cursor status)
   intro next value _hvalue
   exact byte_not_in_predicate_spec parser value
 
@@ -135,18 +140,19 @@ theorem byte_not_in_with_spec (parser : ByteNotIn) (bytes : List U8)
 theorem byte_not_in_final_spec (parser : ByteNotIn) (input : Slice U8) (cursor : Cursor) :
     ByteNotIn.Insts.RusthammerParserInputU8.parse_with parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.bitmapComplete input parser.set true cursor) result ⦄ := by
-  unfold ByteNotIn.Insts.RusthammerParserInputU8.parse_with
+  rw [ByteNotIn.Insts.RusthammerParserInputU8.parse_with_eq]
   apply verify_spec Byte.Insts.RusthammerParserInputU8
     ParserInputByteNotInU8.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool
     { parser := (), predicate := parser } input cursor _
     (Spec.bitmapPredicate parser.set true)
-  · simpa only [ParseContext.FINAL, Partial.primitive, Partial.primitiveResult, Spec.completed] using
+  · simpa only [Byte.Insts.RusthammerParserInputU8.parse_with,
+      Spec.defaultContext, ParseContext.FINAL, Partial.primitive, Partial.primitiveResult, Spec.completed] using
       byte_with_spec input cursor .Final
   · intro next value _hvalue
     exact byte_not_in_predicate_spec parser value
 
 theorem byte_not_in_spec (parser : ByteNotIn) (input : Slice U8) (cursor : Cursor) :
-    Parser.parse.default ByteNotIn.Insts.RusthammerParserInputU8 parser input cursor
+    DirectParser.parse ByteNotIn.Insts.RusthammerParserInputU8 parser input cursor
       ⦃ result => Spec.bitmapComplete input parser.set true cursor result ⦄ := by
   exact complete_spec ByteNotIn.Insts.RusthammerParserInputU8 parser input cursor
     (Spec.bitmapComplete input parser.set true cursor)
@@ -154,7 +160,7 @@ theorem byte_not_in_spec (parser : ByteNotIn) (input : Slice U8) (cursor : Curso
 
 theorem byte_not_in_set_spec (parser : ByteNotIn) (bytes : List U8)
     (hrep : Spec.bitmapRepresents parser.set bytes) (input : Slice U8) (cursor : Cursor) :
-    Parser.parse.default ByteNotIn.Insts.RusthammerParserInputU8 parser input cursor
+    DirectParser.parse ByteNotIn.Insts.RusthammerParserInputU8 parser input cursor
       ⦃ result => Spec.byteSetComplete input bytes true cursor result ⦄ := by
   simpa only [Spec.bitmapComplete, bitmap_predicate_of_represents parser.set bytes true hrep] using
     byte_not_in_spec parser input cursor

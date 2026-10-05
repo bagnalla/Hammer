@@ -1,3 +1,4 @@
+use rusthammer::{Eval, Grammar};
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
@@ -86,10 +87,14 @@ struct Probe<'a> {
     drops: Rc<Cell<usize>>,
 }
 
-impl<'input> Parser<'input> for Probe<'_> {
+impl<'input> Grammar<'input> for Probe<'_> {
     type Output = Token;
-    fn parse_with(
+}
+
+impl<'input, Backend> Eval<'input, Backend> for Probe<'_> {
+    fn eval(
         &self,
+        _: &mut Backend,
         _: &'input [u8],
         cursor: Cursor,
         context: ParseContext,

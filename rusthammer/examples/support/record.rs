@@ -2,8 +2,8 @@
 #[cfg(rusthammer_verify)]
 use crate as rusthammer;
 use rusthammer::{
-    Bits, ConfigError, Cursor, End, ParseContext, ParseError, ParseOutcome, Parser, Seq,
-    TakeAligned, Verify,
+    Bits, ConfigError, Cursor, End, Eval, Grammar, ParseContext, ParseError, ParseOutcome, Parser,
+    Seq, TakeAligned, Verify,
 };
 
 /// Maximum payload length in the example record format, in bytes.
@@ -55,57 +55,77 @@ impl RecordParser {
     }
 }
 
-impl<'input> Parser<'input> for RecordParser {
+impl<'input> Grammar<'input> for RecordParser {
     type Output = Record<'input>;
+}
 
-    fn parse_with(
+// Construct this closure outside the lifetime/backend-generic method: the pinned
+// Aeneas cannot infer its unused Backend argument. See probes/backend_closure.rs.
+fn record_header(
+    version: Bits,
+    flags: Bits,
+    length: Bits,
+) -> Verify<Seq<Bits, Seq<Bits, Bits>>, impl Fn(&(u64, (u64, u64))) -> bool> {
+    Verify {
+        parser: Seq {
+            first: version,
+            second: Seq {
+                first: flags,
+                second: length,
+            },
+        },
+        predicate: |fields: &(u64, (u64, u64))| fields.0 == 1 && fields.1 .1 <= MAX_RECORD_PAYLOAD,
+    }
+}
+
+impl<'input, Backend> Eval<'input, Backend> for RecordParser {
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
         // An empty aligned read validates the cursor and alignment without advancing.
-        match (TakeAligned { count: 0 }).parse_with(input, cursor, context) {
+        match (TakeAligned { count: 0 }).eval(backend, input, cursor, context) {
             ParseOutcome::NeedMore => return ParseOutcome::NeedMore,
             ParseOutcome::Error(error) => return ParseOutcome::Error(error),
             ParseOutcome::Success(_, _) => {}
         }
-        let header = Verify {
-            parser: Seq {
-                first: self.version,
-                second: Seq {
-                    first: self.flags,
-                    second: self.length,
-                },
-            },
-            predicate: |fields: &(u64, (u64, u64))| {
-                fields.0 == 1 && fields.1 .1 <= MAX_RECORD_PAYLOAD
-            },
-        };
-        match header.parse_with(input, cursor, context) {
+        let header = record_header(self.version, self.flags, self.length);
+        match header.eval(backend, input, cursor, context) {
             ParseOutcome::NeedMore => return ParseOutcome::NeedMore,
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
             ParseOutcome::Success(next, (version, (flags, length))) => {
                 // The verified bound fits usize on every supported Rust target.
-                parse_record_body(input, next, version, flags, length as usize, context)
+                parse_record_body(
+                    backend,
+                    input,
+                    next,
+                    version,
+                    flags,
+                    length as usize,
+                    context,
+                )
             }
         }
     }
 }
 
-fn parse_record_body(
-    input: &[u8],
+fn parse_record_body<'input, Backend>(
+    backend: &mut Backend,
+    input: &'input [u8],
     cursor: Cursor,
     version: u64,
     flags: u64,
     count: usize,
     context: ParseContext,
-) -> ParseOutcome<Record<'_>> {
+) -> ParseOutcome<Record<'input>> {
     let body = Seq {
         first: TakeAligned { count },
         second: End,
     };
-    match body.parse_with(input, cursor, context) {
+    match body.eval(backend, input, cursor, context) {
         ParseOutcome::NeedMore => return ParseOutcome::NeedMore,
         ParseOutcome::Error(error) => ParseOutcome::Error(error),
         ParseOutcome::Success(end, (payload, ())) => ParseOutcome::Success(

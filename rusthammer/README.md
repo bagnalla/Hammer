@@ -357,8 +357,8 @@ tests compare against independent `u128` position arithmetic, including virtual
 lengths near `usize::MAX` without allocating input. They also cover both statuses,
 all bit offsets, truncation, invalid cursors, zero counts, parser references,
 dependent counts, lookahead, backtracking, and repetition. Both MIR modes and
-all 43 consumer entry points translate and Lean type-check without a new
-workaround. The C comparison adds 118,188 cases for `h_skip` and `h_tell` at
+the separate Cargo consumer translate and Lean type-check. The C comparison
+adds 118,188 cases for `h_skip` and `h_tell` at
 representable positions, including canonical end-of-input and large skip counts.
 
 ## Bytes and byte patterns
@@ -566,14 +566,40 @@ functions; use the corresponding parser's `parse_with` for partial input. The
 `parse_flags`, `parse_marker`, and `parse_record` helpers are complete-input
 functions in the shared example source.
 
+## Grammar and execution
+
+`Grammar<'input>` supplies the associated `Output` type. `Eval<'input, Backend>`
+executes that grammar with `&mut Backend`, an input slice, cursor, and immutable
+`ParseContext`. `Direct` is an empty backend; the library currently implements
+only direct interpretation. Built-in combinators share one execution implementation
+and pass the same backend through every child call, including lookahead,
+repetition, and the parser produced by `Bind`.
+
+`Parser<'input>` is a convenience trait implemented automatically for every
+`Eval<'input, Direct>`. Existing `parser.parse(...)` and `parser.parse_with(...)`
+calls keep their signatures and behavior. Custom implementations migrate from
+`impl Parser` to separate `Grammar` and `Eval` implementations; custom overrides
+of `parse` are no longer supported. An evaluator must call child `eval` methods,
+since a convenience entry point creates a fresh direct execution.
+
+A custom parser may implement `Eval<Direct>` only, or provide a generic evaluator
+with explicit backend capabilities. A grammar is executable with a backend only
+when its children support it. No fallback silently runs a child through `Direct`.
+Construction needs only the grammar/output constraints, as in `IntRange::new`.
+Outputs retain their own lifetimes and require neither `Clone` nor `Copy`.
+
+Cursor rollback does not roll back backend bookkeeping. A future caching backend
+must bind its state to an input and grammar session; passing backend state alone
+does not supply memoization, rule identity, or left recursion. Compilation to
+other parsing engines remains a separate capability over the structured grammar.
+
 ## Parser reuse and output selection
 
-`&P` implements `Parser<'input>` when `P` does, so a grammar can borrow an existing
-parser or use the same parser in several positions. Both `parse_with` and `parse`
-forward to the underlying parser, including a custom override of `parse`.
-Combinators continue to call their children's `parse_with` method. The parser
-reference's lifetime is independent of the input lifetime; selected outputs can
-borrow the input after local grammar objects have gone out of scope.
+`&P` forwards `Grammar` and `Eval<Backend>` to the underlying parser. A grammar
+can therefore borrow a parser or use it in several positions while retaining the
+selected backend. The reference lifetime is independent of the input lifetime;
+outputs can borrow the input after local grammar objects have gone out of scope.
+The `Parser` convenience methods are supplied automatically for `Eval<Direct>`.
 
 The primitive parsers (`Bit`, `Bits`, `Literal`, `End`, and `TakeAligned`) and the
 example `Marker` and `RecordParser` implement `Clone` and `Copy`. Every combinator
@@ -1193,6 +1219,8 @@ available for dependency bodies and checks a
 tests in both allocation configurations; its extraction includes RustHammer's
 implementation with `alloc` enabled. Both extra translations are checked for
 admitted/opaque declarations and Lean type-checked. They stay under `target/`.
+All 44 consumer entry points pass, including an evaluator that uses a local
+mutable backend while returning a borrowed input slice.
 
 The cross-crate investigation found that cleanup code can recheck an enum's tag
 after a payload move, which the pinned Aeneas rejects. Five internal pattern
@@ -1201,6 +1229,11 @@ that code. This preserves the API and existing proofs. The
 [minimal reproductions and explanation](probes/cross_crate/README.md#cause-of-the-original-failure)
 record the constraint for future changes; the borrowed-record callback issue
 remains separate and deferred.
+
+Two example evaluators construct their zero-capture callbacks in nongeneric
+helpers. This avoids a Lean type-inference failure in closures defined inside
+lifetime/backend-generic methods. The [minimal probe and workaround](probes/README.md#closures-inside-lifetime-generic-evaluators)
+record both forms at both MIR stages; this does not change their parser semantics.
 
 The first Lean build downloads the pinned Aeneas proof library, its dependencies,
 and available cached build artifacts. Subsequent builds reuse `lean/.lake/`.
@@ -1229,6 +1262,18 @@ without assuming their end position fits in `usize`.
 combinator contracts, and [FlagsProofs.lean](lean/RustHammer/FlagsProofs.lean) proves
 the typed flag example. These relate the specifications to the
 [generated implementation](lean/RustHammer/Rusthammer.lean).
+
+The [direct views](lean/RustHammer/DirectState.lean) specialize extracted `Eval`
+implementations to `Direct` and discard its empty state. Their
+[equations](lean/RustHammer/DirectEquations.lean) are proved against the generated
+code, and the convenience entry points are definitionally equal to these views.
+The existing grammar contracts therefore still verify the actual Rust execution.
+[Backend composition proofs](lean/RustHammer/BackendProofs.lean) also establish
+state propagation through sequencing and choice for arbitrary backend types,
+assuming the child evaluators satisfy their state-transition contracts. They
+include retaining state from a rejected alternative while restoring its cursor.
+The verification command audits these results and the direct adapters alongside
+the ordering theorems; no project axioms or admitted obligations are introduced.
 
 [BitsSpec.lean](lean/RustHammer/BitsSpec.lean) specifies numeric fields using
 positional binary notation with unbounded natural numbers. Its
@@ -1467,7 +1512,7 @@ complete-input operations.
 | `byte_pattern_with_spec`, `byte_pattern_final_spec`, `byte_pattern_spec` | Total ordered pattern matching, empty-pattern identity, byte-wise error precedence, and final-input exclusion of `NeedMore`. |
 | `byte_pattern_success` | Output equals the configured pattern; each byte matches eight input bits and total consumption is exactly eight times the pattern length. |
 | `seq_spec` | Sequencing preserves arbitrary supplied child specifications, including error propagation. |
-| `parser_ref_with_spec`, `parser_ref_spec` | Shared references preserve the underlying parser's contracts for both methods, including custom complete-method overrides. |
+| `parser_ref_with_spec`, `parser_ref_spec` | Shared references forward evaluation and preserve the underlying parser's contracts for both direct convenience methods. |
 | `left_with_spec`, `right_with_spec`, `middle_with_spec`, `ignore_with_spec` | Output selection preserves sequencing or child behavior for both input statuses and arbitrary output types. |
 | `left_final_spec`, `right_final_spec`, `middle_final_spec`, `ignore_final_spec` | Final-input child contracts exclude `NeedMore` and give the complete selection relation. |
 | `left_spec`, `right_spec`, `middle_spec`, `ignore_spec` | The default complete API satisfies the corresponding selection contract. |
@@ -1574,9 +1619,13 @@ Fixed-width typed integer readers, inclusive ranges, byte sets, `SkipBits`,
 `Tell`, `ButNot`, `Difference`, and `Xor` are implemented and proved, with
 semantic and differential checks. Scoped ordering and its context interface are
 also implemented and proved; see the [input plan](../plans/rusthammer-input.md).
-Next add `BitSpan`, `Recognize`, and `WithSpan` with physical-boundary and
-borrowed-view contracts. The isolated probes remain as design/extraction evidence.
-Design permutation and recursion separately.
+The [backend execution boundary](../plans/rusthammer-backends.md) separates
+`Grammar` output types from `Eval<Backend>`, with `Parser` providing direct parsing
+entry points. Continue with `BitSpan`, `Recognize`, and `WithSpan` and their
+physical-boundary and borrowed-view contracts. Memoization, cached-output ownership,
+rule identities, and recursive grammar construction remain later work, guided by
+representative protocol benchmarks. The private cache probe remains design evidence.
+Design permutation separately.
 
 Keep future application grammars in shared example/proof-support source. The
 original `Flags`, `Marker`, and `Record` fixtures have been migrated out of the
@@ -1586,9 +1635,10 @@ Before implementing streaming buffering and resumption, revisit the
 [deferred eager literal rejection](../plans/rusthammer.md#deferred-eager-literal-rejection)
 work, including its error precedence and proof updates.
 
-After each increment, run `python3 tools/verify.py`. Keep recursion, chunk buffering and resumption,
-seeking, deferred effects, memoization, and additional backends as separately
-specified additions.
+After each production increment, run `python3 tools/verify.py`. Packrat and its
+recursion support follow the backend plan above. Keep chunk buffering and
+resumption, seeking, deferred effects, and other engines as separately specified
+additions.
 
 CI integration and further investigation of the recorded borrowed-callback
 extraction limitation are deferred. Continue running verification locally.

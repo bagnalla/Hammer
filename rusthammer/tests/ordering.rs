@@ -1,4 +1,5 @@
 use rusthammer::*;
+use rusthammer::{Eval, Grammar};
 use std::cell::Cell;
 
 fn order(flags: u8) -> Order {
@@ -311,9 +312,18 @@ struct Scripted<'a> {
     answer: Answer,
 }
 
-impl<'input> Parser<'input> for Scripted<'_> {
+impl<'input> Grammar<'input> for Scripted<'_> {
     type Output = u64;
-    fn parse_with(&self, _: &'input [u8], _: Cursor, context: ParseContext) -> ParseOutcome<u64> {
+}
+
+impl<'input, Backend> Eval<'input, Backend> for Scripted<'_> {
+    fn eval(
+        &self,
+        _: &mut Backend,
+        _: &'input [u8],
+        _: Cursor,
+        context: ParseContext,
+    ) -> ParseOutcome<u64> {
         self.calls.set(self.calls.get() + 1);
         assert_eq!(context, self.expected_context);
         match self.answer {
@@ -652,10 +662,14 @@ fn scope_discards_owned_outputs_exactly_once_on_exit_errors() {
         drops: &'a Cell<usize>,
         next: Cursor,
     }
-    impl<'input, 'a> Parser<'input> for Produce<'a> {
+    impl<'input, 'a> Grammar<'input> for Produce<'a> {
         type Output = Owned<'a>;
-        fn parse_with(
+    }
+
+    impl<'input, 'a, Backend> Eval<'input, Backend> for Produce<'a> {
+        fn eval(
             &self,
+            _: &mut Backend,
             _: &'input [u8],
             _: Cursor,
             _: ParseContext,

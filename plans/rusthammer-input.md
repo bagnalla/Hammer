@@ -95,12 +95,12 @@ pub enum ByteOrder { Big, Little }
 pub struct Order { pub bit: BitOrder, pub byte: ByteOrder }
 pub struct ParseContext { pub status: InputStatus, pub order: Order }
 
-pub trait Parser<'input> {
-    type Output;
-    fn parse_with(
-        &self, input: &'input [u8], cursor: Cursor, context: ParseContext,
+pub trait Grammar<'input> { type Output; }
+pub trait Eval<'input, Backend>: Grammar<'input> {
+    fn eval(
+        &self, backend: &mut Backend, input: &'input [u8], cursor: Cursor, context: ParseContext,
     ) -> ParseOutcome<Self::Output>;
-    // parse(input, cursor) remains the complete-input entry point.
+    // Parser supplies direct parse / parse_with entry points separately.
 }
 ```
 
@@ -315,7 +315,8 @@ agreements** and **2,848 expected scope rejections**, including 2,064 that C
 accepts. The comparison uses the same independent event/bit-count model and
 corpus classification. See the [runnable example](../rusthammer/examples/ordering.rs)
 for scoped fields and a partial-input retry. Span geometry and recognition APIs
-remain the next increment; no public span type is introduced by this work.
+remain planned after the [backend foundation](rusthammer-backends.md); no public
+span type is introduced by this work.
 
 ## Restricted probe and evidence
 
@@ -404,7 +405,10 @@ verification as though all of those cases should still be accepted.
    with numeric-reader and compositional proofs, default-format theorems,
    examples, and tests. Both MIR stages and the separate Cargo consumer pass;
    differential checks distinguish agreements from intentional rejections.
-3. **Next: add the intended span/recognition APIs** with bounds, physical-interval,
+3. **Backend execution boundary complete.** Direct execution and its proofs use
+   [Grammar / Eval / Parser](rusthammer-backends.md). Memoization and recursive
+   rule construction are deferred; they do not block the span API.
+4. Add the intended span/recognition APIs with bounds, physical-interval,
    borrowing, consumed-length, and raw-byte-view proofs. Expose only durable,
    implemented operations.
 

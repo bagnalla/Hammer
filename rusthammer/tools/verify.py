@@ -25,6 +25,15 @@ ORDER_THEOREMS = (
     )),
 )
 
+BACKEND_THEOREMS = (
+    "RustHammer.Code.eval_direct",
+    "RustHammer.Code.direct_entry_with",
+    "RustHammer.Code.direct_entry",
+    "RustHammer.Code.direct_projection_spec",
+    "RustHammer.Backend.seq_eval_spec",
+    "RustHammer.Backend.choice_eval_spec",
+)
+
 
 def output(*args, cwd=None):
     return subprocess.check_output(args, cwd=cwd, text=True).strip()
@@ -43,19 +52,22 @@ def translate(aeneas, llbc, destination, namespace):
     )
 
 
-def audit_ordering_proofs():
-    audit = ROOT / "target" / "ordering-axioms.lean"
-    audit.write_text("import RustHammer.OrderParserProofs\n" + "".join(
-        f"#print axioms {name}\n" for name in ORDER_THEOREMS
+def audit_proofs():
+    theorems = ORDER_THEOREMS + BACKEND_THEOREMS
+    audit = ROOT / "target" / "proof-axioms.lean"
+    audit.write_text("import RustHammer\n" + "".join(
+        f"#print axioms {name}\n" for name in theorems
     ))
     result = output("lake", "env", "lean", "-DwarningAsError=true", audit, cwd=ROOT / "lean")
-    audits = re.findall(r"'([^']+)' depends on axioms: \[([^]]*)\]", result)
-    if {name for name, _ in audits} != set(ORDER_THEOREMS):
-        raise RuntimeError(f"missing ordering proof axiom audit:\n{result}")
+    audits = re.findall(
+        r"'([^']+)' (?:depends on axioms: \[([^]]*)\]|does not depend on any axioms)", result,
+    )
+    if {name for name, _ in audits} != set(theorems):
+        raise RuntimeError(f"missing proof axiom audit:\n{result}")
     for name, axioms in audits:
         if set(filter(None, map(str.strip, axioms.split(",")))) - {"propext", "Classical.choice", "Quot.sound"}:
             raise RuntimeError(f"unexpected axioms in {name}: {axioms}")
-    print(f"Ordering axiom audit: {len(audits)} theorems use only standard Lean axioms.", flush=True)
+    print(f"Proof axiom audit: {len(audits)} ordering/backend theorems use only standard Lean axioms.", flush=True)
 
 
 def main():
@@ -141,6 +153,7 @@ def main():
         "--start-from", "rusthammer::FoldSepBy::min",
         "--start-from", "rusthammer::FoldSepBy::max",
         "--start-from", "{impl rusthammer::Parser for _}",
+        "--start-from", "{impl rusthammer::Eval for _}",
         "--start-from", "{impl core::clone::Clone for rusthammer::_}",
         # The crate-root type pattern above does not cover nested example types.
         "--start-from", "{impl core::clone::Clone for rusthammer::marker_example::Marker}",
@@ -173,7 +186,7 @@ def main():
     run("cargo", "test", *cargo_args, "--no-default-features")
     run("cargo", "test", *cargo_args, "--features", "alloc")
     entries = (
-        "checked_flag", "packet", "complete_bit", "blocks", "leading_ones",
+        "checked_flag", "packet", "complete_bit", "blocks", "leading_ones", "backend_payload",
         "folded_checksum", "leading_ones_count",
         "separated_blocks", "separated_checksum",
         "bound_payload", "bound_literal", "bound_blocks", "bound_reference",
@@ -216,7 +229,7 @@ def main():
         if re.search(r"\b(?:sorry|admit)\b|^\s*(?:axiom|opaque)\s", path.read_text(), re.M):
             parser.error(f"unproved or opaque declaration in {path}")
     run("lake", "build", cwd=ROOT / "lean")
-    audit_ordering_proofs()
+    audit_proofs()
     for path in compatibility_files:
         run("lake", "env", "lean", "-DwarningAsError=true", path, cwd=ROOT / "lean")
 

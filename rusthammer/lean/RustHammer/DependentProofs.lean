@@ -30,8 +30,9 @@ private def checkedCount (value : U64) (result : core.result.Result Usize Unit) 
 
 private theorem checked_count_spec (value : U64) :
     checkInst.call () value ⦃ result => checkedCount value result ⦄ := by
-  simp only [
-    dependent_examples.ParserInputCountPrefixUsize.parse_with.closure.Insts.CoreOpsFunctionFnTupleU64ResultUsizeTuple.call]
+  change dependent_examples.count_parser.closure.Insts.CoreOpsFunctionFnTupleU64ResultUsizeTuple.call
+    () value ⦃ result => checkedCount value result ⦄
+  simp only [dependent_examples.count_parser.closure.Insts.CoreOpsFunctionFnTupleU64ResultUsizeTuple.call]
   by_cases h : value.val ≤ 64
   · have hv : value ≤ 64#u64 := by scalar_tac
     simp only [if_pos hv]
@@ -90,7 +91,7 @@ theorem count_prefix_with_spec (input : Slice U8) (cursor : Cursor) (status : In
       ⦃ result => Spec.countPrefix input cursor status result ⦄ := by
   change dependent_examples.CountPrefix.Insts.RusthammerParserInputUsize.parse_with () input cursor (Spec.defaultContext status)
     ⦃ result => Spec.countPrefix input cursor status result ⦄
-  unfold dependent_examples.CountPrefix.Insts.RusthammerParserInputUsize.parse_with
+  rw [dependent_examples.CountPrefix.Insts.RusthammerParserInputUsize.parse_with_eq]
   step with fixed_bits_spec 8#u8 (by decide) as ⟨configured, hconfigured⟩
   simp only [hconfigured]
   step with try_map_with_spec Bits.Insts.RusthammerParserInputU64 checkInst

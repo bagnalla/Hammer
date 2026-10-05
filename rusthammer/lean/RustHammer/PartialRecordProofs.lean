@@ -58,7 +58,7 @@ theorem record_header_with_spec (input : Slice U8) (cursor : Cursor) (status : I
   have hv (start : Cursor) := bits_with_spec Spec.recordParser.version input start status (by decide)
   have hf (start : Cursor) := bits_with_spec Spec.recordParser.flags input start status (by decide)
   have hl (start : Cursor) := bits_with_spec Spec.recordParser.length input start status (by decide)
-  have htail (start : Cursor) : (Seq.Insts.RusthammerParserInputPair bi bi).parse_with fieldsParser.second input start (Spec.defaultContext status)
+  have htail (start : Cursor) : Seq.Insts.RusthammerParserInputPair.parse_with bi bi fieldsParser.second input start (Spec.defaultContext status)
       ⦃ outcome => Partial.primitive status
         (Spec.sequence (fun start => Spec.bitsOutcome input start 5#u8)
           (fun start => Spec.bitsOutcome input start 16#u8) start) outcome ⦄ := by
@@ -67,6 +67,9 @@ theorem record_header_with_spec (input : Slice U8) (cursor : Cursor) (status : I
       (fun start => Partial.primitive status (Spec.bitsOutcome input start 16#u8)) hf hl
       as ⟨outcome, houtcome⟩
     exact sequence_primitive status _ _ start outcome houtcome
+  change Seq.Insts.RusthammerParserInputPair.parse_with bi
+    (Seq.Insts.RusthammerParserInputPair bi bi) fieldsParser input cursor (Spec.defaultContext status)
+    ⦃ outcome => Partial.primitive status (Spec.recordHeaderOutcome input cursor) outcome ⦄
   step with seq_with_spec bi (Seq.Insts.RusthammerParserInputPair bi bi) fieldsParser input cursor (Spec.defaultContext status)
     (fun start => Partial.primitive status (Spec.bitsOutcome input start 3#u8))
     (fun start => Partial.primitive status (Spec.sequence
@@ -88,7 +91,7 @@ theorem marker_with_spec (parser : Marker) (input : Slice U8) (cursor : Cursor)
     (fun start => Partial.primitive status (Spec.literalOutcome input start 8#u8 202#u64))
     (fun start => literal_with_spec _ input start status (by decide))
     (fun start => literal_with_spec _ input start status (by decide))
-  unfold Marker.Insts.RusthammerParserInputU64.parse_with
+  rw [Marker.Insts.RusthammerParserInputU64.parse_with_eq]
   rw [hconfig]
   step with seq_with_spec ci End.Insts.RusthammerParserInputTuple
     { first := alternatives, second := () } input cursor (Spec.defaultContext status)
@@ -111,13 +114,13 @@ theorem marker_with_spec (parser : Marker) (input : Slice U8) (cursor : Cursor)
 /-- A partial body cannot succeed before EOF is confirmed, even with all payload bytes. -/
 theorem record_body_partial_spec (input : Slice U8) (cursor : Cursor) (version flags : U64)
     (count : Usize) (hvalid : Spec.validCursor input cursor) (haligned : cursor.bit.val = 0) :
-    parse_record_body input cursor version flags count (Spec.defaultContext .Partial)
+    DirectRun.record_example.parse_record_body input cursor version flags count (Spec.defaultContext .Partial)
       ⦃ result => Partial.recordBodyOutcome input cursor count result ⦄ := by
   have hparts : cursor.bit.val < 8 ∧ cursor.byte.val ≤ input.val.length ∧
       (cursor.byte.val = input.val.length → cursor.bit.val = 0) := by
     unfold Spec.validCursor Spec.position at hvalid
     omega
-  unfold parse_record_body
+  rw [DirectRun.record_example.parse_record_body_eq]
   step with seq_with_spec TakeAligned.Insts.RusthammerParserInputSharedInputSliceU8
     End.Insts.RusthammerParserInputTuple { first := { count }, second := () } input cursor (Spec.defaultContext .Partial)
     (fun start => Partial.primitive .Partial (Spec.takeAlignedOutcome input start count))
@@ -169,7 +172,7 @@ theorem record_partial_spec (parser : RecordParser) (input : Slice U8) (cursor :
       ⦃ result => Partial.recordOutcome input cursor result ⦄ := by
   change parser = Spec.recordParser at hconfig
   subst parser
-  unfold RecordParser.Insts.RusthammerParserInputRecord.parse_with
+  rw [RecordParser.Insts.RusthammerParserInputRecord.parse_with_eq]
   step with take_aligned_with_spec { count := 0#usize } input cursor .Partial
     as ⟨checkedOutcome, hcheckedOutcome⟩
   rcases hcheckedOutcome with ⟨checked, hchecked, rfl⟩

@@ -43,6 +43,10 @@ Ordering entries check all four orders through unsigned, signed, and named
 integer; and a pattern borrow returned through a scope. They cover context
 propagation, restored order, partial input, and parser references/cloning.
 All entries now pass `ParseContext` through the ordinary dependency interface.
+The `backend_payload` entry uses a consumer-defined mutable backend and a child
+that implements only `Eval<Counter>`. Lookahead, sequencing, and a dependent
+parser share its call counter. Its borrowed output escapes the local backend;
+native tests check pointer identity, call counts, and partial-input outcomes.
 
 Run `python3 tools/verify.py` from `rusthammer/`. Alongside the library tests and
 proofs, that command:
@@ -51,7 +55,7 @@ proofs, that command:
    the compiler stage available for dependencies, and Lean type-checks it.
 2. Tests this consumer with allocation disabled and enabled.
 3. Extracts the consumer with RustHammer's dependency bodies included and `alloc`
-   enabled, checks that all 43 entry points were translated, and Lean
+   enabled, checks that all 44 entry points were translated, and Lean
    type-checks the result.
 4. Rejects admitted or opaque project declarations in both extra translations.
 

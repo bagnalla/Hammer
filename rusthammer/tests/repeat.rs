@@ -1,4 +1,5 @@
 #![cfg(feature = "alloc")]
+use rusthammer::{Eval, Grammar};
 
 use rusthammer::{
     And, Bits, Choice, ConfigError, Cursor, End, Literal, Map, Not, Optional, ParseContext,
@@ -8,10 +9,18 @@ use std::cell::Cell;
 
 struct MustNotRun;
 
-impl<'input> Parser<'input> for MustNotRun {
+impl<'input> Grammar<'input> for MustNotRun {
     type Output = ();
+}
 
-    fn parse_with(&self, _: &'input [u8], _: Cursor, _: ParseContext) -> ParseOutcome<()> {
+impl<'input, Backend> Eval<'input, Backend> for MustNotRun {
+    fn eval(
+        &self,
+        _: &mut Backend,
+        _: &'input [u8],
+        _: Cursor,
+        _: ParseContext,
+    ) -> ParseOutcome<()> {
         panic!("zero repetitions must not invoke the child")
     }
 }
@@ -152,9 +161,18 @@ fn stopping_distinguishes_rejection_fatal_errors_and_incompleteness() {
         calls: &'a Cell<usize>,
         error: Option<ParseError>,
     }
-    impl<'input> Parser<'input> for StopAfterTwo<'_> {
+    impl<'input> Grammar<'input> for StopAfterTwo<'_> {
         type Output = ();
-        fn parse_with(&self, _: &'input [u8], cursor: Cursor, _: ParseContext) -> ParseOutcome<()> {
+    }
+
+    impl<'input, Backend> Eval<'input, Backend> for StopAfterTwo<'_> {
+        fn eval(
+            &self,
+            _: &mut Backend,
+            _: &'input [u8],
+            cursor: Cursor,
+            _: ParseContext,
+        ) -> ParseOutcome<()> {
             self.calls.set(self.calls.get() + 1);
             match self.calls.get() {
                 1 | 2 => ParseOutcome::Success(cursor, ()),
@@ -428,9 +446,18 @@ fn every_child_error_stops_repetition_and_is_preserved() {
         calls: &'a Cell<usize>,
         error: ParseError,
     }
-    impl<'input> Parser<'input> for FailAfterTwo<'_> {
+    impl<'input> Grammar<'input> for FailAfterTwo<'_> {
         type Output = ();
-        fn parse_with(&self, _: &'input [u8], cursor: Cursor, _: ParseContext) -> ParseOutcome<()> {
+    }
+
+    impl<'input, Backend> Eval<'input, Backend> for FailAfterTwo<'_> {
+        fn eval(
+            &self,
+            _: &mut Backend,
+            _: &'input [u8],
+            cursor: Cursor,
+            _: ParseContext,
+        ) -> ParseOutcome<()> {
             self.calls.set(self.calls.get() + 1);
             match self.calls.get() {
                 1 | 2 => ParseOutcome::Success(cursor, ()),
@@ -800,9 +827,18 @@ fn unbounded_invalid_initial_cursors_skip_the_child() {
 #[test]
 fn unbounded_success_cursors_must_be_valid_and_strictly_forward() {
     struct Jump(Cursor);
-    impl<'input> Parser<'input> for Jump {
+    impl<'input> Grammar<'input> for Jump {
         type Output = ();
-        fn parse_with(&self, _: &'input [u8], _: Cursor, _: ParseContext) -> ParseOutcome<()> {
+    }
+
+    impl<'input, Backend> Eval<'input, Backend> for Jump {
+        fn eval(
+            &self,
+            _: &mut Backend,
+            _: &'input [u8],
+            _: Cursor,
+            _: ParseContext,
+        ) -> ParseOutcome<()> {
             ParseOutcome::Success(self.0, ())
         }
     }
@@ -838,9 +874,18 @@ fn unbounded_success_cursors_must_be_valid_and_strictly_forward() {
 #[test]
 fn repetition_progress_and_count_errors_are_fatal_in_control_combinators() {
     struct Fail(ParseError);
-    impl<'input> Parser<'input> for Fail {
+    impl<'input> Grammar<'input> for Fail {
         type Output = ();
-        fn parse_with(&self, _: &'input [u8], _: Cursor, _: ParseContext) -> ParseOutcome<()> {
+    }
+
+    impl<'input, Backend> Eval<'input, Backend> for Fail {
+        fn eval(
+            &self,
+            _: &mut Backend,
+            _: &'input [u8],
+            _: Cursor,
+            _: ParseContext,
+        ) -> ParseOutcome<()> {
             ParseOutcome::Error(self.0)
         }
     }

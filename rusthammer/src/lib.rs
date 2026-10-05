@@ -173,11 +173,14 @@ impl SkipBits {
     }
 }
 
-impl<'input> Parser<'input> for SkipBits {
+impl<'input> Grammar<'input> for SkipBits {
     type Output = ();
+}
 
-    fn parse_with(
+impl<'input, Backend> Eval<'input, Backend> for SkipBits {
+    fn eval(
         &self,
+        _: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
@@ -205,11 +208,14 @@ impl<'input> Parser<'input> for SkipBits {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Tell;
 
-impl<'input> Parser<'input> for Tell {
+impl<'input> Grammar<'input> for Tell {
     type Output = Cursor;
+}
 
-    fn parse_with(
+impl<'input, Backend> Eval<'input, Backend> for Tell {
+    fn eval(
         &self,
+        _: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         _context: ParseContext,
@@ -366,32 +372,61 @@ impl<T> ParseOutcome<T> {
     }
 }
 
-/// A parser with an output type determined by its implementation.
+/// A typed grammar, independent of the backend used to execute it.
 ///
-/// Input and cursor are separate so outputs may borrow from the input without
-/// also returning a borrowed input object through the generic interface.
-pub trait Parser<'input> {
+/// The output can borrow from the input or from the grammar's configuration.
+/// Implementing this trait alone does not provide an execution capability.
+pub trait Grammar<'input> {
     type Output;
+}
 
-    /// Parse with explicit ordering and input finality. Implementations must propagate
-    /// `NeedMore` before trying alternatives or deciding absence. On final input,
-    /// they must return success or a parse error, never `NeedMore`.
+/// Execute a grammar with a selected backend and its invocation-local state.
+///
+/// Every child invocation must use `eval` with the same backend, including
+/// lookahead, retries, and parsers constructed by `Bind`. Calling `parse` or
+/// `parse_with` inside an evaluator would start a separate direct execution.
+/// Backtracking restores the cursor, not backend bookkeeping.
+///
+/// Input and immutable ordering/finality context are separate from mutable
+/// execution state so returned values can borrow the input independently.
+/// Implementations propagate `NeedMore` before trying alternatives or deciding
+/// absence; on final input they return success or an error, never `NeedMore`.
+/// A stateful backend must bind its state to the input and grammar it describes.
+pub trait Eval<'input, Backend>: Grammar<'input> {
+    fn eval(
+        &self,
+        backend: &mut Backend,
+        input: &'input [u8],
+        cursor: Cursor,
+        context: ParseContext,
+    ) -> ParseOutcome<Self::Output>;
+}
+
+/// Direct recursive interpretation, with no retained execution state.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Direct;
+
+/// Convenience entry points for grammars that support direct interpretation.
+///
+/// This trait is implemented automatically from `Eval<Direct>`. Custom parsers
+/// implement `Grammar` and `Eval`, rather than overriding these entry points.
+pub trait Parser<'input>: Eval<'input, Direct> {
+    /// Start direct execution with explicit ordering and input finality.
     ///
     /// A partial parse can succeed without reaching EOF. To retry `NeedMore`,
-    /// supply the accumulated input and the original cursor, not just the new
-    /// chunk. Parsers retain no buffer or continuation. Retrying can rerun
-    /// callbacks from successful prefixes; their effects are not rolled back.
+    /// supply the accumulated input and original cursor. Parsers retain no buffer
+    /// or continuation. Retrying can rerun callbacks; effects are not rolled back.
     fn parse_with(
         &self,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
-    ) -> ParseOutcome<Self::Output>;
+    ) -> ParseOutcome<Self::Output> {
+        self.eval(&mut Direct, input, cursor, context)
+    }
 
     /// Parse a complete buffer with high-first bits and big byte order.
-    /// Built-in combinators use this default unchanged;
-    /// parser references forward any override from their underlying parser.
-    /// A custom implementation's unexpected `NeedMore` becomes `UnexpectedEnd`.
+    /// A custom evaluator's unexpected `NeedMore` becomes `UnexpectedEnd`.
     fn parse(
         &self,
         input: &'input [u8],
@@ -402,26 +437,23 @@ pub trait Parser<'input> {
     }
 }
 
+impl<'input, P: Eval<'input, Direct>> Parser<'input> for P {}
+
 /// Reuse a parser by shared reference, preserving both entry points and its output
 /// type. The parser reference's lifetime is independent of the input lifetime.
-impl<'input, P: Parser<'input>> Parser<'input> for &P {
+impl<'input, P: Grammar<'input>> Grammar<'input> for &P {
     type Output = P::Output;
+}
 
-    fn parse_with(
+impl<'input, Backend, P: Eval<'input, Backend>> Eval<'input, Backend> for &P {
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        P::parse_with(*self, input, cursor, context)
-    }
-
-    fn parse(
-        &self,
-        input: &'input [u8],
-        cursor: Cursor,
-    ) -> Result<(Cursor, Self::Output), ParseError> {
-        P::parse(*self, input, cursor)
+        P::eval(*self, backend, input, cursor, context)
     }
 }
 
@@ -469,11 +501,14 @@ fn read_bit_ordered(
 #[derive(Clone, Copy)]
 pub struct Bit;
 
-impl<'input> Parser<'input> for Bit {
+impl<'input> Grammar<'input> for Bit {
     type Output = bool;
+}
 
-    fn parse_with(
+impl<'input, Backend> Eval<'input, Backend> for Bit {
+    fn eval(
         &self,
+        _: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
@@ -515,11 +550,14 @@ impl Bits {
     }
 }
 
-impl<'input> Parser<'input> for Bits {
+impl<'input> Grammar<'input> for Bits {
     type Output = u64;
+}
 
-    fn parse_with(
+impl<'input, Backend> Eval<'input, Backend> for Bits {
+    fn eval(
         &self,
+        _: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
@@ -699,11 +737,14 @@ fn finish_order_scope<T>(length: usize, changed: bool, result: ParseOutcome<T>) 
     }
 }
 
-impl<'input, P: Parser<'input>> Parser<'input> for WithOrder<P> {
+impl<'input, P: Grammar<'input>> Grammar<'input> for WithOrder<P> {
     type Output = P::Output;
+}
 
-    fn parse_with(
+impl<'input, Backend, P: Eval<'input, Backend>> Eval<'input, Backend> for WithOrder<P> {
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
@@ -714,7 +755,8 @@ impl<'input, P: Parser<'input>> Parser<'input> for WithOrder<P> {
                 return ParseOutcome::Error(error);
             }
         }
-        let result = self.parser.parse_with(
+        let result = self.parser.eval(
+            backend,
             input,
             cursor,
             ParseContext {
@@ -763,16 +805,19 @@ impl SignedBits {
     }
 }
 
-impl<'input> Parser<'input> for SignedBits {
+impl<'input> Grammar<'input> for SignedBits {
     type Output = i64;
+}
 
-    fn parse_with(
+impl<'input, Backend> Eval<'input, Backend> for SignedBits {
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
     ) -> ParseOutcome<i64> {
-        match self.bits.parse_with(input, cursor, context) {
+        match self.bits.eval(backend, input, cursor, context) {
             ParseOutcome::Success(next, value) => {
                 ParseOutcome::Success(next, sign_extend(value, self.bits.width))
             }
@@ -803,16 +848,19 @@ fn sign_extend(value: u64, width: u8) -> i64 {
 #[derive(Clone, Copy)]
 pub struct Byte;
 
-impl<'input> Parser<'input> for Byte {
+impl<'input> Grammar<'input> for Byte {
     type Output = u8;
+}
 
-    fn parse_with(
+impl<'input, Backend> Eval<'input, Backend> for Byte {
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
     ) -> ParseOutcome<u8> {
-        match (Bits { width: 8 }).parse_with(input, cursor, context) {
+        match (Bits { width: 8 }).eval(backend, input, cursor, context) {
             // An eight-bit field is always representable as a byte.
             ParseOutcome::Success(next, value) => ParseOutcome::Success(next, value as u8),
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
@@ -830,11 +878,14 @@ macro_rules! fixed_integer {
         #[derive(Clone, Copy)]
         pub struct $name;
 
-        impl<'input> Parser<'input> for $name {
+        impl<'input> Grammar<'input> for $name {
             type Output = $output;
+        }
 
-            fn parse_with(
+        impl<'input, Backend> Eval<'input, Backend> for $name {
+            fn eval(
                 &self,
+                backend: &mut Backend,
                 input: &'input [u8],
                 cursor: Cursor,
                 context: ParseContext,
@@ -842,7 +893,7 @@ macro_rules! fixed_integer {
                 let context = if $pin_big {
                     ParseContext { order: Order { bit: context.order.bit, byte: ByteOrder::Big }, status: context.status }
                 } else { context };
-                match ($field).parse_with(input, cursor, context) {
+                match ($field).eval(backend, input, cursor, context) {
                     ParseOutcome::Success(next, value) => ParseOutcome::Success(next, value as $output),
                     ParseOutcome::Error(error) => ParseOutcome::Error(error),
                     ParseOutcome::NeedMore => ParseOutcome::NeedMore,
@@ -1014,11 +1065,14 @@ impl ByteIn {
     }
 }
 
-impl<'input> Parser<'input> for ByteIn {
+impl<'input> Grammar<'input> for ByteIn {
     type Output = u8;
+}
 
-    fn parse_with(
+impl<'input, Backend> Eval<'input, Backend> for ByteIn {
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
@@ -1027,7 +1081,7 @@ impl<'input> Parser<'input> for ByteIn {
             parser: Byte,
             predicate: |value: &u8| self.accepts(*value),
         }
-        .parse_with(input, cursor, context)
+        .eval(backend, input, cursor, context)
     }
 }
 
@@ -1074,11 +1128,14 @@ impl ByteNotIn {
     }
 }
 
-impl<'input> Parser<'input> for ByteNotIn {
+impl<'input> Grammar<'input> for ByteNotIn {
     type Output = u8;
+}
 
-    fn parse_with(
+impl<'input, Backend> Eval<'input, Backend> for ByteNotIn {
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
@@ -1087,7 +1144,7 @@ impl<'input> Parser<'input> for ByteNotIn {
             parser: Byte,
             predicate: |value: &u8| self.accepts(*value),
         }
-        .parse_with(input, cursor, context)
+        .eval(backend, input, cursor, context)
     }
 }
 
@@ -1128,11 +1185,14 @@ impl<'pattern> BytePattern<'pattern> {
     }
 }
 
-impl<'input, 'pattern> Parser<'input> for BytePattern<'pattern> {
+impl<'input, 'pattern> Grammar<'input> for BytePattern<'pattern> {
     type Output = &'pattern [u8];
+}
 
-    fn parse_with(
+impl<'input, 'pattern, Backend> Eval<'input, Backend> for BytePattern<'pattern> {
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
@@ -1140,7 +1200,7 @@ impl<'input, 'pattern> Parser<'input> for BytePattern<'pattern> {
         // Keep the returned pattern borrow outside the matching loop. The pinned
         // Aeneas cannot join the loop's borrow contexts when it returns the slice.
         // See probes/pattern_loop_borrow.rs and the accompanying probe notes.
-        match match_byte_pattern(self.pattern, input, cursor, context) {
+        match match_byte_pattern(backend, self.pattern, input, cursor, context) {
             ParseOutcome::Success(next, ()) => ParseOutcome::Success(next, self.pattern),
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
@@ -1148,7 +1208,8 @@ impl<'input, 'pattern> Parser<'input> for BytePattern<'pattern> {
     }
 }
 
-fn match_byte_pattern(
+fn match_byte_pattern<Backend>(
+    backend: &mut Backend,
     pattern: &[u8],
     input: &[u8],
     cursor: Cursor,
@@ -1157,7 +1218,7 @@ fn match_byte_pattern(
     let mut next = cursor;
     let mut index = 0;
     while index < pattern.len() {
-        match Byte.parse_with(input, next, context) {
+        match Byte.eval(backend, input, next, context) {
             ParseOutcome::Success(after, value) => {
                 if value != pattern[index] {
                     return ParseOutcome::Error(ParseError::Mismatch);
@@ -1215,11 +1276,14 @@ impl Literal {
     }
 }
 
-impl<'input> Parser<'input> for Literal {
+impl<'input> Grammar<'input> for Literal {
     type Output = u64;
+}
 
-    fn parse_with(
+impl<'input, Backend> Eval<'input, Backend> for Literal {
+    fn eval(
         &self,
+        _: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
@@ -1254,11 +1318,14 @@ fn read_literal(
 #[derive(Clone, Copy)]
 pub struct End;
 
-impl<'input> Parser<'input> for End {
+impl<'input> Grammar<'input> for End {
     type Output = ();
+}
 
-    fn parse_with(
+impl<'input, Backend> Eval<'input, Backend> for End {
+    fn eval(
         &self,
+        _: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
@@ -1286,10 +1353,18 @@ impl<'input> Parser<'input> for End {
 #[derive(Clone, Copy)]
 pub struct Epsilon;
 
-impl<'input> Parser<'input> for Epsilon {
+impl<'input> Grammar<'input> for Epsilon {
     type Output = ();
+}
 
-    fn parse_with(&self, _: &'input [u8], cursor: Cursor, _: ParseContext) -> ParseOutcome<()> {
+impl<'input, Backend> Eval<'input, Backend> for Epsilon {
+    fn eval(
+        &self,
+        _: &mut Backend,
+        _: &'input [u8],
+        cursor: Cursor,
+        _: ParseContext,
+    ) -> ParseOutcome<()> {
         ParseOutcome::Success(cursor, ())
     }
 }
@@ -1324,10 +1399,18 @@ impl<T> Clone for Fail<T> {
     }
 }
 
-impl<'input, T> Parser<'input> for Fail<T> {
+impl<'input, T> Grammar<'input> for Fail<T> {
     type Output = T;
+}
 
-    fn parse_with(&self, _: &'input [u8], _: Cursor, _: ParseContext) -> ParseOutcome<T> {
+impl<'input, Backend, T> Eval<'input, Backend> for Fail<T> {
+    fn eval(
+        &self,
+        _: &mut Backend,
+        _: &'input [u8],
+        _: Cursor,
+        _: ParseContext,
+    ) -> ParseOutcome<T> {
         ParseOutcome::Error(ParseError::Mismatch)
     }
 }
@@ -1340,20 +1423,25 @@ pub struct Seq<P, Q> {
     pub second: Q,
 }
 
-impl<'input, P: Parser<'input>, Q: Parser<'input>> Parser<'input> for Seq<P, Q> {
+impl<'input, P: Grammar<'input>, Q: Grammar<'input>> Grammar<'input> for Seq<P, Q> {
     type Output = (P::Output, Q::Output);
+}
 
-    fn parse_with(
+impl<'input, Backend, P: Eval<'input, Backend>, Q: Eval<'input, Backend>> Eval<'input, Backend>
+    for Seq<P, Q>
+{
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        match self.first.parse_with(input, cursor, context) {
+        match self.first.eval(backend, input, cursor, context) {
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
             ParseOutcome::Success(next, first) => {
-                match self.second.parse_with(input, next, context) {
+                match self.second.eval(backend, input, next, context) {
                     ParseOutcome::NeedMore => ParseOutcome::NeedMore,
                     ParseOutcome::Error(error) => ParseOutcome::Error(error),
                     ParseOutcome::Success(end, second) => {
@@ -1401,23 +1489,31 @@ pub struct Bind<P, F> {
     pub then: F,
 }
 
-impl<'input, P, F, Q> Parser<'input> for Bind<P, F>
+impl<'input, P, F, Q> Grammar<'input> for Bind<P, F>
 where
-    P: Parser<'input>,
+    P: Grammar<'input>,
     F: Fn(P::Output) -> Q,
-    Q: Parser<'input>,
+    Q: Grammar<'input>,
 {
     type Output = Q::Output;
+}
 
-    fn parse_with(
+impl<'input, Backend, P, F, Q> Eval<'input, Backend> for Bind<P, F>
+where
+    P: Eval<'input, Backend>,
+    F: Fn(P::Output) -> Q,
+    Q: Eval<'input, Backend>,
+{
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        match self.parser.parse_with(input, cursor, context) {
+        match self.parser.eval(backend, input, cursor, context) {
             ParseOutcome::Success(next, value) => {
-                (self.then)(value).parse_with(input, next, context)
+                (self.then)(value).eval(backend, input, next, context)
             }
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
@@ -1434,11 +1530,16 @@ pub struct Left<P, Q> {
     pub second: Q,
 }
 
-impl<'input, P: Parser<'input>, Q: Parser<'input>> Parser<'input> for Left<P, Q> {
+impl<'input, P: Grammar<'input>, Q: Grammar<'input>> Grammar<'input> for Left<P, Q> {
     type Output = P::Output;
+}
 
-    fn parse_with(
+impl<'input, Backend, P: Eval<'input, Backend>, Q: Eval<'input, Backend>> Eval<'input, Backend>
+    for Left<P, Q>
+{
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
@@ -1447,7 +1548,7 @@ impl<'input, P: Parser<'input>, Q: Parser<'input>> Parser<'input> for Left<P, Q>
             first: &self.first,
             second: &self.second,
         };
-        match sequence.parse_with(input, cursor, context) {
+        match sequence.eval(backend, input, cursor, context) {
             // Keep tuple destructuring separate for Aeneas dependency extraction;
             // see InputStatus::classify and probes/cross_crate/README.md.
             ParseOutcome::Success(next, values) => {
@@ -1469,11 +1570,16 @@ pub struct Right<P, Q> {
     pub second: Q,
 }
 
-impl<'input, P: Parser<'input>, Q: Parser<'input>> Parser<'input> for Right<P, Q> {
+impl<'input, P: Grammar<'input>, Q: Grammar<'input>> Grammar<'input> for Right<P, Q> {
     type Output = Q::Output;
+}
 
-    fn parse_with(
+impl<'input, Backend, P: Eval<'input, Backend>, Q: Eval<'input, Backend>> Eval<'input, Backend>
+    for Right<P, Q>
+{
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
@@ -1482,7 +1588,7 @@ impl<'input, P: Parser<'input>, Q: Parser<'input>> Parser<'input> for Right<P, Q
             first: &self.first,
             second: &self.second,
         };
-        match sequence.parse_with(input, cursor, context) {
+        match sequence.eval(backend, input, cursor, context) {
             // Keep tuple destructuring separate for Aeneas dependency extraction;
             // see InputStatus::classify and probes/cross_crate/README.md.
             ParseOutcome::Success(next, values) => {
@@ -1505,13 +1611,23 @@ pub struct Middle<L, P, R> {
     pub right: R,
 }
 
-impl<'input, L: Parser<'input>, P: Parser<'input>, R: Parser<'input>> Parser<'input>
+impl<'input, L: Grammar<'input>, P: Grammar<'input>, R: Grammar<'input>> Grammar<'input>
     for Middle<L, P, R>
 {
     type Output = P::Output;
+}
 
-    fn parse_with(
+impl<
+        'input,
+        Backend,
+        L: Eval<'input, Backend>,
+        P: Eval<'input, Backend>,
+        R: Eval<'input, Backend>,
+    > Eval<'input, Backend> for Middle<L, P, R>
+{
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
@@ -1523,7 +1639,7 @@ impl<'input, L: Parser<'input>, P: Parser<'input>, R: Parser<'input>> Parser<'in
                 second: &self.right,
             },
         };
-        match sequence.parse_with(input, cursor, context) {
+        match sequence.eval(backend, input, cursor, context) {
             // Keep tuple destructuring separate for Aeneas dependency extraction;
             // see InputStatus::classify and probes/cross_crate/README.md.
             ParseOutcome::Success(next, values) => {
@@ -1544,16 +1660,19 @@ pub struct Ignore<P> {
     pub parser: P,
 }
 
-impl<'input, P: Parser<'input>> Parser<'input> for Ignore<P> {
+impl<'input, P: Grammar<'input>> Grammar<'input> for Ignore<P> {
     type Output = ();
+}
 
-    fn parse_with(
+impl<'input, Backend, P: Eval<'input, Backend>> Eval<'input, Backend> for Ignore<P> {
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
     ) -> ParseOutcome<()> {
-        match self.parser.parse_with(input, cursor, context) {
+        match self.parser.eval(backend, input, cursor, context) {
             ParseOutcome::Success(next, _) => ParseOutcome::Success(next, ()),
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
@@ -2017,37 +2136,67 @@ fn repeat_next_count(count: usize) -> Result<usize, ParseError> {
 }
 
 #[cfg(feature = "alloc")]
-impl<'input, P: Parser<'input>> Parser<'input> for Repeat<P> {
+impl<'input, P: Grammar<'input>> Grammar<'input> for Repeat<P> {
     type Output = Vec<P::Output>;
+}
 
-    fn parse_with(
+#[cfg(feature = "alloc")]
+impl<'input, Backend, P: Eval<'input, Backend>> Eval<'input, Backend> for Repeat<P> {
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        repeat_run(&self.parser, self.bounds, &Collect, input, cursor, context)
+        repeat_run(
+            backend,
+            &self.parser,
+            self.bounds,
+            &Collect,
+            input,
+            cursor,
+            context,
+        )
     }
 }
 
-impl<'input, P, I, F, R> Parser<'input> for FoldRepeat<P, I, F>
+impl<'input, P, I, F, R> Grammar<'input> for FoldRepeat<P, I, F>
 where
-    P: Parser<'input>,
+    P: Grammar<'input>,
     I: Fn() -> R,
     F: Fn(R, P::Output) -> R,
 {
     type Output = R;
-    fn parse_with(
+}
+
+impl<'input, Backend, P, I, F, R> Eval<'input, Backend> for FoldRepeat<P, I, F>
+where
+    P: Eval<'input, Backend>,
+    I: Fn() -> R,
+    F: Fn(R, P::Output) -> R,
+{
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
     ) -> ParseOutcome<R> {
-        repeat_run(&self.parser, self.bounds, self, input, cursor, context)
+        repeat_run(
+            backend,
+            &self.parser,
+            self.bounds,
+            self,
+            input,
+            cursor,
+            context,
+        )
     }
 }
 
-fn repeat_run<'input, P, A>(
+fn repeat_run<'input, Backend, P, A>(
+    backend: &mut Backend,
     parser: &P,
     bounds: RepeatBounds,
     accumulator: &A,
@@ -2056,17 +2205,33 @@ fn repeat_run<'input, P, A>(
     context: ParseContext,
 ) -> ParseOutcome<A::Output>
 where
-    P: Parser<'input>,
+    P: Eval<'input, Backend>,
     A: RepeatAccumulator<P::Output>,
 {
-    repeat_run_with(parser, parser, bounds, accumulator, input, cursor, context)
+    repeat_run_with(
+        backend,
+        parser,
+        parser,
+        bounds,
+        accumulator,
+        input,
+        cursor,
+        context,
+    )
 }
 
 #[cfg(feature = "alloc")]
-impl<'input, P: Parser<'input>, S: Parser<'input>> Parser<'input> for SepBy<P, S> {
+impl<'input, P: Grammar<'input>, S: Grammar<'input>> Grammar<'input> for SepBy<P, S> {
     type Output = Vec<P::Output>;
-    fn parse_with(
+}
+
+#[cfg(feature = "alloc")]
+impl<'input, Backend, P: Eval<'input, Backend>, S: Eval<'input, Backend>> Eval<'input, Backend>
+    for SepBy<P, S>
+{
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
@@ -2076,6 +2241,7 @@ impl<'input, P: Parser<'input>, S: Parser<'input>> Parser<'input> for SepBy<P, S
             second: &self.parser,
         };
         repeat_run_with(
+            backend,
             &self.parser,
             &following,
             self.bounds,
@@ -2087,16 +2253,26 @@ impl<'input, P: Parser<'input>, S: Parser<'input>> Parser<'input> for SepBy<P, S
     }
 }
 
-impl<'input, P, S, I, F, R> Parser<'input> for FoldSepBy<P, S, I, F>
+impl<'input, P, S, I, F, R> Grammar<'input> for FoldSepBy<P, S, I, F>
 where
-    P: Parser<'input>,
-    S: Parser<'input>,
+    P: Grammar<'input>,
+    S: Grammar<'input>,
     I: Fn() -> R,
     F: Fn(R, P::Output) -> R,
 {
     type Output = R;
-    fn parse_with(
+}
+
+impl<'input, Backend, P, S, I, F, R> Eval<'input, Backend> for FoldSepBy<P, S, I, F>
+where
+    P: Eval<'input, Backend>,
+    S: Eval<'input, Backend>,
+    I: Fn() -> R,
+    F: Fn(R, P::Output) -> R,
+{
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
@@ -2106,6 +2282,7 @@ where
             second: &self.parser,
         };
         repeat_run_with(
+            backend,
             &self.parser,
             &following,
             self.bounds,
@@ -2118,7 +2295,8 @@ where
 }
 
 // Choose by retained item count, not cursor position: finite empty items are valid.
-fn repeat_parse<'input, P, Q>(
+fn repeat_parse<'input, Backend, P, Q>(
+    backend: &mut Backend,
     parser: &P,
     following: &Q,
     count: usize,
@@ -2127,20 +2305,21 @@ fn repeat_parse<'input, P, Q>(
     context: ParseContext,
 ) -> ParseOutcome<P::Output>
 where
-    P: Parser<'input>,
-    Q: Parser<'input, Output = P::Output>,
+    P: Eval<'input, Backend>,
+    Q: Eval<'input, Backend, Output = P::Output>,
 {
     if count == 0 {
-        parser.parse_with(input, cursor, context)
+        parser.eval(backend, input, cursor, context)
     } else {
-        following.parse_with(input, cursor, context)
+        following.eval(backend, input, cursor, context)
     }
 }
 
 // The first item and all following attempts share one count/progress/storage loop.
 // A separator/item pair is a single `Right` parser, so rejected pairs naturally
 // leave `next` at the cursor before the separator.
-fn repeat_run_with<'input, P, Q, A>(
+fn repeat_run_with<'input, Backend, P, Q, A>(
+    backend: &mut Backend,
     parser: &P,
     following: &Q,
     bounds: RepeatBounds,
@@ -2150,8 +2329,8 @@ fn repeat_run_with<'input, P, Q, A>(
     context: ParseContext,
 ) -> ParseOutcome<A::Output>
 where
-    P: Parser<'input>,
-    Q: Parser<'input, Output = P::Output>,
+    P: Eval<'input, Backend>,
+    Q: Eval<'input, Backend, Output = P::Output>,
     A: RepeatAccumulator<P::Output>,
 {
     let unbounded = bounds.max.is_none();
@@ -2167,7 +2346,7 @@ where
         if !repeat_below_max(count, bounds.max) {
             return ParseOutcome::Success(next, values);
         }
-        match repeat_parse(parser, following, count, input, next, context) {
+        match repeat_parse(backend, parser, following, count, input, next, context) {
             ParseOutcome::Success(after, value) => {
                 if unbounded {
                     if let Err(error) = repeat_progress(input, next, after) {
@@ -2204,20 +2383,27 @@ pub struct Map<P, F> {
     pub map: F,
 }
 
-impl<'input, P, F, O> Parser<'input> for Map<P, F>
+impl<'input, P, F, O> Grammar<'input> for Map<P, F>
 where
-    P: Parser<'input>,
+    P: Grammar<'input>,
     F: Fn(P::Output) -> O,
 {
     type Output = O;
+}
 
-    fn parse_with(
+impl<'input, Backend, P, F, O> Eval<'input, Backend> for Map<P, F>
+where
+    P: Eval<'input, Backend>,
+    F: Fn(P::Output) -> O,
+{
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        match self.parser.parse_with(input, cursor, context) {
+        match self.parser.eval(backend, input, cursor, context) {
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
             ParseOutcome::Success(next, value) => ParseOutcome::Success(next, (self.map)(value)),
@@ -2240,20 +2426,27 @@ pub struct TryMap<P, F> {
     pub map: F,
 }
 
-impl<'input, P, F, O, E> Parser<'input> for TryMap<P, F>
+impl<'input, P, F, O, E> Grammar<'input> for TryMap<P, F>
 where
-    P: Parser<'input>,
+    P: Grammar<'input>,
     F: Fn(P::Output) -> Result<O, E>,
 {
     type Output = O;
+}
 
-    fn parse_with(
+impl<'input, Backend, P, F, O, E> Eval<'input, Backend> for TryMap<P, F>
+where
+    P: Eval<'input, Backend>,
+    F: Fn(P::Output) -> Result<O, E>,
+{
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        match self.parser.parse_with(input, cursor, context) {
+        match self.parser.eval(backend, input, cursor, context) {
             ParseOutcome::Success(next, value) => match (self.map)(value) {
                 Ok(mapped) => ParseOutcome::Success(next, mapped),
                 // Keep `_error`: unlike `_`, it moves the payload out of Result.
@@ -2279,20 +2472,27 @@ pub struct Verify<P, F> {
     pub predicate: F,
 }
 
-impl<'input, P, F> Parser<'input> for Verify<P, F>
+impl<'input, P, F> Grammar<'input> for Verify<P, F>
 where
-    P: Parser<'input>,
+    P: Grammar<'input>,
     F: Fn(&P::Output) -> bool,
 {
     type Output = P::Output;
+}
 
-    fn parse_with(
+impl<'input, Backend, P, F> Eval<'input, Backend> for Verify<P, F>
+where
+    P: Eval<'input, Backend>,
+    F: Fn(&P::Output) -> bool,
+{
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        match self.parser.parse_with(input, cursor, context) {
+        match self.parser.eval(backend, input, cursor, context) {
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
             ParseOutcome::Success(next, value) => {
@@ -2348,7 +2548,7 @@ impl<P, T> IntRange<P, T> {
     /// Construct an inclusive range, rejecting `lower > upper` before parsing.
     pub fn new<'input>(parser: P, lower: T, upper: T) -> Result<Self, ConfigError>
     where
-        P: Parser<'input, Output = T>,
+        P: Grammar<'input, Output = T>,
         T: Ord,
     {
         if lower > upper {
@@ -2373,15 +2573,22 @@ impl<P, T> IntRange<P, T> {
     }
 }
 
-impl<'input, P, T> Parser<'input> for IntRange<P, T>
+impl<'input, P, T> Grammar<'input> for IntRange<P, T>
 where
-    P: Parser<'input, Output = T>,
+    P: Grammar<'input, Output = T>,
     T: Ord,
 {
     type Output = T;
+}
 
-    fn parse_with(
+impl<'input, Backend, P, T> Eval<'input, Backend> for IntRange<P, T>
+where
+    P: Eval<'input, Backend, Output = T>,
+    T: Ord,
+{
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
@@ -2390,7 +2597,7 @@ where
             parser: &self.parser,
             predicate: |value: &T| self.lower <= *value && *value <= self.upper,
         }
-        .parse_with(input, cursor, context)
+        .eval(backend, input, cursor, context)
     }
 }
 
@@ -2407,25 +2614,32 @@ pub struct Choice<P, Q> {
     pub second: Q,
 }
 
-impl<'input, P, Q> Parser<'input> for Choice<P, Q>
+impl<'input, P, Q> Grammar<'input> for Choice<P, Q>
 where
-    P: Parser<'input>,
-    Q: Parser<'input, Output = P::Output>,
+    P: Grammar<'input>,
+    Q: Grammar<'input, Output = P::Output>,
 {
     type Output = P::Output;
+}
 
-    fn parse_with(
+impl<'input, Backend, P, Q> Eval<'input, Backend> for Choice<P, Q>
+where
+    P: Eval<'input, Backend>,
+    Q: Eval<'input, Backend, Output = P::Output>,
+{
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        match self.first.parse_with(input, cursor, context) {
+        match self.first.eval(backend, input, cursor, context) {
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
             ParseOutcome::Success(next, value) => ParseOutcome::Success(next, value),
             ParseOutcome::Error(error) => {
                 if error.is_recoverable() {
-                    self.second.parse_with(input, cursor, context)
+                    self.second.eval(backend, input, cursor, context)
                 } else {
                     ParseOutcome::Error(error)
                 }
@@ -2442,7 +2656,8 @@ fn match_length_allows(first: Cursor, second: Cursor, allow_equal: bool) -> bool
             && (first.bit > second.bit || (allow_equal && first.bit == second.bit)))
 }
 
-fn restrict_match<'input, P, Q>(
+fn restrict_match<'input, Backend, P, Q>(
+    backend: &mut Backend,
     first: &P,
     second: &Q,
     input: &'input [u8],
@@ -2451,13 +2666,13 @@ fn restrict_match<'input, P, Q>(
     allow_equal: bool,
 ) -> ParseOutcome<P::Output>
 where
-    P: Parser<'input>,
-    Q: Parser<'input>,
+    P: Eval<'input, Backend>,
+    Q: Eval<'input, Backend>,
 {
-    match first.parse_with(input, cursor, context) {
+    match first.eval(backend, input, cursor, context) {
         ParseOutcome::NeedMore => ParseOutcome::NeedMore,
         ParseOutcome::Error(error) => ParseOutcome::Error(error),
-        ParseOutcome::Success(next, value) => match second.parse_with(input, cursor, context) {
+        ParseOutcome::Success(next, value) => match second.eval(backend, input, cursor, context) {
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
             ParseOutcome::Error(error) => {
                 if error.is_recoverable() {
@@ -2506,20 +2721,35 @@ pub struct ButNot<P, Q> {
     pub second: Q,
 }
 
-impl<'input, P, Q> Parser<'input> for ButNot<P, Q>
+impl<'input, P, Q> Grammar<'input> for ButNot<P, Q>
 where
-    P: Parser<'input>,
-    Q: Parser<'input>,
+    P: Grammar<'input>,
+    Q: Grammar<'input>,
 {
     type Output = P::Output;
+}
 
-    fn parse_with(
+impl<'input, Backend, P, Q> Eval<'input, Backend> for ButNot<P, Q>
+where
+    P: Eval<'input, Backend>,
+    Q: Eval<'input, Backend>,
+{
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        restrict_match(&self.first, &self.second, input, cursor, context, false)
+        restrict_match(
+            backend,
+            &self.first,
+            &self.second,
+            input,
+            cursor,
+            context,
+            false,
+        )
     }
 }
 
@@ -2535,20 +2765,35 @@ pub struct Difference<P, Q> {
     pub second: Q,
 }
 
-impl<'input, P, Q> Parser<'input> for Difference<P, Q>
+impl<'input, P, Q> Grammar<'input> for Difference<P, Q>
 where
-    P: Parser<'input>,
-    Q: Parser<'input>,
+    P: Grammar<'input>,
+    Q: Grammar<'input>,
 {
     type Output = P::Output;
+}
 
-    fn parse_with(
+impl<'input, Backend, P, Q> Eval<'input, Backend> for Difference<P, Q>
+where
+    P: Eval<'input, Backend>,
+    Q: Eval<'input, Backend>,
+{
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        restrict_match(&self.first, &self.second, input, cursor, context, true)
+        restrict_match(
+            backend,
+            &self.first,
+            &self.second,
+            input,
+            cursor,
+            context,
+            true,
+        )
     }
 }
 
@@ -2576,30 +2821,37 @@ pub struct Xor<P, Q> {
     pub second: Q,
 }
 
-impl<'input, P, Q> Parser<'input> for Xor<P, Q>
+impl<'input, P, Q> Grammar<'input> for Xor<P, Q>
 where
-    P: Parser<'input>,
-    Q: Parser<'input, Output = P::Output>,
+    P: Grammar<'input>,
+    Q: Grammar<'input, Output = P::Output>,
 {
     type Output = P::Output;
+}
 
-    fn parse_with(
+impl<'input, Backend, P, Q> Eval<'input, Backend> for Xor<P, Q>
+where
+    P: Eval<'input, Backend>,
+    Q: Eval<'input, Backend, Output = P::Output>,
+{
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        match self.first.parse_with(input, cursor, context) {
+        match self.first.eval(backend, input, cursor, context) {
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
             ParseOutcome::Error(error) => {
                 if error.is_recoverable() {
-                    self.second.parse_with(input, cursor, context)
+                    self.second.eval(backend, input, cursor, context)
                 } else {
                     ParseOutcome::Error(error)
                 }
             }
             ParseOutcome::Success(next, value) => {
-                match self.second.parse_with(input, cursor, context) {
+                match self.second.eval(backend, input, cursor, context) {
                     ParseOutcome::NeedMore => ParseOutcome::NeedMore,
                     ParseOutcome::Success(_other_cursor, _other_value) => {
                         ParseOutcome::Error(ParseError::Mismatch)
@@ -2628,16 +2880,19 @@ pub struct Optional<P> {
     pub parser: P,
 }
 
-impl<'input, P: Parser<'input>> Parser<'input> for Optional<P> {
+impl<'input, P: Grammar<'input>> Grammar<'input> for Optional<P> {
     type Output = Option<P::Output>;
+}
 
-    fn parse_with(
+impl<'input, Backend, P: Eval<'input, Backend>> Eval<'input, Backend> for Optional<P> {
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        match self.parser.parse_with(input, cursor, context) {
+        match self.parser.eval(backend, input, cursor, context) {
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
             ParseOutcome::Success(next, value) => ParseOutcome::Success(next, Some(value)),
             ParseOutcome::Error(error) => {
@@ -2661,16 +2916,19 @@ pub struct And<P> {
     pub parser: P,
 }
 
-impl<'input, P: Parser<'input>> Parser<'input> for And<P> {
+impl<'input, P: Grammar<'input>> Grammar<'input> for And<P> {
     type Output = ();
+}
 
-    fn parse_with(
+impl<'input, Backend, P: Eval<'input, Backend>> Eval<'input, Backend> for And<P> {
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
     ) -> ParseOutcome<()> {
-        match self.parser.parse_with(input, cursor, context) {
+        match self.parser.eval(backend, input, cursor, context) {
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
             ParseOutcome::Success(_, _) => ParseOutcome::Success(cursor, ()),
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
@@ -2688,16 +2946,19 @@ pub struct Not<P> {
     pub parser: P,
 }
 
-impl<'input, P: Parser<'input>> Parser<'input> for Not<P> {
+impl<'input, P: Grammar<'input>> Grammar<'input> for Not<P> {
     type Output = ();
+}
 
-    fn parse_with(
+impl<'input, Backend, P: Eval<'input, Backend>> Eval<'input, Backend> for Not<P> {
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
     ) -> ParseOutcome<()> {
-        match self.parser.parse_with(input, cursor, context) {
+        match self.parser.eval(backend, input, cursor, context) {
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
             ParseOutcome::Success(_, _) => ParseOutcome::Error(ParseError::Mismatch),
             ParseOutcome::Error(error) => {
@@ -2720,11 +2981,14 @@ pub struct TakeAligned {
     pub count: usize,
 }
 
-impl<'input> Parser<'input> for TakeAligned {
+impl<'input> Grammar<'input> for TakeAligned {
     type Output = &'input [u8];
+}
 
-    fn parse_with(
+impl<'input, Backend> Eval<'input, Backend> for TakeAligned {
+    fn eval(
         &self,
+        _: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,

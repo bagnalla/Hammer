@@ -17,7 +17,7 @@ theorem bits_with_spec (parser : Bits) (input : Slice U8) (cursor : Cursor) (con
     (hw : Spec.validBits parser) :
     Bits.Insts.RusthammerParserInputU64.parse_with parser input cursor context
       ⦃ result => Partial.primitive context.status (outcome input cursor parser.width context.order) result ⦄ := by
-  unfold Bits.Insts.RusthammerParserInputU64.parse_with
+  rw [Bits.Insts.RusthammerParserInputU64.parse_with_eq]
   step with read_ordered_bits_spec input cursor parser context.order hw as ⟨parsed, hp⟩
   step with classify_spec context.status parsed as ⟨result, hr⟩
   exact ⟨parsed, hp, hr⟩
@@ -25,7 +25,7 @@ theorem bits_with_spec (parser : Bits) (input : Slice U8) (cursor : Cursor) (con
 theorem bit_with_spec (input : Slice U8) (cursor : Cursor) (context : ParseContext) :
     Bit.Insts.RusthammerParserInputBool.parse_with () input cursor context
       ⦃ result => Partial.primitive context.status (bitOutcome input cursor context.order.bit) result ⦄ := by
-  unfold Bit.Insts.RusthammerParserInputBool.parse_with
+  rw [Bit.Insts.RusthammerParserInputBool.parse_with_eq]
   step with read_bit_ordered_spec input cursor context.order.bit as ⟨parsed, hp⟩
   step with classify_spec context.status parsed as ⟨result, hr⟩
   exact ⟨parsed, hp, hr⟩
@@ -58,7 +58,7 @@ theorem literal_with_spec (parser : Literal) (input : Slice U8) (cursor : Cursor
     Literal.Insts.RusthammerParserInputU64.parse_with parser input cursor context
       ⦃ result => Partial.primitive context.status
         (literalOutcome input cursor parser.bits.width parser.value context.order) result ⦄ := by
-  unfold Literal.Insts.RusthammerParserInputU64.parse_with
+  rw [Literal.Insts.RusthammerParserInputU64.parse_with_eq]
   step with literal_decode_spec parser input cursor context.order hw as ⟨parsed, hp⟩
   step with classify_spec context.status parsed as ⟨result, hr⟩
   exact ⟨parsed, hp, hr⟩
@@ -90,7 +90,7 @@ theorem signed_bits_with_spec (parser : SignedBits) (input : Slice U8) (cursor :
     (context : ParseContext) (hconfig : Spec.validSignedBits parser) :
     SignedBits.Insts.RusthammerParserInputI64.parse_with parser input cursor context
       ⦃ result => Partial.primitive context.status (signedBitsOutcome input cursor parser.bits.width context.order) result ⦄ := by
-  unfold SignedBits.Insts.RusthammerParserInputI64.parse_with
+  rw [SignedBits.Insts.RusthammerParserInputI64.parse_with_eq]
   step with bits_with_spec parser.bits input cursor context hconfig as ⟨outcome, houtcome⟩
   rcases houtcome with ⟨parsed, hparsed, rfl⟩
   by_cases hvalid : Spec.validCursor input cursor
@@ -211,6 +211,7 @@ theorem byte_with_spec (input : Slice U8) (cursor : Cursor) (context : ParseCont
     Byte.Insts.RusthammerParserInputU8.parse_with () input cursor context
       ⦃ result => Partial.primitive context.status
         (unsignedIntegerOutcome .U8 input cursor context.order) result ⦄ := by
+  rw [Byte.Insts.RusthammerParserInputU8.parse_with_eq]
   exact narrow_unsigned_spec .U8 8#u8 input cursor context rfl (by decide)
 
 abbrev bigContext (context : ParseContext) : ParseContext :=
@@ -220,36 +221,41 @@ theorem be_u16_with_spec (input : Slice U8) (cursor : Cursor) (context : ParseCo
     BeU16.Insts.RusthammerParserInputU16.parse_with () input cursor context
       ⦃ result => Partial.primitive context.status
         (unsignedIntegerOutcome .U16 input cursor (bigContext context).order) result ⦄ := by
+  rw [BeU16.Insts.RusthammerParserInputU16.parse_with_eq]
   exact narrow_unsigned_spec .U16 16#u8 input cursor (bigContext context) rfl (by decide)
 
 theorem be_u32_with_spec (input : Slice U8) (cursor : Cursor) (context : ParseContext) :
     BeU32.Insts.RusthammerParserInputU32.parse_with () input cursor context
       ⦃ result => Partial.primitive context.status
         (unsignedIntegerOutcome .U32 input cursor (bigContext context).order) result ⦄ := by
+  rw [BeU32.Insts.RusthammerParserInputU32.parse_with_eq]
   exact narrow_unsigned_spec .U32 32#u8 input cursor (bigContext context) rfl (by decide)
 
 theorem be_i16_with_spec (input : Slice U8) (cursor : Cursor) (context : ParseContext) :
     BeI16.Insts.RusthammerParserInputI16.parse_with () input cursor context
       ⦃ result => Partial.primitive context.status
         (signedIntegerOutcome .I16 input cursor (bigContext context).order) result ⦄ := by
+  rw [BeI16.Insts.RusthammerParserInputI16.parse_with_eq]
   exact narrow_signed_spec .I16 16#u8 input cursor (bigContext context) rfl (by decide)
 
 theorem be_i32_with_spec (input : Slice U8) (cursor : Cursor) (context : ParseContext) :
     BeI32.Insts.RusthammerParserInputI32.parse_with () input cursor context
       ⦃ result => Partial.primitive context.status
         (signedIntegerOutcome .I32 input cursor (bigContext context).order) result ⦄ := by
+  rw [BeI32.Insts.RusthammerParserInputI32.parse_with_eq]
   exact narrow_signed_spec .I32 32#u8 input cursor (bigContext context) rfl (by decide)
 
 theorem i8_with_spec (input : Slice U8) (cursor : Cursor) (context : ParseContext) :
     I8.Insts.RusthammerParserInputI8.parse_with () input cursor context
       ⦃ result => Partial.primitive context.status
         (signedIntegerOutcome .I8 input cursor context.order) result ⦄ := by
+  rw [I8.Insts.RusthammerParserInputI8.parse_with_eq]
   exact narrow_signed_spec .I8 8#u8 input cursor context rfl (by decide)
 
 theorem be_u64_with_spec (input : Slice U8) (cursor : Cursor) (context : ParseContext) :
     BeU64.Insts.RusthammerParserInputU64.parse_with () input cursor context
       ⦃ result => Partial.primitive context.status (unsignedIntegerOutcome .U64 input cursor (bigContext context).order) result ⦄ := by
-  unfold BeU64.Insts.RusthammerParserInputU64.parse_with
+  rw [BeU64.Insts.RusthammerParserInputU64.parse_with_eq]
   step with bits_with_spec { width := 64#u8 } input cursor (bigContext context) (by decide) as ⟨outcome, houtcome⟩
   have h : Partial.primitive context.status (unsignedIntegerOutcome .U64 input cursor (bigContext context).order) outcome := by
     simpa only [Partial.primitive, Ordering.outcome, Ordering.success, unsignedIntegerOutcome,
@@ -259,7 +265,7 @@ theorem be_u64_with_spec (input : Slice U8) (cursor : Cursor) (context : ParseCo
 theorem be_i64_with_spec (input : Slice U8) (cursor : Cursor) (context : ParseContext) :
     BeI64.Insts.RusthammerParserInputI64.parse_with () input cursor context
       ⦃ result => Partial.primitive context.status (signedIntegerOutcome .I64 input cursor (bigContext context).order) result ⦄ := by
-  unfold BeI64.Insts.RusthammerParserInputI64.parse_with
+  rw [BeI64.Insts.RusthammerParserInputI64.parse_with_eq]
   step with signed_bits_with_spec { bits := { width := 64#u8 } } input cursor (bigContext context) (by decide)
     as ⟨outcome, houtcome⟩
   have h : Partial.primitive context.status (signedIntegerOutcome .I64 input cursor (bigContext context).order) outcome := by
@@ -269,15 +275,19 @@ theorem be_i64_with_spec (input : Slice U8) (cursor : Cursor) (context : ParseCo
 
 /-- The existing byte reader is the unsigned eight-bit member of this family. -/
 theorem match_byte_pattern_spec (pattern input : Slice U8) (cursor : Cursor) (context : ParseContext) :
-    match_byte_pattern pattern input cursor context
+    DirectRun.match_byte_pattern pattern input cursor context
       ⦃ result => matchBytes input context pattern.val cursor result ⦄ := by
-  unfold match_byte_pattern match_byte_pattern_loop
-  apply loop.spec_decr_nat (fun state => pattern.val.length - state.2.val)
-    (fun (next, index) => index.val ≤ pattern.val.length ∧
+  rw [DirectRun.match_byte_pattern_eq]
+  unfold DirectRun.match_byte_pattern_loop
+  apply direct_projection_spec
+  unfold match_byte_pattern_loop
+  apply loop.spec_decr_nat (fun state => pattern.val.length - state.2.2.val)
+    (fun (_, next, index) => index.val ≤ pattern.val.length ∧
       ∀ outcome, matchBytes input context (pattern.val.drop index.val) next outcome →
         matchBytes input context pattern.val cursor outcome)
-  · rintro ⟨next, index⟩ ⟨hindex, hcont⟩
+  · rintro ⟨⟨⟩, next, index⟩ ⟨hindex, hcont⟩
     unfold match_byte_pattern_loop.body
+    simp only [Byte.Insts.RusthammerParserInputU8.parse_with_lift, Std.bind_assoc, bind_ok]
     by_cases hlt : index < pattern.len
     · have hlen : index.val < pattern.val.length := by scalar_tac
       have hdrop : pattern.val.drop index.val =
@@ -324,7 +334,7 @@ theorem byte_pattern_with_spec (parser : BytePattern) (input : Slice U8)
     (cursor : Cursor) (context : ParseContext) :
     BytePattern.Insts.RusthammerParserInputSharedPatternSliceU8.parse_with parser input cursor context
       ⦃ result => bytePatternOutcome input context parser.pattern cursor result ⦄ := by
-  unfold BytePattern.Insts.RusthammerParserInputSharedPatternSliceU8.parse_with
+  rw [BytePattern.Insts.RusthammerParserInputSharedPatternSliceU8.parse_with_eq]
   step with match_byte_pattern_spec parser.pattern input cursor context as ⟨outcome, houtcome⟩
   cases outcome <;> simp only [spec_ok, bytePatternOutcome]
   · exact ⟨trivial, houtcome⟩
@@ -337,11 +347,13 @@ theorem byte_in_with_spec (parser : ByteIn) (input : Slice U8) (cursor : Cursor)
       ⦃ result => Partial.verify
         (fun start => Partial.primitive context.status (unsignedIntegerOutcome .U8 input start context.order))
         (Spec.bitmapPredicate parser.set false) cursor result ⦄ := by
-  unfold ByteIn.Insts.RusthammerParserInputU8.parse_with
+  rw [ByteIn.Insts.RusthammerParserInputU8.parse_with_eq]
   apply verify_with_spec Byte.Insts.RusthammerParserInputU8
     ParserInputByteInU8.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool
     { parser := (), predicate := parser } input cursor context _
-    (Spec.bitmapPredicate parser.set false) (byte_with_spec input cursor context)
+    (Spec.bitmapPredicate parser.set false) (by
+      simpa only [Byte.Insts.RusthammerParserInputU8.parse_with] using
+        byte_with_spec input cursor context)
   intro next value _
   exact byte_in_predicate_spec parser value
 
@@ -351,11 +363,13 @@ theorem byte_not_in_with_spec (parser : ByteNotIn) (input : Slice U8) (cursor : 
       ⦃ result => Partial.verify
         (fun start => Partial.primitive context.status (unsignedIntegerOutcome .U8 input start context.order))
         (Spec.bitmapPredicate parser.set true) cursor result ⦄ := by
-  unfold ByteNotIn.Insts.RusthammerParserInputU8.parse_with
+  rw [ByteNotIn.Insts.RusthammerParserInputU8.parse_with_eq]
   apply verify_with_spec Byte.Insts.RusthammerParserInputU8
     ParserInputByteNotInU8.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool
     { parser := (), predicate := parser } input cursor context _
-    (Spec.bitmapPredicate parser.set true) (byte_with_spec input cursor context)
+    (Spec.bitmapPredicate parser.set true) (by
+      simpa only [Byte.Insts.RusthammerParserInputU8.parse_with] using
+        byte_with_spec input cursor context)
   intro next value _
   exact byte_not_in_predicate_spec parser value
 

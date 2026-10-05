@@ -1,3 +1,4 @@
+use rusthammer::{Eval, Grammar};
 use std::cell::{Cell, RefCell};
 
 use rusthammer::{
@@ -17,12 +18,16 @@ fn complete<'input, P: Parser<'input>>(
 }
 
 #[test]
-fn references_forward_both_methods_including_complete_overrides() {
+fn references_forward_execution_through_both_entry_points() {
     struct Custom(Cell<usize>);
-    impl<'input> Parser<'input> for Custom {
+    impl<'input> Grammar<'input> for Custom {
         type Output = &'input [u8];
-        fn parse_with(
+    }
+
+    impl<'input, Backend> Eval<'input, Backend> for Custom {
+        fn eval(
             &self,
+            _: &mut Backend,
             _: &'input [u8],
             _: Cursor,
             context: ParseContext,
@@ -33,49 +38,39 @@ fn references_forward_both_methods_including_complete_overrides() {
                 rusthammer::InputStatus::Final => ParseOutcome::Error(ParseError::Mismatch),
             }
         }
-        fn parse(
-            &self,
-            input: &'input [u8],
-            cursor: Cursor,
-        ) -> Result<(Cursor, Self::Output), ParseError> {
-            self.0.set(self.0.get() + 10);
-            Ok((cursor, input))
-        }
     }
     let parser = Custom(Cell::new(0));
     let reference = &parser;
-    assert_eq!(
-        complete(reference, b"abc"),
-        Ok((Cursor::start(), &b"abc"[..]))
-    );
-    assert_eq!(
-        complete(&reference, b"xy"),
-        Ok((Cursor::start(), &b"xy"[..]))
-    );
-    assert_eq!(parser.0.get(), 20);
-    // Generic combinators use parse_with, even when the child overrides parse.
+    assert_eq!(complete(reference, b"abc"), Err(ParseError::Mismatch));
+    assert_eq!(complete(&reference, b"xy"), Err(ParseError::Mismatch));
+    assert_eq!(parser.0.get(), 2);
+    // Nested references and combinators retain the same evaluator.
     let ignore = Ignore { parser: &reference };
     assert_eq!(
         ignore.parse_with(b"abc", Cursor::start(), ParseContext::PARTIAL),
         ParseOutcome::NeedMore
     );
     assert_eq!(complete(&ignore, b"abc"), Err(ParseError::Mismatch));
-    assert_eq!(parser.0.get(), 22);
+    assert_eq!(parser.0.get(), 4);
 }
 
 #[test]
 fn one_nonclone_parser_can_be_reused_in_multiple_grammars() {
     // The wrapper deliberately implements neither Clone nor Copy.
     struct Byte(Bits);
-    impl<'input> Parser<'input> for Byte {
+    impl<'input> Grammar<'input> for Byte {
         type Output = u64;
-        fn parse_with(
+    }
+
+    impl<'input, Backend> Eval<'input, Backend> for Byte {
+        fn eval(
             &self,
+            backend: &mut Backend,
             input: &'input [u8],
             cursor: Cursor,
             context: ParseContext,
         ) -> ParseOutcome<u64> {
-            self.0.parse_with(input, cursor, context)
+            self.0.eval(backend, input, cursor, context)
         }
     }
     let byte = Byte(Bits::new(8).unwrap());
@@ -241,15 +236,19 @@ fn selection_matches_a_bit_string_oracle_including_empty_fields() {
 struct Borrowed<'input>(&'input [u8]);
 
 struct BorrowedParser;
-impl<'input> Parser<'input> for BorrowedParser {
+impl<'input> Grammar<'input> for BorrowedParser {
     type Output = Borrowed<'input>;
-    fn parse_with(
+}
+
+impl<'input, Backend> Eval<'input, Backend> for BorrowedParser {
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        match (TakeAligned { count: 3 }).parse_with(input, cursor, context) {
+        match (TakeAligned { count: 3 }).eval(backend, input, cursor, context) {
             ParseOutcome::Success(next, bytes) => ParseOutcome::Success(next, Borrowed(bytes)),
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,
@@ -371,10 +370,14 @@ struct Stage<'a> {
     visits: &'a RefCell<Vec<(usize, Cursor, ParseContext)>>,
     drops: &'a RefCell<Vec<usize>>,
 }
-impl<'input, 'a> Parser<'input> for Stage<'a> {
+impl<'input, 'a> Grammar<'input> for Stage<'a> {
     type Output = Ticket<'a>;
-    fn parse_with(
+}
+
+impl<'input, 'a, Backend> Eval<'input, Backend> for Stage<'a> {
+    fn eval(
         &self,
+        _: &mut Backend,
         _: &'input [u8],
         cursor: Cursor,
         context: ParseContext,

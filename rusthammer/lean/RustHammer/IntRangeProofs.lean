@@ -9,7 +9,7 @@ open Code
 
 /-- Comparisons in user-defined Ord implementations require contracts, just like
 Verify callbacks. Native scalar comparisons satisfy these hypotheses directly. -/
-theorem int_range_new_spec {P T : Type} (pi : Parser P T) (oi : core.cmp.Ord T)
+theorem int_range_new_spec {P T : Type} (pi : Grammar P T) (oi : core.cmp.Ord T)
     (child : P) (lower upper : T) (le : T → T → Prop) [DecidableRel le]
     (hgt : oi.partialOrdInst.gt lower upper ⦃ result => result = decide (¬ le lower upper) ⦄) :
     IntRange.new pi oi child lower upper
@@ -18,7 +18,7 @@ theorem int_range_new_spec {P T : Type} (pi : Parser P T) (oi : core.cmp.Ord T)
   step with hgt as ⟨reversed, hreversed⟩
   by_cases h : le lower upper <;> simp [hreversed, h, Spec.intRangeNewOutcome, spec_ok]
 
-theorem int_range_new_valid {P T : Type} (pi : Parser P T) (oi : core.cmp.Ord T)
+theorem int_range_new_valid {P T : Type} (pi : Grammar P T) (oi : core.cmp.Ord T)
     (child : P) (lower upper : T) (parser : IntRange P T)
     (le : T → T → Prop) [DecidableRel le]
     (hgt : oi.partialOrdInst.gt lower upper ⦃ result => result = decide (¬ le lower upper) ⦄)
@@ -52,12 +52,13 @@ theorem int_range_clone_spec {P T : Type} (pc : core.clone.Clone P) (tc : core.c
   step with hu as ⟨upper, hupper⟩
   simp [hchild, hlower, hupper]
 
-theorem int_range_predicate_spec {P T : Type} (pi : Parser P T) (oi : core.cmp.Ord T)
+theorem int_range_predicate_spec {P T : Type} (pi : DirectParser P T) (oi : core.cmp.Ord T)
     (parser : IntRange P T) (value : T) (le : T → T → Prop) [DecidableRel le]
     (hle : ∀ a b, oi.partialOrdInst.le a b ⦃ result => result = decide (le a b) ⦄) :
     ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1TBool.call
       pi oi parser value ⦃ result => result = decide (Spec.inRange le parser.lower parser.upper value) ⦄ := by
   unfold ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1TBool.call
+    EvalInputIntRangeBackendT.eval.closure.Insts.CoreOpsFunctionFnTupleShared1TBool.call
   step with hle parser.lower value as ⟨above, habove⟩
   by_cases h : le parser.lower value
   · simp only [habove, h, decide_true, ↓reduceIte]
@@ -67,14 +68,14 @@ theorem int_range_predicate_spec {P T : Type} (pi : Parser P T) (oi : core.cmp.O
 
 /-- Range validation is exactly Verify with a proved inclusive predicate.
 No extra cursor checks or bound revalidation are inserted at parse time. -/
-theorem int_range_with_spec {P T : Type} (pi : Parser P T) (oi : core.cmp.Ord T)
+theorem int_range_with_spec {P T : Type} (pi : DirectParser P T) (oi : core.cmp.Ord T)
     (parser : IntRange P T) (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (child : Cursor → ParseOutcome T → Prop) (le : T → T → Prop) [DecidableRel le]
     (hp : pi.parse_with parser.parser input cursor context ⦃ result => child cursor result ⦄)
     (hle : ∀ a b, oi.partialOrdInst.le a b ⦃ result => result = decide (le a b) ⦄) :
     IntRange.Insts.RusthammerParser.parse_with pi oi parser input cursor context
       ⦃ result => Partial.verify child (Spec.inRange le parser.lower parser.upper) cursor result ⦄ := by
-  unfold IntRange.Insts.RusthammerParser.parse_with
+  rw [IntRange.Insts.RusthammerParser.parse_with_eq]
   apply verify_with_spec (Shared0P.Insts.RusthammerParser pi)
     (ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1TBool pi oi)
     { parser := parser.parser, predicate := parser } input cursor context child
@@ -82,14 +83,14 @@ theorem int_range_with_spec {P T : Type} (pi : Parser P T) (oi : core.cmp.Ord T)
   intro next value _hvalue
   exact int_range_predicate_spec pi oi parser value le hle
 
-theorem int_range_final_spec {P T : Type} (pi : Parser P T) (oi : core.cmp.Ord T)
+theorem int_range_final_spec {P T : Type} (pi : DirectParser P T) (oi : core.cmp.Ord T)
     (parser : IntRange P T) (input : Slice U8) (cursor : Cursor)
     (child : Cursor → Spec.ParseResult T → Prop) (le : T → T → Prop) [DecidableRel le]
     (hp : pi.parse_with parser.parser input cursor ParseContext.FINAL ⦃ result => Spec.completed (child cursor) result ⦄)
     (hle : ∀ a b, oi.partialOrdInst.le a b ⦃ result => result = decide (le a b) ⦄) :
     IntRange.Insts.RusthammerParser.parse_with pi oi parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.intRange child le parser.lower parser.upper cursor) result ⦄ := by
-  unfold IntRange.Insts.RusthammerParser.parse_with
+  rw [IntRange.Insts.RusthammerParser.parse_with_eq]
   apply verify_spec (Shared0P.Insts.RusthammerParser pi)
     (ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1TBool pi oi)
     { parser := parser.parser, predicate := parser } input cursor child
@@ -97,12 +98,12 @@ theorem int_range_final_spec {P T : Type} (pi : Parser P T) (oi : core.cmp.Ord T
   intro next value _hvalue
   exact int_range_predicate_spec pi oi parser value le hle
 
-theorem int_range_spec {P T : Type} (pi : Parser P T) (oi : core.cmp.Ord T)
+theorem int_range_spec {P T : Type} (pi : DirectParser P T) (oi : core.cmp.Ord T)
     (parser : IntRange P T) (input : Slice U8) (cursor : Cursor)
     (child : Cursor → Spec.ParseResult T → Prop) (le : T → T → Prop) [DecidableRel le]
     (hp : pi.parse_with parser.parser input cursor ParseContext.FINAL ⦃ result => Spec.completed (child cursor) result ⦄)
     (hle : ∀ a b, oi.partialOrdInst.le a b ⦃ result => result = decide (le a b) ⦄) :
-    Parser.parse.default (IntRange.Insts.RusthammerParser pi oi) parser input cursor
+    DirectParser.parse (IntRange.Insts.RusthammerParser pi oi) parser input cursor
       ⦃ result => Spec.intRange child le parser.lower parser.upper cursor result ⦄ := by
   exact complete_spec (IntRange.Insts.RusthammerParser pi oi) parser input cursor
     (Spec.intRange child le parser.lower parser.upper cursor)
@@ -167,7 +168,7 @@ theorem int_range_i64_comparisons (a b : Std.I64) :
     (core.cmp.OrdI64.partialOrdInst.gt a b ⦃ result => result = decide (¬ a.val ≤ b.val) ⦄) := by
   simp [core.cmp.impls.PartialOrdI64.le, core.cmp.impls.PartialOrdI64.gt, liftFun2, spec_ok, not_le]
 
-theorem int_range_u8_new_spec {P : Type} (pi : Parser P Std.U8)
+theorem int_range_u8_new_spec {P : Type} (pi : Grammar P Std.U8)
     (child : P) (lower upper : Std.U8) :
     IntRange.new pi core.cmp.OrdU8 child lower upper
       ⦃ result => Spec.intRangeNewOutcome (fun a b => a.val ≤ b.val) child lower upper result ⦄ := by
@@ -187,7 +188,7 @@ theorem byte_integer_range_with_spec (parser : IntRange Code.Byte Std.U8)
     (byte_integer_with_spec input cursor status)
     (fun a b => (int_range_u8_comparisons a b).1)
 
-theorem int_range_u16_new_spec {P : Type} (pi : Parser P Std.U16)
+theorem int_range_u16_new_spec {P : Type} (pi : Grammar P Std.U16)
     (child : P) (lower upper : Std.U16) :
     IntRange.new pi core.cmp.OrdU16 child lower upper
       ⦃ result => Spec.intRangeNewOutcome (fun a b => a.val ≤ b.val) child lower upper result ⦄ := by
@@ -207,7 +208,7 @@ theorem be_u16_range_with_spec (parser : IntRange BeU16 Std.U16)
     (be_u16_with_spec input cursor status)
     (fun a b => (int_range_u16_comparisons a b).1)
 
-theorem int_range_u32_new_spec {P : Type} (pi : Parser P Std.U32)
+theorem int_range_u32_new_spec {P : Type} (pi : Grammar P Std.U32)
     (child : P) (lower upper : Std.U32) :
     IntRange.new pi core.cmp.OrdU32 child lower upper
       ⦃ result => Spec.intRangeNewOutcome (fun a b => a.val ≤ b.val) child lower upper result ⦄ := by
@@ -227,7 +228,7 @@ theorem be_u32_range_with_spec (parser : IntRange BeU32 Std.U32)
     (be_u32_with_spec input cursor status)
     (fun a b => (int_range_u32_comparisons a b).1)
 
-theorem int_range_u64_new_spec {P : Type} (pi : Parser P Std.U64)
+theorem int_range_u64_new_spec {P : Type} (pi : Grammar P Std.U64)
     (child : P) (lower upper : Std.U64) :
     IntRange.new pi core.cmp.OrdU64 child lower upper
       ⦃ result => Spec.intRangeNewOutcome (fun a b => a.val ≤ b.val) child lower upper result ⦄ := by
@@ -247,7 +248,7 @@ theorem be_u64_range_with_spec (parser : IntRange BeU64 Std.U64)
     (be_u64_with_spec input cursor status)
     (fun a b => (int_range_u64_comparisons a b).1)
 
-theorem int_range_i8_new_spec {P : Type} (pi : Parser P Std.I8)
+theorem int_range_i8_new_spec {P : Type} (pi : Grammar P Std.I8)
     (child : P) (lower upper : Std.I8) :
     IntRange.new pi core.cmp.OrdI8 child lower upper
       ⦃ result => Spec.intRangeNewOutcome (fun a b => a.val ≤ b.val) child lower upper result ⦄ := by
@@ -267,7 +268,7 @@ theorem i8_range_with_spec (parser : IntRange Code.I8 Std.I8)
     (i8_with_spec input cursor status)
     (fun a b => (int_range_i8_comparisons a b).1)
 
-theorem int_range_i16_new_spec {P : Type} (pi : Parser P Std.I16)
+theorem int_range_i16_new_spec {P : Type} (pi : Grammar P Std.I16)
     (child : P) (lower upper : Std.I16) :
     IntRange.new pi core.cmp.OrdI16 child lower upper
       ⦃ result => Spec.intRangeNewOutcome (fun a b => a.val ≤ b.val) child lower upper result ⦄ := by
@@ -287,7 +288,7 @@ theorem be_i16_range_with_spec (parser : IntRange BeI16 Std.I16)
     (be_i16_with_spec input cursor status)
     (fun a b => (int_range_i16_comparisons a b).1)
 
-theorem int_range_i32_new_spec {P : Type} (pi : Parser P Std.I32)
+theorem int_range_i32_new_spec {P : Type} (pi : Grammar P Std.I32)
     (child : P) (lower upper : Std.I32) :
     IntRange.new pi core.cmp.OrdI32 child lower upper
       ⦃ result => Spec.intRangeNewOutcome (fun a b => a.val ≤ b.val) child lower upper result ⦄ := by
@@ -307,7 +308,7 @@ theorem be_i32_range_with_spec (parser : IntRange BeI32 Std.I32)
     (be_i32_with_spec input cursor status)
     (fun a b => (int_range_i32_comparisons a b).1)
 
-theorem int_range_i64_new_spec {P : Type} (pi : Parser P Std.I64)
+theorem int_range_i64_new_spec {P : Type} (pi : Grammar P Std.I64)
     (child : P) (lower upper : Std.I64) :
     IntRange.new pi core.cmp.OrdI64 child lower upper
       ⦃ result => Spec.intRangeNewOutcome (fun a b => a.val ≤ b.val) child lower upper result ⦄ := by

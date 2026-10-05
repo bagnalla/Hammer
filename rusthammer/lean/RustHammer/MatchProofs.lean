@@ -55,14 +55,14 @@ theorem match_endpoint_order_consumption (allowEqual : Bool) (cursor first secon
   rw [match_endpoint_order_bits allowEqual first second hf hs]
   cases allowEqual <;> simp only [Bool.false_eq_true, ↓reduceIte] <;> omega
 
-theorem restrict_match_with_spec {P Q α β : Type} (pi : Parser P α) (qi : Parser Q β)
+theorem restrict_match_with_spec {P Q α β : Type} (pi : DirectParser P α) (qi : DirectParser Q β)
     (p : P) (q : Q) (input : Slice U8) (cursor : Cursor) (context : ParseContext) (allowEqual : Bool)
     (first : Cursor → ParseOutcome α → Prop) (second : Cursor → ParseOutcome β → Prop)
     (hp : pi.parse_with p input cursor context ⦃ result => first cursor result ⦄)
     (hq : qi.parse_with q input cursor context ⦃ result => second cursor result ⦄) :
-    restrict_match pi qi p q input cursor context allowEqual
+    DirectRun.restrict_match pi qi p q input cursor context allowEqual
       ⦃ result => Partial.matchRestriction allowEqual first second cursor result ⦄ := by
-  unfold restrict_match
+  rw [DirectRun.restrict_match_eq]
   step with hp as ⟨left, hleft⟩
   cases left with
   | NeedMore => simp only [spec_ok]; exact ⟨.NeedMore, hleft, rfl⟩
@@ -90,7 +90,7 @@ theorem restrict_match_with_spec {P Q α β : Type} (pi : Parser P α) (qi : Par
         simp only [heq, Bool.false_eq_true, ↓reduceIte, spec_ok]
         exact ⟨.Success next value, hleft, .Success other otherValue, hright, by simp [hl]⟩
 
-theorem but_not_with_spec {P Q α β : Type} (pi : Parser P α) (qi : Parser Q β)
+theorem but_not_with_spec {P Q α β : Type} (pi : DirectParser P α) (qi : DirectParser Q β)
     (parser : ButNot P Q) (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (first : Cursor → ParseOutcome α → Prop) (second : Cursor → ParseOutcome β → Prop)
     (hp : pi.parse_with parser.first input cursor context ⦃ result => first cursor result ⦄)
@@ -99,7 +99,7 @@ theorem but_not_with_spec {P Q α β : Type} (pi : Parser P α) (qi : Parser Q �
       ⦃ result => Partial.matchRestriction false first second cursor result ⦄ := by
   exact restrict_match_with_spec pi qi parser.first parser.second input cursor context false first second hp hq
 
-theorem difference_with_spec {P Q α β : Type} (pi : Parser P α) (qi : Parser Q β)
+theorem difference_with_spec {P Q α β : Type} (pi : DirectParser P α) (qi : DirectParser Q β)
     (parser : Difference P Q) (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (first : Cursor → ParseOutcome α → Prop) (second : Cursor → ParseOutcome β → Prop)
     (hp : pi.parse_with parser.first input cursor context ⦃ result => first cursor result ⦄)
@@ -108,14 +108,14 @@ theorem difference_with_spec {P Q α β : Type} (pi : Parser P α) (qi : Parser 
       ⦃ result => Partial.matchRestriction true first second cursor result ⦄ := by
   exact restrict_match_with_spec pi qi parser.first parser.second input cursor context true first second hp hq
 
-theorem xor_with_spec {P Q α : Type} (pi : Parser P α) (qi : Parser Q α)
+theorem xor_with_spec {P Q α : Type} (pi : DirectParser P α) (qi : DirectParser Q α)
     (parser : Xor P Q) (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (first second : Cursor → ParseOutcome α → Prop)
     (hp : pi.parse_with parser.first input cursor context ⦃ result => first cursor result ⦄)
     (hq : qi.parse_with parser.second input cursor context ⦃ result => second cursor result ⦄) :
     Xor.Insts.RusthammerParser.parse_with pi qi parser input cursor context
       ⦃ result => Partial.exclusive first second cursor result ⦄ := by
-  unfold Xor.Insts.RusthammerParser.parse_with
+  rw [Xor.Insts.RusthammerParser.parse_with_eq]
   step with hp as ⟨left, hleft⟩
   cases left with
   | NeedMore => simp only [spec_ok]; exact ⟨.NeedMore, hleft, rfl⟩
@@ -186,12 +186,12 @@ private theorem completed_not_more {α : Type} (contract : Spec.ParseResult α �
   | Err error => cases heq
   | Ok pair => cases pair; cases heq
 
-theorem restrict_match_final_spec {P Q α β : Type} (pi : Parser P α) (qi : Parser Q β)
+theorem restrict_match_final_spec {P Q α β : Type} (pi : DirectParser P α) (qi : DirectParser Q β)
     (p : P) (q : Q) (input : Slice U8) (cursor : Cursor) (allowEqual : Bool)
     (first : Cursor → Spec.ParseResult α → Prop) (second : Cursor → Spec.ParseResult β → Prop)
     (hp : pi.parse_with p input cursor ParseContext.FINAL ⦃ result => Spec.completed (first cursor) result ⦄)
     (hq : qi.parse_with q input cursor ParseContext.FINAL ⦃ result => Spec.completed (second cursor) result ⦄) :
-    restrict_match pi qi p q input cursor ParseContext.FINAL allowEqual
+    DirectRun.restrict_match pi qi p q input cursor ParseContext.FINAL allowEqual
       ⦃ result => Spec.completed (Spec.matchRestriction allowEqual first second cursor) result ⦄ := by
   step with restrict_match_with_spec pi qi p q input cursor ParseContext.FINAL allowEqual
     (fun start => Spec.completed (first start)) (fun start => Spec.completed (second start)) hp hq
@@ -202,7 +202,7 @@ theorem restrict_match_final_spec {P Q α β : Type} (pi : Parser P α) (qi : Pa
   | NeedMore => exact False.elim (match_restriction_not_more allowEqual _ _ cursor
       (completed_not_more _) (completed_not_more _) hresult)
 
-theorem xor_final_spec {P Q α : Type} (pi : Parser P α) (qi : Parser Q α)
+theorem xor_final_spec {P Q α : Type} (pi : DirectParser P α) (qi : DirectParser Q α)
     (parser : Xor P Q) (input : Slice U8) (cursor : Cursor)
     (first second : Cursor → Spec.ParseResult α → Prop)
     (hp : pi.parse_with parser.first input cursor ParseContext.FINAL ⦃ result => Spec.completed (first cursor) result ⦄)
@@ -217,7 +217,7 @@ theorem xor_final_spec {P Q α : Type} (pi : Parser P α) (qi : Parser Q α)
   | Error error => exact ⟨.Err error, hresult, rfl⟩
   | NeedMore => exact False.elim (xor_not_more _ _ cursor (completed_not_more _) (completed_not_more _) hresult)
 
-theorem but_not_final_spec {P Q α β : Type} (pi : Parser P α) (qi : Parser Q β)
+theorem but_not_final_spec {P Q α β : Type} (pi : DirectParser P α) (qi : DirectParser Q β)
     (parser : ButNot P Q) (input : Slice U8) (cursor : Cursor)
     (first : Cursor → Spec.ParseResult α → Prop) (second : Cursor → Spec.ParseResult β → Prop)
     (hp : pi.parse_with parser.first input cursor ParseContext.FINAL ⦃ result => Spec.completed (first cursor) result ⦄)
@@ -226,7 +226,7 @@ theorem but_not_final_spec {P Q α β : Type} (pi : Parser P α) (qi : Parser Q 
       ⦃ result => Spec.completed (Spec.matchRestriction false first second cursor) result ⦄ := by
   exact restrict_match_final_spec pi qi parser.first parser.second input cursor false first second hp hq
 
-theorem difference_final_spec {P Q α β : Type} (pi : Parser P α) (qi : Parser Q β)
+theorem difference_final_spec {P Q α β : Type} (pi : DirectParser P α) (qi : DirectParser Q β)
     (parser : Difference P Q) (input : Slice U8) (cursor : Cursor)
     (first : Cursor → Spec.ParseResult α → Prop) (second : Cursor → Spec.ParseResult β → Prop)
     (hp : pi.parse_with parser.first input cursor ParseContext.FINAL ⦃ result => Spec.completed (first cursor) result ⦄)
@@ -235,30 +235,30 @@ theorem difference_final_spec {P Q α β : Type} (pi : Parser P α) (qi : Parser
       ⦃ result => Spec.completed (Spec.matchRestriction true first second cursor) result ⦄ := by
   exact restrict_match_final_spec pi qi parser.first parser.second input cursor true first second hp hq
 
-theorem but_not_spec {P Q α β : Type} (pi : Parser P α) (qi : Parser Q β)
+theorem but_not_spec {P Q α β : Type} (pi : DirectParser P α) (qi : DirectParser Q β)
     (parser : ButNot P Q) (input : Slice U8) (cursor : Cursor)
     (first : Cursor → Spec.ParseResult α → Prop) (second : Cursor → Spec.ParseResult β → Prop)
     (hp : pi.parse_with parser.first input cursor ParseContext.FINAL ⦃ result => Spec.completed (first cursor) result ⦄)
     (hq : qi.parse_with parser.second input cursor ParseContext.FINAL ⦃ result => Spec.completed (second cursor) result ⦄) :
-    Parser.parse.default (ButNot.Insts.RusthammerParser pi qi) parser input cursor
+    DirectParser.parse (ButNot.Insts.RusthammerParser pi qi) parser input cursor
       ⦃ result => Spec.matchRestriction false first second cursor result ⦄ := by
   exact complete_spec _ parser input cursor _ (but_not_final_spec pi qi parser input cursor first second hp hq)
 
-theorem difference_spec {P Q α β : Type} (pi : Parser P α) (qi : Parser Q β)
+theorem difference_spec {P Q α β : Type} (pi : DirectParser P α) (qi : DirectParser Q β)
     (parser : Difference P Q) (input : Slice U8) (cursor : Cursor)
     (first : Cursor → Spec.ParseResult α → Prop) (second : Cursor → Spec.ParseResult β → Prop)
     (hp : pi.parse_with parser.first input cursor ParseContext.FINAL ⦃ result => Spec.completed (first cursor) result ⦄)
     (hq : qi.parse_with parser.second input cursor ParseContext.FINAL ⦃ result => Spec.completed (second cursor) result ⦄) :
-    Parser.parse.default (Difference.Insts.RusthammerParser pi qi) parser input cursor
+    DirectParser.parse (Difference.Insts.RusthammerParser pi qi) parser input cursor
       ⦃ result => Spec.matchRestriction true first second cursor result ⦄ := by
   exact complete_spec _ parser input cursor _ (difference_final_spec pi qi parser input cursor first second hp hq)
 
-theorem xor_spec {P Q α : Type} (pi : Parser P α) (qi : Parser Q α)
+theorem xor_spec {P Q α : Type} (pi : DirectParser P α) (qi : DirectParser Q α)
     (parser : Xor P Q) (input : Slice U8) (cursor : Cursor)
     (first second : Cursor → Spec.ParseResult α → Prop)
     (hp : pi.parse_with parser.first input cursor ParseContext.FINAL ⦃ result => Spec.completed (first cursor) result ⦄)
     (hq : qi.parse_with parser.second input cursor ParseContext.FINAL ⦃ result => Spec.completed (second cursor) result ⦄) :
-    Parser.parse.default (Xor.Insts.RusthammerParser pi qi) parser input cursor
+    DirectParser.parse (Xor.Insts.RusthammerParser pi qi) parser input cursor
       ⦃ result => Spec.exclusive first second cursor result ⦄ := by
   exact complete_spec _ parser input cursor _ (xor_final_spec pi qi parser input cursor first second hp hq)
 
@@ -321,44 +321,44 @@ theorem xor_success {α : Type} (first second : Cursor → ParseOutcome α → P
 
 -- These laws deliberately make no termination or contract assumption about the
 -- second child: short-circuiting must not require that child to run successfully.
-theorem restrict_match_first_error {P Q α β : Type} (pi : Parser P α) (qi : Parser Q β)
+theorem restrict_match_first_error {P Q α β : Type} (pi : DirectParser P α) (qi : DirectParser Q β)
     (p : P) (q : Q) (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (allowEqual : Bool) (error : ParseError)
     (hp : pi.parse_with p input cursor context ⦃ result => result = .Error error ⦄) :
-    restrict_match pi qi p q input cursor context allowEqual ⦃ result => result = .Error error ⦄ := by
-  unfold restrict_match
+    DirectRun.restrict_match pi qi p q input cursor context allowEqual ⦃ result => result = .Error error ⦄ := by
+  rw [DirectRun.restrict_match_eq]
   step with hp as ⟨result, hresult⟩
   subst result
   simp only [spec_ok]
 
-theorem restrict_match_first_more {P Q α β : Type} (pi : Parser P α) (qi : Parser Q β)
+theorem restrict_match_first_more {P Q α β : Type} (pi : DirectParser P α) (qi : DirectParser Q β)
     (p : P) (q : Q) (input : Slice U8) (cursor : Cursor) (context : ParseContext) (allowEqual : Bool)
     (hp : pi.parse_with p input cursor context ⦃ result => result = .NeedMore ⦄) :
-    restrict_match pi qi p q input cursor context allowEqual ⦃ result => result = .NeedMore ⦄ := by
-  unfold restrict_match
+    DirectRun.restrict_match pi qi p q input cursor context allowEqual ⦃ result => result = .NeedMore ⦄ := by
+  rw [DirectRun.restrict_match_eq]
   step with hp as ⟨result, hresult⟩
   subst result
   simp only [spec_ok]
 
-theorem xor_first_fatal {P Q α : Type} (pi : Parser P α) (qi : Parser Q α)
+theorem xor_first_fatal {P Q α : Type} (pi : DirectParser P α) (qi : DirectParser Q α)
     (parser : Xor P Q) (input : Slice U8) (cursor : Cursor) (context : ParseContext) (error : ParseError)
     (hfatal : ¬Spec.recoverable error)
     (hp : pi.parse_with parser.first input cursor context ⦃ result => result = .Error error ⦄) :
     Xor.Insts.RusthammerParser.parse_with pi qi parser input cursor context
       ⦃ result => result = .Error error ⦄ := by
-  unfold Xor.Insts.RusthammerParser.parse_with
+  rw [Xor.Insts.RusthammerParser.parse_with_eq]
   step with hp as ⟨result, hresult⟩
   subst result
   step with recoverable_spec error as ⟨recover, hrecover⟩
   have heq : recover = false := by simpa [hfatal] using hrecover
   simp only [heq, Bool.false_eq_true, ↓reduceIte, spec_ok]
 
-theorem xor_first_more {P Q α : Type} (pi : Parser P α) (qi : Parser Q α)
+theorem xor_first_more {P Q α : Type} (pi : DirectParser P α) (qi : DirectParser Q α)
     (parser : Xor P Q) (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (hp : pi.parse_with parser.first input cursor context ⦃ result => result = .NeedMore ⦄) :
     Xor.Insts.RusthammerParser.parse_with pi qi parser input cursor context
       ⦃ result => result = .NeedMore ⦄ := by
-  unfold Xor.Insts.RusthammerParser.parse_with
+  rw [Xor.Insts.RusthammerParser.parse_with_eq]
   step with hp as ⟨result, hresult⟩
   subst result
   simp only [spec_ok]

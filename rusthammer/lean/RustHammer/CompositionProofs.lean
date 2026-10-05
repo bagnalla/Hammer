@@ -10,16 +10,16 @@ open Code
 theorem epsilon_with_spec (input : Slice U8) (cursor : Cursor) (context : ParseContext) :
     Epsilon.Insts.RusthammerParserInputTuple.parse_with () input cursor context
       ⦃ result => Partial.epsilon cursor result ⦄ := by
-  simp [Epsilon.Insts.RusthammerParserInputTuple.parse_with, Partial.epsilon, spec_ok]
+  simp [Epsilon.Insts.RusthammerParserInputTuple.parse_with_eq, Partial.epsilon, spec_ok]
 
 theorem epsilon_final_spec (input : Slice U8) (cursor : Cursor) :
     Epsilon.Insts.RusthammerParserInputTuple.parse_with () input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.epsilon cursor) result ⦄ := by
-  simp [Epsilon.Insts.RusthammerParserInputTuple.parse_with, Spec.completed_success,
+  simp [Epsilon.Insts.RusthammerParserInputTuple.parse_with_eq, Spec.completed_success,
     Spec.epsilon, spec_ok]
 
 theorem epsilon_spec (input : Slice U8) (cursor : Cursor) :
-    Parser.parse.default Epsilon.Insts.RusthammerParserInputTuple () input cursor
+    DirectParser.parse Epsilon.Insts.RusthammerParserInputTuple () input cursor
       ⦃ result => Spec.epsilon cursor result ⦄ :=
   complete_spec Epsilon.Insts.RusthammerParserInputTuple () input cursor
     (Spec.epsilon cursor) (epsilon_final_spec input cursor)
@@ -40,20 +40,20 @@ theorem fail_with_spec {α : Type} (parser : Fail α) (input : Slice U8)
     (cursor : Cursor) (context : ParseContext) :
     Fail.Insts.RusthammerParser.parse_with parser input cursor context
       ⦃ result => Partial.fail result ⦄ := by
-  simp [Fail.Insts.RusthammerParser.parse_with, Partial.fail, spec_ok]
+  simp [Fail.Insts.RusthammerParser.parse_with_eq, Partial.fail, spec_ok]
 
 theorem fail_final_spec {α : Type} (parser : Fail α) (input : Slice U8) (cursor : Cursor) :
     Fail.Insts.RusthammerParser.parse_with parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed Spec.fail result ⦄ := by
-  simp [Fail.Insts.RusthammerParser.parse_with, Spec.completed_error, Spec.fail, spec_ok]
+  simp [Fail.Insts.RusthammerParser.parse_with_eq, Spec.completed_error, Spec.fail, spec_ok]
 
 theorem fail_spec {α : Type} (parser : Fail α) (input : Slice U8) (cursor : Cursor) :
-    Parser.parse.default (Fail.Insts.RusthammerParser α) parser input cursor
+    DirectParser.parse (Fail.Insts.RusthammerParser α) parser input cursor
       ⦃ result => Spec.fail result ⦄ :=
   complete_spec (Fail.Insts.RusthammerParser α) parser input cursor
     Spec.fail (fail_final_spec parser input cursor)
 
-theorem try_map_with_spec {P F α β ε : Type} (pi : Parser P α)
+theorem try_map_with_spec {P F α β ε : Type} (pi : DirectParser P α)
     (fi : core.ops.function.Fn F α (core.result.Result β ε))
     (parser : TryMap P F) (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (child : Cursor → ParseOutcome α → Prop) (mapping : α → core.result.Result β ε → Prop)
@@ -62,7 +62,7 @@ theorem try_map_with_spec {P F α β ε : Type} (pi : Parser P α)
       fi.call parser.map value ⦃ result => mapping value result ⦄) :
     TryMap.Insts.RusthammerParser.parse_with pi fi parser input cursor context
       ⦃ result => Partial.tryMap child mapping cursor result ⦄ := by
-  unfold TryMap.Insts.RusthammerParser.parse_with
+  rw [TryMap.Insts.RusthammerParser.parse_with_eq]
   step with hp as ⟨parsed, hparsed⟩
   cases parsed with
   | NeedMore => simp only [spec_ok]; exact ⟨.NeedMore, hparsed, rfl⟩
@@ -77,7 +77,7 @@ theorem try_map_with_spec {P F α β ε : Type} (pi : Parser P α)
       simp only [spec_ok]
       exact ⟨.Success next value, hparsed, .Err error, hmapped, rfl⟩
 
-theorem try_map_final_spec {P F α β ε : Type} (pi : Parser P α)
+theorem try_map_final_spec {P F α β ε : Type} (pi : DirectParser P α)
     (fi : core.ops.function.Fn F α (core.result.Result β ε))
     (parser : TryMap P F) (input : Slice U8) (cursor : Cursor)
     (child : Cursor → Spec.ParseResult α → Prop) (mapping : α → core.result.Result β ε → Prop)
@@ -87,7 +87,7 @@ theorem try_map_final_spec {P F α β ε : Type} (pi : Parser P α)
       fi.call parser.map value ⦃ result => mapping value result ⦄) :
     TryMap.Insts.RusthammerParser.parse_with pi fi parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.tryMap child mapping cursor) result ⦄ := by
-  unfold TryMap.Insts.RusthammerParser.parse_with
+  rw [TryMap.Insts.RusthammerParser.parse_with_eq]
   step with hp as ⟨outcome, houtcome⟩
   rcases houtcome with ⟨parsed, hparsed, rfl⟩
   cases parsed with
@@ -106,7 +106,7 @@ theorem try_map_final_spec {P F α β ε : Type} (pi : Parser P α)
       simp only [spec_ok, Spec.completed_error]
       exact ⟨.Ok (next, value), hparsed, .Err error, hmapped, rfl⟩
 
-theorem try_map_spec {P F α β ε : Type} (pi : Parser P α)
+theorem try_map_spec {P F α β ε : Type} (pi : DirectParser P α)
     (fi : core.ops.function.Fn F α (core.result.Result β ε))
     (parser : TryMap P F) (input : Slice U8) (cursor : Cursor)
     (child : Cursor → Spec.ParseResult α → Prop) (mapping : α → core.result.Result β ε → Prop)
@@ -114,31 +114,31 @@ theorem try_map_spec {P F α β ε : Type} (pi : Parser P α)
       ⦃ result => Spec.completed (child cursor) result ⦄)
     (hf : ∀ next value, child cursor (.Ok (next, value)) →
       fi.call parser.map value ⦃ result => mapping value result ⦄) :
-    Parser.parse.default (TryMap.Insts.RusthammerParser pi fi) parser input cursor
+    DirectParser.parse (TryMap.Insts.RusthammerParser pi fi) parser input cursor
       ⦃ result => Spec.tryMap child mapping cursor result ⦄ :=
   complete_spec (TryMap.Insts.RusthammerParser pi fi) parser input cursor
     (Spec.tryMap child mapping cursor)
     (try_map_final_spec pi fi parser input cursor child mapping hp hf)
 
 /-- Skipped callbacks need no correctness or termination assumption. -/
-theorem try_map_child_error {P F α β ε : Type} (pi : Parser P α)
+theorem try_map_child_error {P F α β ε : Type} (pi : DirectParser P α)
     (fi : core.ops.function.Fn F α (core.result.Result β ε))
     (parser : TryMap P F) (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (error : ParseError)
     (hp : pi.parse_with parser.parser input cursor context ⦃ result => result = .Error error ⦄) :
     TryMap.Insts.RusthammerParser.parse_with pi fi parser input cursor context
       ⦃ result => result = .Error error ⦄ := by
-  unfold TryMap.Insts.RusthammerParser.parse_with
+  rw [TryMap.Insts.RusthammerParser.parse_with_eq]
   step with hp as ⟨parsed, hparsed⟩
   simp [hparsed, spec_ok]
 
-theorem try_map_need_more {P F α β ε : Type} (pi : Parser P α)
+theorem try_map_need_more {P F α β ε : Type} (pi : DirectParser P α)
     (fi : core.ops.function.Fn F α (core.result.Result β ε))
     (parser : TryMap P F) (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (hp : pi.parse_with parser.parser input cursor context ⦃ result => result = .NeedMore ⦄) :
     TryMap.Insts.RusthammerParser.parse_with pi fi parser input cursor context
       ⦃ result => result = .NeedMore ⦄ := by
-  unfold TryMap.Insts.RusthammerParser.parse_with
+  rw [TryMap.Insts.RusthammerParser.parse_with_eq]
   step with hp as ⟨parsed, hparsed⟩
   simp [hparsed, spec_ok]
 

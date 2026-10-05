@@ -26,19 +26,22 @@ theorem separated_tail_of_right {α β : Type} (item : Cursor → ParseOutcome �
       rcases hmapped with ⟨mapped, rfl, rfl⟩
       exact ⟨middle, ignored, hseparator, hchild⟩
 
-theorem separated_attempt_spec {P S α β : Type} (pi : Parser P α) (si : Parser S β)
+theorem separated_attempt_spec {P S α β : Type} (pi : DirectParser P α) (si : DirectParser S β)
     (parser : P) (separator : S) (count : Usize) (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (item : Cursor → ParseOutcome α → Prop) (sep : Cursor → ParseOutcome β → Prop)
     (hp : ∀ start, pi.parse_with parser input start context ⦃ result => item start result ⦄)
     (hs : ∀ start, si.parse_with separator input start context ⦃ result => sep start result ⦄) :
-    repeat_parse pi (Right.Insts.RusthammerParser (Shared0P.Insts.RusthammerParser si)
+    DirectRun.repeat_parse pi (Right.Insts.RusthammerParser (Shared0P.Insts.RusthammerParser si)
       (Shared0P.Insts.RusthammerParser pi)) parser { first := separator, second := parser }
       count input cursor context ⦃ result => Spec.separatedAttempt item sep count.val cursor result ⦄ := by
-  unfold repeat_parse
+  rw [DirectRun.repeat_parse_eq]
   by_cases hzero : count = 0#usize
   · simpa [hzero, Spec.separatedAttempt] using hp cursor
   · have hn : count.val ≠ 0 := by scalar_tac
     simp only [hzero, ↓reduceIte, Spec.separatedAttempt, hn]
+    change Right.Insts.RusthammerParser.parse_with (Shared0P.Insts.RusthammerParser si)
+      (Shared0P.Insts.RusthammerParser pi) { first := separator, second := parser }
+      input cursor context ⦃ result => Spec.separatedTail item sep cursor result ⦄
     step with right_with_spec (Shared0P.Insts.RusthammerParser si) (Shared0P.Insts.RusthammerParser pi)
       { first := separator, second := parser } input cursor context sep item hs hp as ⟨outcome, houtcome⟩
     exact separated_tail_of_right item sep cursor outcome houtcome

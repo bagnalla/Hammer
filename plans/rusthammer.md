@@ -212,8 +212,8 @@ callback contracts on successful child outputs. Mapping preserves consumption;
 predicate rejection returns recoverable `Mismatch`. Child errors skip the
 callback entirely. The `Flags` example uses `Map` for its typed output.
 
-`&P` now implements `Parser` by forwarding both `parse_with` and `parse`, including
-custom overrides of the complete method. Shared parser references can be reused
+`&P` forwards `Grammar` and `Eval<Backend>` to its underlying parser. Direct
+`parse_with` and `parse` entry points come from the blanket `Parser` implementation. Shared parser references can be reused
 throughout a grammar without cloning the parser, and their lifetimes are independent
 of input borrowing. `Left`, `Right`, and `Middle` compose `Seq` over these references
 and select the desired tuple component. `Ignore` replaces a successful output with
@@ -403,8 +403,15 @@ compositional contracts are proved; all default-order application proofs pass.
 Both MIR stages, all 43 Cargo-consumer entries, native tests, and a 25-theorem
 axiom audit pass. C checks give 107,364 agreements plus 2,848 expected scope
 rejections, including 2,064 cases C accepts. No new extraction workaround was
-needed. Both isolated probes remain design evidence. Next implement and prove
-`BitSpan`, `Recognize`, and `WithSpan`; design permutation and recursion separately.
+needed. Both isolated probes remain design evidence. The
+[backend execution boundary](rusthammer-backends.md) separates grammar output
+from evaluation and retains direct convenience entry points. Packrat remains a
+planned capability; cache ownership, rule identities, and recursion are deferred.
+The direct migration is verified: all existing Lean contracts pass, stateful
+backend tests cover nested combinators, and all 44 consumer entries translate
+and Lean type-check. The axiom audit now covers 31 ordering/backend theorems.
+`BitSpan`, `Recognize`, and `WithSpan` can follow. Representative protocol
+benchmarks should guide memoization work.
 CI integration and the recorded Aeneas callback investigation are deferred.
 
 ## Requirements and working decisions
@@ -480,27 +487,36 @@ resolve discrepancies between implementation behavior and intended semantics.
 The current experimental interface is:
 
 ```rust
-pub trait Parser<'input> {
+pub trait Grammar<'input> {
     type Output;
+}
 
-    fn parse_with(
+pub trait Eval<'input, Backend>: Grammar<'input> {
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
     ) -> ParseOutcome<Self::Output>;
-
-    // The default implementation invokes parse_with with ParseContext::FINAL.
-    fn parse(
-        &self,
-        input: &'input [u8],
-        cursor: Cursor,
-    ) -> Result<(Cursor, Self::Output), ParseError>;
 }
+
+pub struct Direct;
+
+pub trait Parser<'input>: Eval<'input, Direct> {
+    // These methods have default implementations in the library.
+    fn parse_with(&self, input: &'input [u8], cursor: Cursor, context: ParseContext)
+        -> ParseOutcome<Self::Output>;
+    fn parse(&self, input: &'input [u8], cursor: Cursor)
+        -> Result<(Cursor, Self::Output), ParseError>;
+}
+
+// A blanket implementation supplies Parser for every Eval<Direct>.
+
 ```
 
 This summarizes the experimental interface; the implementation supplies the
-default `parse` body. `Cursor` contains byte and bit offsets, `ParseError` describes
+default direct entry-point bodies. `Cursor` contains byte and bit offsets, `ParseError` describes
 rejection, and `ParseOutcome` separately represents incomplete input. The full
 bit-cursor interface now extracts and its implementations have Lean proofs.
 
@@ -525,11 +541,11 @@ The lifetime permits outputs that borrow from the input. It does not imply that
 every output contains a reference. For example, with parsing methods omitted:
 
 ```rust
-impl<'input> Parser<'input> for BeU16 {
+impl<'input> Grammar<'input> for BeU16 {
     type Output = u16;
 }
 
-impl<'input> Parser<'input> for TakeBytes {
+impl<'input> Grammar<'input> for TakeAligned {
     type Output = &'input [u8];
 }
 ```
@@ -647,6 +663,16 @@ positions need independent specifications and boundary checks.
 
 ## Grammar structure and execution
 
+The [backend plan](rusthammer-backends.md) fixes the execution boundary:
+`Grammar` determines output types, `Eval<Backend>` carries invocation state, and
+`Parser` supplies direct convenience entry points. All child invocations retain
+the selected backend. The public API adds no memoization or recursive-rule types.
+
+Packrat implementation is deferred. Typed caching, replay ownership, stable rule
+identity, callback assumptions, and left recursion remain explicit future design
+obligations, informed by representative protocol benchmarks. They need not be
+settled before migrating direct execution or adding the planned span combinators.
+
 Use concrete structures such as `Seq<P, Q>`, `Choice<P, Q>`, `Repeat<P>`,
 `Map<P, F>`, and `Bind<P, F>`. Their fields retain structure while trait
 implementations provide execution through static dispatch.
@@ -665,7 +691,7 @@ Initially, these can be module boundaries rather than separate crates:
 | Input and primitives | Cursor invariants, bit operations, literals, numeric decoding, bounds, and spans. |
 | Combinators | Typed composition with explicitly specified control flow and results. |
 | Grammar analysis and lowering | Supported grammar representations, capability checks, and compilation. |
-| Execution engines | Direct parsing initially; memoized or compiled execution as later implementations. |
+| Execution engines | Direct parsing uses an explicit backend boundary. Packrat implementation and other compiled engines remain later additions. |
 | Lean specifications and proofs | Independent semantics, primitive proofs, combinator theorems, and application proofs. |
 
 The Rust parsing implementation used by applications should be the implementation
@@ -880,7 +906,7 @@ completeness is not completeness for an unrelated context-free interpretation.
 Prove each combinator assuming contracts for its child parsers. Mapping and bind
 also require contracts for their functions or parser families. Application-parser
 proofs should reuse these theorems and add format-specific constraints. Arbitrary
-Rust implementations of the `Parser` trait do not acquire correctness proofs
+Rust implementations of the `Eval` trait do not acquire correctness proofs
 merely by implementing the interface.
 
 Rust `ParseOutcome::Error` and `NeedMore`, or `Result::Err` from the complete
@@ -936,15 +962,16 @@ probe used:
     -abort-on-error -warnings-as-errors -no-progress-bar borrowed.llbc
 ```
 
-The generated trait represents the associated output as a Lean type parameter:
+The initial generated trait represented the associated output as a Lean type parameter:
 
 ```lean
 structure Parser (Self : Type) (Self_Output : Type) where
   -- translated parse operation
 ```
 
-Thus, the proposed associated type is a Rust API choice, not an assumption that
-Lean requires that particular source syntax.
+The current `Grammar` and `Eval` dictionaries retain that representation of
+associated output types. Thus, the associated type is a Rust API choice, not an
+assumption that Lean requires that particular source syntax.
 
 Subsequent prototype work has now type-checked and proved the generic `Map` and
 `Verify` implementations, the concrete `Flags` mapping callback, the record header
@@ -975,7 +1002,8 @@ collection experiment. The verification command tests both feature configuration
 and extracts with `alloc` enabled, including the repetition constructors.
 
 Shared parser references and output-selection wrappers now extract and are proved
-in the actual library. References preserve both trait methods; tuple projections
+in the actual library. References forward evaluation with the chosen backend;
+both direct convenience methods use that evaluator. Tuple projections
 need no callback. Their generic proofs cover arbitrary output types, and native
 tests check borrowed slices, non-`Copy` records, and destructor behavior. The older
 borrowed-record callback issue remains deferred.
@@ -1038,8 +1066,8 @@ types that are intended to be discarded.
 | 2. Verified input and primitives | Specify the bit cursor, ordering, alignment, widths, sign extension, bounds, and basic literal/numeric operations. | Lean proofs of decoding, cursor invariants, termination, and safe failure; boundary tests against agreed Hammer behavior. |
 | 3. Compositional core | Implement sequence, ordered choice, optionality, lookahead, bounded repetition, mapping, predicates, and the data dependencies needed by the first format. Add unbounded repetition only with progress semantics. | Reusable combinator theorems, checked callback assumptions, and tests for backtracking, empty success, truncation, and error propagation. |
 | 4. First verified application parser | Parse a small binary record with bit fields, a constrained header, a bounded length-prefixed payload, and explicit end-of-input behavior. | An independent format specification and a Lean-checked application theorem covering values, consumption, valid-input acceptance, safe rejection, and termination under documented bounds. |
-| 5. Capability expansion | Add guarded recursion, then separately plan left recursion, runtime grammars, seeking, streaming, deferred effects, additional field types, and richer diagnostics. | A contract, compatibility probe, tests, and proof obligations for each added capability; no implicit claim of full Hammer coverage. |
-| 6. Additional engines and optimization | Add memoization or compiled backends where justified; optimize measured bottlenecks. | Correctness or refinement proofs on explicit supported subsets, documented complexity assumptions, differential tests, and benchmarks. |
+| 5. Backend execution boundary | Separate grammar outputs and evaluator capabilities, thread the backend through all child calls, and migrate direct parsing and proofs. See the [backend plan](rusthammer-backends.md). | Existing direct contracts, native backend propagation tests, both MIR stages, and the separate Cargo consumer. |
+| 6. Further capabilities and optimization | Add spans, then prioritize memoization, recursion, runtime grammars, seeking, streaming, deferred effects, richer diagnostics, or other compiled backends according to separately reviewed contracts. Optimize measured bottlenecks. | Correctness proofs on explicit supported subsets, documented complexity assumptions, differential tests, and benchmarks; no implicit claim of full Hammer coverage. |
 
 Use native Rust tests, focused property tests, and differential tests with C Hammer
 to catch integration and specification mistakes. Compare acceptance, decoded

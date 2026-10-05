@@ -5,6 +5,10 @@ Status: target API and implementation order, with scoped ordering, signed fields
 [main plan](rusthammer.md) and [prototype README](../rusthammer/README.md) for
 current implementation and proof coverage.
 
+The [backend execution boundary](rusthammer-backends.md) is implemented and
+verified. Span and recognition combinators can follow it. The private
+memoization probes remain design evidence outside the public API.
+
 ## API policy
 
 Public features must have an intended place in the finished library. Do not add
@@ -55,9 +59,9 @@ and collection do not automatically erase them as C's null AST handling does.
 
 For a complete parse, compose `Left(parser, End)`. Convenience syntax for this
 can be added if useful; it does not need another parsing algorithm. Forwarding
-`Parser` through `&P` is implemented and proved for reusing immutable parsers
-without cloning them. Both methods forward, preserving a custom `parse` override;
-combinators still call `parse_with`. Input borrowing is independent of the lifetime
+`Grammar` and `Eval` through `&P` is implemented and proved for reusing immutable
+parsers without cloning them. Combinators call `eval` with the selected backend;
+`Parser` supplies direct convenience methods automatically. Input borrowing is independent of the lifetime
 of the parser reference. The actual Rust syntax is `Left { first: parser, second: End }`.
 
 Parser structs derive `Clone` and `Copy` conditionally on their stored children
@@ -167,8 +171,8 @@ successful iterations rather than reserve an input-derived count in advance.
 
 ## Dependent parsing and reusable helpers
 
-The implemented `Bind { parser, then }` factory has the shape `Fn(A) -> Q`, where `Q` implements
-`Parser<'input>`. For a given input lifetime, it returns one concrete parser type;
+The implemented `Bind { parser, then }` factory has the shape `Fn(A) -> Q`, where
+`Q` implements `Eval<'input, Backend>` for the selected backend. For a given input lifetime, it returns one concrete parser type;
 input values may change that parser's configuration. Choosing heterogeneous
 branches requires a typed parser enum or another explicitly represented choice.
 Static dispatch does not make a Rust return type depend on a runtime value.
@@ -284,13 +288,14 @@ The combinators above also need a deliberate primitive and extension inventory:
 | Byte/token parsing | Implemented and proved: `Byte` (`h_uint8`) returns `u8`; `BytePattern::new(&pattern)` (`h_token` / `h_literal`) borrows an arbitrary byte pattern and returns that configured slice on success. Input and pattern lifetimes are independent. Both support unaligned starts without allocation. Empty patterns succeed without cursor validation; nonempty patterns compare complete bytes in order. `h_ch` can be a later literal-reader convenience. |
 | Byte sequences | Keep `TakeAligned` for borrowed slices. `Repeat::exact(Byte, count)` now supplies `h_bytes`-style decoded `Vec<u8>` with `alloc`; a named convenience can be added if useful. Never silently align unaligned input. |
 | Skipping and position | Implemented and proved: `SkipBits::new(bits)` discards any `usize` bit count and returns `()`; `Tell` reports the validated `Cursor` without consuming. Both validate even at zero consumption and preserve `h_skip` and `h_tell` capabilities. Skips advance in constant time, classify exhaustion by input finality, and have an infallible `const` constructor and `bits()` accessor. Position reporting avoids an absolute machine bit count; see the [known C overflow issue](rusthammer.md#known-c-issue-absolute-bit-position-overflow). |
-| Recognizing matched input | The [input plan](rusthammer-input.md#matched-input-spans) specifies `BitSpan`, `Recognize`, and `WithSpan`, retaining `(byte, bit)` endpoints and the enclosing bit direction. Implement and prove them after restricted ordering. Partial-bit matches need not be byte slices; spans do not retain internal order scopes or field grouping. |
+| Recognizing matched input | The [input plan](rusthammer-input.md#matched-input-spans) specifies `BitSpan`, `Recognize`, and `WithSpan`, retaining `(byte, bit)` endpoints and the enclosing bit direction. Restricted ordering and the backend execution boundary are complete. Partial-bit matches need not be byte slices; spans do not retain internal order scopes or field grouping. |
 | Floating-point fields/ranges | Preserve as a later capability; specify bit decoding, NaNs, infinities, rounding where applicable, and available Aeneas models before exporting readers or range helpers. |
 | Bit and byte order | Implemented and proved with the [input plan's restriction](rusthammer-input.md#ordering-scopes): a changed bit direction requires aligned entry and successful exit, otherwise fatal `Unaligned`. Unaligned fields and unrestricted byte-order changes remain supported. Retain `(byte, bit)` with immutable `ParseContext`. Numeric-reader, contextual primitive, and generic scope/combinator proofs pass; `Be*` pins big byte order while inheriting bit direction. |
 | Recursion | Start with named typed parsers and guarded recursion. Design runtime rule graphs and left-recursive execution separately; `h_indirect`/`h_bind_indirect` are C's construction mechanism, not the required Rust interface. |
 | Parse-local state and actions | Express ordinary dependencies with typed values and `Bind`. Preserve `h_put_value`/`h_get_value`/`h_free_value` and deferred `h_action_stash`/`h_action_apply` capabilities in a separately specified environment/effect design, including rollback and commit. |
 | Diagnostics | Plan context labels corresponding to `h_with_context` and parser labels as a separate diagnostic layer; keep their effect on errors explicit. |
-| Seeking, streaming, memoization, compiled engines | Retain as separately specified capabilities. They need ownership, termination, state, and semantic-equivalence work, not placeholder combinators. |
+| Packrat and other execution engines | The [backend plan](rusthammer-backends.md) separates grammar outputs and evaluation. Memoization, rule identities, and the cached-output policy remain future work guided by protocol benchmarks. Left recursion needs its own algorithm and proofs. Other compiled engines remain separately specified. |
+| Seeking and streaming | Retain as separately specified capabilities. They need ownership, termination, state, and semantic-equivalence work, not placeholder combinators. |
 
 C allocator variants, variadic/array calling variants, dynamic AST extraction,
 and vtable plumbing do not need one-for-one public replacements. Permanent Rust
@@ -371,7 +376,9 @@ helpers should represent grammar operations or output needs.
    production implementation and proofs now pass both MIR stages, all 43
    Cargo-consumer entries, native tests, and 25 ordering theorem axiom audits.
    C comparisons add 107,364 agreements and 2,848 expected scope rejections.
-   Next implement and prove `BitSpan`, `Recognize`, and `WithSpan`.
+   The subsequent backend migration is complete, with all existing proofs,
+   stateful backend tests, 44 consumer entries, and 31 ordering/backend theorem
+   axiom audits passing. Next implement and prove `BitSpan`, `Recognize`, and `WithSpan`.
    The isolated probes remain design evidence.
    Plan permutation, recursion, and the other larger capabilities separately.
 

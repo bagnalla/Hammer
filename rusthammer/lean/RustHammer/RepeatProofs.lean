@@ -47,7 +47,7 @@ theorem repeat_max_spec {P : Type} (parser : Repeat P) :
 /-- Finite repetition terminates by the number of remaining permitted calls,
 including empty successes. This proves bounds, stopping, rollback, and all three
 outcomes under the child contract, without depending on an allocation strategy. -/
-theorem repeat_with_spec {P α : Type} (pi : Parser P α) (parser : Repeat P)
+theorem repeat_with_spec {P α : Type} (pi : DirectParser P α) (parser : Repeat P)
     (max : Usize) (hmax : parser.bounds.max = some max)
     (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (hconfig : Spec.validRepeat parser) (child : Cursor → ParseOutcome α → Prop)
@@ -57,7 +57,7 @@ theorem repeat_with_spec {P α : Type} (pi : Parser P α) (parser : Repeat P)
   have hbounds := hconfig max hmax
   have hb : parser.bounds = { min := parser.bounds.min, max := some max } := by
     cases h : parser.bounds; simp_all
-  unfold Repeat.Insts.RusthammerParserInputVec.parse_with
+  rw [Repeat.Insts.RusthammerParserInputVec.parse_with_eq]
   rw [hb]
   step with repeat_run_bounded_spec pi (Collect.Insts.RusthammerRepeatAccumulatorAVec α)
     parser.parser parser.bounds.min max () input cursor context hbounds child
@@ -76,7 +76,7 @@ theorem repeat_success_bounds {α : Type} (child : Cursor → ParseOutcome α �
     min ≤ values.val.length ∧ values.val.length ≤ max := ⟨h.1, h.2.1⟩
 
 /-- Final-input child contracts rule out NeedMore for the whole repetition. -/
-theorem repeat_final_spec {P α : Type} (pi : Parser P α) (parser : Repeat P)
+theorem repeat_final_spec {P α : Type} (pi : DirectParser P α) (parser : Repeat P)
     (max : Usize) (hmax : parser.bounds.max = some max)
     (input : Slice U8) (cursor : Cursor) (hconfig : Spec.validRepeat parser)
     (child : Cursor → Spec.ParseResult α → Prop)
@@ -96,13 +96,13 @@ theorem repeat_final_spec {P α : Type} (pi : Parser P α) (parser : Repeat P)
     | Err _ => cases heq
     | Ok pair => cases pair; cases heq
 
-theorem repeat_spec {P α : Type} (pi : Parser P α) (parser : Repeat P)
+theorem repeat_spec {P α : Type} (pi : DirectParser P α) (parser : Repeat P)
     (max : Usize) (hmax : parser.bounds.max = some max)
     (input : Slice U8) (cursor : Cursor) (hconfig : Spec.validRepeat parser)
     (child : Cursor → Spec.ParseResult α → Prop)
     (hp : ∀ start, pi.parse_with parser.parser input start ParseContext.FINAL
       ⦃ result => Spec.completed (child start) result ⦄) :
-    Parser.parse.default (Repeat.Insts.RusthammerParserInputVec pi) parser input cursor
+    DirectParser.parse (Repeat.Insts.RusthammerParserInputVec pi) parser input cursor
       ⦃ result => Spec.boundedRepeatComplete child parser.bounds.min.val max.val cursor result ⦄ := by
   exact complete_spec (Repeat.Insts.RusthammerParserInputVec pi) parser input cursor
     (Spec.boundedRepeatComplete child parser.bounds.min.val max.val cursor)
@@ -128,7 +128,7 @@ theorem bounded_repeat_exact {α : Type} (child : Cursor → ParseOutcome α →
   | NeedMore => rfl
 
 /-- Exact repetition is a specialization of the shared implementation theorem. -/
-theorem repeat_exact_with_spec {P α : Type} (pi : Parser P α) (parser : P) (count : Usize)
+theorem repeat_exact_with_spec {P α : Type} (pi : DirectParser P α) (parser : P) (count : Usize)
     (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (child : Cursor → ParseOutcome α → Prop)
     (hp : ∀ start, pi.parse_with parser input start context ⦃ result => child start result ⦄) :
@@ -143,7 +143,7 @@ theorem repeat_exact_success_length {α : Type} (child : Cursor → ParseOutcome
     (h : Spec.repeatN child count cursor (.Success next values)) :
     values.val.length = count := h.1
 
-theorem repeat_exact_final_spec {P α : Type} (pi : Parser P α) (parser : P) (count : Usize)
+theorem repeat_exact_final_spec {P α : Type} (pi : DirectParser P α) (parser : P) (count : Usize)
     (input : Slice U8) (cursor : Cursor) (child : Cursor → Spec.ParseResult α → Prop)
     (hp : ∀ start, pi.parse_with parser input start ParseContext.FINAL
       ⦃ result => Spec.completed (child start) result ⦄) :
@@ -161,11 +161,11 @@ theorem repeat_exact_final_spec {P α : Type} (pi : Parser P α) (parser : P) (c
     | Err _ => cases heq
     | Ok pair => cases pair; cases heq
 
-theorem repeat_exact_complete_spec {P α : Type} (pi : Parser P α) (parser : P) (count : Usize)
+theorem repeat_exact_complete_spec {P α : Type} (pi : DirectParser P α) (parser : P) (count : Usize)
     (input : Slice U8) (cursor : Cursor) (child : Cursor → Spec.ParseResult α → Prop)
     (hp : ∀ start, pi.parse_with parser input start ParseContext.FINAL
       ⦃ result => Spec.completed (child start) result ⦄) :
-    Parser.parse.default (Repeat.Insts.RusthammerParserInputVec pi)
+    DirectParser.parse (Repeat.Insts.RusthammerParserInputVec pi)
       { parser, bounds := { min := count, max := some count } } input cursor
       ⦃ result => Spec.repeatNComplete child count.val cursor result ⦄ := by
   exact complete_spec (Repeat.Insts.RusthammerParserInputVec pi)
@@ -174,18 +174,21 @@ theorem repeat_exact_complete_spec {P α : Type} (pi : Parser P α) (parser : P)
     (repeat_exact_final_spec pi parser count input cursor child hp)
 
 /-- Zero maximum requires no correctness or termination assumption about the child. -/
-theorem repeat_zero {P α : Type} (pi : Parser P α) (parser : P)
+theorem repeat_zero {P α : Type} (pi : DirectParser P α) (parser : P)
     (input : Slice U8) (cursor : Cursor) (context : ParseContext) :
     Repeat.Insts.RusthammerParserInputVec.parse_with pi { parser, bounds := { min := 0#usize, max := some 0#usize } }
       input cursor context ⦃ result => result = .Success cursor (alloc.vec.Vec.new α) ⦄ := by
-  unfold Repeat.Insts.RusthammerParserInputVec.parse_with repeat_run repeat_run_with
+  rw [Repeat.Insts.RusthammerParserInputVec.parse_with_eq, DirectRun.repeat_run_eq, DirectRun.repeat_run_with_eq]
   simp only [core.option.Option.is_none, Option.isNone, repeat_start, Bool.false_eq_true,
     ↓reduceIte, bind_ok, Collect.Insts.RusthammerRepeatAccumulatorAVec.init]
+  unfold DirectRun.repeat_run_with_loop
+  apply direct_projection_spec
   unfold repeat_run_with_loop loop
-  simp [repeat_run_with_loop.body, repeat_below_max, repeat_parse, spec_ok]
+  simp [repeat_run_with_loop.body, repeat_below_max, DirectRun.repeat_parse_lift,
+    Std.bind_assoc, DirectRun.repeat_parse_eq, spec_ok]
 
 /-- A first error below the minimum or a fatal error needs no later-call contracts. -/
-theorem repeat_first_error {P α : Type} (pi : Parser P α) (parser : Repeat P)
+theorem repeat_first_error {P α : Type} (pi : DirectParser P α) (parser : Repeat P)
     (max : Usize) (hmax : parser.bounds.max = some max)
     (input : Slice U8) (cursor : Cursor) (context : ParseContext) (error : ParseError)
     (hpositive : max.val > 0) (hstop : parser.bounds.min.val > 0 ∨ ¬Spec.recoverable error)
@@ -193,11 +196,14 @@ theorem repeat_first_error {P α : Type} (pi : Parser P α) (parser : Repeat P)
     Repeat.Insts.RusthammerParserInputVec.parse_with pi parser input cursor context
       ⦃ result => result = .Error error ⦄ := by
   have hmore : 0#usize < max := by scalar_tac
-  unfold Repeat.Insts.RusthammerParserInputVec.parse_with repeat_run repeat_run_with
+  rw [Repeat.Insts.RusthammerParserInputVec.parse_with_eq, DirectRun.repeat_run_eq, DirectRun.repeat_run_with_eq]
   simp only [hmax, core.option.Option.is_none, Option.isNone, repeat_start, Bool.false_eq_true, ↓reduceIte,
     bind_ok, Collect.Insts.RusthammerRepeatAccumulatorAVec.init]
+  unfold DirectRun.repeat_run_with_loop
+  apply direct_projection_spec
   unfold repeat_run_with_loop loop
-  simp only [repeat_run_with_loop.body, repeat_below_max, repeat_parse,
+  simp only [repeat_run_with_loop.body, repeat_below_max, DirectRun.repeat_parse_lift,
+    Std.bind_assoc, DirectRun.repeat_parse_eq,
     bind_ok, hmore, decide_true, ↓reduceIte]
   step with hp as ⟨result, hresult⟩
   simp only [hresult]
@@ -210,7 +216,7 @@ theorem repeat_first_error {P α : Type} (pi : Parser P α) (parser : Repeat P)
     simp [hfalse, spec_ok]
   · simp [hmin, spec_ok]
 
-theorem repeat_first_need_more {P α : Type} (pi : Parser P α) (parser : Repeat P)
+theorem repeat_first_need_more {P α : Type} (pi : DirectParser P α) (parser : Repeat P)
     (max : Usize) (hmax : parser.bounds.max = some max)
     (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (hpositive : max.val > 0)
@@ -218,11 +224,14 @@ theorem repeat_first_need_more {P α : Type} (pi : Parser P α) (parser : Repeat
     Repeat.Insts.RusthammerParserInputVec.parse_with pi parser input cursor context
       ⦃ result => result = .NeedMore ⦄ := by
   have hmore : 0#usize < max := by scalar_tac
-  unfold Repeat.Insts.RusthammerParserInputVec.parse_with repeat_run repeat_run_with
+  rw [Repeat.Insts.RusthammerParserInputVec.parse_with_eq, DirectRun.repeat_run_eq, DirectRun.repeat_run_with_eq]
   simp only [hmax, core.option.Option.is_none, Option.isNone, repeat_start, Bool.false_eq_true, ↓reduceIte,
     bind_ok, Collect.Insts.RusthammerRepeatAccumulatorAVec.init]
+  unfold DirectRun.repeat_run_with_loop
+  apply direct_projection_spec
   unfold repeat_run_with_loop loop
-  simp only [repeat_run_with_loop.body, repeat_below_max, repeat_parse,
+  simp only [repeat_run_with_loop.body, repeat_below_max, DirectRun.repeat_parse_lift,
+    Std.bind_assoc, DirectRun.repeat_parse_eq,
     bind_ok, hmore, decide_true, ↓reduceIte]
   step with hp as ⟨result, hresult⟩
   simp [hresult, spec_ok]

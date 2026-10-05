@@ -1,0 +1,11 @@
+[package]
+name = "rusthammer-backend-probe"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+path = "../backend_memo.rs"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(rusthammer_verify)', 'cfg(feature, values("alloc"))'] }

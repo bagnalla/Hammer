@@ -86,7 +86,7 @@ theorem signed_bits_with_spec (parser : SignedBits) (input : Slice U8) (cursor :
     (status : InputStatus) (hconfig : Spec.validSignedBits parser) :
     SignedBits.Insts.RusthammerParserInputI64.parse_with parser input cursor (Spec.defaultContext status)
       ⦃ result => Partial.primitive status (Spec.signedBitsOutcome input cursor parser.bits.width) result ⦄ := by
-  unfold SignedBits.Insts.RusthammerParserInputI64.parse_with
+  rw [SignedBits.Insts.RusthammerParserInputI64.parse_with_eq]
   step with bits_with_spec parser.bits input cursor status hconfig as ⟨outcome, houtcome⟩
   rcases houtcome with ⟨parsed, hparsed, rfl⟩
   by_cases hvalid : Spec.validCursor input cursor
@@ -121,7 +121,7 @@ theorem signed_bits_final_spec (parser : SignedBits) (input : Slice U8) (cursor 
 
 theorem signed_bits_spec (parser : SignedBits) (input : Slice U8) (cursor : Cursor)
     (hconfig : Spec.validSignedBits parser) :
-    Parser.parse.default SignedBits.Insts.RusthammerParserInputI64 parser input cursor
+    DirectParser.parse SignedBits.Insts.RusthammerParserInputI64 parser input cursor
       ⦃ result => Spec.signedBitsOutcome input cursor parser.bits.width result ⦄ := by
   exact complete_spec SignedBits.Insts.RusthammerParserInputI64 parser input cursor
     (Spec.signedBitsOutcome input cursor parser.bits.width) (signed_bits_final_spec parser input cursor hconfig)

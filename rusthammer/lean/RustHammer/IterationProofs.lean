@@ -8,31 +8,34 @@ open Code
 
 /-- Finite repetition terminates by the remaining permitted calls. The storage
 invariant and step contract concern only reachable prefixes and child successes. -/
-theorem repeat_run_with_bounded_spec {P Q A α R : Type} (pi : Parser P α) (qi : Parser Q α)
+theorem repeat_run_with_bounded_spec {P Q A α R : Type} (pi : DirectParser P α) (qi : DirectParser Q α)
     (ai : RepeatAccumulator A α R) (parser : P) (following : Q) (min max : Usize) (accumulator : A)
     (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (hbounds : min.val ≤ max.val) (child : Nat → Cursor → ParseOutcome α → Prop)
     (invariant : List α → R → Prop)
-    (hp : ∀ count start, repeat_parse pi qi parser following count input start context
+    (hp : ∀ count start, DirectRun.repeat_parse pi qi parser following count input start context
       ⦃ result => child count.val start result ⦄)
     (hi : ai.init accumulator ⦃ result => invariant [] result ⦄)
     (hs : ∀ values next after value state,
       Spec.indexedRepetitions child cursor values next → child values.length next (.Success after value) →
       values.length < max.val → invariant values state →
       ai.step accumulator state value ⦃ result => invariant (values ++ [value]) result ⦄) :
-    repeat_run_with pi qi ai parser following { min, max := some max } accumulator input cursor context
+    DirectRun.repeat_run_with pi qi ai parser following { min, max := some max } accumulator input cursor context
       ⦃ result => Spec.accumulated invariant
         (Spec.boundedIterations child min.val max.val cursor) result ⦄ := by
-  unfold repeat_run_with
+  rw [DirectRun.repeat_run_with_eq]
   simp only [core.option.Option.is_none, Option.isNone, repeat_start, Bool.false_eq_true,
     ↓reduceIte, bind_ok]
   step with hi as ⟨initial, hinitial⟩
+  unfold DirectRun.repeat_run_with_loop
+  apply direct_projection_spec
   unfold repeat_run_with_loop
-  apply loop.spec_decr_nat (fun state => max.val - state.2.2.val)
-    (fun (state, next, count) => ∃ values : List α, values.length = count.val ∧
+  apply loop.spec_decr_nat (fun state => max.val - state.2.2.2.val)
+    (fun (_, state, next, count) => ∃ values : List α, values.length = count.val ∧
       count.val ≤ max.val ∧ Spec.indexedRepetitions child cursor values next ∧ invariant values state)
-  · rintro ⟨state, next, count⟩ ⟨values, hcount, hbound, hprefix, hinvariant⟩
+  · rintro ⟨⟨⟩, state, next, count⟩ ⟨values, hcount, hbound, hprefix, hinvariant⟩
     unfold repeat_run_with_loop.body
+    simp only [DirectRun.repeat_parse_lift, Std.bind_assoc, bind_ok]
     simp only [repeat_below_max, bind_ok, decide_eq_true_eq]
     by_cases hmore : count < max
     · have hless : count.val < max.val := by scalar_tac
@@ -73,11 +76,11 @@ theorem repeat_run_with_bounded_spec {P Q A α R : Type} (pi : Parser P α) (qi 
 
 /-- Unbounded repetition terminates by remaining input bits. The accumulator step
 runs only after progress and representation checks, including the count limit. -/
-theorem repeat_run_with_unbounded_spec {P Q A α R : Type} (pi : Parser P α) (qi : Parser Q α)
+theorem repeat_run_with_unbounded_spec {P Q A α R : Type} (pi : DirectParser P α) (qi : DirectParser Q α)
     (ai : RepeatAccumulator A α R) (parser : P) (following : Q) (min : Usize) (accumulator : A)
     (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (child : Nat → Cursor → ParseOutcome α → Prop) (invariant : List α → R → Prop)
-    (hp : ∀ count start, repeat_parse pi qi parser following count input start context
+    (hp : ∀ count start, DirectRun.repeat_parse pi qi parser following count input start context
       ⦃ result => child count.val start result ⦄)
     (hi : ai.init accumulator ⦃ result => invariant [] result ⦄)
     (hs : ∀ values next after value state,
@@ -85,23 +88,26 @@ theorem repeat_run_with_unbounded_spec {P Q A α R : Type} (pi : Parser P α) (q
       Spec.advancing input (child values.length) next (.Success after value) →
       values.length < Usize.max → invariant values state →
       ai.step accumulator state value ⦃ result => invariant (values ++ [value]) result ⦄) :
-    repeat_run_with pi qi ai parser following { min, max := none } accumulator input cursor context
+    DirectRun.repeat_run_with pi qi ai parser following { min, max := none } accumulator input cursor context
       ⦃ result => Spec.accumulated invariant
         (Spec.unboundedIterations input child min.val cursor) result ⦄ := by
-  unfold repeat_run_with
+  rw [DirectRun.repeat_run_with_eq]
   simp only [core.option.Option.is_none, Option.isNone]
   step with repeat_start_spec input cursor true as ⟨initial, hinitial⟩
   by_cases hvalid : Spec.validCursor input cursor
   · have hiok : initial = .Ok () := by simpa [hvalid] using hinitial
     simp only [hiok]
     step with hi as ⟨initialState, hinit⟩
+    unfold DirectRun.repeat_run_with_loop
+    apply direct_projection_spec
     unfold repeat_run_with_loop
-    apply loop.spec_decr_nat (fun state => 8 * input.val.length - Spec.position state.2.1)
-      (fun (state, next, count) => ∃ values : List α, values.length = count.val ∧
+    apply loop.spec_decr_nat (fun state => 8 * input.val.length - Spec.position state.2.2.1)
+      (fun (_, state, next, count) => ∃ values : List α, values.length = count.val ∧
         Spec.validCursor input next ∧
         Spec.indexedRepetitions (fun n => Spec.advancing input (child n)) cursor values next ∧ invariant values state)
-    · rintro ⟨state, next, count⟩ ⟨values, hcount, hnext, hprefix, hinvariant⟩
+    · rintro ⟨⟨⟩, state, next, count⟩ ⟨values, hcount, hnext, hprefix, hinvariant⟩
       unfold repeat_run_with_loop.body
+      simp only [DirectRun.repeat_parse_lift, Std.bind_assoc, bind_ok]
       simp only [repeat_below_max, bind_ok, ↓reduceIte]
       step with hp count next as ⟨parsed, hparsed⟩
       rw [← hcount] at hparsed

@@ -3,6 +3,7 @@ use rusthammer::{
     IntRange, Map, Not, Optional, ParseContext, ParseError, ParseOutcome, Parser, Seq, SignedBits,
     I8,
 };
+use rusthammer::{Eval, Grammar};
 use std::cell::Cell;
 use std::rc::Rc;
 
@@ -287,9 +288,18 @@ struct Stub<'a> {
     outcome: ParseOutcome<u16>,
     calls: &'a Cell<usize>,
 }
-impl<'input> Parser<'input> for Stub<'_> {
+impl<'input> Grammar<'input> for Stub<'_> {
     type Output = u16;
-    fn parse_with(&self, _: &'input [u8], _: Cursor, _: ParseContext) -> ParseOutcome<u16> {
+}
+
+impl<'input, Backend> Eval<'input, Backend> for Stub<'_> {
+    fn eval(
+        &self,
+        _: &mut Backend,
+        _: &'input [u8],
+        _: Cursor,
+        _: ParseContext,
+    ) -> ParseOutcome<u16> {
         self.calls.set(self.calls.get() + 1);
         match &self.outcome {
             ParseOutcome::Success(next, value) => ParseOutcome::Success(*next, *value),

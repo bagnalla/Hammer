@@ -1,3 +1,4 @@
+use rusthammer::{Eval, Grammar};
 #[path = "../examples/support/dependent.rs"]
 mod formats;
 
@@ -118,9 +119,18 @@ fn prefix_errors_have_defined_precedence_at_every_raw_cursor() {
 }
 
 struct Fixed(ParseOutcome<()>);
-impl<'input> Parser<'input> for Fixed {
+impl<'input> Grammar<'input> for Fixed {
     type Output = ();
-    fn parse_with(&self, _: &'input [u8], _: Cursor, _: ParseContext) -> ParseOutcome<()> {
+}
+
+impl<'input, Backend> Eval<'input, Backend> for Fixed {
+    fn eval(
+        &self,
+        _: &mut Backend,
+        _: &'input [u8],
+        _: Cursor,
+        _: ParseContext,
+    ) -> ParseOutcome<()> {
         match self.0 {
             ParseOutcome::Success(cursor, ()) => ParseOutcome::Success(cursor, ()),
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
@@ -165,10 +175,14 @@ struct Observed<'a> {
     calls: &'a Cell<usize>,
     error: Option<ParseError>,
 }
-impl<'input> Parser<'input> for Observed<'_> {
+impl<'input> Grammar<'input> for Observed<'_> {
     type Output = bool;
-    fn parse_with(
+}
+
+impl<'input, Backend> Eval<'input, Backend> for Observed<'_> {
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
@@ -180,7 +194,7 @@ impl<'input> Parser<'input> for Observed<'_> {
         self.calls.set(self.calls.get() + 1);
         match self.error {
             Some(error) => ParseOutcome::Error(error),
-            None => Bit.parse_with(input, cursor, context),
+            None => Bit.eval(backend, input, cursor, context),
         }
     }
 }
@@ -321,10 +335,14 @@ impl Drop for OwnedParser {
         self.parser_drops.set(self.parser_drops.get() + 1);
     }
 }
-impl<'input> Parser<'input> for OwnedParser {
+impl<'input> Grammar<'input> for OwnedParser {
     type Output = Token;
-    fn parse_with(
+}
+
+impl<'input, Backend> Eval<'input, Backend> for OwnedParser {
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
@@ -332,7 +350,7 @@ impl<'input> Parser<'input> for OwnedParser {
         assert_eq!(self.input_value.0.get(), 0);
         match Literal::new(8, 97)
             .unwrap()
-            .parse_with(input, cursor, context)
+            .eval(backend, input, cursor, context)
         {
             ParseOutcome::Success(next, _) => {
                 ParseOutcome::Success(next, Token(Rc::clone(&self.output_drops)))
@@ -380,10 +398,14 @@ fn first_values_constructed_parsers_and_second_values_have_independent_ownership
 fn copy_bounds_do_not_extend_to_outputs_or_constructed_parsers() {
     struct Owned(bool);
     struct Body(Owned);
-    impl<'input> Parser<'input> for Body {
+    impl<'input> Grammar<'input> for Body {
         type Output = Owned;
-        fn parse_with(
+    }
+
+    impl<'input, Backend> Eval<'input, Backend> for Body {
+        fn eval(
             &self,
+            _: &mut Backend,
             _: &'input [u8],
             cursor: Cursor,
             _: ParseContext,

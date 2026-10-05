@@ -12,11 +12,11 @@ theorem classify_final_spec {α : Type} (result : Spec.ParseResult α) :
   | Err error => cases error <;> simp [InputStatus.classify, Spec.completedResult, spec_ok]
 
 /-- The default complete entry point preserves a final-input contract. -/
-theorem complete_spec {P α : Type} (pi : Parser P α) (parser : P)
+theorem complete_spec {P α : Type} (pi : DirectParser P α) (parser : P)
     (input : Slice U8) (cursor : Cursor) (contract : Spec.ParseResult α → Prop)
     (hp : pi.parse_with parser input cursor ParseContext.FINAL ⦃ outcome => Spec.completed contract outcome ⦄) :
-    Parser.parse.default pi parser input cursor ⦃ result => contract result ⦄ := by
-  unfold Parser.parse.default
+    DirectParser.parse pi parser input cursor ⦃ result => contract result ⦄ := by
+  unfold DirectParser.parse
   step with hp as ⟨outcome, houtcome⟩
   rcases houtcome with ⟨result, hresult, rfl⟩
   cases result with
@@ -28,7 +28,7 @@ theorem complete_spec {P α : Type} (pi : Parser P α) (parser : P)
 theorem bit_spec (input : Slice U8) (cursor : Cursor) :
     Bit.Insts.RusthammerParserInputBool.parse_with () input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.bitOutcome input cursor) result ⦄ := by
-  unfold Bit.Insts.RusthammerParserInputBool.parse_with
+  rw [Bit.Insts.RusthammerParserInputBool.parse_with_eq]
   simp only [ParseContext.FINAL, Order.DEFAULT]
   have hp : read_bit_ordered input cursor .HighFirst ⦃ result => Spec.bitOutcome input cursor result ⦄ := by
     by_cases h : cursor.bit.val < 8 ∧ cursor.byte.val < input.val.length
@@ -42,7 +42,7 @@ theorem bits_spec (parser : Bits) (input : Slice U8) (cursor : Cursor)
     (hconfig : Spec.validBits parser) :
     Bits.Insts.RusthammerParserInputU64.parse_with parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.bitsOutcome input cursor parser.width) result ⦄ := by
-  unfold Bits.Insts.RusthammerParserInputU64.parse_with
+  rw [Bits.Insts.RusthammerParserInputU64.parse_with_eq]
   simp only [ParseContext.FINAL, Order.DEFAULT, read_ordered_bits]
   step with read_bits_spec input cursor parser hconfig as ⟨result, hresult⟩
   step with classify_final_spec result as ⟨outcome, houtcome⟩
@@ -51,14 +51,14 @@ theorem bits_spec (parser : Bits) (input : Slice U8) (cursor : Cursor)
 theorem take_aligned_parser_spec (parser : TakeAligned) (input : Slice U8) (cursor : Cursor) :
     TakeAligned.Insts.RusthammerParserInputSharedInputSliceU8.parse_with parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.takeAlignedOutcome input cursor parser.count) result ⦄ := by
-  unfold TakeAligned.Insts.RusthammerParserInputSharedInputSliceU8.parse_with
+  rw [TakeAligned.Insts.RusthammerParserInputSharedInputSliceU8.parse_with_eq]
   simp only [ParseContext.FINAL]
   step with take_aligned_spec input cursor parser.count as ⟨result, hresult⟩
   step with classify_final_spec result as ⟨outcome, houtcome⟩
   exact ⟨result, hresult, houtcome⟩
 
 /-- Final-input sequencing retains the earlier complete-buffer relation. -/
-theorem seq_spec {P Q α β : Type} (pi : Parser P α) (qi : Parser Q β)
+theorem seq_spec {P Q α β : Type} (pi : DirectParser P α) (qi : DirectParser Q β)
     (parser : Seq P Q) (input : Slice U8) (cursor : Cursor)
     (first : Cursor → Spec.ParseResult α → Prop)
     (second : Cursor → Spec.ParseResult β → Prop)
@@ -68,7 +68,7 @@ theorem seq_spec {P Q α β : Type} (pi : Parser P α) (qi : Parser Q β)
       ⦃ result => Spec.completed (second start) result ⦄) :
     Seq.Insts.RusthammerParserInputPair.parse_with pi qi parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.sequence first second cursor) result ⦄ := by
-  unfold Seq.Insts.RusthammerParserInputPair.parse_with
+  rw [Seq.Insts.RusthammerParserInputPair.parse_with_eq]
   step with hp cursor as ⟨outcome, houtcome⟩
   rcases houtcome with ⟨left, hleft, rfl⟩
   cases left with
@@ -89,7 +89,7 @@ theorem seq_spec {P Q α β : Type} (pi : Parser P α) (qi : Parser Q β)
       simp only [Spec.completedResult, spec_ok, Spec.completed_success]
       exact ⟨.Ok (middle, a), hleft, .Ok (last, b), hright, rfl⟩
 
-theorem map_spec {P F α β : Type} (pi : Parser P α) (fi : core.ops.function.Fn F α β)
+theorem map_spec {P F α β : Type} (pi : DirectParser P α) (fi : core.ops.function.Fn F α β)
     (parser : Map P F) (input : Slice U8) (cursor : Cursor)
     (child : Cursor → Spec.ParseResult α → Prop) (mapping : α → β → Prop)
     (hp : pi.parse_with parser.parser input cursor ParseContext.FINAL
@@ -98,7 +98,7 @@ theorem map_spec {P F α β : Type} (pi : Parser P α) (fi : core.ops.function.F
       fi.call parser.map value ⦃ result => mapping value result ⦄) :
     Map.Insts.RusthammerParser.parse_with pi fi parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.map child mapping cursor) result ⦄ := by
-  unfold Map.Insts.RusthammerParser.parse_with
+  rw [Map.Insts.RusthammerParser.parse_with_eq]
   step with hp as ⟨outcome, houtcome⟩
   rcases houtcome with ⟨parsed, hparsed, rfl⟩
   cases parsed with
@@ -112,7 +112,7 @@ theorem map_spec {P F α β : Type} (pi : Parser P α) (fi : core.ops.function.F
     simp only [Spec.completed_success]
     exact ⟨.Ok (next, value), hparsed, mapped, hmapped, rfl⟩
 
-theorem verify_spec {P F α : Type} (pi : Parser P α) (fi : core.ops.function.Fn F α Bool)
+theorem verify_spec {P F α : Type} (pi : DirectParser P α) (fi : core.ops.function.Fn F α Bool)
     (parser : Verify P F) (input : Slice U8) (cursor : Cursor)
     (child : Cursor → Spec.ParseResult α → Prop) (predicate : α → Prop)
     [DecidablePred predicate]
@@ -122,7 +122,7 @@ theorem verify_spec {P F α : Type} (pi : Parser P α) (fi : core.ops.function.F
       fi.call parser.predicate value ⦃ result => result = decide (predicate value) ⦄) :
     Verify.Insts.RusthammerParser.parse_with pi fi parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.verify child predicate cursor) result ⦄ := by
-  unfold Verify.Insts.RusthammerParser.parse_with
+  rw [Verify.Insts.RusthammerParser.parse_with_eq]
   step with hp as ⟨outcome, houtcome⟩
   rcases houtcome with ⟨parsed, hparsed, rfl⟩
   cases parsed with

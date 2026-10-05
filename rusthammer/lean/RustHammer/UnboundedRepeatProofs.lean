@@ -8,13 +8,13 @@ open Code
 /-- Unbounded repetition terminates by strictly decreasing the mathematical
 number of remaining input bits. It enforces valid, advancing child cursors at
 runtime, and handles the count limit before arithmetic or vector growth. -/
-theorem repeat_unbounded_with_spec {P α : Type} (pi : Parser P α) (parser : P) (min : Usize)
+theorem repeat_unbounded_with_spec {P α : Type} (pi : DirectParser P α) (parser : P) (min : Usize)
     (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (child : Cursor → ParseOutcome α → Prop)
     (hp : ∀ start, pi.parse_with parser input start context ⦃ result => child start result ⦄) :
     Repeat.Insts.RusthammerParserInputVec.parse_with pi { parser, bounds := { min, max := none } }
       input cursor context ⦃ result => Spec.unboundedRepeat input child min.val cursor result ⦄ := by
-  unfold Repeat.Insts.RusthammerParserInputVec.parse_with
+  rw [Repeat.Insts.RusthammerParserInputVec.parse_with_eq]
   step with repeat_run_unbounded_spec pi (Collect.Insts.RusthammerRepeatAccumulatorAVec α)
     parser min () input cursor context child (fun values state => state.val = values) hp
     (by simp [Collect.Insts.RusthammerRepeatAccumulatorAVec.init, spec_ok])
@@ -25,7 +25,7 @@ theorem repeat_unbounded_with_spec {P α : Type} (pi : Parser P α) (parser : P)
       simpa [hstate] using happended) as ⟨outcome, houtcome⟩
   exact (accumulated_collection _ outcome).mp houtcome
 
-theorem repeat_unbounded_final_spec {P α : Type} (pi : Parser P α) (parser : P) (min : Usize)
+theorem repeat_unbounded_final_spec {P α : Type} (pi : DirectParser P α) (parser : P) (min : Usize)
     (input : Slice U8) (cursor : Cursor) (child : Cursor → Spec.ParseResult α → Prop)
     (hp : ∀ start, pi.parse_with parser input start ParseContext.FINAL
       ⦃ result => Spec.completed (child start) result ⦄) :
@@ -46,11 +46,11 @@ theorem repeat_unbounded_final_spec {P α : Type} (pi : Parser P α) (parser : P
       | Ok pair => cases pair; cases heq
     · simp [Spec.unboundedRepeat, Spec.collectedValues, Spec.unboundedRepetition, hv] at houtcome
 
-theorem repeat_unbounded_spec {P α : Type} (pi : Parser P α) (parser : P) (min : Usize)
+theorem repeat_unbounded_spec {P α : Type} (pi : DirectParser P α) (parser : P) (min : Usize)
     (input : Slice U8) (cursor : Cursor) (child : Cursor → Spec.ParseResult α → Prop)
     (hp : ∀ start, pi.parse_with parser input start ParseContext.FINAL
       ⦃ result => Spec.completed (child start) result ⦄) :
-    Parser.parse.default (Repeat.Insts.RusthammerParserInputVec pi)
+    DirectParser.parse (Repeat.Insts.RusthammerParserInputVec pi)
       { parser, bounds := { min, max := none } } input cursor
       ⦃ result => Spec.unboundedRepeatComplete input child min.val cursor result ⦄ := by
   exact complete_spec (Repeat.Insts.RusthammerParserInputVec pi)
@@ -59,12 +59,12 @@ theorem repeat_unbounded_spec {P α : Type} (pi : Parser P α) (parser : P) (min
     (repeat_unbounded_final_spec pi parser min input cursor child hp)
 
 /-- Invalid initial cursors are rejected without any child-parser assumptions. -/
-theorem repeat_unbounded_invalid_cursor {P α : Type} (pi : Parser P α) (parser : P) (min : Usize)
+theorem repeat_unbounded_invalid_cursor {P α : Type} (pi : DirectParser P α) (parser : P) (min : Usize)
     (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (hcursor : ¬Spec.validCursor input cursor) :
     Repeat.Insts.RusthammerParserInputVec.parse_with pi { parser, bounds := { min, max := none } }
       input cursor context ⦃ result => result = .Error .InvalidCursor ⦄ := by
-  unfold Repeat.Insts.RusthammerParserInputVec.parse_with repeat_run repeat_run_with
+  rw [Repeat.Insts.RusthammerParserInputVec.parse_with_eq, DirectRun.repeat_run_eq, DirectRun.repeat_run_with_eq]
   simp only [core.option.Option.is_none, Option.isNone]
   step with repeat_start_spec input cursor true as ⟨initial, hinitial⟩
   simp [hcursor] at hinitial

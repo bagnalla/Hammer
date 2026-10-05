@@ -105,6 +105,9 @@ theorem record_header_fields_spec (input : Slice U8) (cursor : Cursor)
   have htail (start : Cursor) := seq_spec bi bi fieldsParser.second input start
     (fun start => Spec.bitsOutcome input start 5#u8)
     (fun start => Spec.bitsOutcome input start 16#u8) hf hl
+  change Seq.Insts.RusthammerParserInputPair.parse_with bi
+    (Seq.Insts.RusthammerParserInputPair bi bi) fieldsParser input cursor ParseContext.FINAL
+    ⦃ result => Spec.completed (Spec.recordHeaderOutcome input cursor) result ⦄
   step with seq_spec bi (Seq.Insts.RusthammerParserInputPair bi bi) fieldsParser input cursor
     (fun start => Spec.bitsOutcome input start 3#u8)
     (Spec.sequence (fun start => Spec.bitsOutcome input start 5#u8)
@@ -116,7 +119,9 @@ theorem record_header_fields_spec (input : Slice U8) (cursor : Cursor)
 theorem record_predicate_spec (fields : Spec.HeaderFields) :
     predicateInst.call () fields ⦃ result => result = decide (Spec.recordHeaderAllowed fields) ⦄ := by
   rcases fields with ⟨version, flags, length⟩
-  simp only [ParserInputRecordParserRecord.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared0PairU64PairU64U64Bool.call,
+  change record_header.closure.Insts.CoreOpsFunctionFnTupleShared0PairU64PairU64U64Bool.call ()
+    (version, flags, length) ⦃ result => result = decide (Spec.recordHeaderAllowed (version, flags, length)) ⦄
+  simp only [record_header.closure.Insts.CoreOpsFunctionFnTupleShared0PairU64PairU64U64Bool.call,
     MAX_RECORD_PAYLOAD]
   by_cases hversion : version = 1#u64
   · simp [hversion, Spec.recordHeaderAllowed, spec_ok]
@@ -126,13 +131,13 @@ theorem record_predicate_spec (fields : Spec.HeaderFields) :
 /-- The private payload helper has no configuration assumption on the requested count. -/
 theorem record_body_spec (input : Slice U8) (cursor : Cursor) (version flags : U64) (count : Usize)
     (hvalid : Spec.validCursor input cursor) (haligned : cursor.bit.val = 0) :
-    parse_record_body input cursor version flags count ParseContext.FINAL
+    DirectRun.record_example.parse_record_body input cursor version flags count ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.recordBodyOutcome input cursor version flags count) result ⦄ := by
   have hparts : cursor.bit.val < 8 ∧ cursor.byte.val ≤ input.val.length ∧
       (cursor.byte.val = input.val.length → cursor.bit.val = 0) := by
     unfold Spec.validCursor Spec.position at hvalid
     omega
-  unfold parse_record_body
+  rw [DirectRun.record_example.parse_record_body_eq]
   step with seq_spec TakeAligned.Insts.RusthammerParserInputSharedInputSliceU8
     End.Insts.RusthammerParserInputTuple { first := { count }, second := () } input cursor
     (fun start => Spec.takeAlignedOutcome input start count) (Spec.endOutcome input)
@@ -181,7 +186,7 @@ theorem record_parser_spec (parser : RecordParser) (input : Slice U8) (cursor : 
       ⦃ result => Spec.completed (Spec.recordOutcome input cursor) result ⦄ := by
   change parser = Spec.recordParser at hconfig
   subst parser
-  unfold RecordParser.Insts.RusthammerParserInputRecord.parse_with
+  rw [RecordParser.Insts.RusthammerParserInputRecord.parse_with_eq]
   step with take_aligned_parser_spec { count := 0#usize } input cursor as ⟨checkedOutcome, hcheckedOutcome⟩
   rcases hcheckedOutcome with ⟨checked, hchecked, rfl⟩
   have hparts : (cursor.bit.val < 8 ∧ cursor.byte.val ≤ input.val.length ∧

@@ -4,6 +4,7 @@ use rusthammer::{
     Bits, Choice, ConfigError, Cursor, End, Epsilon, FoldSepBy, Ignore, Left, Literal, Map,
     Optional, ParseContext, ParseError, ParseOutcome, Parser, Seq, TakeAligned,
 };
+use rusthammer::{Eval, Grammar};
 use std::cell::Cell;
 use std::rc::Rc;
 
@@ -16,9 +17,18 @@ fn literal(byte: u8) -> Literal {
 }
 
 struct MustNotRun;
-impl<'input> Parser<'input> for MustNotRun {
+impl<'input> Grammar<'input> for MustNotRun {
     type Output = ();
-    fn parse_with(&self, _: &'input [u8], _: Cursor, _: ParseContext) -> ParseOutcome<()> {
+}
+
+impl<'input, Backend> Eval<'input, Backend> for MustNotRun {
+    fn eval(
+        &self,
+        _: &mut Backend,
+        _: &'input [u8],
+        _: Cursor,
+        _: ParseContext,
+    ) -> ParseOutcome<()> {
         panic!("parser must not run")
     }
 }
@@ -297,9 +307,18 @@ struct Controlled<'a> {
     error: Option<ParseError>,
     calls: &'a Cell<usize>,
 }
-impl<'input> Parser<'input> for Controlled<'_> {
+impl<'input> Grammar<'input> for Controlled<'_> {
     type Output = ();
-    fn parse_with(&self, _: &'input [u8], cursor: Cursor, _: ParseContext) -> ParseOutcome<()> {
+}
+
+impl<'input, Backend> Eval<'input, Backend> for Controlled<'_> {
+    fn eval(
+        &self,
+        _: &mut Backend,
+        _: &'input [u8],
+        cursor: Cursor,
+        _: ParseContext,
+    ) -> ParseOutcome<()> {
         self.calls.set(self.calls.get() + 1);
         if self.first_item && cursor == Cursor::start() {
             ParseOutcome::Success(byte_cursor(1), ())
@@ -550,15 +569,19 @@ struct Tracked<P> {
     parser: P,
     drops: Rc<Cell<usize>>,
 }
-impl<'input, P: Parser<'input>> Parser<'input> for Tracked<P> {
+impl<'input, P: Grammar<'input>> Grammar<'input> for Tracked<P> {
     type Output = Token<P::Output>;
-    fn parse_with(
+}
+
+impl<'input, Backend, P: Eval<'input, Backend>> Eval<'input, Backend> for Tracked<P> {
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
     ) -> ParseOutcome<Self::Output> {
-        match self.parser.parse_with(input, cursor, context) {
+        match self.parser.eval(backend, input, cursor, context) {
             ParseOutcome::Success(next, value) => ParseOutcome::Success(
                 next,
                 Token {
