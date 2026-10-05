@@ -1,7 +1,8 @@
-use rusthammer::{
-    parse_flags, read_bit, take_aligned, Bit, Bits, ConfigError, Cursor, Flags, ParseError, Parser,
-    Seq,
-};
+#[path = "../examples/support/flags.rs"]
+mod flags_example;
+
+use flags_example::{parse_flags, Flags};
+use rusthammer::{read_bit, take_aligned, Bit, Bits, ConfigError, Cursor, ParseError, Parser, Seq};
 
 fn read_bits(input: &[u8], cursor: Cursor, width: u8) -> Result<(Cursor, u64), ParseError> {
     let parser = Bits::new(width).unwrap();

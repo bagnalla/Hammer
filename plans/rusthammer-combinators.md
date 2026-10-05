@@ -366,14 +366,22 @@ helpers should represent grammar operations or output needs.
    Resolve cursor/span/order questions before implementing their affected APIs.
    Plan permutation, recursion, and the other larger capabilities separately.
 
-Audit existing exports alongside this work: `Flags`, `Marker`, `Record`, their
-parsers/functions, and the example payload limit are application fixtures, not
-general-purpose final library features. Move them to an example/proof-support
-target while preserving their extraction and proofs. Retain `read_bit`,
-`read_bits`, and `take_aligned` as documented complete-input primitive convenience
-functions; use the parser interface when partial-input semantics are needed.
+**Application fixture migration is complete.** `Flags`, `Marker`, `Record`,
+`RecordParser`, their parsing helpers, and the example payload limit now live in
+[`examples/support/`](../rusthammer/examples/support/). Each runnable example and
+its existing native tests compile the same shared source against the ordinary
+library. Private modules enabled only by `rusthammer_verify` supply extraction
+and Lean proofs, following the dependent-format pattern. The moved fixtures
+are absent from normal library builds and the public API; no feature or public
+compatibility alias exposes them. Generated application names acquire module
+prefixes, while the existing Lean theorems and contracts are preserved.
+Explicit extraction roots retain the moved parsers' derived clone methods in
+both MIR stages. The normal Cargo consumer continues to use only core exports.
+
+`read_bit`, `read_bits`, and `take_aligned` remain documented complete-input
+primitive convenience functions; use the parser interface for partial input.
+Keep future application fixtures outside the general-purpose public API.
 Internal proof convenience alone is not a reason to export any additional helper.
-These are planned migrations, not changes already made.
 
 Before exposing a new family: write its independent semantics, check the relevant
 Aeneas shape, implement the actual library path, prove its compositional contract,

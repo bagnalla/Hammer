@@ -6,6 +6,7 @@ open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Proofs
 open Code
+open marker_example record_example
 
 /-- Sequencing readers that only classify exhaustion can reuse their complete
 value/position relation. This lifting does not apply to choice or lookahead. -/

@@ -58,16 +58,16 @@ def main():
     # later stage, which can contain cleanup code absent from promoted MIR.
     library_extraction = (
         str(charon), "cargo", "--preset=aeneas", "--sysroot", "default",
-        # Private fixture module shares source with the runnable examples; it is
-        # excluded from ordinary library builds and does not expand the API.
+        # Private fixture modules share source with the runnable examples; they
+        # are excluded from ordinary library builds and do not expand the API.
         "--rustc-arg=--cfg=rusthammer_verify",
         "--start-from", "rusthammer::dependent_examples::payload",
         "--start-from", "rusthammer::dependent_examples::fields",
-        "--start-from", "rusthammer::parse_flags",
+        "--start-from", "rusthammer::flags_example::parse_flags",
         "--start-from", "rusthammer::take_aligned",
         "--start-from", "rusthammer::read_bits",
-        "--start-from", "rusthammer::parse_marker",
-        "--start-from", "rusthammer::parse_record",
+        "--start-from", "rusthammer::marker_example::parse_marker",
+        "--start-from", "rusthammer::record_example::parse_record",
         "--start-from", "rusthammer::Bits::new",
         "--start-from", "rusthammer::Bits::width",
         "--start-from", "rusthammer::SkipBits::new",
@@ -86,8 +86,8 @@ def main():
         "--start-from", "rusthammer::Literal::new",
         "--start-from", "rusthammer::Literal::width",
         "--start-from", "rusthammer::Literal::value",
-        "--start-from", "rusthammer::Marker::new",
-        "--start-from", "rusthammer::RecordParser::new",
+        "--start-from", "rusthammer::marker_example::Marker::new",
+        "--start-from", "rusthammer::record_example::RecordParser::new",
         "--start-from", "rusthammer::Fail::new",
         "--start-from", "{impl core::default::Default for rusthammer::Fail}",
         "--start-from", "rusthammer::Repeat::new",
@@ -112,6 +112,9 @@ def main():
         "--start-from", "rusthammer::FoldSepBy::max",
         "--start-from", "{impl rusthammer::Parser for _}",
         "--start-from", "{impl core::clone::Clone for rusthammer::_}",
+        # The crate-root type pattern above does not cover nested example types.
+        "--start-from", "{impl core::clone::Clone for rusthammer::marker_example::Marker}",
+        "--start-from", "{impl core::clone::Clone for rusthammer::record_example::RecordParser}",
         "--include", "core::option::{impl core::clone::Clone for core::option::Option}",
     )
     run(

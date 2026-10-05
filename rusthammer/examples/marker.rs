@@ -1,4 +1,8 @@
-use rusthammer::{parse_marker, ConfigError, Cursor, Marker};
+#[path = "support/marker.rs"]
+mod marker_example;
+
+use marker_example::{parse_marker, Marker};
+use rusthammer::{ConfigError, Cursor};
 
 fn main() -> Result<(), ConfigError> {
     let parser = Marker::new()?;

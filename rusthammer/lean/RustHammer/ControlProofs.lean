@@ -5,6 +5,7 @@ open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Proofs
 open Code
+open marker_example
 
 theorem recoverable_spec (error : ParseError) :
     ParseError.is_recoverable error ⦃ result => result = decide (Spec.recoverable error) ⦄ := by

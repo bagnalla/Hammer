@@ -5,6 +5,7 @@ open Aeneas Aeneas.Std
 
 namespace RustHammer.Partial
 open Code
+open record_example
 
 /-- The ordered marker grammar, with finality applied at each primitive. -/
 def markerOutcome (input : Slice U8) (cursor : Cursor) (status : InputStatus)

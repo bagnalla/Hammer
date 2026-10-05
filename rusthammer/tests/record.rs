@@ -1,4 +1,8 @@
-use rusthammer::{parse_record, Cursor, ParseError, Record, RecordParser, MAX_RECORD_PAYLOAD};
+#[path = "../examples/support/record.rs"]
+mod record_example;
+
+use record_example::{parse_record, Record, RecordParser, MAX_RECORD_PAYLOAD};
+use rusthammer::{Cursor, ParseError};
 
 #[test]
 fn records_decode_all_header_values_and_borrow_the_exact_payload() {

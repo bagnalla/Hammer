@@ -4,6 +4,7 @@ open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Proofs
 open Code
+open flags_example
 
 /-- The typed example refines its three-bit grammar, including every error path. -/
 theorem flags_spec (input : Slice U8) (cursor : Cursor) :

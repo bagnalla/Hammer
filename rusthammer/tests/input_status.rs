@@ -1,8 +1,17 @@
+#[path = "../examples/support/marker.rs"]
+#[allow(dead_code)] // Complete-entry helpers are exercised in other tests.
+mod marker_example;
+#[path = "../examples/support/record.rs"]
+#[allow(dead_code)] // Complete-entry helpers are exercised in other tests.
+mod record_example;
+
+use marker_example::Marker;
+use record_example::RecordParser;
 use std::cell::Cell;
 
 use rusthammer::{
-    And, Bit, Bits, Choice, Cursor, End, InputStatus, Literal, Map, Marker, Not, Optional,
-    ParseError, ParseOutcome, Parser, RecordParser, Seq, TakeAligned, Verify,
+    And, Bit, Bits, Choice, Cursor, End, InputStatus, Literal, Map, Not, Optional, ParseError,
+    ParseOutcome, Parser, Seq, TakeAligned, Verify,
 };
 use InputStatus::{Final, Partial};
 use ParseOutcome::{Error, NeedMore, Success};

@@ -1,4 +1,8 @@
-use rusthammer::{parse_record, ConfigError, Cursor, RecordParser};
+#[path = "support/record.rs"]
+mod record_example;
+
+use record_example::{parse_record, RecordParser};
+use rusthammer::{ConfigError, Cursor};
 
 fn main() -> Result<(), ConfigError> {
     let parser = RecordParser::new()?;

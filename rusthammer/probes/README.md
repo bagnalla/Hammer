@@ -29,8 +29,9 @@ The second command is expected to fail at Aeneas revision
 `c8f15d7d658c86a95658f71ad99cddd4be002e04`. Recheck it when upgrading the tools;
 it does not establish that all callbacks returning borrowed values are unsupported.
 
-The record parser constructs its final borrowed `Record` directly after parsing
-the payload. That implementation extracts and is included in the normal
+The [record example](../examples/support/record.rs) constructs its final borrowed
+`Record` directly after parsing the payload. That implementation extracts through
+its private verification module and is included in the normal
 verification command. Generic `Map` and `Verify` have callback-dependent Lean
 contracts; each concrete callback must still translate and satisfy its contract.
 

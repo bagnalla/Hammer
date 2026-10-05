@@ -42,11 +42,14 @@ The prototype supports:
 - `FoldRepeat<P, I, F>` folding those same repetitions into an owned accumulator without library allocation.
 - `SepBy<P, S>` and `FoldSepBy<P, S, I, F>` for separated lists, collecting or folding only item outputs.
 - Numeric literal matching and an exact end-of-input check.
-- A toy three-bit header parser returning a `Flags` struct.
 - An explicitly aligned payload parser returning a borrowed `&'input [u8]`.
-- A complete marker grammar accepting `CA FE` or `CA`, with no trailing input.
-- A complete record with a constrained header and a bounded, borrowed payload
-  whose length comes from the input.
+
+Verified application examples live in [`examples/support/`](examples/support/):
+a three-bit `Flags` header, a complete `CA FE` / `CA` marker grammar, a bounded
+record with a borrowed payload, and count-prefixed formats built with `Bind`.
+Their types, parsing helpers, and format limits belong to those examples and
+are absent from the public library API. Runnable examples, native tests, and
+Lean extraction share each format's source.
 
 The library uses `no_std` and forbids unsafe Rust. Default features are empty;
 without `alloc`, the built-in core allocates no memory. The optional `alloc` feature
@@ -481,8 +484,10 @@ Custom parser implementations now implement `parse_with` and must honor the
 finality contract. The default `parse` calls it with `Final`; defensively, an
 unexpected `NeedMore` from a custom parser becomes `UnexpectedEnd`. The built-in
 proofs rule out that case rather than relying on this conversion. The free
-`read_bit`, `read_bits`, `take_aligned`, and `parse_*` helpers remain complete-input
-functions; use the corresponding parser's `parse_with` for partial input.
+`read_bit`, `read_bits`, and `take_aligned` library helpers remain complete-input
+functions; use the corresponding parser's `parse_with` for partial input. The
+`parse_flags`, `parse_marker`, and `parse_record` helpers are complete-input
+functions in the shared example source.
 
 ## Parser reuse and output selection
 
@@ -603,7 +608,8 @@ A later failure outside a successful choice does not revisit that choice.
 The built-in parsers have no mutable semantic state; cursor backtracking does
 not undo effects in custom parsers that use interior mutability.
 
-The [marker example](examples/marker.rs) calls `Marker::new()` once, then passes
+The [marker example](examples/marker.rs) imports its grammar from
+[`support/marker.rs`](examples/support/marker.rs), calls `Marker::new()` once, then passes
 `&parser` to `parse_marker(input, cursor, &parser)` for each input buffer. The grammar
 tries the 16-bit literal `0xcafe`, then the 8-bit literal `0xca`, followed by `End`.
 Thus `[0xca]` succeeds after the
@@ -1023,8 +1029,10 @@ limitation remains separate and deferred.
 
 ## Bounded record example
 
-The [record example](examples/record.rs) constructs a reusable `RecordParser` with
-`RecordParser::new()`, then calls `parse_record(input, cursor, &parser)`.
+The [record example](examples/record.rs) uses the grammar and format limit defined
+in [`support/record.rs`](examples/support/record.rs). It constructs a reusable
+`RecordParser` with `RecordParser::new()`, then calls
+`parse_record(input, cursor, &parser)`.
 The format is:
 
 ```text
@@ -1091,11 +1099,16 @@ Extraction includes derived `Clone` methods and the standard library's
 `Option::clone` implementation used by repetition bounds.
 
 The library extraction also sets the private `rusthammer_verify` configuration
-to include [the dependent-format source](examples/support/dependent.rs) as a
-private module. Examples and native tests compile that same source against the
-ordinary library. These formats are absent from normal library builds and add
-no public API or Cargo feature. This gives application proofs access to the same
-generated core definitions without maintaining a second implementation.
+to include the shared [flags](examples/support/flags.rs),
+[marker](examples/support/marker.rs), [record](examples/support/record.rs), and
+[dependent-format](examples/support/dependent.rs) sources as private modules.
+Examples and native tests compile those same sources against the ordinary
+library. The formats are absent from normal library builds and add no public
+API or Cargo feature. Their extraction roots include the constructors, parsing
+helpers, and derived marker/record clone methods. Both MIR stages use these
+roots, preserving application proof coverage alongside the core definitions.
+The Lean application theorems retain their names and contracts; generated
+application definitions live under their example-module namespaces.
 
 The command also extracts the same library roots at the optimized MIR stage
 available for dependency bodies and checks a
@@ -1485,8 +1498,9 @@ Fixed-width typed integer readers, inclusive ranges, byte sets, `SkipBits`,
 semantic and differential checks. Settle cursor/span and bit-order semantics
 before their affected APIs, and design permutation and recursion separately.
 
-Keep application grammars in examples or proof fixtures as the API is organized;
-the current exported demo types are also recorded for migration in the plan.
+Keep future application grammars in shared example/proof-support source. The
+original `Flags`, `Marker`, and `Record` fixtures have been migrated out of the
+public library while preserving their tests and proofs.
 
 Before implementing streaming buffering and resumption, revisit the
 [deferred eager literal rejection](../plans/rusthammer.md#deferred-eager-literal-rejection)

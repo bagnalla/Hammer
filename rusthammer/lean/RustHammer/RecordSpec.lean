@@ -4,6 +4,7 @@ open Aeneas Aeneas.Std
 
 namespace RustHammer.Spec
 open Code
+open record_example
 
 /-- The private record configuration fixes the three field widths. -/
 def recordParser : RecordParser :=

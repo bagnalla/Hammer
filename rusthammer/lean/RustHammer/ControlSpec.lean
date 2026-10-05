@@ -4,6 +4,7 @@ open Aeneas Aeneas.Std
 
 namespace RustHammer.Spec
 open Code
+open marker_example
 
 deriving instance DecidableEq for ParseError
 

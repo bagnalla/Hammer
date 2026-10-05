@@ -1,6 +1,10 @@
+#[path = "../examples/support/marker.rs"]
+mod marker_example;
+
+use marker_example::{parse_marker, Marker};
 use rusthammer::{
-    parse_marker, Bits, Choice, ConfigError, Cursor, End, InputStatus, Literal, Marker, ParseError,
-    ParseOutcome, Parser, Seq, TakeAligned,
+    Bits, Choice, ConfigError, Cursor, End, InputStatus, Literal, ParseError, ParseOutcome, Parser,
+    Seq, TakeAligned,
 };
 
 struct MustNotRun;

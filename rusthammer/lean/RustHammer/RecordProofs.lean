@@ -5,6 +5,7 @@ open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Proofs
 open Code
+open record_example
 
 theorem record_new_spec :
     RecordParser.new ⦃ result => result = .Ok Spec.recordParser ⦄ := by

@@ -4,6 +4,7 @@ open Aeneas Aeneas.Std
 
 namespace RustHammer.Spec
 open Code
+open flags_example
 
 abbrev ParseResult (α : Type) := core.result.Result (Cursor × α) ParseError
 

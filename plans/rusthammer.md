@@ -383,8 +383,18 @@ and `BytePattern` expand the binary primitives, and signed fields are implemente
 and proved, including fixed-width readers with native Rust integer outputs.
 Inclusive typed ranges, byte sets, skipping, position reporting, and match
 restrictions are also implemented and proved, with semantic/differential checks.
-Next audit the remaining exported application fixtures and design cursor/span/order
-semantics, permutation, and recursion before introducing their public APIs.
+The original `Flags`, `Marker`, and `Record` grammars have also moved into shared
+[`examples/support/`](../rusthammer/examples/support/) source. Their parser types,
+complete parsing helpers, and payload limit are absent from the library's normal
+build and public API. Runnable examples and existing native tests use the same
+files, while private `rusthammer_verify` modules preserve extraction and all
+application proofs. The Lean contracts and theorem names are unchanged; only
+references to the generated application namespaces move. Explicit clone roots
+preserve the previous extraction coverage for the two moved parser types.
+The general-purpose `read_bit`, `read_bits`, and `take_aligned` helpers remain.
+
+Next design cursor/span/order semantics, permutation, and recursion before
+introducing their public APIs.
 CI integration and the
 recorded Aeneas callback investigation are deferred. Configurable byte and bit
 order remains unimplemented.

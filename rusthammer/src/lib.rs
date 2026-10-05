@@ -39,6 +39,21 @@ use core::marker::PhantomData;
 #[path = "../examples/support/dependent.rs"]
 mod dependent_examples;
 
+#[cfg(rusthammer_verify)]
+#[allow(dead_code)]
+#[path = "../examples/support/flags.rs"]
+mod flags_example;
+
+#[cfg(rusthammer_verify)]
+#[allow(dead_code)]
+#[path = "../examples/support/marker.rs"]
+mod marker_example;
+
+#[cfg(rusthammer_verify)]
+#[allow(dead_code)]
+#[path = "../examples/support/record.rs"]
+mod record_example;
+
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
@@ -2459,33 +2474,6 @@ impl<'input> Parser<'input> for TakeAligned {
     }
 }
 
-/// A toy three-bit header used to exercise typed parser composition.
-#[derive(Debug, PartialEq, Eq)]
-pub struct Flags {
-    pub urgent: bool,
-    pub encrypted: bool,
-    pub compressed: bool,
-}
-
-/// Parse a header prefix, preserving every unconsumed bit.
-pub fn parse_flags(input: &[u8], cursor: Cursor) -> Result<(Cursor, Flags), ParseError> {
-    let parser = Map {
-        parser: Seq {
-            first: Bit,
-            second: Seq {
-                first: Bit,
-                second: Bit,
-            },
-        },
-        map: |(urgent, (encrypted, compressed))| Flags {
-            urgent,
-            encrypted,
-            compressed,
-        },
-    };
-    parser.parse(input, cursor)
-}
-
 /// Parse a byte-aligned payload with a borrowed output.
 pub fn take_aligned(
     input: &[u8],
@@ -2506,182 +2494,6 @@ pub fn take_aligned(
     }
     let end = cursor.byte + count;
     Ok((Cursor { byte: end, bit: 0 }, &input[cursor.byte..end]))
-}
-
-/// A complete marker is either the two bytes `CA FE` or the single byte `CA`.
-/// Build the grammar once, then reuse it. Partial input waits for confirmation of EOF.
-#[derive(Clone, Copy)]
-pub struct Marker {
-    parser: Seq<Choice<Literal, Literal>, End>,
-}
-
-impl Marker {
-    /// Construct both validated alternatives before parsing any input.
-    /// The fixed constants are valid; the fallible return composes their constructors.
-    pub fn new() -> Result<Self, ConfigError> {
-        let first = match Literal::new(16, 0xcafe) {
-            Ok(parser) => parser,
-            Err(error) => return Err(error),
-        };
-        let second = match Literal::new(8, 0xca) {
-            Ok(parser) => parser,
-            Err(error) => return Err(error),
-        };
-        Ok(Self {
-            parser: Seq {
-                first: Choice { first, second },
-                second: End,
-            },
-        })
-    }
-}
-
-impl<'input> Parser<'input> for Marker {
-    type Output = u64;
-
-    fn parse_with(
-        &self,
-        input: &'input [u8],
-        cursor: Cursor,
-        status: InputStatus,
-    ) -> ParseOutcome<u64> {
-        match self.parser.parse_with(input, cursor, status) {
-            ParseOutcome::Success(next, (value, ())) => ParseOutcome::Success(next, value),
-            ParseOutcome::Error(error) => ParseOutcome::Error(error),
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
-        }
-    }
-}
-
-/// Parse using the already constructed marker grammar.
-pub fn parse_marker(
-    input: &[u8],
-    cursor: Cursor,
-    parser: &Marker,
-) -> Result<(Cursor, u64), ParseError> {
-    parser.parse(input, cursor)
-}
-
-/// Maximum payload length in the example record format, in bytes.
-pub const MAX_RECORD_PAYLOAD: u64 = 1024;
-
-/// A decoded record. The payload borrows the original input buffer.
-#[derive(Debug, PartialEq, Eq)]
-pub struct Record<'input> {
-    pub version: u64,
-    pub flags: u64,
-    pub payload: &'input [u8],
-}
-
-/// A byte-aligned, complete record: 3-bit version, 5-bit flags, 16-bit length,
-/// then exactly that many payload bytes. All fields are MSB-first.
-///
-/// Version must be 1; all five flag bits are available. Lengths above
-/// `MAX_RECORD_PAYLOAD` are rejected with `Mismatch`. The complete three-byte
-/// header is read before these constraints are checked. Trailing input is rejected.
-/// Partial input waits for the remaining bytes or confirmation of EOF; call
-/// `parse_with` again with the accumulated buffer and the original cursor.
-#[derive(Clone, Copy)]
-pub struct RecordParser {
-    version: Bits,
-    flags: Bits,
-    length: Bits,
-}
-
-impl RecordParser {
-    /// Validate the fixed field widths once, before any input is supplied.
-    pub fn new() -> Result<Self, ConfigError> {
-        let version = match Bits::new(3) {
-            Ok(parser) => parser,
-            Err(error) => return Err(error),
-        };
-        let flags = match Bits::new(5) {
-            Ok(parser) => parser,
-            Err(error) => return Err(error),
-        };
-        let length = match Bits::new(16) {
-            Ok(parser) => parser,
-            Err(error) => return Err(error),
-        };
-        Ok(Self {
-            version,
-            flags,
-            length,
-        })
-    }
-}
-
-impl<'input> Parser<'input> for RecordParser {
-    type Output = Record<'input>;
-
-    fn parse_with(
-        &self,
-        input: &'input [u8],
-        cursor: Cursor,
-        status: InputStatus,
-    ) -> ParseOutcome<Self::Output> {
-        // An empty aligned read validates the cursor and alignment without advancing.
-        match (TakeAligned { count: 0 }).parse_with(input, cursor, status) {
-            ParseOutcome::NeedMore => return ParseOutcome::NeedMore,
-            ParseOutcome::Error(error) => return ParseOutcome::Error(error),
-            ParseOutcome::Success(_, _) => {}
-        }
-        let header = Verify {
-            parser: Seq {
-                first: self.version,
-                second: Seq {
-                    first: self.flags,
-                    second: self.length,
-                },
-            },
-            predicate: |fields: &(u64, (u64, u64))| {
-                fields.0 == 1 && fields.1 .1 <= MAX_RECORD_PAYLOAD
-            },
-        };
-        match header.parse_with(input, cursor, status) {
-            ParseOutcome::NeedMore => return ParseOutcome::NeedMore,
-            ParseOutcome::Error(error) => ParseOutcome::Error(error),
-            ParseOutcome::Success(next, (version, (flags, length))) => {
-                // The verified bound fits usize on every supported Rust target.
-                parse_record_body(input, next, version, flags, length as usize, status)
-            }
-        }
-    }
-}
-
-fn parse_record_body(
-    input: &[u8],
-    cursor: Cursor,
-    version: u64,
-    flags: u64,
-    count: usize,
-    status: InputStatus,
-) -> ParseOutcome<Record<'_>> {
-    let body = Seq {
-        first: TakeAligned { count },
-        second: End,
-    };
-    match body.parse_with(input, cursor, status) {
-        ParseOutcome::NeedMore => return ParseOutcome::NeedMore,
-        ParseOutcome::Error(error) => ParseOutcome::Error(error),
-        ParseOutcome::Success(end, (payload, ())) => ParseOutcome::Success(
-            end,
-            Record {
-                version,
-                flags,
-                payload,
-            },
-        ),
-    }
-}
-
-/// Parse using an already constructed record grammar.
-pub fn parse_record<'input>(
-    input: &'input [u8],
-    cursor: Cursor,
-    parser: &RecordParser,
-) -> Result<(Cursor, Record<'input>), ParseError> {
-    parser.parse(input, cursor)
 }
 
 #[cfg(test)]
