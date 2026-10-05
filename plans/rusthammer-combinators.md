@@ -258,7 +258,10 @@ lookahead, discarded prefixes/suffixes, zero/equal/unequal lengths, all bit
 offsets, nonzero byte starts, and truncation. Native tests and compositional
 proofs separately cover partial input and fatal errors. Both MIR stages and all
 40 consumer entries pass, including enum-mapped alternatives and borrowed outputs.
-Arbitrary seeking and mixed bit-order scopes need a separate treatment.
+The revised [input plan](rusthammer-input.md) retains this `(byte, bit)`
+comparison by restricting bit-direction changes to aligned scope boundaries.
+Its parser contracts will additionally carry the ordering context and scope
+discipline. Arbitrary seeking still needs a separate treatment.
 In particular, `ButNot` and `Difference` cannot be replaced by sequencing with
 `Not(q)`: they may accept when both children succeed.
 
@@ -281,9 +284,9 @@ The combinators above also need a deliberate primitive and extension inventory:
 | Byte/token parsing | Implemented and proved: `Byte` (`h_uint8`) returns `u8`; `BytePattern::new(&pattern)` (`h_token` / `h_literal`) borrows an arbitrary byte pattern and returns that configured slice on success. Input and pattern lifetimes are independent. Both support unaligned starts without allocation. Empty patterns succeed without cursor validation; nonempty patterns compare complete bytes in order. `h_ch` can be a later literal-reader convenience. |
 | Byte sequences | Keep `TakeAligned` for borrowed slices. `Repeat::exact(Byte, count)` now supplies `h_bytes`-style decoded `Vec<u8>` with `alloc`; a named convenience can be added if useful. Never silently align unaligned input. |
 | Skipping and position | Implemented and proved: `SkipBits::new(bits)` discards any `usize` bit count and returns `()`; `Tell` reports the validated `Cursor` without consuming. Both validate even at zero consumption and preserve `h_skip` and `h_tell` capabilities. Skips advance in constant time, classify exhaustion by input finality, and have an infallible `const` constructor and `bits()` accessor. Position reporting avoids an absolute machine bit count; see the [known C overflow issue](rusthammer.md#known-c-issue-absolute-bit-position-overflow). |
-| Recognizing matched input | A bit-span view and `Recognize`/value-with-span operations are useful additions. Settle span invariants and bit-order interaction before promising a borrowed slice for arbitrary bit matches. |
+| Recognizing matched input | The [input plan](rusthammer-input.md#matched-input-spans) specifies `BitSpan`, `Recognize`, and `WithSpan`, retaining `(byte, bit)` endpoints and the enclosing bit direction. Implement and prove them after restricted ordering. Partial-bit matches need not be byte slices; spans do not retain internal order scopes or field grouping. |
 | Floating-point fields/ranges | Preserve as a later capability; specify bit decoding, NaNs, infinities, rounding where applicable, and available Aeneas models before exporting readers or range helpers. |
-| Bit and byte order | Preserve the capability of `h_with_endianness`. Mixed order within a partially consumed byte needs the cursor design work recorded in the main plan. No nominal wrapper around MSB-only parsing. |
+| Bit and byte order | Support scoped byte/bit ordering with the [input plan's restriction](rusthammer-input.md#ordering-scopes): a changed bit direction requires aligned entry and successful exit, otherwise fatal `Unaligned`. Keep unaligned fields and unrestricted byte-order changes. Retain `(byte, bit)` and add immutable context. The restricted private probe and generic scope proofs pass; production integration and full reader proofs remain. |
 | Recursion | Start with named typed parsers and guarded recursion. Design runtime rule graphs and left-recursive execution separately; `h_indirect`/`h_bind_indirect` are C's construction mechanism, not the required Rust interface. |
 | Parse-local state and actions | Express ordinary dependencies with typed values and `Bind`. Preserve `h_put_value`/`h_get_value`/`h_free_value` and deferred `h_action_stash`/`h_action_apply` capabilities in a separately specified environment/effect design, including rollback and commit. |
 | Diagnostics | Plan context labels corresponding to `h_with_context` and parser labels as a separate diagnostic layer; keep their effect on errors explicit. |
@@ -363,7 +366,11 @@ helpers should represent grammar operations or output needs.
    combination, ownership, borrowing, and independent bit-length oracles;
    1,879,635 additional C cases agree. Both MIR stages and all 40 consumer entries
    pass without a new workaround.
-   Resolve cursor/span/order questions before implementing their affected APIs.
+   The revised [input plan](rusthammer-input.md) limits bit-direction changes
+   to aligned scope boundaries and retains existing cursor arithmetic. The
+   revised private probe now passes both MIR stages, native/differential checks,
+   and generic guard proofs. Next implement and prove production ordering
+   before adding spans. The unrestricted probe remains historical evidence.
    Plan permutation, recursion, and the other larger capabilities separately.
 
 **Application fixture migration is complete.** `Flags`, `Marker`, `Record`,

@@ -1495,8 +1495,15 @@ is now available.
 
 Fixed-width typed integer readers, inclusive ranges, byte sets, `SkipBits`,
 `Tell`, `ButNot`, `Difference`, and `Xor` are implemented and proved, with
-semantic and differential checks. Settle cursor/span and bit-order semantics
-before their affected APIs, and design permutation and recursion separately.
+semantic and differential checks. The revised [input plan](../plans/rusthammer-input.md)
+retains `(byte, bit)` and restricts changes of bit direction to aligned scope
+entry and successful exit. Byte-order changes and unaligned fields remain
+supported goals. The [restricted probe](probes/README.md#restricted-ordering-scopes)
+now passes both MIR stages, native/differential checks, and Lean scope contracts.
+Next implement ordering/context in the library and complete its proofs before
+exposing spans. The unrestricted-order probe records the earlier design;
+production ordering remains unimplemented.
+Design permutation and recursion separately.
 
 Keep future application grammars in shared example/proof-support source. The
 original `Flags`, `Marker`, and `Record` fixtures have been migrated out of the

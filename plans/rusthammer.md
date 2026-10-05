@@ -393,11 +393,18 @@ references to the generated application namespaces move. Explicit clone roots
 preserve the previous extraction coverage for the two moved parser types.
 The general-purpose `read_bit`, `read_bits`, and `take_aligned` helpers remain.
 
-Next design cursor/span/order semantics, permutation, and recursion before
-introducing their public APIs.
+The revised [input, ordering, and span plan](rusthammer-input.md) retains the
+existing `(byte, bit)` cursor and allows bit-direction changes only at byte
+boundaries, including successful scope exit. Byte-order changes and unaligned
+fields remain supported goals. The restricted probe now passes both MIR stages,
+ten native tests, nine Lean theorem audits, and differential checks with C,
+including explicit rejection of unsupported scopes. The earlier unrestricted
+probe remains historical evidence. Next integrate ordering/context and complete
+the library proofs before exposing spans; design permutation and recursion
+separately.
 CI integration and the
 recorded Aeneas callback investigation are deferred. Configurable byte and bit
-order remains unimplemented.
+order remains unimplemented in the production library.
 
 ## Requirements and working decisions
 
@@ -564,11 +571,16 @@ The input is an immutable byte slice. The cursor describes where and how parsing
 continues without borrowing the slice itself. Cursor construction and operations
 must establish bounds and avoid overflowing position arithmetic.
 
-Bit semantics need an independent specification before choosing cursor fields.
-Hammer's [endianness wrapper](../src/parsers/endianness.c) and
-[bit reader](../src/bitreader.c) can track consumption from opposite ends of a
-partially consumed byte when bit order changes. A single monotonically increasing
-bit offset should not be assumed sufficient to preserve this behavior.
+The [input plan](rusthammer-input.md) records the C audit and revised semantics.
+Keep the normalized `(byte, bit)` cursor with a separate immutable context for
+ordering and finality. A scope that changes bit direction must start and finish
+byte-aligned; byte-order-only changes do not require alignment. Arbitrary
+within-byte direction changes are intentionally excluded. Existing position and
+progress arithmetic can be retained. Partial cursor interpretation requires
+the active bit direction, which escaping spans record explicitly. The revised
+scope contract now has a verified private probe; the earlier unrestricted
+probe is superseded. Full numeric-reader and production integration proofs
+remain to be completed.
 
 Specify field width, sign extension, byte order, bit order, alignment, padding,
 and end-of-input behavior. Preserve unaligned byte parsing deliberately. Aligned
@@ -1040,14 +1052,16 @@ not required for this milestone.
 
 ## Open decisions
 
-- Which C semantics are compatibility requirements, particularly mixed bit-order
-  scopes, unusual combinators, immediate/deferred actions, and seeking?
+- Which remaining C semantics are compatibility requirements, particularly
+  unusual combinators, immediate/deferred actions, and seeking? The
+  [input plan](rusthammer-input.md) intentionally restricts bit-direction
+  changes to byte boundaries, while retaining byte-order control.
 - Which capabilities are required for the first RustHammer release, and when must
   it support left recursion or grammars built at runtime?
 - Should context-free alternatives have a distinct API, or should lowering accept
   only grammars for which ordered-choice equivalence can be established?
-- What cursor representation, bit-span representation, and whole-input padding
-  rules best preserve the chosen semantics?
+- Does a later input API need a logical bit limit or whole-input padding rules
+  beyond the whole-byte buffer and explicit consumption in the input plan?
 - Which resource limits, error categories, and diagnostics belong in the initial
   core, and which require a separate execution context?
 - The core provides allocation-free folding alongside opt-in collected

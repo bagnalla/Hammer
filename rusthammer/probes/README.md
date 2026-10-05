@@ -6,6 +6,106 @@ mapping probe includes the actual library source to exercise a concrete callback
 The `cross_crate` fixture instead uses a normal Cargo dependency and is checked
 by the local verification command.
 
+## Restricted ordering scopes
+
+[`restricted_order.rs`](restricted_order.rs) checks the current
+[input design](../../plans/rusthammer-input.md): retain `(byte, bit)`, pass
+immutable ordering/finality context, and require aligned entry and successful
+exit only when a scope changes bit direction. Byte-order-only scopes and nested
+same-direction scopes delegate without imposing alignment.
+
+From `rusthammer/`, with the pinned tools and Lean dependencies:
+
+```sh
+python3 tools/check_restricted_order.py
+# Optional C comparison:
+python3 tools/check_restricted_order.py --hammer-lib /absolute/path/to/libhammer.so
+```
+
+Checked on 2026-10-05: ten native tests, promoted and optimized MIR extraction,
+generated Lean type-checking, and the same
+[scope proofs](restricted_order_proofs.lean) against both translations pass.
+The runner rejects admitted/opaque project declarations and audits all nine
+theorems for only the standard `propext`, `Classical.choice`, and `Quot.sound`
+axioms. The generic scope contract assumes child termination/semantics only
+when its entry guard permits calling that child. It proves validation precedence,
+context/finality propagation, same-direction transparency, exact exit filtering,
+and aligned, valid boundaries on success when direction changes.
+
+Native tests additionally cover child call counts, owned-output cleanup, all
+field widths/orders and both finalities, nested restoration, the difference
+between scoping a lookahead and looking ahead at a scope, invalid cursors,
+empty scopes, and machine-boundary validation. The concrete borrowed-output
+fixture returns a partial low-first span after its enclosing scope consumes a
+whole byte; the span retains the original input pointer and its boundary
+direction. It translates at both MIR stages. No new extraction workaround was
+needed; the earlier span-construction spelling is retained with a comment.
+
+The optional differential check has 107,364 agreements with C: 101,060 field
+reads and 6,304 nested grammar cases. An independent model of bit counts and
+scope transitions separately checks 2,848 intentional scope rejections,
+including 2,064 inputs C accepts. It reuses the historical C adapter, with new
+Rust code, expected outcomes, and corpus classification. These are complete-input
+comparisons; partial behavior is tested natively.
+
+The reader's numeric correctness, physical span geometry, and application
+grammars are not yet proved. The standalone optimized-MIR check does not replace
+the Cargo-consumer check during production migration. This probe remains outside
+the library and its normal verification command; all build/proof artifacts go
+under ignored `target/restricted-order/`.
+
+## Earlier unrestricted input ordering probe
+
+[`input_order.rs`](input_order.rs) records the superseded full-compatibility
+experiment. The revised [input plan](../../plans/rusthammer-input.md) retains
+`(byte, bit)` and requires aligned entry and successful exit for scopes that
+change bit direction. **This probe does not implement or verify that rule.**
+
+Its private-field cursor tracks consumption at both physical ends of a byte.
+It exercises immutable ordering/finality context, a fragment reader,
+constant-time skipping, typed sequencing, unrestricted nested order scopes,
+and direct construction of a borrowed span. It stays outside the production
+library and is retained for historical reference, not as a planned public API.
+
+From `rusthammer/`, with the pinned tools and Lean dependencies:
+
+```sh
+python3 tools/check_input_order.py
+# Optionally compare against a locally built C Hammer library:
+python3 tools/check_input_order.py --hammer-lib /absolute/path/to/libhammer.so
+```
+
+The earlier checks passed six native tests and both promoted and optimized
+MIR translation/Lean type-checking, including the concrete nested grammar
+with borrowed output. The
+[Lean proof](input_order_proofs.lean) checks against both generated modules and
+proves safe fragment cursor advancement, normalized validity, exact consumed
+length, selected-end geometry, and generic order-scope delegation. Axiom audits
+list only standard Lean axioms; there are no admitted or opaque declarations.
+Full numeric-reader, skip, span, and application correctness were not proved.
+Further implementation/proof work will target the revised restricted model.
+
+The historical differential check agreed on 313,784 cases: 223,964 field reads,
+84,700 skips, and 5,120 real nested `h_with_endianness` parses. It compares final
+input only and uses representable C positions. These counts include geometries
+and scope transitions deliberately excluded by the revised design. Do not
+interpret them as validation of the restricted model.
+
+The first span-wrapper spelling passed promoted extraction but failed optimized
+extraction with `Could not match the contexts` in `InterpJoin.ml`: it returned
+the borrowed success inside a final `else` after validation checks. Returning
+validation errors early, then constructing the borrowed success, passes both
+stages. A source comment preserves the reason for this shape. It does not
+resolve the earlier borrowed-callback issue.
+
+Probe build and proof artifacts go under ignored `target/input-order/`; the
+runner stays separate from `tools/verify.py`. During production migration,
+retain the full library and separate Cargo-consumer checks. The
+[restricted probe above](#restricted-ordering-scopes) now covers the revised
+scope guards, same-direction unaligned fields, byte-order-only changes, and
+span boundary direction. This historical standalone probe does not replace
+those checks.
+
 ## Capturing callback with a borrowed record output
 
 [`borrowed_record_map.rs`](borrowed_record_map.rs) passes a capturing `Fn` to a
