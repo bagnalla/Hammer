@@ -29,6 +29,7 @@ The prototype supports:
 - Private numeric and literal configuration, validated by fallible constructors.
 - `Parser<'input>` with an associated `Output` type and explicit ordering/finality context.
 - Separate `Success`, `Error`, and `NeedMore` outcomes, with a complete-buffer convenience API.
+- Free `seq`, `choice`, `optional`, `map`, `try_map`, `verify`, and `bind` constructors returning concrete grammar nodes.
 - `Seq<P, Q>`, which returns a typed pair and propagates child errors.
 - `Bind<P, F>`, whose factory uses a parsed value to configure the next parser.
 - Shared parser references and `Left`, `Right`, `Middle`, and `Ignore` for selecting outputs.
@@ -71,6 +72,7 @@ cargo run --example flags
 cargo run --example fields
 cargo run --example ordering
 cargo run --example spans
+cargo run --example constructors
 cargo run --example signed_fields
 cargo run --example integers
 cargo run --example ranges
@@ -123,6 +125,53 @@ fn grammar(width: u8) -> Result<Seq<Literal, Bits>, ConfigError> {
     })
 }
 ```
+
+The free construction functions return the existing node types:
+
+| Function | Return type | Construction constraints |
+| --- | --- | --- |
+| `seq(p, q)` | `Seq<P, Q>` | None; `const fn`. |
+| `choice(p, q)` | `Choice<P, Q>` | Both implement `Grammar` with the same output type. |
+| `optional(p)` | `Optional<P>` | None; `const fn`. |
+| `map(p, f)` | `Map<P, F>` | `P: Grammar`; `f` maps its output. |
+| `try_map(p, f)` | `TryMap<P, F>` | `P: Grammar`; `f` returns a `Result`. |
+| `verify(p, f)` | `Verify<P, F>` | `P: Grammar`; `f` borrows its output and returns `bool`. |
+| `bind(p, f)` | `Bind<P, F>` | `P: Grammar`; `f` returns another `Grammar`. |
+
+The callback bounds infer argument types without selecting an interpreter.
+Construction stores the children and callbacks without running them. Evaluation
+requires support for the chosen backend, and uses the same node implementations
+and parsing contracts as a struct literal. Shared parser references, input and
+configuration borrows, and outputs without `Copy` or `Clone` remain supported.
+Parser `Copy`/`Clone` capabilities still depend on the stored fields.
+
+For example, `bind(Byte, |count| TakeAligned { count: usize::from(count) })`
+constructs a count-prefixed payload parser. A factory can hide an unnameable
+closure while exposing the concrete node and its backend implementations:
+
+```rust
+use rusthammer::{map, seq, BeU16, Byte, Map, Seq};
+
+struct Header { tag: u8, length: u16 }
+
+fn header() -> Map<Seq<Byte, BeU16>, impl Fn((u8, u16)) -> Header + Copy> {
+    map(seq(Byte, BeU16), |(tag, length)| Header { tag, length })
+}
+```
+
+The [constructor example](examples/constructors.rs) uses this factory, checked
+conversion, alternatives, and optionality. Its [shared factory](examples/support/constructors.rs)
+also runs through an arbitrary backend in the separate Cargo consumer. Returning
+an entire grammar as `impl Parser<...>` remains a choice about which capabilities
+the factory exposes; the core helpers return concrete nodes.
+
+The [constructor proofs](lean/RustHammer/ConstructorProofs.lean) establish the
+exact node returned by each helper. A general contract-transport theorem reuses
+any existing node contract, with a stateful sequencing proof demonstrating that
+composition. The ordinary verification command covers the generic helper bodies
+at both MIR stages, downstream use, and the new theorem axiom audits.
+Borrowed-output callbacks are valid Rust and covered by native tests; the known
+Aeneas failures for those callbacks remain in the separate diagnostic runner.
 
 The configuration fields of `Bits` and `Literal` are private. Read-only `width()`
 and `value()` accessors expose their settings; there are no setters or unchecked
@@ -1266,10 +1315,10 @@ available for dependency bodies and checks a
 tests in both allocation configurations; its extraction includes RustHammer's
 implementation with `alloc` enabled. Both extra translations are checked for
 admitted/opaque declarations and Lean type-checked. They stay under `target/`.
-All 49 consumer entry points pass, including evaluators that use a local
+All 52 consumer entry points pass, including evaluators that use a local
 mutable backend while returning a borrowed input slice or span. The normal
 verification command also audits all 34 new span theorems, for 65 audited
-ordering/backend/span theorems in total.
+ordering/backend/span theorems, plus nine construction theorems, for 74 in total.
 
 The cross-crate investigation found that cleanup code can recheck an enum's tag
 after a payload move, which the pinned Aeneas rejects. Internal pattern
@@ -1676,11 +1725,13 @@ rule identities, and recursive grammar construction remain later work, guided by
 representative protocol benchmarks. The private cache probe remains design evidence.
 Design permutation separately.
 
-Next, add the planned
+The
 [construction helpers](../plans/rusthammer-combinators.md#construction-functions-and-return-types)
-over the existing concrete nodes. Their private extraction checks are complete;
-production exports and construction proofs remain future work. Use `Grammar`
-bounds where needed and preserve backend capabilities through the return type.
+over the existing concrete nodes are implemented and proved. They use `Grammar`
+bounds where needed and preserve backend capabilities through concrete returns.
+Their generic bodies and ordinary consumer uses pass both extraction checks.
+Select the next larger capability under the backend and combinator plans; its
+ownership and execution contract must be specified before implementation.
 
 Keep future application grammars in shared example/proof-support source. The
 original `Flags`, `Marker`, and `Record` fixtures have been migrated out of the

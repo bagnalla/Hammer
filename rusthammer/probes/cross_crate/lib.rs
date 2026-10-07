@@ -60,6 +60,56 @@ use rusthammer::{
     SkipBits, TakeAligned, Tell, TryMap, WithOrder, Xor, I8,
 };
 
+#[path = "../../examples/support/constructors.rs"]
+mod constructor_example;
+
+/// Concrete nodes with opaque callbacks retain interpretation by any backend.
+pub fn constructor_header<Backend>(
+    backend: &mut Backend,
+    input: &[u8],
+    context: ParseContext,
+) -> ParseOutcome<constructor_example::Header> {
+    use rusthammer::Eval;
+    constructor_example::header().eval(backend, input, Cursor::start(), context)
+}
+
+pub fn constructor_choice(
+    input: &[u8],
+    context: ParseContext,
+    limit: u8,
+) -> ParseOutcome<Option<u16>> {
+    use rusthammer::{choice, map, optional, try_map, verify};
+    let checked = try_map(Byte, move |value| {
+        if value < limit {
+            Ok(value as u16)
+        } else {
+            Err(())
+        }
+    });
+    let fallback = map(verify(Byte, |value| *value == 255), |_| 256u16);
+    optional(choice(checked, fallback)).parse_with(input, Cursor::start(), context)
+}
+
+/// Neither the child nor the backend supports Direct. Two output lifetimes
+/// escape the grammar and backend independently.
+pub fn constructor_payload<'pattern, 'input>(
+    pattern: &'pattern [u8],
+    input: &'input [u8],
+    context: ParseContext,
+) -> (ParseOutcome<(&'pattern [u8], &'input [u8])>, u8) {
+    use rusthammer::{bind, map, seq, verify, Eval};
+    let length = map(verify(Counted(Byte), |count| *count <= 16), |count| {
+        count as usize
+    });
+    let parser = seq(
+        BytePattern::new(pattern),
+        bind(&length, |count| TakeAligned { count }),
+    );
+    let mut backend = Counter { calls: 0 };
+    let outcome = parser.eval(&mut backend, input, Cursor::start(), context);
+    (outcome, backend.calls)
+}
+
 pub fn spanned_pattern<'pattern, 'input>(
     pattern: &'pattern [u8],
     input: &'input [u8],
@@ -707,6 +757,67 @@ pub fn leading_ones(input: &[u8], context: ParseContext) -> ParseOutcome<alloc::
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn constructor_callbacks_infer_types_and_preserve_alternative_priority() {
+        use super::*;
+        let next = Cursor { byte: 1, bit: 0 };
+        for context in [ParseContext::FINAL, ParseContext::PARTIAL] {
+            assert_eq!(
+                constructor_choice(&[3], context, 10),
+                ParseOutcome::Success(next, Some(3))
+            );
+            assert_eq!(
+                constructor_choice(&[255], context, 10),
+                ParseOutcome::Success(next, Some(256))
+            );
+            assert_eq!(
+                constructor_choice(&[10], context, 10),
+                ParseOutcome::Success(Cursor::start(), None)
+            );
+        }
+        assert_eq!(
+            constructor_choice(&[], ParseContext::PARTIAL, 10),
+            ParseOutcome::NeedMore
+        );
+        assert_eq!(
+            constructor_choice(&[], ParseContext::FINAL, 10),
+            ParseOutcome::Success(Cursor::start(), None)
+        );
+    }
+
+    #[test]
+    fn concrete_constructor_returns_keep_opaque_callbacks_and_custom_backends() {
+        use super::*;
+        let mut backend = Counter { calls: 7 };
+        assert_eq!(
+            constructor_header(&mut backend, &[1, 0, 3], ParseContext::FINAL),
+            ParseOutcome::Success(
+                Cursor { byte: 3, bit: 0 },
+                constructor_example::Header { tag: 1, length: 3 }
+            )
+        );
+        assert_eq!(backend.calls, 7);
+        let pattern = *b"!";
+        let input = *b"!\x02ab";
+        let (ParseOutcome::Success(end, (matched, payload)), calls) =
+            constructor_payload(&pattern, &input, ParseContext::PARTIAL)
+        else {
+            panic!()
+        };
+        assert_eq!(end, Cursor { byte: 4, bit: 0 });
+        assert!(core::ptr::eq(matched, pattern.as_slice()));
+        assert!(core::ptr::eq(payload, &input[2..]));
+        assert_eq!(calls, 1);
+        assert_eq!(
+            constructor_payload(&pattern, b"!", ParseContext::PARTIAL),
+            (ParseOutcome::NeedMore, 1)
+        );
+        assert_eq!(
+            constructor_payload(&pattern, b"?", ParseContext::PARTIAL),
+            (ParseOutcome::Error(ParseError::Mismatch), 0)
+        );
+    }
+
     #[test]
     fn spans_escape_parsers_scopes_and_backends() {
         use super::*;

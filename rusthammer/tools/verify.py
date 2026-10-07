@@ -45,6 +45,11 @@ SPAN_THEOREMS = tuple(f"RustHammer.Span.{name}" for name in (
     "interior_byte", "crossing_start", "crossing_end", "aligned_region",
 ))
 
+CONSTRUCTOR_THEOREMS = tuple(f"RustHammer.Constructors.{name}" for name in (
+    "seq_eq", "choice_eq", "optional_eq", "map_eq", "try_map_eq", "verify_eq", "bind_eq",
+    "reuse_spec", "seq_eval_spec",
+))
+
 
 def output(*args, cwd=None):
     return subprocess.check_output(args, cwd=cwd, text=True).strip()
@@ -64,7 +69,7 @@ def translate(aeneas, llbc, destination, namespace):
 
 
 def audit_proofs():
-    theorems = ORDER_THEOREMS + BACKEND_THEOREMS + SPAN_THEOREMS
+    theorems = ORDER_THEOREMS + BACKEND_THEOREMS + SPAN_THEOREMS + CONSTRUCTOR_THEOREMS
     audit = ROOT / "target" / "proof-axioms.lean"
     audit.write_text("import RustHammer\n" + "".join(
         f"#print axioms {name}\n" for name in theorems
@@ -78,7 +83,7 @@ def audit_proofs():
     for name, axioms in audits:
         if set(filter(None, map(str.strip, axioms.split(",")))) - {"propext", "Classical.choice", "Quot.sound"}:
             raise RuntimeError(f"unexpected axioms in {name}: {axioms}")
-    print(f"Proof axiom audit: {len(audits)} ordering/backend/span theorems use only standard Lean axioms.", flush=True)
+    print(f"Proof axiom audit: {len(audits)} theorems use only standard Lean axioms.", flush=True)
 
 
 def main():
@@ -119,6 +124,13 @@ def main():
         "--start-from", "rusthammer::take_aligned",
         "--start-from", "rusthammer::read_bits",
         "--start-from", "rusthammer::ParseContext::PARTIAL",
+        "--start-from", "rusthammer::seq",
+        "--start-from", "rusthammer::choice",
+        "--start-from", "rusthammer::optional",
+        "--start-from", "rusthammer::map",
+        "--start-from", "rusthammer::try_map",
+        "--start-from", "rusthammer::verify",
+        "--start-from", "rusthammer::bind",
         "--start-from", "rusthammer::marker_example::parse_marker",
         "--start-from", "rusthammer::record_example::parse_record",
         "--start-from", "rusthammer::Bits::new",
@@ -219,6 +231,7 @@ def main():
         "complete_matches",
         "ordered_fields", "scoped_payload", "scoped_pattern",
         "spanned_pattern", "recognized_payload", "scoped_span", "span_views", "backend_span",
+        "constructor_header", "constructor_choice", "constructor_payload",
     )
     entry_args = [
         arg for name in entries

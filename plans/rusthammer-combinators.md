@@ -8,8 +8,8 @@ current implementation and proof coverage.
 The [backend execution boundary](rusthammer-backends.md) is implemented and
 verified, as are span and recognition combinators. The private
 memoization probes remain design evidence outside the public API.
-Constructor helpers have also passed a private extraction compatibility check;
-their production implementation is the next increment below.
+The seven constructor helpers are implemented and proved, following the private
+compatibility check. Larger capabilities remain separate increments below.
 
 ## API policy
 
@@ -35,13 +35,14 @@ by a grammar type for an input lifetime; it does not require an output type to
 uniquely identify a grammar. Generic construction functions fit this design and
 preserve the separation of grammar construction from interpretation.
 
-Add a small set of free construction functions over the existing nodes:
-`seq`, `choice`, `optional`, `map`, `try_map`, `verify`, and `bind`. Return the
-concrete node, such as `Seq<P, Q>` or `Map<P, F>`. Use `Grammar` bounds where they
-establish output relationships or help infer callback parameters; construction
-must not require `Parser` or `Eval<Direct>`. Existing validated constructors
-retain their configuration checks. These helpers add syntax and inference
-support, with no new parsing algorithm or runtime grammar representation.
+Implemented: free construction functions `seq`, `choice`, `optional`, `map`,
+`try_map`, `verify`, and `bind`. Each returns the existing concrete node, such as
+`Seq<P, Q>` or `Map<P, F>`. `seq` and `optional` are unconstrained `const fn`s;
+the remaining helpers use `Grammar` bounds to establish output relationships
+or infer callback parameters. Construction requires neither `Parser` nor
+`Eval<Direct>` and never invokes a child or callback. Existing validated
+constructors retain their configuration checks. These helpers add syntax and
+inference support, with no new parsing algorithm or runtime grammar representation.
 
 Use opaque returns selectively. A grammar factory may hide an unnameable
 callback as `Map<P, impl Fn(...) -> ...>` while retaining the node's generic
@@ -63,12 +64,17 @@ proofs. Borrowed identity mapping callbacks fail with both the helper and direct
 diagnostic. Keep those negative probes and the callback investigation separate
 from the constructor work.
 
-Implement these helpers in a small API convenience increment after
-`BitSpan`, `Recognize`, and `WithSpan`, before stabilizing the public construction
-API. They are not prerequisites for spans, memoization, or recursive grammars,
-and do not need to wait for the latter capabilities. Apply the return-type and
-backend-bound policy to new APIs immediately; no migration to opaque returns or
-revision of the associated-output design is planned.
+The production increment is complete. The
+[constructor proofs](../rusthammer/lean/RustHammer/ConstructorProofs.lean) give
+seven exact construction equations and a generic theorem transporting existing
+node contracts through construction, demonstrated with stateful sequencing.
+All nine theorems are axiom-audited. Native tests check construction without any
+interpreter, deferred callbacks, input borrows, and retained backend/Copy
+capabilities. The [example](../rusthammer/examples/constructors.rs) shares its
+opaque-callback factory with the ordinary Cargo consumer. Both library MIR stages
+extract the generic helpers themselves; all 52 consumer entries pass. The older
+negative probes remain isolated. Apply this return-type and backend-bound policy
+to new APIs; no revision of the associated-output design is planned.
 
 ## Core combinator families
 
@@ -428,16 +434,15 @@ helpers should represent grammar operations or output needs.
    validation and propagation, native tests, and 49 consumer entries passing.
    The isolated probes remain design evidence.
    Plan permutation, recursion, and the other larger capabilities separately.
-6. **Add construction conveniences (next).** Promote the seven
-   [construction helpers](#construction-functions-and-return-types) from the
-   private probe into the library, retaining concrete node returns and bounds
-   independent of the evaluator. Document representative usage, including a
-   grammar factory with an opaque callback, without requiring an immediate
-   rewrite of all existing grammars. Add explicit extraction roots for the
-   generic helpers and ordinary Cargo-consumer coverage. Prove their construction
-   equations and reuse the existing node contracts for parsing behavior; run
-   the full verification command. Keep the negative callback cases in the
-   separate diagnostic runner, whose default run intentionally reports failures.
+6. **Construction conveniences (complete).** The seven
+   [construction helpers](#construction-functions-and-return-types) return concrete
+   nodes with bounds independent of the evaluator. Generic extraction roots,
+   ordinary Cargo-consumer coverage, a shared opaque-callback example, and exact
+   construction proofs are integrated into the normal verification command.
+   Existing node contracts govern parsing. The nine new theorem audits bring
+   the total to 74; all 52 consumer entries pass. Existing grammars need no
+   migration. Negative callback probes remain in the separate diagnostic runner,
+   whose default run intentionally reports failures.
 
 **Application fixture migration is complete.** `Flags`, `Marker`, `Record`,
 `RecordParser`, their parsing helpers, and the example payload limit now live in

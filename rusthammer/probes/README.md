@@ -21,6 +21,12 @@ also includes isolated failing borrowed-callback controls and therefore exits
 unsuccessfully; the linked results distinguish those failures from the passing
 API shapes.
 
+The seven helpers now also exist in the production library, with construction
+proofs and ordinary consumer coverage in `tools/verify.py`. This diagnostic
+package retains its local helper definitions so the original reproductions stay
+stable. Its negative borrowed-callback cases remain separate from production
+verification and impose no additional restriction on the Rust API.
+
 ## Backend interpretation and typed memo tables
 
 [`backend_memo.rs`](backend_memo.rs) checks the proposed

@@ -1,8 +1,12 @@
 # Constructor API extraction probe
 
-This private Cargo package tests a possible construction API without adding
-public RustHammer functions. The helpers return existing concrete nodes and use
+This private Cargo package records the construction API compatibility experiment.
+Its local helpers return existing concrete nodes and use
 `Grammar` bounds, so construction does not require `Eval<Direct>`.
+The seven helpers have since been implemented and proved in the public library,
+with their own production extraction roots and ordinary Cargo-consumer checks.
+This package retains the original definitions and negative cases for diagnosis;
+it is not the production implementation.
 
 ## Results
 

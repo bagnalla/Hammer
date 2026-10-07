@@ -4,6 +4,11 @@
 //! byte-aligned scope boundaries. Chunk buffering, recursion, and compiled
 //! backends are not implemented.
 //!
+//! Build concrete grammar nodes with [`seq`], [`choice`], [`optional`], [`map`],
+//! [`try_map`], [`verify`], and [`bind`]. These functions store their arguments;
+//! parsing and callbacks run only when the grammar is evaluated. Construction
+//! does not select a backend or require direct parsing support.
+//!
 //! Parser values implement `Clone` and `Copy` when their stored children and
 //! callbacks do. Parsed outputs need neither trait. For example, a copied grammar
 //! can produce values that implement neither `Clone` nor `Copy`:
@@ -1423,6 +1428,20 @@ pub struct Seq<P, Q> {
     pub second: Q,
 }
 
+/// Construct a [`Seq`], retaining both children and their backend capabilities.
+/// Construction has no grammar bounds; evaluation requires both children to
+/// support the chosen backend. Shared child references are accepted.
+///
+/// ```
+/// use rusthammer::{seq, BeU16, Byte, Cursor, Parser, Seq};
+/// const HEADER: Seq<Byte, BeU16> = seq(Byte, BeU16);
+/// assert_eq!(HEADER.parse(&[7, 0, 3], Cursor::start()),
+///     Ok((Cursor { byte: 3, bit: 0 }, (7, 3))));
+/// ```
+pub const fn seq<P, Q>(first: P, second: Q) -> Seq<P, Q> {
+    Seq { first, second }
+}
+
 impl<'input, P: Grammar<'input>, Q: Grammar<'input>> Grammar<'input> for Seq<P, Q> {
     type Output = (P::Output, Q::Output);
 }
@@ -1487,6 +1506,25 @@ impl<'input, Backend, P: Eval<'input, Backend>, Q: Eval<'input, Backend>> Eval<'
 pub struct Bind<P, F> {
     pub parser: P,
     pub then: F,
+}
+
+/// Construct a [`Bind`], inferring the factory argument from the child's output.
+/// The factory is stored without being called. Both grammar types can support
+/// any backend; construction does not require `Eval<Direct>`.
+///
+/// ```
+/// use rusthammer::{bind, Byte, Cursor, Parser, TakeAligned};
+/// let payload = bind(Byte, |count| TakeAligned { count: usize::from(count) });
+/// assert_eq!(payload.parse(b"\x03abc!", Cursor::start()),
+///     Ok((Cursor { byte: 4, bit: 0 }, &b"abc"[..])));
+/// ```
+pub fn bind<'input, P, F, Q>(parser: P, then: F) -> Bind<P, F>
+where
+    P: Grammar<'input>,
+    F: Fn(P::Output) -> Q,
+    Q: Grammar<'input>,
+{
+    Bind { parser, then }
 }
 
 impl<'input, P, F, Q> Grammar<'input> for Bind<P, F>
@@ -2564,6 +2602,25 @@ pub struct Map<P, F> {
     pub map: F,
 }
 
+/// Construct a [`Map`], inferring the callback argument from the child's output.
+/// The callback is stored without being called. The concrete node preserves
+/// backend support and conditional `Copy`/`Clone`, without requiring either
+/// trait on its output.
+///
+/// ```
+/// use rusthammer::{map, Byte, Cursor, Parser};
+/// let doubled = map(Byte, |value| u16::from(value) * 2);
+/// assert_eq!(doubled.parse(&[200], Cursor::start()),
+///     Ok((Cursor { byte: 1, bit: 0 }, 400)));
+/// ```
+pub fn map<'input, P, F, O>(parser: P, map: F) -> Map<P, F>
+where
+    P: Grammar<'input>,
+    F: Fn(P::Output) -> O,
+{
+    Map { parser, map }
+}
+
 impl<'input, P, F, O> Grammar<'input> for Map<P, F>
 where
     P: Grammar<'input>,
@@ -2605,6 +2662,23 @@ where
 pub struct TryMap<P, F> {
     pub parser: P,
     pub map: F,
+}
+
+/// Construct a [`TryMap`], inferring the checked conversion's argument type.
+/// Construction stores the callback; during parsing, conversion rejection
+/// becomes `Mismatch` under the existing `TryMap` rules.
+///
+/// ```
+/// use rusthammer::{try_map, BeU16, Cursor, ParseError, Parser};
+/// let small = try_map(BeU16, u8::try_from);
+/// assert_eq!(small.parse(&[1, 0], Cursor::start()), Err(ParseError::Mismatch));
+/// ```
+pub fn try_map<'input, P, F, O, E>(parser: P, map: F) -> TryMap<P, F>
+where
+    P: Grammar<'input>,
+    F: Fn(P::Output) -> Result<O, E>,
+{
+    TryMap { parser, map }
 }
 
 impl<'input, P, F, O, E> Grammar<'input> for TryMap<P, F>
@@ -2651,6 +2725,22 @@ where
 pub struct Verify<P, F> {
     pub parser: P,
     pub predicate: F,
+}
+
+/// Construct a [`Verify`], inferring the predicate's borrowed argument type.
+/// The predicate is stored without being called and the output type is preserved.
+///
+/// ```
+/// use rusthammer::{verify, Byte, Cursor, ParseError, Parser};
+/// let version = verify(Byte, |value| *value <= 3);
+/// assert_eq!(version.parse(&[4], Cursor::start()), Err(ParseError::Mismatch));
+/// ```
+pub fn verify<'input, P, F>(parser: P, predicate: F) -> Verify<P, F>
+where
+    P: Grammar<'input>,
+    F: Fn(&P::Output) -> bool,
+{
+    Verify { parser, predicate }
 }
 
 impl<'input, P, F> Grammar<'input> for Verify<P, F>
@@ -2793,6 +2883,30 @@ where
 pub struct Choice<P, Q> {
     pub first: P,
     pub second: Q,
+}
+
+/// Construct a [`Choice`], checking that both grammars have the same output type.
+/// Each child retains its backend capabilities; no parser runs during construction.
+///
+/// ```
+/// use rusthammer::{choice, map, BeU16, Byte, Cursor, Parser};
+/// let number = choice(BeU16, map(Byte, u16::from));
+/// assert_eq!(number.parse(&[7], Cursor::start()),
+///     Ok((Cursor { byte: 1, bit: 0 }, 7)));
+/// ```
+///
+/// Different output types are rejected at construction:
+///
+/// ```compile_fail
+/// use rusthammer::{choice, Bit, Byte};
+/// let _ = choice(Bit, Byte);
+/// ```
+pub fn choice<'input, P, Q>(first: P, second: Q) -> Choice<P, Q>
+where
+    P: Grammar<'input>,
+    Q: Grammar<'input, Output = P::Output>,
+{
+    Choice { first, second }
 }
 
 impl<'input, P, Q> Grammar<'input> for Choice<P, Q>
@@ -3059,6 +3173,18 @@ where
 #[derive(Clone, Copy)]
 pub struct Optional<P> {
     pub parser: P,
+}
+
+/// Construct an [`Optional`] node without evaluating or constraining its child.
+/// Evaluation preserves `NeedMore` and treats recoverable rejection as absence.
+///
+/// ```
+/// use rusthammer::{optional, Byte, Cursor, Optional, Parser};
+/// const MAYBE_BYTE: Optional<Byte> = optional(Byte);
+/// assert_eq!(MAYBE_BYTE.parse(&[], Cursor::start()), Ok((Cursor::start(), None)));
+/// ```
+pub const fn optional<P>(parser: P) -> Optional<P> {
+    Optional { parser }
 }
 
 impl<'input, P: Grammar<'input>> Grammar<'input> for Optional<P> {
