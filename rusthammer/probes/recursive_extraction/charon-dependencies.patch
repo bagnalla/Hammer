@@ -1,0 +1,20 @@
+diff --git a/charon/src/transform/add_missing_info/reorder_decls.rs b/charon/src/transform/add_missing_info/reorder_decls.rs
+index 3802cb11..320cbef5 100644
+--- a/charon/src/transform/add_missing_info/reorder_decls.rs
++++ b/charon/src/transform/add_missing_info/reorder_decls.rs
+@@ -286,6 +286,15 @@ impl VisitAst for DepsForItem<'_> {
+         }
+     }
+ 
++    fn visit_fn_ptr(&mut self, ptr: &FnPtr) -> ControlFlow<Self::Break> {
++        // Unlike an associated type in a signature, an impl passed to a function
++        // is a real dependency, including when it is this method's own impl.
++        let parent_trait_impl = self.parent_trait_impl.take();
++        let result = self.visit_inner(ptr);
++        self.parent_trait_impl = parent_trait_impl;
++        result
++    }
++
+     fn enter_trait_decl_id(&mut self, id: &TraitDeclId) {
+         // If the trait is the trait this item belongs to, we ignore it. This is to avoid mutually
+         // recursive groups between e.g. traits decls and their globals. We treat methods

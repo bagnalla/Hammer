@@ -27,6 +27,61 @@ package retains its local helper definitions so the original reproductions stay
 stable. Its negative borrowed-callback cases remain separate from production
 verification and impose no additional restriction on the Rust API.
 
+## Direct recursive construction
+
+Recursive grammar support and its extraction-tool investigation are deferred
+beyond the first version, which targets nonrecursive grammars. The probes below
+are retained for reproduction when this work is reprioritized; they are not
+first-version prerequisites. The [deferred writeup](../../plans/rusthammer-recursive-rules.md)
+records the proposed direction and the unproved semantic-preservation obligations.
+
+[`direct_recursion/`](direct_recursion/README.md) checks the proposed recursive
+combinator against the pinned tools. Ten native tests and six positive roots at
+both MIR stages and through a Cargo consumer pass for ordinary recursive
+functions behind the existing parser traits. The fixtures include heterogeneous
+mutual recursion, non-`Clone` outputs, independent input/configuration borrows,
+partial input, and composition with existing outer combinators and spans.
+
+The positive bodies use handwritten recursive control flow. Named recursive
+combinator bodies, closure/function-item adapters, and explicit function pointers
+instead reproduce extraction failures. A monomorphized attempt also fails. The
+runner checks ten negative translations separately. This is not a successful
+general `recursive` constructor, an impossibility result, or a correctness proof.
+
+From `rusthammer/`, run `python3 tools/check_direct_recursion.py`. See the
+linked results and [proposal](../../plans/rusthammer-recursive-rules.md) for the
+remaining representation/tool decision and direct proof plan.
+
+The [recursive extraction investigation](recursive_extraction/README.md) identifies
+two layers in the named-parser failure: Charon omits a real implementation
+dependency, and retaining it exposes a mixed recursive group unsupported by
+Aeneas. An indirect entry point can instead make Aeneas succeed while the emitted
+Lean fails. Run `LEAN_NUM_THREADS=3 python3 tools/check_recursive_extraction.py`
+for the baseline checks; the report documents the optional isolated tool patch
+and separately checked handwritten Lean model. Neither is a production tool/API
+change or a successful extraction of recursive combinator bodies.
+
+## Recursive declarations and left-recursion growth
+
+This is retained future-backend evidence, outside the active first-version work.
+
+[`recursive_rules/`](recursive_rules/README.md) develops the
+[recursive-rule proposal](../../plans/rusthammer-recursive-rules.md) privately.
+It lowers a structural recognition subset of actual library nodes and executes
+direct and mutual left recursion with an explicit control stack, dense memo
+tables, packed rule sets, source-view encodings, and checked resource limits.
+Twelve native tests and six roots through each of the two MIR stages and a Cargo
+consumer pass extraction and Lean checking. The runner separately reproduces a
+minimized borrowed-sum failure at both stages; those negative translations are
+not part of the checked code.
+
+From `rusthammer/`, run `python3 tools/check_recursive_rules.py` and
+`python3 tools/check_recursive_rules_c.py`. The latter records 985 C agreements
+and 31 context-cycle differences, not an all-agreeing corpus. No production API,
+general lowering theorem, engine-correctness proof, or complexity claim follows
+from these checks. See the proposal for the remaining typed-schema and workspace
+API gates.
+
 ## Backend interpretation and typed memo tables
 
 [`backend_memo.rs`](backend_memo.rs) checks the proposed
@@ -60,11 +115,11 @@ To reproduce with the pinned tools:
 
 ```sh
 mkdir -p target/backend-recursive-trait
-~/source/aeneas/charon/bin/charon rustc --preset=aeneas --sysroot default \
+target/extraction-tools/aeneas/charon/bin/charon rustc --preset=aeneas --sysroot default \
   --start-from backend_recursive_trait::run \
   --dest-file target/backend-recursive-trait/backend_recursive_trait.llbc -- \
   --crate-type lib --edition 2021 probes/backend_recursive_trait.rs
-~/source/aeneas/bin/aeneas -backend lean -dest target/backend-recursive-trait \
+target/extraction-tools/aeneas/bin/aeneas -backend lean -dest target/backend-recursive-trait \
   -abort-on-error -warnings-as-errors -no-progress-bar \
   target/backend-recursive-trait/backend_recursive_trait.llbc
 ```

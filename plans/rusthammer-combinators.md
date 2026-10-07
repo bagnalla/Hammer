@@ -10,14 +10,23 @@ verified, as are span and recognition combinators. The private
 memoization probes remain design evidence outside the public API.
 The seven constructor helpers are implemented and proved, following the private
 compatibility check. Larger capabilities remain separate increments below.
+The first version targets nonrecursive grammars using `Direct`. Recursive grammar
+support and the associated extraction-tool investigation are deferred at the
+user's request. The [recursion writeup](rusthammer-recursive-rules.md) retains the
+construction proposal, private direct/packrat evidence, tool failures, and
+unproved translation-soundness obligations. These are future design gates,
+not requirements for finishing the first version.
 
 ## API policy
 
-Public features must have an intended place in the finished library. Do not add
-a public type merely because it is a convenient implementation or proof milestone.
-Implement and prove the intended abstraction incrementally; keep compatibility
-experiments in `probes/` and application-specific grammars in examples or proof
-fixtures. Do not export unsupported modes or placeholder implementations.
+Production APIs and implementations must have an intended place in the finished
+library. Do not add public types, internal algorithms, or representations merely
+because they are convenient implementation or proof milestones and are intended
+to be replaced. Implement and prove retained parts of the intended design
+incrementally; keep compatibility experiments in `probes/` and application-specific
+grammars in examples or proof fixtures. Do not export unsupported modes or
+placeholder implementations, or hide disposable implementations behind private
+helpers or feature flags.
 
 This does not require freezing every signature now. Resolve a feature's output,
 failure, consumption, ownership, and verification requirements before exporting
@@ -84,7 +93,7 @@ values. Only collecting operations require the optional `alloc` feature.
 
 | Family | Intended API and output | Implementation and Hammer correspondence |
 | --- | --- | --- |
-| Sequencing | `Seq<P, Q>` produces `(A, B)`. | Already implemented. Run children in order, passing the successful cursor onward. Corresponds to `h_sequence`. Nest pairs initially; any later tuple syntax should expand to the same semantics. |
+| Sequencing | `Seq<P, Q>` produces `(A, B)`. | Already implemented. Run children in order, passing the successful cursor onward. Corresponds to `h_sequence`. Retain binary sequencing; any later tuple syntax should compose it or share its semantics and implementation. |
 | Ordered alternatives | `Choice<P, Q>` produces their common output type. | Already implemented. Retry recoverable rejection at the original cursor. Map alternatives into an enum when their natural outputs differ. Corresponds to `h_choice`. |
 | Optionality | `Optional<P>` produces `Option<A>`. | Already implemented; corresponds to `h_optional`. Empty success is `Some`, not absence. |
 | Output transformation | `Map<P, F>` produces `B`; `Verify<P, F>` preserves `A` when its predicate holds. | Already implemented. Typed counterparts of transforming `h_action` callbacks and `h_attr_bool`. These do not supply deferred-effect semantics. |
@@ -342,7 +351,7 @@ The combinators above also need a deliberate primitive and extension inventory:
 | Recognizing matched input | Implemented and proved: `BitSpan`, `Recognize`, and `WithSpan`, retaining validated `(byte, bit)` endpoints and the enclosing bit direction. `WithSpan` returns the decoded value with its span; `Recognize` runs the child and discards its value. Partial-bit matches need not be byte slices; `as_bytes()` requires both endpoints aligned. No direct C combinator counterparts; these provide optional source retention. See the [input plan](rusthammer-input.md#matched-input-spans). |
 | Floating-point fields/ranges | Preserve as a later capability; specify bit decoding, NaNs, infinities, rounding where applicable, and available Aeneas models before exporting readers or range helpers. |
 | Bit and byte order | Implemented and proved with the [input plan's restriction](rusthammer-input.md#ordering-scopes): a changed bit direction requires aligned entry and successful exit, otherwise fatal `Unaligned`. Unaligned fields and unrestricted byte-order changes remain supported. Retain `(byte, bit)` with immutable `ParseContext`. Numeric-reader, contextual primitive, and generic scope/combinator proofs pass; `Be*` pins big byte order while inheriting bit direction. |
-| Recursion | Start with named typed parsers and guarded recursion. Design runtime rule graphs and left-recursive execution separately; `h_indirect`/`h_bind_indirect` are C's construction mechanism, not the required Rust interface. |
+| Recursion | Deferred beyond the first nonrecursive version, including the related extraction-tool work. Retain `recursive(|self_ref| body)` as a proposal using ordinary combinator bodies; see the [writeup](rusthammer-recursive-rules.md) for representation, translation soundness, ownership, and termination gates. Keep construction usable by a later packrat compiler, whose intended production algorithm includes left recursion. C uses `h_indirect`/`h_bind_indirect` for two-step fixed-point construction; a declaration DSL is not required. |
 | Parse-local state and actions | Express ordinary dependencies with typed values and `Bind`. Preserve `h_put_value`/`h_get_value`/`h_free_value` and deferred `h_action_stash`/`h_action_apply` capabilities in a separately specified environment/effect design, including rollback and commit. |
 | Diagnostics | Plan context labels corresponding to `h_with_context` and parser labels as a separate diagnostic layer; keep their effect on errors explicit. |
 | Packrat and other execution engines | The [backend plan](rusthammer-backends.md) separates grammar outputs and evaluation. Memoization, rule identities, and the cached-output policy remain future work guided by protocol benchmarks. Left recursion needs its own algorithm and proofs. Other compiled engines remain separately specified. |
@@ -443,6 +452,22 @@ helpers should represent grammar operations or output needs.
    the total to 74; all 52 consumer entries pass. Existing grammars need no
    migration. Negative callback probes remain in the separate diagnostic runner,
    whose default run intentionally reports failures.
+7. **Finish selected nonrecursive conveniences and first-version coverage.** Review
+   the remaining [dependent helpers](#dependent-parsing-and-reusable-helpers),
+   including length/count wrappers, tag-based parsing, and ASCII whitespace.
+   Select the operations needed for the first version, specify their contracts,
+   and reuse the existing primitives, `Bind`, and repetition where appropriate.
+   Keep ordinary downstream examples, extraction checks, and compositional proofs
+   with each chosen increment. The full future feature inventory is not an
+   implicit first-release requirement.
+
+**Recursive construction and direct execution are deferred.** The
+[writeup](rusthammer-recursive-rules.md) preserves the proposed constructor,
+passing ordinary-function probes, failing recursive combinator bodies, and
+separate later packrat direction. Aeneas dictionary lowering requires a scoped
+soundness argument before general implementation; the handwritten Lean model
+does not supply that argument. Resume this investigation when reprioritized,
+without introducing a placeholder recursion API in the first version.
 
 **Application fixture migration is complete.** `Flags`, `Marker`, `Record`,
 `RecordParser`, their parsing helpers, and the example payload limit now live in
@@ -467,7 +492,8 @@ and test meaningful boundary/interoperation cases. Proofs should cover construct
 invariants, both input statuses, consumption, error precedence, and termination
 under child/callback contracts. Differential tests should normalize typed output
 differences and identify intentional differences from C. Implementation steps may
-be small; each public addition must have a durable role in this plan.
+be small; each production addition, including internal machinery, must have a
+durable role in this plan.
 
 The local verification command also checks every library verification root at
 the MIR stage used for dependencies and translates a separate Cargo consumer.

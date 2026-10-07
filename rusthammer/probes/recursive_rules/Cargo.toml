@@ -1,0 +1,15 @@
+[package]
+name = "rusthammer-recursive-rules-probe"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+path = "lib.rs"
+
+[dependencies]
+rusthammer = { path = "../.." }
+
+[[bin]]
+name = "recursive-rule-cases"
+path = "cases.rs"

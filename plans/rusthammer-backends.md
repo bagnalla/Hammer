@@ -1,11 +1,23 @@
 # RustHammer backends and packrat parsing
 
-Status: direct execution boundary implemented and verified, 2026-10-05.
+Status: direct execution boundary implemented and verified; first-version scope
+is nonrecursive grammars, 2026-10-06.
 Production has the public `Grammar` / `Eval` boundary
 and the `Direct` interpreter. Memoization remains a later optimization, with a
 private feasibility probe to inform its design. This document extends the
 [main plan](rusthammer.md); it does not claim a production or verified packrat
 implementation.
+
+The [deferred recursion writeup](rusthammer-recursive-rules.md) retains
+`recursive(|self_ref| body)` as a candidate with direct execution. Recursive
+grammar support and its extraction-tool investigation are set aside at the
+user's request and do not gate the first version. The initial investigation
+validates ordinary recursive functions but reproduces extraction failures when
+recursive calls are placed under generic combinators. A reusable structured-body
+API remains unresolved; shared grammar construction must not require packrat
+compilation. The later explicit-frame packrat proposal retains its private
+seed/growth, borrowed-view, lowering, and resource/session evidence. Read the
+separate direct and packrat production gates before implementation.
 
 ## Requirements and recommendation
 
@@ -25,15 +37,18 @@ The chosen boundary and later backend work are:
    policy is `Clone` for the values stored there, without adding that bound to
    ordinary parsers, combinators, or final outputs. This ownership policy needs
    review before it becomes public API; alternatives are compared below.
-5. Make left recursion an explicit part of the Hammer compatibility target.
-   Ordinary memoization and left-recursion growth need separate correctness
-   arguments. Do not describe the first as an implementation of the second.
+5. Design the production packrat algorithm for the intended left-recursion
+   semantics from the outset. Ordinary memoization and left-recursion growth
+   need separate correctness arguments within that implementation. Do not build
+   a non-left-recursive backend intended for replacement by the growth algorithm.
 
 The execution boundary is implemented and verified before adding spans and more
 combinators. Memoization, its output ownership policy, rule identity, and recursion
 are deferred; choosing them is not a prerequisite for continuing combinator work. Measure
-representative grammars to guide their priority. No temporary public `Memo`,
-prototype backend, or grammar-builder API is added for the experiments below.
+representative grammars to guide their priority. No temporary `Memo`, prototype
+backend, grammar-builder API, or disposable internal algorithm is added to the
+production library for the experiments below. Retain `Direct` as a useful
+interpreter alongside packrat; it is not a backend scheduled for replacement.
 
 ## What C Hammer actually separates
 
@@ -93,8 +108,8 @@ for every direct evaluator. A custom parser implements `Grammar` and `Eval`,
 with no separate override of those convenience methods. `Eval::eval` is the
 explicit execution entry point; every child call, including calls in loops and
 application parsers, receives the same mutable backend. `&P` delegates to `P`'s
-evaluator. Sequence, choice, lookahead, and repetition retain one implementation
-of their control flow.
+evaluator. Sequence, choice, lookahead, and repetition share their existing
+generic `Eval` control flow for backends executed through that interface.
 
 Custom parsers may implement `Eval` generically over the capabilities their
 children need, or for a specific backend. There is no fallback from a missing
@@ -104,10 +119,14 @@ separate capabilities.
 
 Threading state does not itself intercept every node or memoize a grammar.
 Built-in primitives ignore the backend; structural nodes pass it to children.
-Later named rules or a lowered representation must define where memoization
-occurs, with stable identities and typed storage. That design may need additional
-capabilities, but does not require a second copy of ordinary combinator semantics.
-No production output acquires a `Clone` or `Copy` bound from this refactor.
+Later recursive references or a lowered representation must define where
+memoization occurs, with stable identities and typed storage. The proposed
+compiled packrat machine implements combinator control flow through explicit
+frames, separately from these generic evaluators. It needs a lowering/refinement
+proof against the shared specifications; it does not automatically inherit the
+existing implementation proofs. This qualifies the earlier expectation that all
+backends would reuse one implementation of combinator control flow. No production
+output acquires a `Clone` or `Copy` bound from the existing boundary refactor.
 
 Backtracking restores the input cursor, not mutable backend state. A backend
 must decide which bookkeeping persists across failed branches and lookahead.
@@ -187,6 +206,9 @@ when the rule/result relation is already known.
 The probe manually defines a small schema. A reusable grammar declaration and
 lowering mechanism is still required; do not mistake its three tables for a
 general grammar-registration API.
+Choose the replay policy and schema for their intended production role before
+implementing them. Do not promote the probe's choices as an interim solution
+while already expecting to replace them with shared handles or another layout.
 
 ## Identity, cache keys, and sessions
 
@@ -211,9 +233,11 @@ distinct from recoverable rejection and cache it only within the same snapshot.
 A future incremental cache must account for successes and failures that depend
 on the old end of input; invalidating only `NeedMore` entries is insufficient.
 
-Do not hold a mutable table-element borrow across recursive evaluation. Mark
-the entry active, retain a stable slot/index, release the borrow, evaluate its
-body, and then complete the entry. Recursive calls may grow the tables.
+Do not hold a mutable table-element borrow across recursive evaluation. Retain a
+stable slot/index and release the borrow before evaluating a body; recursive
+calls populate other entries in the selected workspace. Design entry states and
+transitions for provisional seeds, growth, and settled results together. Do not assume every lookup returns
+a final answer or every entry is computed once and thereafter immutable.
 
 ## Callbacks and dependent parsing
 
@@ -240,8 +264,11 @@ This differs from regular/CF compilation: C itself marks unrestricted
 ## Recursion and complexity
 
 Named rule references must have finite Rust types and explicit identities.
-Consuming recursion is an initial correctness case. Encountering an active entry
-at the same key is a recursion cycle; it must not silently become `Mismatch`.
+Consuming recursion is a useful first proof case for the intended packrat
+implementation. Encountering an active entry at the same key requires the
+selected recursion protocol; it must not silently become ordinary `Mismatch`.
+The probe's fatal active-entry diagnostic is an experiment, not the first
+production recursion algorithm.
 
 For C-compatible left recursion, design the seed/growth algorithm explicitly:
 an initial internal seed, recursion heads and involved rules, reevaluation, and
@@ -252,12 +279,19 @@ preserve the ordering-scope discipline. Partial input and ambiguous same-length
 semantic results need an explicit policy. These are not solved by adding a
 `Busy` flag to an ordinary cache.
 
+Choose this complete driver design and its entry invariants before implementing
+production memoization. Storage, rule references, replay operations, and driver
+branches can be built incrementally when they are retained parts of that design.
+Separate proof milestones do not justify a standalone, non-left-recursive
+packrat implementation that will need a different driver and cache lifecycle.
+
 The [Warth, Douglass, and Millstein paper](https://web.cs.ucla.edu/~todd/research/pub.php?id=pepm08)
 provides C Hammer's algorithmic starting point. It also explicitly notes that
 some left-recursive grammars can take superlinear time. Preserve this capability
 as a planned part of packrat support, while proving the ordinary memoization
-case separately. A backend lacking the growth algorithm must report unsupported
-recursion explicitly; the probe uses a fatal diagnostic and implements no growth.
+case separately. Cycles outside the chosen supported semantics must be rejected
+explicitly; an internal failure seed used by the growth protocol is distinct
+from reporting such a cycle as recoverable grammar rejection.
 
 Do not advertise unconditional linear time. The classical
 [packrat result](https://pdos.csail.mit.edu/~baford/packrat/icfp02/)
@@ -274,7 +308,7 @@ depends on a fixed grammar and bounded work per memoized state. For RustHammer:
   result whose size grows with that input. Constant-size shared results/handles
   are needed for the corresponding storage bound.
 
-For the initial fixed-rule design, investigate dense typed tables indexed by
+For the intended fixed-rule capability, investigate dense typed tables indexed by
 byte, bit, and the finite context, with checked allocation/index arithmetic.
 Retain `(byte, bit)`; do not reintroduce unchecked absolute machine bit counts.
 Sparse storage is a separately justified alternative. Failure to allocate a
@@ -328,41 +362,96 @@ It does **not** establish that arbitrary recursive combinator descriptions can
 be lowered automatically. A general rule representation/lowering must preserve
 that separation, or the tool limitation must be fixed and verified separately.
 
+The newer [recursive-rule experiment](../rusthammer/probes/recursive_rules/README.md)
+avoids recursive interpreter dictionaries by lowering descriptions to owned
+instructions and running an explicit control stack. Twelve native tests and six
+roots at promoted MIR, optimized MIR, and through a Cargo consumer pass extraction
+and Lean checking. It includes ordinary/direct-left/mutual recursion, packed rule
+sets, incomplete growth, typed source views, actual combinator-node lowering for
+recognition, and workspace reuse with fresh session state.
+
+This is still a private finite-schema model. It supplies no general action
+compiler or engine-correctness theorem. Its borrowed-sum negative probe records a
+different Aeneas limitation; its C comparison records 31 context-cycle differences
+separately from 985 agreements. The proposal explains the recommended effective
+`(rule, context)` symbols, the proposed C compatibility difference, and the
+remaining generated-schema/workspace API checks.
+
 ## Work sequence and proof obligations
+
+The first version uses `Direct` with nonrecursive grammar definitions. Continue
+the API and verification work in steps 1–2. Steps 3–8 preserve the deferred
+recursion/packrat direction and apply when that work is reprioritized. No Aeneas
+dictionary transformation or new packrat engine is required for the first version.
 
 1. **Direct execution boundary complete.** One implementation of ordinary
    combinator control flow, migrated examples and Lean proofs, a stateful test
    backend, and normal Cargo consumers pass the checks described above.
-2. **Continue the planned API and measure representative grammars.** Spans can
-   follow this boundary; memoization is not a prerequisite. Use measurements to
-   select worthwhile cache boundaries and assess storage and replay costs.
-3. **Choose the memoized-output policy and validate rule lowering privately.**
-   Choose its durable capability contract before imposing public bounds. Keep
-   unrestricted direct outputs. The basic independent-borrow
-   and Cargo dependency checks pass. Next exercise reusable configurable rule
-   identity, mutual recursion, and lowering of recursive combinator descriptions
-   without the trait cycle. Choose the declaration/compiled representation based on that
-   evidence. Set the left-recursion and fatal-resource-error contracts.
-4. **Implement typed packrat storage and ordinary recursion.** Use the selected
-   table representation, stable identities, fresh sessions, and explicit cycle
-   handling. Prove lookup/completion invariants and refinement of direct parsing
-   for the supported pure, terminating subset. Validate all current primitives
-   and ordering scopes through that interpreter.
-5. **Implement and prove left-recursion growth.** Specify its semantics separately
-   from the direct interpreter, which may diverge on the same grammar. Compare
-   the admitted cases with C; add direct/indirect/nullable regression grammars.
-6. **State measured and proved cost bounds.** Include normalization, table access,
+2. **Finish the selected nonrecursive API and its verification.** Spans and
+   constructor helpers are complete. Use the
+   [combinator plan](rusthammer-combinators.md#implementation-order-and-migration)
+   to select remaining conveniences and review first-version coverage. Preserve
+   the existing backend boundary. Measurements of representative grammars can
+   later guide cache boundaries, storage, and replay costs.
+3. **Recursive construction and direct execution (deferred).** On resumption,
+   validate a finite typed recursive reference inside actual combinator bodies, including mutual
+   recursion, configuration/input borrows, and non-`Clone` outputs. Resolve the
+   recursive trait-dictionary extraction obstacle, termination/admissibility,
+   and call-stack behavior. Keep the grammar construction independent of packrat
+   compilation; a separate declaration language is not required. The
+   [recursion proposal](rusthammer-recursive-rules.md#proposed-construction-and-direct-execution)
+   records the initial result: ten native tests and six roots through both MIR
+   stages and a Cargo consumer pass for ordinary recursive functions. Named
+   combinator bodies, closure/function-item adapters, and explicit function
+   pointers fail extraction; monomorphization is not a drop-in remedy. Address
+   the recursive evaluator-dictionary issue or validate a deliberate generation
+   approach before treating this step as complete. The
+   [follow-up diagnosis](../rusthammer/probes/recursive_extraction/README.md)
+   identifies a lost Charon dependency and an underlying mixed recursive group
+   unsupported by Aeneas; retaining the dependency alone is insufficient. A
+   handwritten Lean fixed-point model passes, but soundness of a general
+   translation has not been established. Develop a scoped semantic-preservation
+   argument before a general tool implementation; automatic construction and
+   monotonicity proofs also remain open. Handwritten recursive control
+   flow behind a wrapper does not establish a general structured constructor.
+4. **Implement and prove the durable direct recursion capability.** Proceed after
+   that API and extraction check. Direct recursive evaluation remains an intended
+   capability alongside packrat; it is not a temporary packrat driver. Preserve
+   a separate path for lowering supported bodies to the later compiled backend.
+5. **Choose the complete packrat design and validate it privately.** Set the
+   replay ownership, rule declaration/lowering, storage, left-recursion semantics,
+   memo-entry lifecycle, partial-input behavior, and fatal-resource-error contracts
+   before production implementation. Keep unrestricted direct outputs. The
+   recursive-rule proposal now supplies private checks of configurable identities,
+   mutual recursion, and recognition lowering without the trait cycle, including
+   the selected growth machinery. Lowering recursive combinators to the generated
+   heterogeneous schema, general replay/callback storage, the caller-workspace
+   API, and the admitted grammar contract remain production gates in this step.
+6. **Implement retained components of that design.** Build typed storage, stable
+   rule references, replay operations, and fresh sessions with their selected
+   resource handling. Prove component invariants that distinguish provisional,
+   growing, and settled entries. Do not turn these components into an interim
+   non-left-recursive packrat backend.
+7. **Implement and verify the integrated rule driver.** Use the chosen seed/growth
+   protocol from the first production packrat implementation. Stage the proof
+   work: establish refinement of direct parsing for the supported pure,
+   terminating, non-left-recursive subset, then establish the separately specified
+   left-recursion behavior, termination, and coordination invariants of that
+   driver. Validate current primitives and ordering scopes through it, compare
+   admitted cases with C, and include direct/indirect/mutual/nullable regressions.
+8. **State measured and proved cost bounds.** Include normalization, table access,
    semantic-value ownership, callbacks, and memory limits. Keep all assertions
    specific to their supported grammar class.
 
-The central invariant is that each completed memo entry agrees with the rule's
-specification at its session, cursor, context, and parameters. A cache hit must
-return an equivalent typed result and end cursor; a miss must establish that
-invariant before publishing the entry. Termination and safe table growth need
-separate arguments. The established independent Lean grammar contracts remain
-the reference for the non-left-recursive subset; a second backend does not
-inherit their implementation proofs automatically.
+The central invariant is that each settled memo entry agrees with the rule's
+specification at its session, cursor, context, and parameters. Replaying a settled
+entry returns an equivalent typed result and end cursor. Provisional seeds and
+growth-time answers require their own invariants and must not be treated as
+settled results; publication as settled must establish the final invariant.
+Termination and safe table growth need separate arguments. The established
+independent Lean grammar contracts remain the reference for the non-left-recursive
+subset; a second backend does not inherit their implementation proofs automatically.
 
-Span APIs remain planned after the execution boundary. CI, the older borrowed-callback
+Span APIs and constructor helpers are complete. CI, the older borrowed-callback
 investigation, live streaming, seeking, and unrelated compiled engines retain
 their separate scope.

@@ -1,6 +1,6 @@
 # RustHammer design and verification plan
 
-Status: verified prototype with an explicit backend execution boundary, scoped ordering, match restrictions, skipping/position, byte sets, typed ranges, native integer readers, signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection, 2026-10-05.
+Status: verified prototype with an explicit backend execution boundary, scoped ordering, spans, constructor helpers, match restrictions, skipping/position, byte sets, typed ranges, native integer readers, signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection, 2026-10-06. The first version targets nonrecursive grammars; recursion and its extraction-tool investigation are deferred at the user's request.
 
 RustHammer will be a Rust rewrite of Hammer whose parsers can be translated
 through Charon and Aeneas and proved correct in Lean. It should preserve Hammer's
@@ -13,13 +13,14 @@ that goal. CI is deferred at the user's request. The
 [combinator API plan](rusthammer-combinators.md) inventories the intended families,
 their Hammer counterparts, and implementation order. Detailed compatibility work
 and additional core combinators remain unfinished; the prototype is not a complete
-replacement for C Hammer. Public features must have an intended role in the final
-API, independent of implementation or proof milestones.
+replacement for C Hammer. Production APIs and implementations must have an
+intended role in the finished library, independent of implementation or proof
+milestones. Do not introduce a known disposable algorithm behind a durable API.
 
 ## Resume here
 
-Current implementation checkpoint: `fd50771` (`Separate RustHammer grammar from
-backend execution`), on `rusthammer-dev`. `origin` is
+Current implementation checkpoint: `cdac3cd` (`Add verified RustHammer constructor
+helpers`), on `rusthammer-dev`. `origin` is
 `git@github.com:bagnalla/Hammer.git`; `upstream` is the original Hammer repository.
 Check `git status` and recent history before continuing; this checkpoint records
 verified implementation, not a promise that the working tree has no later edits.
@@ -33,8 +34,9 @@ according to the work being resumed:
 | Document | Context to carry forward |
 | --- | --- |
 | [Backend plan](rusthammer-backends.md) | The implemented execution boundary, its verification evidence, and the separate future memoization/recursion design. |
+| [Deferred recursion writeup](rusthammer-recursive-rules.md) | Proposed fixed-point construction, extraction diagnosis, unproved translation-soundness obligations, and retained packrat evidence. Not a prerequisite for the first version. |
 | [Input plan](rusthammer-input.md#matched-input-spans) | Implemented `BitSpan`, `Recognize`, and `WithSpan`, their physical-bit meaning, and the permanent ordering restriction. |
-| [Combinator plan](rusthammer-combinators.md) | Implemented and proposed families, Hammer counterparts, constructor/return-type policy, and the rule against temporary public APIs. |
+| [Combinator plan](rusthammer-combinators.md) | Implemented and proposed families, Hammer counterparts, constructor/return-type policy, and the rule against temporary production APIs or implementations. |
 | [Prototype README](../rusthammer/README.md) | Current usage, source/proof map, verification commands, and proof-model limits. |
 | [Compatibility probes](../rusthammer/probes/README.md) | Supported source forms and minimized failures for the pinned extraction tools. Some diagnostic probes intentionally fail. |
 
@@ -62,7 +64,7 @@ intentionally excluded. Partial input distinguishes `NeedMore` from rejection,
 but currently retries the accumulated buffer rather than retaining a streaming
 continuation. Do not reopen these decisions as missing prerequisites for spans.
 
-### Next increment
+### First-version scope and next steps
 
 The span/recognition family from the
 [input plan](rusthammer-input.md#matched-input-spans) is implemented and proved.
@@ -84,13 +86,45 @@ stateful sequencing. Native tests and downstream extraction include a shared
 factory that hides only its callback, preserving generic backend support.
 Retain this policy for new APIs. All 52 consumer entries and 74 theorem audits pass.
 
-Next select and specify a larger capability under the backend/combinator plans.
-Memoization and recursive grammars still need decisions about cached-output
-ownership, rule identity, and recursion semantics before production implementation.
+The first version will support nonrecursive grammars with the existing `Direct`
+interpreter. Repetition, separated lists, folds, and data-dependent parsing with
+`Bind` remain in scope; they do not require recursive grammar references.
+Recursive construction and its direct/packrat support are deferred, together
+with further Aeneas/Charon work for that feature. They are not first-version
+completion gates.
 
-Memoization, recursion, permutation, seeking, live streaming, deferred effects,
-and other engines remain separate increments. CI and investigation of the older
-borrowed-callback limitation remain deferred at the user's request. Revisit
+Continue from the existing nonrecursive API:
+
+1. Review the remaining nonrecursive gaps in the
+   [combinator inventory](rusthammer-combinators.md) and select the next retained
+   increment. Planned conveniences include length-counted elements,
+   length-prefixed bytes, tag-based selection, and ASCII whitespace; decide which
+   are needed for the first version rather than treating the entire future
+   inventory as a release requirement.
+2. Specify and implement selected operations using the current core, with
+   compositional proofs and ordinary downstream examples. Preserve typed
+   outputs, borrowing, partial-input behavior, and the backend boundary.
+3. Review the first-version API, supported extraction forms, and proof coverage,
+   then run the production verification command for the resulting increment.
+
+The [deferred recursion writeup](rusthammer-recursive-rules.md) preserves the
+`recursive(|self_ref| body)` proposal, passing ordinary-function probes, failing
+structured-body candidates, and the extraction diagnosis. It records the
+possible dictionary-to-function fixed-point translation and the missing
+semantic-preservation argument. A checked handwritten Lean definition does not
+establish soundness of a general Rust translation. The isolated tool patch and
+private parsers remain evidence; no workaround API or tool-pin update is planned
+for the first version.
+
+The writeup also retains the private packrat model, its C comparison results,
+and remaining typed-storage/lowering gates. Packrat remains a later capability
+whose intended implementation includes left recursion from the outset. The
+first nonrecursive release uses `Direct`; it does not call for a disposable
+non-left-recursive packrat engine.
+
+Permutation, seeking, live streaming, deferred effects, and other engines retain
+their separate scope. CI and investigation of the older borrowed-callback
+limitation remain deferred at the user's request. Revisit
 [eager literal rejection](#deferred-eager-literal-rejection) before implementing
 streaming buffering/resumption. Packrat remains an intended capability;
 representative grammar measurements should guide its priority and cache design.
@@ -105,14 +139,28 @@ declarations. The checkpoint above passes all these checks: 52 consumer entry
 points, 22/25 consumer tests without/with `alloc`, and 74 ordering/backend/span/construction theorem
 axiom audits. `python3 tools/check_backend_memo.py` also passes; it separately
 checks the private cache probe when relevant backend or tool changes are made.
+
+The following recursion probes are retained for later reproduction, not required
+work for a nonrecursive first-version increment.
+`python3 tools/check_recursive_rules.py` checks the private recursive-rule model and
+its two expected negative extraction cases; `python3 tools/check_recursive_rules_c.py`
+checks C agreement and the separately recorded context-cycle discrepancies.
+`python3 tools/check_direct_recursion.py` checks the ordinary-function direct
+fixtures and separately reproduces the recursive-body and monomorphization
+failures; success of that runner does not establish a general `recursive` API.
+`python3 tools/check_recursive_extraction.py` reproduces the dependency/cycle
+diagnosis and checks the separate handwritten Lean model. Its optional candidate
+tool mode is diagnostic and does not establish a sound extraction transformation.
 For a proof-only edit, `lake build` from `rusthammer/lean/` checks existing Lean
 files without regenerating them.
 
 Use the pinned Rust `nightly-2026-09-17`, Lean `v4.31.0`, and the
 [Aeneas/Charon revisions](#aeneas-compatibility-evidence) enforced by the runner.
-The local extraction checkout is `~/source/aeneas/`, including its `charon/`
-subdirectory; `~/source/nom/` is a design reference. Updating to an unpinned tool
-revision is a separate compatibility task.
+The pinned local extraction checkout is `rusthammer/target/extraction-tools/aeneas/`,
+including its `charon/` subdirectory. From `rusthammer/`, pass
+`--aeneas-dir target/extraction-tools/aeneas` to runners whose default remains
+`~/source/aeneas/`; `~/source/nom/` is a design reference. Updating to an unpinned
+tool revision is a separate compatibility task.
 
 Edit Rust to change generated behavior; do not hand-edit
 [`Rusthammer.lean`](../rusthammer/lean/RustHammer/Rusthammer.lean).
@@ -548,8 +596,9 @@ The established requirements are:
 - Keep the core `no_std`, with opt-in `alloc` support for collected repetition outputs.
 - Validate constrained parser configuration through fallible constructors and
   protect its invariants with private fields.
-- Give every public feature an intended place in the final API. Implementation
-  and proof stages must not introduce temporary public combinators.
+- Give every production API and implementation an intended place in the finished
+  library. Implementation and proof stages must not introduce temporary public
+  combinators, internal algorithms, or representations intended for replacement.
 - Use the local Hammer, Aeneas, and nom checkouts to inform the design.
 
 The prototype follows these implementation choices:
@@ -562,8 +611,36 @@ The prototype follows these implementation choices:
 - Keep the core semantically pure, with explicit input and semantic state.
 - Prove primitives and combinators compositionally against independent Lean
   specifications.
-- Stage implementation and proofs within the intended API; keep experiments and
-  application-specific proof fixtures outside the general-purpose public API.
+- Stage implementation and proofs within the intended API and implementation;
+  keep compatibility experiments in `probes/` and application-specific proof
+  fixtures outside the production library.
+
+Before starting a production increment, identify which components it contributes
+to the intended implementation and settle the contracts that determine their
+representation and control flow. A private field, helper, or feature flag does
+not make a disposable implementation acceptable. Small extraction/design probes
+remain useful evidence, but must not become interim library backends or features.
+This is not a promise that new evidence can never justify a redesign; it excludes
+work already expected to be discarded when the planned capability is completed.
+
+The 2026-10-06 plan audit identified these distinctions:
+
+- Recursion staging must use the intended left-recursion-capable packrat design.
+  Non-left-recursive correctness and growth correctness are separate proof
+  obligations on that implementation, not reasons to build successive backends.
+- [Eager literal rejection](#deferred-eager-literal-rejection) is an explicit
+  planned change to existing behavior and proofs, deferred by prior user request.
+  It remains recorded as such; no additional temporary literal API is planned.
+- Memoized-output ownership, rule lowering, and production cache storage remain
+  design decisions. The probe's `Clone` policy, manual schema, and linear searches
+  must not be adopted on the assumption that they will be replaced later.
+- `Direct`, snapshot parsing with `NeedMore`, binary `Seq`, and aligned borrowed
+  byte reads have durable uses. Additional interpreters, resumable streaming,
+  tuple syntax, and decoded unaligned byte collections do not retire them.
+- Recoverable allocation failure and resource budgets remain open capability
+  decisions for the existing collections. Their current allocation assumptions
+  are explicit, not a claim of resource-failure handling. New packrat storage
+  must settle its allocation/error contract before implementation.
 
 Remaining API signatures, release packaging, release scope, and compatibility
 guarantees remain open. Source compatibility with the C API and preservation of
@@ -800,6 +877,10 @@ Use concrete structures such as `Seq<P, Q>`, `Choice<P, Q>`, `Repeat<P>`,
 `Map<P, F>`, and `Bind<P, F>`. Their fields retain structure while trait
 implementations provide execution through static dispatch.
 
+Retain `Direct` as an intended interpreter with no memo-table allocation or
+cached-output replay requirement. It remains useful alongside packrat; it is
+not a temporary implementation awaiting replacement by that backend.
+
 Separate the ability to execute a parser from the ability to analyze or lower its
 grammar. A custom parser function can be an extension point without automatically
 being eligible for compilation. An unrestricted value-dependent `Bind` cannot
@@ -907,15 +988,25 @@ action APIs should be inventoried separately rather than mechanically translated
 
 ### Recursion, progress, and resources
 
+Recursive grammar support is deferred beyond the first version. The
+[deferred writeup](rusthammer-recursive-rules.md) records the construction and
+extraction questions. The recursion-specific requirements below apply when that
+work resumes; the implemented repetition/progress contracts remain part of the
+nonrecursive core.
+
 Named parser types or functions can express recursion without infinitely nested
 combinator types. Runtime grammars may use a finite graph of rule IDs and explicit
 node variants. Such a graph needs a design for output typing, ownership, and rule
 validation; a generic internal parse tree may be appropriate there.
 
 Left recursion requires a suitable algorithm and proof. Hammer already exercises
-it in [its core parser tests](../tests/t_parser.c), so its omission from an early
-subset must be explicit. Guarded recursion and left recursion should have separate
-milestones.
+it in [its core parser tests](../tests/t_parser.c). Design the packrat rule driver,
+memo-entry lifecycle, and recursion bookkeeping for the selected left-recursion
+semantics before production implementation. Consuming recursion and left recursion
+can have separate proof milestones within that design. Do not build a temporary
+recursion-rejecting packrat driver and then replace its algorithm and invariants.
+Runtime rule graphs remain a separate representation capability; any initial
+static rule representation must have a durable role of its own.
 
 Unbounded repetition now enforces valid, strictly advancing success cursors,
 reporting `InvalidCursor` or `NonProgress` on violations. Empty-success parsers
@@ -970,6 +1061,10 @@ and Lean type-checking of default trait methods and borrowed three-outcome value
 
 Streaming machinery remains a later capability. Specify buffering, resumption,
 consistency across growing buffers, and output lifetime/ownership across chunks.
+Parsing complete buffers and partial input snapshots remains supported;
+resumable streaming adds a separately specified capability. Do not introduce an
+interim streaming wrapper whose storage or execution is already intended for
+replacement.
 Retries currently reparse prefixes and can rerun callbacks; speculative effects
 are not rolled back. Input-borrowing outputs refer to the input of their invocation;
 `BytePattern` outputs instead borrow its configured pattern.
@@ -982,6 +1077,11 @@ of a forward-only core.
 
 Deferred by agreement on 2026-10-04. Revisit before implementing streaming
 buffering and resumption; repetition work can proceed first.
+
+This is a known planned revision to existing literal behavior and its proofs,
+not an additional parser family. The 2026-10-06 durability audit leaves the prior
+deferral in place. When resumed, implement the intended behavior in the existing
+literal/pattern operations; do not add temporary conservative/eager variants.
 
 `Literal` currently reads its entire numeric field before comparing. For example,
 `Literal::new(16, 0x6162)` (the bits of `"ab"`) given partial input `"x"` returns
@@ -1199,11 +1299,14 @@ scope choice, not a finding that those mechanisms cannot be verified.
 
 ## Implementation and proof stages
 
-These stages organize work, not temporary public APIs. The
+These stages organize work within the intended production API and implementation.
+The
 [combinator API plan](rusthammer-combinators.md#implementation-order-and-migration)
 specifies the intended families and the next implementation steps. Complete a
-subset of that API at each stage without exporting unsupported cases or stand-in
-types that are intended to be discarded.
+retained part of that design at each stage without exporting unsupported cases
+or adding stand-in types, internal algorithms, or representations intended for
+replacement. Proofs may cover restricted cases of the chosen implementation
+before its full correctness argument is complete.
 
 | Stage | Work | Completion evidence |
 | --- | --- | --- |
@@ -1212,7 +1315,8 @@ types that are intended to be discarded.
 | 3. Compositional core | Implement sequence, ordered choice, optionality, lookahead, bounded repetition, mapping, predicates, and the data dependencies needed by the first format. Add unbounded repetition only with progress semantics. | Reusable combinator theorems, checked callback assumptions, and tests for backtracking, empty success, truncation, and error propagation. |
 | 4. First verified application parser | Parse a small binary record with bit fields, a constrained header, a bounded length-prefixed payload, and explicit end-of-input behavior. | An independent format specification and a Lean-checked application theorem covering values, consumption, valid-input acceptance, safe rejection, and termination under documented bounds. |
 | 5. Backend execution boundary | Separate grammar outputs and evaluator capabilities, thread the backend through all child calls, and migrate direct parsing and proofs. See the [backend plan](rusthammer-backends.md). | Existing direct contracts, native backend propagation tests, both MIR stages, and the separate Cargo consumer. |
-| 6. Further capabilities and optimization | Spans and construction helpers are implemented and proved. Prioritize memoization, recursion, runtime grammars, seeking, streaming, deferred effects, richer diagnostics, or other compiled backends according to separately reviewed contracts. Optimize measured bottlenecks. | Correctness proofs on explicit supported subsets, documented complexity assumptions, differential tests, and benchmarks; no implicit claim of full Hammer coverage. |
+| 6. First nonrecursive version | Spans and construction helpers are implemented and proved. Finish selected nonrecursive API gaps, downstream examples, supported-source documentation, and proof coverage using `Direct`. | The agreed first-version API passes native tests, both MIR stages, downstream extraction, and Lean proofs; remaining omissions are explicit. |
+| 7. Deferred capabilities and optimization | Reprioritize recursion and its tool/soundness work separately. Memoization, runtime grammars, seeking, streaming, deferred effects, richer diagnostics, and other compiled backends retain their own contracts. Optimize measured bottlenecks. | Correctness proofs on explicit supported subsets, documented complexity assumptions, differential tests, and benchmarks; no implicit claim of full Hammer coverage. |
 
 Use native Rust tests, focused property tests, and differential tests with C Hammer
 to catch integration and specification mistakes. Compare acceptance, decoded
@@ -1229,8 +1333,9 @@ A complete NTP or DNS parser is not a prerequisite for the next core increment.
   unusual combinators, immediate/deferred actions, and seeking? The
   [input plan](rusthammer-input.md) intentionally restricts bit-direction
   changes to byte boundaries, while retaining byte-order control.
-- Which capabilities are required for the first RustHammer release, and when must
-  it support left recursion or grammars built at runtime?
+- Which remaining nonrecursive conveniences are required for the first RustHammer
+  release? Recursive grammar support and its extraction-tool work are explicitly
+  deferred; their eventual priority and supported class remain future decisions.
 - Should context-free alternatives have a distinct API, or should lowering accept
   only grammars for which ordered-choice equivalence can be established?
 - Does a later input API need a logical bit limit or whole-input padding rules

@@ -1701,6 +1701,11 @@ the verified `Bind` combinator.
 
 ## Next increments
 
+The first version will support nonrecursive grammars through `Direct`. Recursive
+grammar construction and its extraction-tool investigation are deferred at the
+user's request. Existing repetition, lists, folds, and data-dependent `Bind`
+remain in scope.
+
 Follow the [combinator API plan](../plans/rusthammer-combinators.md):
 
 Basic composition is implemented and proved, including parser references,
@@ -1725,13 +1730,20 @@ rule identities, and recursive grammar construction remain later work, guided by
 representative protocol benchmarks. The private cache probe remains design evidence.
 Design permutation separately.
 
+The [deferred recursion writeup](../plans/rusthammer-recursive-rules.md) records
+the proposed `recursive(|self_ref| body)` API, direct-execution probes, extraction
+failures, and the later packrat direction. It also records a possible change to
+Aeneas's dictionary translation and the missing semantic-preservation argument.
+The handwritten Lean model and diagnostic Charon patch remain private evidence;
+no recursion API or tool update is required for the first version.
+
 The
 [construction helpers](../plans/rusthammer-combinators.md#construction-functions-and-return-types)
 over the existing concrete nodes are implemented and proved. They use `Grammar`
 bounds where needed and preserve backend capabilities through concrete returns.
 Their generic bodies and ordinary consumer uses pass both extraction checks.
-Select the next larger capability under the backend and combinator plans; its
-ownership and execution contract must be specified before implementation.
+Continue with selected nonrecursive conveniences and first-version API/proof
+coverage, following the [active plan](../plans/rusthammer.md#first-version-scope-and-next-steps).
 
 Keep future application grammars in shared example/proof-support source. The
 original `Flags`, `Marker`, and `Record` fixtures have been migrated out of the
