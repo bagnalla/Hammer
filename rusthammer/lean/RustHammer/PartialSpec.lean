@@ -1,5 +1,9 @@
 import RustHammer.ControlSpec
 
+open RustHammer.Code.grammar.control
+  RustHammer.Code.grammar.transform
+  RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std
 
 namespace RustHammer.Partial

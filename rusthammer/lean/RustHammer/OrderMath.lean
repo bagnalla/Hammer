@@ -1,6 +1,8 @@
 import RustHammer.OrderSpec
 import RustHammer.BitsProofs
 
+open RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std
 
 namespace RustHammer.Ordering

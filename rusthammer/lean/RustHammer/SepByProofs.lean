@@ -1,5 +1,9 @@
 import RustHammer.SepBySupport
 
+open RustHammer.Code.grammar.repeat
+  RustHammer.Code.grammar.sequence
+  RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Proofs
@@ -106,15 +110,15 @@ theorem sep_by_with_spec {P S α β : Type} (pi : DirectParser P α) (si : Direc
   rw [SepBy.Insts.RusthammerParserInputVec.parse_with_eq]
   rw [hb]
   step with repeat_run_with_bounded_spec pi
-    (Right.Insts.RusthammerParser (Shared0P.Insts.RusthammerParser si) (Shared0P.Insts.RusthammerParser pi)) (Collect.Insts.RusthammerRepeatAccumulatorAVec α)
+    (Right.Insts.RusthammerParser (Shared0P.Insts.RusthammerParser si) (Shared0P.Insts.RusthammerParser pi)) (Collect.Insts.RusthammerGrammarRepeatRepeatAccumulatorAVec α)
     parser.parser { first := parser.separator, second := parser.parser }
     parser.bounds.min max () input cursor context (hconfig max hmax) (Spec.separatedAttempt item sep)
     (fun values state => state.val = values)
     (fun count start => separated_attempt_spec pi si parser.parser parser.separator count input start context item sep hp hs)
-    (by simp [Collect.Insts.RusthammerRepeatAccumulatorAVec.init, spec_ok])
+    (by simp [Collect.Insts.RusthammerGrammarRepeatRepeatAccumulatorAVec.init, spec_ok])
     (by
       intro values next after value state _ _ hlen hstate
-      simp only [Collect.Insts.RusthammerRepeatAccumulatorAVec.step]
+      simp only [Collect.Insts.RusthammerGrammarRepeatRepeatAccumulatorAVec.step]
       step with alloc.vec.Vec.push_spec state value (by clear hb; scalar_tac) as ⟨appended, happended⟩
       simpa [hstate] using happended) as ⟨outcome, houtcome⟩
   exact (accumulated_collection _ outcome).mp houtcome
@@ -134,15 +138,15 @@ theorem sep_by_unbounded_with_spec {P S α β : Type} (pi : DirectParser P α) (
   rw [SepBy.Insts.RusthammerParserInputVec.parse_with_eq]
   rw [hb]
   step with repeat_run_with_unbounded_spec pi
-    (Right.Insts.RusthammerParser (Shared0P.Insts.RusthammerParser si) (Shared0P.Insts.RusthammerParser pi)) (Collect.Insts.RusthammerRepeatAccumulatorAVec α)
+    (Right.Insts.RusthammerParser (Shared0P.Insts.RusthammerParser si) (Shared0P.Insts.RusthammerParser pi)) (Collect.Insts.RusthammerGrammarRepeatRepeatAccumulatorAVec α)
     parser.parser { first := parser.separator, second := parser.parser }
     parser.bounds.min () input cursor context (Spec.separatedAttempt item sep)
     (fun values state => state.val = values)
     (fun count start => separated_attempt_spec pi si parser.parser parser.separator count input start context item sep hp hs)
-    (by simp [Collect.Insts.RusthammerRepeatAccumulatorAVec.init, spec_ok])
+    (by simp [Collect.Insts.RusthammerGrammarRepeatRepeatAccumulatorAVec.init, spec_ok])
     (by
       intro values next after value state _ _ hlen hstate
-      simp only [Collect.Insts.RusthammerRepeatAccumulatorAVec.step]
+      simp only [Collect.Insts.RusthammerGrammarRepeatRepeatAccumulatorAVec.step]
       step with alloc.vec.Vec.push_spec state value (by simpa only [hstate] using hlen) as ⟨appended, happended⟩
       simpa [hstate] using happended) as ⟨outcome, houtcome⟩
   exact (accumulated_collection _ outcome).mp houtcome
@@ -170,16 +174,16 @@ theorem fold_sep_by_with_spec {P S I F α β R : Type} (pi : DirectParser P α) 
   rw [FoldSepBy.Insts.RusthammerParser.parse_with_eq]
   rw [hb]
   apply repeat_run_with_bounded_spec pi
-    (Right.Insts.RusthammerParser (Shared0P.Insts.RusthammerParser si) (Shared0P.Insts.RusthammerParser pi)) (FoldSepBy.Insts.RusthammerRepeatAccumulator P S ii fi)
+    (Right.Insts.RusthammerParser (Shared0P.Insts.RusthammerParser si) (Shared0P.Insts.RusthammerParser pi)) (FoldSepBy.Insts.RusthammerGrammarRepeatRepeatAccumulator P S ii fi)
     parser.parser { first := parser.separator, second := parser.parser }
     parser.bounds.min max parser input cursor context (hconfig max hmax)
     (Spec.separatedAttempt item sep) (Spec.folds initial fold)
     (fun count start => separated_attempt_spec pi si parser.parser parser.separator count input start context item sep hp hs)
-  · simp only [FoldSepBy.Insts.RusthammerRepeatAccumulator.init]
+  · simp only [FoldSepBy.Insts.RusthammerGrammarRepeatRepeatAccumulator.init]
     step with hi as ⟨state, hstate⟩
     exact Spec.folds.empty hstate
   · intro values next after value state hprefix hchild hlen hstate
-    simp only [FoldSepBy.Insts.RusthammerRepeatAccumulator.step]
+    simp only [FoldSepBy.Insts.RusthammerGrammarRepeatRepeatAccumulator.step]
     step with hf values next after value state hprefix hchild hlen hstate as ⟨following, hfollowing⟩
     exact Spec.folds.append hstate hfollowing
 
@@ -204,15 +208,15 @@ theorem fold_sep_by_unbounded_with_spec {P S I F α β R : Type} (pi : DirectPar
   rw [FoldSepBy.Insts.RusthammerParser.parse_with_eq]
   rw [hb]
   apply repeat_run_with_unbounded_spec pi
-    (Right.Insts.RusthammerParser (Shared0P.Insts.RusthammerParser si) (Shared0P.Insts.RusthammerParser pi)) (FoldSepBy.Insts.RusthammerRepeatAccumulator P S ii fi)
+    (Right.Insts.RusthammerParser (Shared0P.Insts.RusthammerParser si) (Shared0P.Insts.RusthammerParser pi)) (FoldSepBy.Insts.RusthammerGrammarRepeatRepeatAccumulator P S ii fi)
     parser.parser { first := parser.separator, second := parser.parser }
     parser.bounds.min parser input cursor context (Spec.separatedAttempt item sep) (Spec.folds initial fold)
     (fun count start => separated_attempt_spec pi si parser.parser parser.separator count input start context item sep hp hs)
-  · simp only [FoldSepBy.Insts.RusthammerRepeatAccumulator.init]
+  · simp only [FoldSepBy.Insts.RusthammerGrammarRepeatRepeatAccumulator.init]
     step with hi as ⟨state, hstate⟩
     exact Spec.folds.empty hstate
   · intro values next after value state hprefix hchild hlen hstate
-    simp only [FoldSepBy.Insts.RusthammerRepeatAccumulator.step]
+    simp only [FoldSepBy.Insts.RusthammerGrammarRepeatRepeatAccumulator.step]
     step with hf values next after value state hprefix hchild hlen hstate as ⟨following, hfollowing⟩
     exact Spec.folds.append hstate hfollowing
 

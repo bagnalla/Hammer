@@ -1,6 +1,11 @@
 import RustHammer.CompleteProofs
 import RustHammer.ControlSpec
 
+open RustHammer.Code.grammar.control
+  RustHammer.Code.grammar.numeric
+  RustHammer.Code.grammar.position
+  RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Proofs
@@ -281,13 +286,13 @@ theorem optional_spec {P α : Type} (pi : DirectParser P α) (parser : Optional 
 
 /-- Positive lookahead preserves every error and restores the cursor on success,
 regardless of the child's output type or how far it advanced. -/
-theorem and_spec {P α : Type} (pi : DirectParser P α) (parser : Code.And P)
+theorem and_spec {P α : Type} (pi : DirectParser P α) (parser : Code.grammar.control.And P)
     (input : Slice U8) (cursor : Cursor) (child : Cursor → Spec.ParseResult α → Prop)
     (hp : pi.parse_with parser.parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (child cursor) result ⦄) :
-    Code.And.Insts.RusthammerParserInputTuple.parse_with pi parser input cursor ParseContext.FINAL
+    Code.grammar.control.And.Insts.RusthammerParserInputTuple.parse_with pi parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.and child cursor) result ⦄ := by
-  rw [Code.And.Insts.RusthammerParserInputTuple.parse_with_eq]
+  rw [Code.grammar.control.And.Insts.RusthammerParserInputTuple.parse_with_eq]
   step with hp as ⟨outcome, houtcome⟩
   rcases houtcome with ⟨parsed, hparsed, rfl⟩
   cases parsed with
@@ -301,13 +306,13 @@ theorem and_spec {P α : Type} (pi : DirectParser P α) (parser : Code.And P)
 
 /-- Negative lookahead reverses match/rejection while preserving fatal errors.
 No progress assumption is needed for a child that succeeds without consuming input. -/
-theorem not_spec {P α : Type} (pi : DirectParser P α) (parser : Code.Not P)
+theorem not_spec {P α : Type} (pi : DirectParser P α) (parser : Code.grammar.control.Not P)
     (input : Slice U8) (cursor : Cursor) (child : Cursor → Spec.ParseResult α → Prop)
     (hp : pi.parse_with parser.parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (child cursor) result ⦄) :
-    Code.Not.Insts.RusthammerParserInputTuple.parse_with pi parser input cursor ParseContext.FINAL
+    Code.grammar.control.Not.Insts.RusthammerParserInputTuple.parse_with pi parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.not child cursor) result ⦄ := by
-  rw [Code.Not.Insts.RusthammerParserInputTuple.parse_with_eq]
+  rw [Code.grammar.control.Not.Insts.RusthammerParserInputTuple.parse_with_eq]
   step with hp as ⟨outcome, houtcome⟩
   rcases houtcome with ⟨parsed, hparsed, rfl⟩
   cases parsed with

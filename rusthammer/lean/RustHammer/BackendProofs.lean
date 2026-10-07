@@ -1,5 +1,10 @@
 import RustHammer.ControlProofs
 
+open RustHammer.Code.grammar.control
+  RustHammer.Code.grammar.sequence
+  RustHammer.Code.input_types
+  RustHammer.Code.parser_traits
+
 open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Backend
@@ -29,9 +34,9 @@ theorem seq_eval_spec {State P Q α β : Type} (pi : Eval P State α) (qi : Eval
     (hp : pi.eval parser.first state input cursor context ⦃ result => first state cursor result ⦄)
     (hq : ∀ next value middle, first state cursor (.Success next value, middle) →
       qi.eval parser.second middle input next context ⦃ result => second middle next result ⦄) :
-    Seq.Insts.RusthammerEvalInputBackendPair.eval pi qi parser state input cursor context
+    Seq.Insts.RusthammerParser_traitsEvalInputBackendPair.eval pi qi parser state input cursor context
       ⦃ result => sequence first second state cursor result ⦄ := by
-  unfold Seq.Insts.RusthammerEvalInputBackendPair.eval
+  unfold Seq.Insts.RusthammerParser_traitsEvalInputBackendPair.eval
   step with hp as ⟨left, middle, hleft⟩
   cases left with
   | Success next a =>
@@ -61,9 +66,9 @@ theorem choice_eval_spec {State P Q α : Type} (pi : Eval P State α) (qi : Eval
     (hp : pi.eval parser.first state input cursor context ⦃ result => first state cursor result ⦄)
     (hq : ∀ error middle, first state cursor (.Error error, middle) → Spec.recoverable error →
       qi.eval parser.second middle input cursor context ⦃ result => second middle cursor result ⦄) :
-    Choice.Insts.RusthammerEval.eval pi qi parser state input cursor context
+    Choice.Insts.RusthammerParser_traitsEval.eval pi qi parser state input cursor context
       ⦃ result => choice first second state cursor result ⦄ := by
-  unfold Choice.Insts.RusthammerEval.eval
+  unfold Choice.Insts.RusthammerParser_traitsEval.eval
   step with hp as ⟨left, middle, hleft⟩
   cases left with
   | Success next value =>

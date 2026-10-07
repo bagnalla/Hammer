@@ -1,6 +1,11 @@
 import RustHammer.RepeatSpec
 import RustHammer.RepeatDriverProofs
 
+open RustHammer.Code.grammar.bytes
+  RustHammer.Code.grammar.numeric
+  RustHammer.Code.grammar.repeat
+  RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Proofs
@@ -59,13 +64,13 @@ theorem repeat_with_spec {P α : Type} (pi : DirectParser P α) (parser : Repeat
     cases h : parser.bounds; simp_all
   rw [Repeat.Insts.RusthammerParserInputVec.parse_with_eq]
   rw [hb]
-  step with repeat_run_bounded_spec pi (Collect.Insts.RusthammerRepeatAccumulatorAVec α)
+  step with repeat_run_bounded_spec pi (Collect.Insts.RusthammerGrammarRepeatRepeatAccumulatorAVec α)
     parser.parser parser.bounds.min max () input cursor context hbounds child
     (fun values state => state.val = values) hp
-    (by simp [Collect.Insts.RusthammerRepeatAccumulatorAVec.init, spec_ok])
+    (by simp [Collect.Insts.RusthammerGrammarRepeatRepeatAccumulatorAVec.init, spec_ok])
     (by
       intro values next after value state _ _ hlen hstate
-      simp only [Collect.Insts.RusthammerRepeatAccumulatorAVec.step]
+      simp only [Collect.Insts.RusthammerGrammarRepeatRepeatAccumulatorAVec.step]
       step with alloc.vec.Vec.push_spec state value (by clear hb; scalar_tac) as ⟨appended, happended⟩
       simpa [hstate] using happended) as ⟨outcome, houtcome⟩
   exact (accumulated_collection _ outcome).mp houtcome
@@ -180,7 +185,7 @@ theorem repeat_zero {P α : Type} (pi : DirectParser P α) (parser : P)
       input cursor context ⦃ result => result = .Success cursor (alloc.vec.Vec.new α) ⦄ := by
   rw [Repeat.Insts.RusthammerParserInputVec.parse_with_eq, DirectRun.repeat_run_eq, DirectRun.repeat_run_with_eq]
   simp only [core.option.Option.is_none, Option.isNone, repeat_start, Bool.false_eq_true,
-    ↓reduceIte, bind_ok, Collect.Insts.RusthammerRepeatAccumulatorAVec.init]
+    ↓reduceIte, bind_ok, Collect.Insts.RusthammerGrammarRepeatRepeatAccumulatorAVec.init]
   unfold DirectRun.repeat_run_with_loop
   apply direct_projection_spec
   unfold repeat_run_with_loop loop
@@ -198,7 +203,7 @@ theorem repeat_first_error {P α : Type} (pi : DirectParser P α) (parser : Repe
   have hmore : 0#usize < max := by scalar_tac
   rw [Repeat.Insts.RusthammerParserInputVec.parse_with_eq, DirectRun.repeat_run_eq, DirectRun.repeat_run_with_eq]
   simp only [hmax, core.option.Option.is_none, Option.isNone, repeat_start, Bool.false_eq_true, ↓reduceIte,
-    bind_ok, Collect.Insts.RusthammerRepeatAccumulatorAVec.init]
+    bind_ok, Collect.Insts.RusthammerGrammarRepeatRepeatAccumulatorAVec.init]
   unfold DirectRun.repeat_run_with_loop
   apply direct_projection_spec
   unfold repeat_run_with_loop loop
@@ -226,7 +231,7 @@ theorem repeat_first_need_more {P α : Type} (pi : DirectParser P α) (parser : 
   have hmore : 0#usize < max := by scalar_tac
   rw [Repeat.Insts.RusthammerParserInputVec.parse_with_eq, DirectRun.repeat_run_eq, DirectRun.repeat_run_with_eq]
   simp only [hmax, core.option.Option.is_none, Option.isNone, repeat_start, Bool.false_eq_true, ↓reduceIte,
-    bind_ok, Collect.Insts.RusthammerRepeatAccumulatorAVec.init]
+    bind_ok, Collect.Insts.RusthammerGrammarRepeatRepeatAccumulatorAVec.init]
   unfold DirectRun.repeat_run_with_loop
   apply direct_projection_spec
   unfold repeat_run_with_loop loop

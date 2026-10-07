@@ -1,5 +1,9 @@
 import RustHammer.BackendProofs
 
+open RustHammer.Code.grammar.sequence
+  RustHammer.Code.input_types
+  RustHammer.Code.parser_traits
+
 open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Constructors
@@ -12,30 +16,30 @@ node specifications govern parsing; `reuse_spec` transports any such contract
 through construction, for any backend, context, output, or parsing entry point. -/
 
 @[simp] theorem seq_eq {P Q : Type} (first : P) (second : Q) :
-    Code.seq first second = ok (Code.Seq.mk first second) := rfl
+    Code.grammar.sequence.seq first second = ok (Code.grammar.sequence.Seq.mk first second) := rfl
 
 @[simp] theorem choice_eq {P Q α : Type} (pi : Grammar P α) (qi : Grammar Q α)
     (first : P) (second : Q) :
-    Code.choice pi qi first second = ok (Code.Choice.mk first second) := rfl
+    Code.grammar.control.choice pi qi first second = ok (Code.grammar.control.Choice.mk first second) := rfl
 
 @[simp] theorem optional_eq {P : Type} (parser : P) :
-    Code.optional parser = ok (Code.Optional.mk parser) := rfl
+    Code.grammar.control.optional parser = ok (Code.grammar.control.Optional.mk parser) := rfl
 
 @[simp] theorem map_eq {P F α β : Type} (pi : Grammar P α)
     (fi : core.ops.function.Fn F α β) (parser : P) (mapping : F) :
-    Code.map pi fi parser mapping = ok (Code.Map.mk parser mapping) := rfl
+    Code.grammar.transform.map pi fi parser mapping = ok (Code.grammar.transform.Map.mk parser mapping) := rfl
 
 @[simp] theorem try_map_eq {P F α β ε : Type} (pi : Grammar P α)
     (fi : core.ops.function.Fn F α (core.result.Result β ε)) (parser : P) (mapping : F) :
-    Code.try_map pi fi parser mapping = ok (Code.TryMap.mk parser mapping) := rfl
+    Code.grammar.transform.try_map pi fi parser mapping = ok (Code.grammar.transform.TryMap.mk parser mapping) := rfl
 
 @[simp] theorem verify_eq {P F α : Type} (pi : Grammar P α)
     (fi : core.ops.function.Fn F α Bool) (parser : P) (predicate : F) :
-    Code.verify pi fi parser predicate = ok (Code.Verify.mk parser predicate) := rfl
+    Code.grammar.transform.verify pi fi parser predicate = ok (Code.grammar.transform.Verify.mk parser predicate) := rfl
 
 @[simp] theorem bind_eq {P F Q α β : Type} (pi : Grammar P α)
     (fi : core.ops.function.Fn F α Q) (qi : Grammar Q β) (parser : P) (factory : F) :
-    Code.bind pi fi qi parser factory = ok (Code.Bind.mk parser factory) := rfl
+    Code.grammar.sequence.bind pi fi qi parser factory = ok (Code.grammar.sequence.Bind.mk parser factory) := rfl
 
 /-- Every property of evaluating a node also holds after constructing that node.
 The continuation may invoke Eval with mutable backend state, either default
@@ -54,10 +58,10 @@ theorem seq_eval_spec {State P Q α β : Type} (pi : Eval P State α) (qi : Eval
     (hp : pi.eval first state input cursor ctx ⦃ result => left state cursor result ⦄)
     (hq : ∀ next value middle, left state cursor (.Success next value, middle) →
       qi.eval second middle input next ctx ⦃ result => right middle next result ⦄) :
-    (do let parser ← Code.seq first second
-        Seq.Insts.RusthammerEvalInputBackendPair.eval pi qi parser state input cursor ctx)
+    (do let parser ← Code.grammar.sequence.seq first second
+        Seq.Insts.RusthammerParser_traitsEvalInputBackendPair.eval pi qi parser state input cursor ctx)
       ⦃ result => Backend.sequence left right state cursor result ⦄ := by
-  apply reuse_spec (Code.seq first second) (Code.Seq.mk first second) (seq_eq first second)
+  apply reuse_spec (Code.grammar.sequence.seq first second) (Code.grammar.sequence.Seq.mk first second) (seq_eq first second)
   exact Backend.seq_eval_spec pi qi ⟨first, second⟩ state input cursor ctx left right hp hq
 
 end RustHammer.Constructors

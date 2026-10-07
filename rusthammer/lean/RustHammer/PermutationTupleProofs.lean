@@ -4,7 +4,7 @@ import RustHammer.PermutationProofs
 open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Permutation
-open Code
+open Code Code.input_types Code.parser_traits Code.grammar
 
 /- Storage equations for every public tuple arity. They establish independent
 slots, exact selected-child dispatch, and output assembly in declaration order.
@@ -12,20 +12,20 @@ The mathematical search theorem uses these operations abstractly. -/
 
 section Tuple1
 variable {P0 O0 : Type}
-local notation "layout" => TupleP.Insts.RusthammerPermutationLayoutInputTupleSlotTupleClause0_Output
-local notation "entries" => TupleP.Insts.RusthammerPermutationItemsInputBTupleSlotTupleClause0_Clause0_Output
+local notation "layout" => TupleP.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotTupleClause0_Output
+local notation "entries" => TupleP.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotTupleClause0_Clause0_Output
 
 theorem tuple1_initial (g0 : Grammar P0 O0) (parsers : (P0)) :
     (layout g0).count parsers = ok 1#usize ∧
     (layout g0).empty parsers = ok (⟨false, none⟩ : permutation.Slot O0) := by
-  simp [TupleP.Insts.RusthammerPermutationLayoutInputTupleSlotTupleClause0_Output.count, TupleP.Insts.RusthammerPermutationLayoutInputTupleSlotTupleClause0_Output.empty, permutation.empty_slot]
+  simp [TupleP.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotTupleClause0_Output.count, TupleP.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotTupleClause0_Output.empty, permutation.empty_slot]
 
 theorem tuple1_matched (g0 : Grammar P0 O0) (parsers : (P0)) (s0 : permutation.Slot O0)
     (index : Usize) :
     (layout g0).matched parsers s0 index = ok (match index.val with
       | 0 => s0.matched
       | _ => false) := by
-  simp only [TupleP.Insts.RusthammerPermutationLayoutInputTupleSlotTupleClause0_Output.matched]
+  simp only [TupleP.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotTupleClause0_Output.matched]
   split <;> simp_all
 
 theorem tuple1_clear (g0 : Grammar P0 O0) (parsers : (P0)) (s0 : permutation.Slot O0)
@@ -33,7 +33,7 @@ theorem tuple1_clear (g0 : Grammar P0 O0) (parsers : (P0)) (s0 : permutation.Slo
     (layout g0).clear parsers s0 index = ok (match index.val with
       | 0 => ⟨false, none⟩
       | _ => s0) := by
-  simp only [TupleP.Insts.RusthammerPermutationLayoutInputTupleSlotTupleClause0_Output.clear]
+  simp only [TupleP.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotTupleClause0_Output.clear]
   split <;> simp_all [permutation.empty_slot]
 
 def tuple1Finish (s0 : permutation.Slot O0) : core.result.Result (O0) ParseError :=
@@ -44,7 +44,7 @@ def tuple1Finish (s0 : permutation.Slot O0) : core.result.Result (O0) ParseError
 
 theorem tuple1_finish (g0 : Grammar P0 O0) (parsers : (P0)) (s0 : permutation.Slot O0) :
     (layout g0).finish parsers s0 = ok (tuple1Finish s0) := by
-  simp only [TupleP.Insts.RusthammerPermutationLayoutInputTupleSlotTupleClause0_Output.finish, permutation.slot_value, tuple1Finish]
+  simp only [TupleP.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotTupleClause0_Output.finish, permutation.slot_value, tuple1Finish]
   repeat' (split <;> simp_all)
 
 theorem tuple1_output_order (g0 : Grammar P0 O0) (parsers : (P0))
@@ -64,20 +64,20 @@ theorem tuple1_dispatch {B : Type}
         | 0 => ((r0.1.1, r0.1.2), r0.2)
         | _ => ((.Error .Mismatch, s0), backend)) := by
   rcases r0 with ⟨⟨a0, slot0⟩, b0⟩
-  simp only [TupleP.Insts.RusthammerPermutationItemsInputBTupleSlotTupleClause0_Clause0_Output.attempt]
+  simp only [TupleP.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotTupleClause0_Clause0_Output.attempt]
   split <;> simp_all
 
 end Tuple1
 
 section Tuple2
 variable {P0 P1 O0 O1 : Type}
-local notation "layout" => Pair.Insts.RusthammerPermutationLayoutInputPairSlotSlotPair
-local notation "entries" => Pair.Insts.RusthammerPermutationItemsInputBPairSlotSlotPair
+local notation "layout" => Pair.Insts.RusthammerGrammarPermutationLayoutInputPairSlotSlotPair
+local notation "entries" => Pair.Insts.RusthammerGrammarPermutationItemsInputBPairSlotSlotPair
 
 theorem tuple2_initial (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (parsers : (P0 × P1)) :
     (layout g0 g1).count parsers = ok 2#usize ∧
     (layout g0 g1).empty parsers = ok ((⟨false, none⟩ : permutation.Slot O0), (⟨false, none⟩ : permutation.Slot O1)) := by
-  simp [Pair.Insts.RusthammerPermutationLayoutInputPairSlotSlotPair.count, Pair.Insts.RusthammerPermutationLayoutInputPairSlotSlotPair.empty, permutation.empty_slot]
+  simp [Pair.Insts.RusthammerGrammarPermutationLayoutInputPairSlotSlotPair.count, Pair.Insts.RusthammerGrammarPermutationLayoutInputPairSlotSlotPair.empty, permutation.empty_slot]
 
 theorem tuple2_matched (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (parsers : (P0 × P1)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1)
     (index : Usize) :
@@ -85,7 +85,7 @@ theorem tuple2_matched (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (parsers : (P0 
       | 0 => s0.matched
       | 1 => s1.matched
       | _ => false) := by
-  simp only [Pair.Insts.RusthammerPermutationLayoutInputPairSlotSlotPair.matched]
+  simp only [Pair.Insts.RusthammerGrammarPermutationLayoutInputPairSlotSlotPair.matched]
   split <;> simp_all
 
 theorem tuple2_clear (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (parsers : (P0 × P1)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1)
@@ -94,7 +94,7 @@ theorem tuple2_clear (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (parsers : (P0 ×
       | 0 => (⟨false, none⟩, s1)
       | 1 => (s0, ⟨false, none⟩)
       | _ => (s0, s1)) := by
-  simp only [Pair.Insts.RusthammerPermutationLayoutInputPairSlotSlotPair.clear]
+  simp only [Pair.Insts.RusthammerGrammarPermutationLayoutInputPairSlotSlotPair.clear]
   split <;> simp_all [permutation.empty_slot]
 
 def tuple2Finish (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) : core.result.Result (O0 × O1) ParseError :=
@@ -108,7 +108,7 @@ def tuple2Finish (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) : core.re
 
 theorem tuple2_finish (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (parsers : (P0 × P1)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) :
     (layout g0 g1).finish parsers (s0, s1) = ok (tuple2Finish s0 s1) := by
-  simp only [Pair.Insts.RusthammerPermutationLayoutInputPairSlotSlotPair.finish, permutation.slot_value, tuple2Finish]
+  simp only [Pair.Insts.RusthammerGrammarPermutationLayoutInputPairSlotSlotPair.finish, permutation.slot_value, tuple2Finish]
   repeat' (split <;> simp_all)
 
 theorem tuple2_output_order (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (parsers : (P0 × P1))
@@ -131,20 +131,20 @@ theorem tuple2_dispatch {B : Type}
         | _ => ((.Error .Mismatch, (s0, s1)), backend)) := by
   rcases r0 with ⟨⟨a0, slot0⟩, b0⟩
   rcases r1 with ⟨⟨a1, slot1⟩, b1⟩
-  simp only [Pair.Insts.RusthammerPermutationItemsInputBPairSlotSlotPair.attempt]
+  simp only [Pair.Insts.RusthammerGrammarPermutationItemsInputBPairSlotSlotPair.attempt]
   split <;> simp_all
 
 end Tuple2
 
 section Tuple3
 variable {P0 P1 P2 O0 O1 O2 : Type}
-local notation "layout" => TuplePQR.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output
-local notation "entries" => TuplePQR.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_Output
+local notation "layout" => TuplePQR.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output
+local notation "entries" => TuplePQR.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_Output
 
 theorem tuple3_initial (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (parsers : (P0 × P1 × P2)) :
     (layout g0 g1 g2).count parsers = ok 3#usize ∧
     (layout g0 g1 g2).empty parsers = ok ((⟨false, none⟩ : permutation.Slot O0), (⟨false, none⟩ : permutation.Slot O1), (⟨false, none⟩ : permutation.Slot O2)) := by
-  simp [TuplePQR.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.count, TuplePQR.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.empty, permutation.empty_slot]
+  simp [TuplePQR.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.count, TuplePQR.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.empty, permutation.empty_slot]
 
 theorem tuple3_matched (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (parsers : (P0 × P1 × P2)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2)
     (index : Usize) :
@@ -153,7 +153,7 @@ theorem tuple3_matched (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P
       | 1 => s1.matched
       | 2 => s2.matched
       | _ => false) := by
-  simp only [TuplePQR.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.matched]
+  simp only [TuplePQR.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.matched]
   split <;> simp_all
 
 theorem tuple3_clear (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (parsers : (P0 × P1 × P2)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2)
@@ -163,7 +163,7 @@ theorem tuple3_clear (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 
       | 1 => (s0, ⟨false, none⟩, s2)
       | 2 => (s0, s1, ⟨false, none⟩)
       | _ => (s0, s1, s2)) := by
-  simp only [TuplePQR.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.clear]
+  simp only [TuplePQR.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.clear]
   split <;> simp_all [permutation.empty_slot]
 
 def tuple3Finish (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) : core.result.Result (O0 × O1 × O2) ParseError :=
@@ -180,7 +180,7 @@ def tuple3Finish (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : per
 
 theorem tuple3_finish (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (parsers : (P0 × P1 × P2)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) :
     (layout g0 g1 g2).finish parsers (s0, s1, s2) = ok (tuple3Finish s0 s1 s2) := by
-  simp only [TuplePQR.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.finish, permutation.slot_value, tuple3Finish]
+  simp only [TuplePQR.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.finish, permutation.slot_value, tuple3Finish]
   repeat' (split <;> simp_all)
 
 theorem tuple3_output_order (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (parsers : (P0 × P1 × P2))
@@ -206,20 +206,20 @@ theorem tuple3_dispatch {B : Type}
   rcases r0 with ⟨⟨a0, slot0⟩, b0⟩
   rcases r1 with ⟨⟨a1, slot1⟩, b1⟩
   rcases r2 with ⟨⟨a2, slot2⟩, b2⟩
-  simp only [TuplePQR.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_Output.attempt]
+  simp only [TuplePQR.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_Output.attempt]
   split <;> simp_all
 
 end Tuple3
 
 section Tuple4
 variable {P0 P1 P2 P3 O0 O1 O2 O3 : Type}
-local notation "layout" => TuplePQRS.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output
-local notation "entries" => TuplePQRS.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_Output
+local notation "layout" => TuplePQRS.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output
+local notation "entries" => TuplePQRS.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_Output
 
 theorem tuple4_initial (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (parsers : (P0 × P1 × P2 × P3)) :
     (layout g0 g1 g2 g3).count parsers = ok 4#usize ∧
     (layout g0 g1 g2 g3).empty parsers = ok ((⟨false, none⟩ : permutation.Slot O0), (⟨false, none⟩ : permutation.Slot O1), (⟨false, none⟩ : permutation.Slot O2), (⟨false, none⟩ : permutation.Slot O3)) := by
-  simp [TuplePQRS.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.count, TuplePQRS.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.empty, permutation.empty_slot]
+  simp [TuplePQRS.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.count, TuplePQRS.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.empty, permutation.empty_slot]
 
 theorem tuple4_matched (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (parsers : (P0 × P1 × P2 × P3)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3)
     (index : Usize) :
@@ -229,7 +229,7 @@ theorem tuple4_matched (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P
       | 2 => s2.matched
       | 3 => s3.matched
       | _ => false) := by
-  simp only [TuplePQRS.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.matched]
+  simp only [TuplePQRS.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.matched]
   split <;> simp_all
 
 theorem tuple4_clear (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (parsers : (P0 × P1 × P2 × P3)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3)
@@ -240,7 +240,7 @@ theorem tuple4_clear (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 
       | 2 => (s0, s1, ⟨false, none⟩, s3)
       | 3 => (s0, s1, s2, ⟨false, none⟩)
       | _ => (s0, s1, s2, s3)) := by
-  simp only [TuplePQRS.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.clear]
+  simp only [TuplePQRS.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.clear]
   split <;> simp_all [permutation.empty_slot]
 
 def tuple4Finish (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) : core.result.Result (O0 × O1 × O2 × O3) ParseError :=
@@ -260,7 +260,7 @@ def tuple4Finish (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : per
 
 theorem tuple4_finish (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (parsers : (P0 × P1 × P2 × P3)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) :
     (layout g0 g1 g2 g3).finish parsers (s0, s1, s2, s3) = ok (tuple4Finish s0 s1 s2 s3) := by
-  simp only [TuplePQRS.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.finish, permutation.slot_value, tuple4Finish]
+  simp only [TuplePQRS.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.finish, permutation.slot_value, tuple4Finish]
   repeat' (split <;> simp_all)
 
 theorem tuple4_output_order (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (parsers : (P0 × P1 × P2 × P3))
@@ -289,20 +289,20 @@ theorem tuple4_dispatch {B : Type}
   rcases r1 with ⟨⟨a1, slot1⟩, b1⟩
   rcases r2 with ⟨⟨a2, slot2⟩, b2⟩
   rcases r3 with ⟨⟨a3, slot3⟩, b3⟩
-  simp only [TuplePQRS.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_Output.attempt]
+  simp only [TuplePQRS.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_Output.attempt]
   split <;> simp_all
 
 end Tuple4
 
 section Tuple5
 variable {P0 P1 P2 P3 P4 O0 O1 O2 O3 O4 : Type}
-local notation "layout" => TuplePQRST.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output
-local notation "entries" => TuplePQRST.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_Output
+local notation "layout" => TuplePQRST.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output
+local notation "entries" => TuplePQRST.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_Output
 
 theorem tuple5_initial (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (parsers : (P0 × P1 × P2 × P3 × P4)) :
     (layout g0 g1 g2 g3 g4).count parsers = ok 5#usize ∧
     (layout g0 g1 g2 g3 g4).empty parsers = ok ((⟨false, none⟩ : permutation.Slot O0), (⟨false, none⟩ : permutation.Slot O1), (⟨false, none⟩ : permutation.Slot O2), (⟨false, none⟩ : permutation.Slot O3), (⟨false, none⟩ : permutation.Slot O4)) := by
-  simp [TuplePQRST.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.count, TuplePQRST.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.empty, permutation.empty_slot]
+  simp [TuplePQRST.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.count, TuplePQRST.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.empty, permutation.empty_slot]
 
 theorem tuple5_matched (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (parsers : (P0 × P1 × P2 × P3 × P4)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4)
     (index : Usize) :
@@ -313,7 +313,7 @@ theorem tuple5_matched (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P
       | 3 => s3.matched
       | 4 => s4.matched
       | _ => false) := by
-  simp only [TuplePQRST.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.matched]
+  simp only [TuplePQRST.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.matched]
   split <;> simp_all
 
 theorem tuple5_clear (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (parsers : (P0 × P1 × P2 × P3 × P4)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4)
@@ -325,7 +325,7 @@ theorem tuple5_clear (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 
       | 3 => (s0, s1, s2, ⟨false, none⟩, s4)
       | 4 => (s0, s1, s2, s3, ⟨false, none⟩)
       | _ => (s0, s1, s2, s3, s4)) := by
-  simp only [TuplePQRST.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.clear]
+  simp only [TuplePQRST.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.clear]
   split <;> simp_all [permutation.empty_slot]
 
 def tuple5Finish (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) : core.result.Result (O0 × O1 × O2 × O3 × O4) ParseError :=
@@ -348,7 +348,7 @@ def tuple5Finish (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : per
 
 theorem tuple5_finish (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (parsers : (P0 × P1 × P2 × P3 × P4)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) :
     (layout g0 g1 g2 g3 g4).finish parsers (s0, s1, s2, s3, s4) = ok (tuple5Finish s0 s1 s2 s3 s4) := by
-  simp only [TuplePQRST.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.finish, permutation.slot_value, tuple5Finish]
+  simp only [TuplePQRST.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.finish, permutation.slot_value, tuple5Finish]
   repeat' (split <;> simp_all)
 
 theorem tuple5_output_order (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (parsers : (P0 × P1 × P2 × P3 × P4))
@@ -380,20 +380,20 @@ theorem tuple5_dispatch {B : Type}
   rcases r2 with ⟨⟨a2, slot2⟩, b2⟩
   rcases r3 with ⟨⟨a3, slot3⟩, b3⟩
   rcases r4 with ⟨⟨a4, slot4⟩, b4⟩
-  simp only [TuplePQRST.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_Output.attempt]
+  simp only [TuplePQRST.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_Output.attempt]
   split <;> simp_all
 
 end Tuple5
 
 section Tuple6
 variable {P0 P1 P2 P3 P4 P5 O0 O1 O2 O3 O4 O5 : Type}
-local notation "layout" => TuplePQRSTU.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output
-local notation "entries" => TuplePQRSTU.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_Output
+local notation "layout" => TuplePQRSTU.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output
+local notation "entries" => TuplePQRSTU.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_Output
 
 theorem tuple6_initial (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (parsers : (P0 × P1 × P2 × P3 × P4 × P5)) :
     (layout g0 g1 g2 g3 g4 g5).count parsers = ok 6#usize ∧
     (layout g0 g1 g2 g3 g4 g5).empty parsers = ok ((⟨false, none⟩ : permutation.Slot O0), (⟨false, none⟩ : permutation.Slot O1), (⟨false, none⟩ : permutation.Slot O2), (⟨false, none⟩ : permutation.Slot O3), (⟨false, none⟩ : permutation.Slot O4), (⟨false, none⟩ : permutation.Slot O5)) := by
-  simp [TuplePQRSTU.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.count, TuplePQRSTU.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.empty, permutation.empty_slot]
+  simp [TuplePQRSTU.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.count, TuplePQRSTU.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.empty, permutation.empty_slot]
 
 theorem tuple6_matched (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (parsers : (P0 × P1 × P2 × P3 × P4 × P5)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5)
     (index : Usize) :
@@ -405,7 +405,7 @@ theorem tuple6_matched (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P
       | 4 => s4.matched
       | 5 => s5.matched
       | _ => false) := by
-  simp only [TuplePQRSTU.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.matched]
+  simp only [TuplePQRSTU.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.matched]
   split <;> simp_all
 
 theorem tuple6_clear (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (parsers : (P0 × P1 × P2 × P3 × P4 × P5)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5)
@@ -418,7 +418,7 @@ theorem tuple6_clear (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 
       | 4 => (s0, s1, s2, s3, ⟨false, none⟩, s5)
       | 5 => (s0, s1, s2, s3, s4, ⟨false, none⟩)
       | _ => (s0, s1, s2, s3, s4, s5)) := by
-  simp only [TuplePQRSTU.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.clear]
+  simp only [TuplePQRSTU.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.clear]
   split <;> simp_all [permutation.empty_slot]
 
 def tuple6Finish (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) : core.result.Result (O0 × O1 × O2 × O3 × O4 × O5) ParseError :=
@@ -444,7 +444,7 @@ def tuple6Finish (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : per
 
 theorem tuple6_finish (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (parsers : (P0 × P1 × P2 × P3 × P4 × P5)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) :
     (layout g0 g1 g2 g3 g4 g5).finish parsers (s0, s1, s2, s3, s4, s5) = ok (tuple6Finish s0 s1 s2 s3 s4 s5) := by
-  simp only [TuplePQRSTU.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.finish, permutation.slot_value, tuple6Finish]
+  simp only [TuplePQRSTU.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.finish, permutation.slot_value, tuple6Finish]
   repeat' (split <;> simp_all)
 
 theorem tuple6_output_order (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (parsers : (P0 × P1 × P2 × P3 × P4 × P5))
@@ -479,20 +479,20 @@ theorem tuple6_dispatch {B : Type}
   rcases r3 with ⟨⟨a3, slot3⟩, b3⟩
   rcases r4 with ⟨⟨a4, slot4⟩, b4⟩
   rcases r5 with ⟨⟨a5, slot5⟩, b5⟩
-  simp only [TuplePQRSTU.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_Output.attempt]
+  simp only [TuplePQRSTU.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_Output.attempt]
   split <;> simp_all
 
 end Tuple6
 
 section Tuple7
 variable {P0 P1 P2 P3 P4 P5 P6 O0 O1 O2 O3 O4 O5 O6 : Type}
-local notation "layout" => TuplePQRSTUV.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output
-local notation "entries" => TuplePQRSTUV.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_Output
+local notation "layout" => TuplePQRSTUV.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output
+local notation "entries" => TuplePQRSTUV.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_Output
 
 theorem tuple7_initial (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6)) :
     (layout g0 g1 g2 g3 g4 g5 g6).count parsers = ok 7#usize ∧
     (layout g0 g1 g2 g3 g4 g5 g6).empty parsers = ok ((⟨false, none⟩ : permutation.Slot O0), (⟨false, none⟩ : permutation.Slot O1), (⟨false, none⟩ : permutation.Slot O2), (⟨false, none⟩ : permutation.Slot O3), (⟨false, none⟩ : permutation.Slot O4), (⟨false, none⟩ : permutation.Slot O5), (⟨false, none⟩ : permutation.Slot O6)) := by
-  simp [TuplePQRSTUV.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.count, TuplePQRSTUV.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.empty, permutation.empty_slot]
+  simp [TuplePQRSTUV.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.count, TuplePQRSTUV.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.empty, permutation.empty_slot]
 
 theorem tuple7_matched (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) (s6 : permutation.Slot O6)
     (index : Usize) :
@@ -505,7 +505,7 @@ theorem tuple7_matched (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P
       | 5 => s5.matched
       | 6 => s6.matched
       | _ => false) := by
-  simp only [TuplePQRSTUV.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.matched]
+  simp only [TuplePQRSTUV.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.matched]
   split <;> simp_all
 
 theorem tuple7_clear (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) (s6 : permutation.Slot O6)
@@ -519,7 +519,7 @@ theorem tuple7_clear (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 
       | 5 => (s0, s1, s2, s3, s4, ⟨false, none⟩, s6)
       | 6 => (s0, s1, s2, s3, s4, s5, ⟨false, none⟩)
       | _ => (s0, s1, s2, s3, s4, s5, s6)) := by
-  simp only [TuplePQRSTUV.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.clear]
+  simp only [TuplePQRSTUV.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.clear]
   split <;> simp_all [permutation.empty_slot]
 
 def tuple7Finish (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) (s6 : permutation.Slot O6) : core.result.Result (O0 × O1 × O2 × O3 × O4 × O5 × O6) ParseError :=
@@ -548,7 +548,7 @@ def tuple7Finish (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : per
 
 theorem tuple7_finish (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) (s6 : permutation.Slot O6) :
     (layout g0 g1 g2 g3 g4 g5 g6).finish parsers (s0, s1, s2, s3, s4, s5, s6) = ok (tuple7Finish s0 s1 s2 s3 s4 s5 s6) := by
-  simp only [TuplePQRSTUV.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.finish, permutation.slot_value, tuple7Finish]
+  simp only [TuplePQRSTUV.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.finish, permutation.slot_value, tuple7Finish]
   repeat' (split <;> simp_all)
 
 theorem tuple7_output_order (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6))
@@ -586,20 +586,20 @@ theorem tuple7_dispatch {B : Type}
   rcases r4 with ⟨⟨a4, slot4⟩, b4⟩
   rcases r5 with ⟨⟨a5, slot5⟩, b5⟩
   rcases r6 with ⟨⟨a6, slot6⟩, b6⟩
-  simp only [TuplePQRSTUV.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_Output.attempt]
+  simp only [TuplePQRSTUV.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_Output.attempt]
   split <;> simp_all
 
 end Tuple7
 
 section Tuple8
 variable {P0 P1 P2 P3 P4 P5 P6 P7 O0 O1 O2 O3 O4 O5 O6 O7 : Type}
-local notation "layout" => TuplePQRSTUVW.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output
-local notation "entries" => TuplePQRSTUVW.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_Output
+local notation "layout" => TuplePQRSTUVW.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output
+local notation "entries" => TuplePQRSTUVW.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_Output
 
 theorem tuple8_initial (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (g7 : Grammar P7 O7) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6 × P7)) :
     (layout g0 g1 g2 g3 g4 g5 g6 g7).count parsers = ok 8#usize ∧
     (layout g0 g1 g2 g3 g4 g5 g6 g7).empty parsers = ok ((⟨false, none⟩ : permutation.Slot O0), (⟨false, none⟩ : permutation.Slot O1), (⟨false, none⟩ : permutation.Slot O2), (⟨false, none⟩ : permutation.Slot O3), (⟨false, none⟩ : permutation.Slot O4), (⟨false, none⟩ : permutation.Slot O5), (⟨false, none⟩ : permutation.Slot O6), (⟨false, none⟩ : permutation.Slot O7)) := by
-  simp [TuplePQRSTUVW.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.count, TuplePQRSTUVW.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.empty, permutation.empty_slot]
+  simp [TuplePQRSTUVW.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.count, TuplePQRSTUVW.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.empty, permutation.empty_slot]
 
 theorem tuple8_matched (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (g7 : Grammar P7 O7) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6 × P7)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) (s6 : permutation.Slot O6) (s7 : permutation.Slot O7)
     (index : Usize) :
@@ -613,7 +613,7 @@ theorem tuple8_matched (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P
       | 6 => s6.matched
       | 7 => s7.matched
       | _ => false) := by
-  simp only [TuplePQRSTUVW.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.matched]
+  simp only [TuplePQRSTUVW.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.matched]
   split <;> simp_all
 
 theorem tuple8_clear (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (g7 : Grammar P7 O7) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6 × P7)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) (s6 : permutation.Slot O6) (s7 : permutation.Slot O7)
@@ -628,7 +628,7 @@ theorem tuple8_clear (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 
       | 6 => (s0, s1, s2, s3, s4, s5, ⟨false, none⟩, s7)
       | 7 => (s0, s1, s2, s3, s4, s5, s6, ⟨false, none⟩)
       | _ => (s0, s1, s2, s3, s4, s5, s6, s7)) := by
-  simp only [TuplePQRSTUVW.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.clear]
+  simp only [TuplePQRSTUVW.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.clear]
   split <;> simp_all [permutation.empty_slot]
 
 def tuple8Finish (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) (s6 : permutation.Slot O6) (s7 : permutation.Slot O7) : core.result.Result (O0 × O1 × O2 × O3 × O4 × O5 × O6 × O7) ParseError :=
@@ -660,7 +660,7 @@ def tuple8Finish (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : per
 
 theorem tuple8_finish (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (g7 : Grammar P7 O7) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6 × P7)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) (s6 : permutation.Slot O6) (s7 : permutation.Slot O7) :
     (layout g0 g1 g2 g3 g4 g5 g6 g7).finish parsers (s0, s1, s2, s3, s4, s5, s6, s7) = ok (tuple8Finish s0 s1 s2 s3 s4 s5 s6 s7) := by
-  simp only [TuplePQRSTUVW.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.finish, permutation.slot_value, tuple8Finish]
+  simp only [TuplePQRSTUVW.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.finish, permutation.slot_value, tuple8Finish]
   repeat' (split <;> simp_all)
 
 theorem tuple8_output_order (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (g7 : Grammar P7 O7) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6 × P7))
@@ -701,20 +701,20 @@ theorem tuple8_dispatch {B : Type}
   rcases r5 with ⟨⟨a5, slot5⟩, b5⟩
   rcases r6 with ⟨⟨a6, slot6⟩, b6⟩
   rcases r7 with ⟨⟨a7, slot7⟩, b7⟩
-  simp only [TuplePQRSTUVW.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_Output.attempt]
+  simp only [TuplePQRSTUVW.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_Output.attempt]
   split <;> simp_all
 
 end Tuple8
 
 section Tuple9
 variable {P0 P1 P2 P3 P4 P5 P6 P7 P8 O0 O1 O2 O3 O4 O5 O6 O7 O8 : Type}
-local notation "layout" => TuplePQRSTUVWX.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output
-local notation "entries" => TuplePQRSTUVWX.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_Output
+local notation "layout" => TuplePQRSTUVWX.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output
+local notation "entries" => TuplePQRSTUVWX.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_Output
 
 theorem tuple9_initial (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (g7 : Grammar P7 O7) (g8 : Grammar P8 O8) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6 × P7 × P8)) :
     (layout g0 g1 g2 g3 g4 g5 g6 g7 g8).count parsers = ok 9#usize ∧
     (layout g0 g1 g2 g3 g4 g5 g6 g7 g8).empty parsers = ok ((⟨false, none⟩ : permutation.Slot O0), (⟨false, none⟩ : permutation.Slot O1), (⟨false, none⟩ : permutation.Slot O2), (⟨false, none⟩ : permutation.Slot O3), (⟨false, none⟩ : permutation.Slot O4), (⟨false, none⟩ : permutation.Slot O5), (⟨false, none⟩ : permutation.Slot O6), (⟨false, none⟩ : permutation.Slot O7), (⟨false, none⟩ : permutation.Slot O8)) := by
-  simp [TuplePQRSTUVWX.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.count, TuplePQRSTUVWX.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.empty, permutation.empty_slot]
+  simp [TuplePQRSTUVWX.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.count, TuplePQRSTUVWX.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.empty, permutation.empty_slot]
 
 theorem tuple9_matched (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (g7 : Grammar P7 O7) (g8 : Grammar P8 O8) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6 × P7 × P8)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) (s6 : permutation.Slot O6) (s7 : permutation.Slot O7) (s8 : permutation.Slot O8)
     (index : Usize) :
@@ -729,7 +729,7 @@ theorem tuple9_matched (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P
       | 7 => s7.matched
       | 8 => s8.matched
       | _ => false) := by
-  simp only [TuplePQRSTUVWX.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.matched]
+  simp only [TuplePQRSTUVWX.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.matched]
   split <;> simp_all
 
 theorem tuple9_clear (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (g7 : Grammar P7 O7) (g8 : Grammar P8 O8) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6 × P7 × P8)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) (s6 : permutation.Slot O6) (s7 : permutation.Slot O7) (s8 : permutation.Slot O8)
@@ -745,7 +745,7 @@ theorem tuple9_clear (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 
       | 7 => (s0, s1, s2, s3, s4, s5, s6, ⟨false, none⟩, s8)
       | 8 => (s0, s1, s2, s3, s4, s5, s6, s7, ⟨false, none⟩)
       | _ => (s0, s1, s2, s3, s4, s5, s6, s7, s8)) := by
-  simp only [TuplePQRSTUVWX.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.clear]
+  simp only [TuplePQRSTUVWX.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.clear]
   split <;> simp_all [permutation.empty_slot]
 
 def tuple9Finish (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) (s6 : permutation.Slot O6) (s7 : permutation.Slot O7) (s8 : permutation.Slot O8) : core.result.Result (O0 × O1 × O2 × O3 × O4 × O5 × O6 × O7 × O8) ParseError :=
@@ -780,7 +780,7 @@ def tuple9Finish (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : per
 
 theorem tuple9_finish (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (g7 : Grammar P7 O7) (g8 : Grammar P8 O8) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6 × P7 × P8)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) (s6 : permutation.Slot O6) (s7 : permutation.Slot O7) (s8 : permutation.Slot O8) :
     (layout g0 g1 g2 g3 g4 g5 g6 g7 g8).finish parsers (s0, s1, s2, s3, s4, s5, s6, s7, s8) = ok (tuple9Finish s0 s1 s2 s3 s4 s5 s6 s7 s8) := by
-  simp only [TuplePQRSTUVWX.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.finish, permutation.slot_value, tuple9Finish]
+  simp only [TuplePQRSTUVWX.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.finish, permutation.slot_value, tuple9Finish]
   repeat' (split <;> simp_all)
 
 theorem tuple9_output_order (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (g7 : Grammar P7 O7) (g8 : Grammar P8 O8) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6 × P7 × P8))
@@ -824,20 +824,20 @@ theorem tuple9_dispatch {B : Type}
   rcases r6 with ⟨⟨a6, slot6⟩, b6⟩
   rcases r7 with ⟨⟨a7, slot7⟩, b7⟩
   rcases r8 with ⟨⟨a8, slot8⟩, b8⟩
-  simp only [TuplePQRSTUVWX.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_Output.attempt]
+  simp only [TuplePQRSTUVWX.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_Output.attempt]
   split <;> simp_all
 
 end Tuple9
 
 section Tuple10
 variable {P0 P1 P2 P3 P4 P5 P6 P7 P8 P9 O0 O1 O2 O3 O4 O5 O6 O7 O8 O9 : Type}
-local notation "layout" => TuplePQRSTUVWXY.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output
-local notation "entries" => TuplePQRSTUVWXY.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_Output
+local notation "layout" => TuplePQRSTUVWXY.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output
+local notation "entries" => TuplePQRSTUVWXY.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_Output
 
 theorem tuple10_initial (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (g7 : Grammar P7 O7) (g8 : Grammar P8 O8) (g9 : Grammar P9 O9) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6 × P7 × P8 × P9)) :
     (layout g0 g1 g2 g3 g4 g5 g6 g7 g8 g9).count parsers = ok 10#usize ∧
     (layout g0 g1 g2 g3 g4 g5 g6 g7 g8 g9).empty parsers = ok ((⟨false, none⟩ : permutation.Slot O0), (⟨false, none⟩ : permutation.Slot O1), (⟨false, none⟩ : permutation.Slot O2), (⟨false, none⟩ : permutation.Slot O3), (⟨false, none⟩ : permutation.Slot O4), (⟨false, none⟩ : permutation.Slot O5), (⟨false, none⟩ : permutation.Slot O6), (⟨false, none⟩ : permutation.Slot O7), (⟨false, none⟩ : permutation.Slot O8), (⟨false, none⟩ : permutation.Slot O9)) := by
-  simp [TuplePQRSTUVWXY.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.count, TuplePQRSTUVWXY.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.empty, permutation.empty_slot]
+  simp [TuplePQRSTUVWXY.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.count, TuplePQRSTUVWXY.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.empty, permutation.empty_slot]
 
 theorem tuple10_matched (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (g7 : Grammar P7 O7) (g8 : Grammar P8 O8) (g9 : Grammar P9 O9) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6 × P7 × P8 × P9)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) (s6 : permutation.Slot O6) (s7 : permutation.Slot O7) (s8 : permutation.Slot O8) (s9 : permutation.Slot O9)
     (index : Usize) :
@@ -853,7 +853,7 @@ theorem tuple10_matched (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar 
       | 8 => s8.matched
       | 9 => s9.matched
       | _ => false) := by
-  simp only [TuplePQRSTUVWXY.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.matched]
+  simp only [TuplePQRSTUVWXY.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.matched]
   split <;> simp_all
 
 theorem tuple10_clear (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (g7 : Grammar P7 O7) (g8 : Grammar P8 O8) (g9 : Grammar P9 O9) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6 × P7 × P8 × P9)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) (s6 : permutation.Slot O6) (s7 : permutation.Slot O7) (s8 : permutation.Slot O8) (s9 : permutation.Slot O9)
@@ -870,7 +870,7 @@ theorem tuple10_clear (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2
       | 8 => (s0, s1, s2, s3, s4, s5, s6, s7, ⟨false, none⟩, s9)
       | 9 => (s0, s1, s2, s3, s4, s5, s6, s7, s8, ⟨false, none⟩)
       | _ => (s0, s1, s2, s3, s4, s5, s6, s7, s8, s9)) := by
-  simp only [TuplePQRSTUVWXY.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.clear]
+  simp only [TuplePQRSTUVWXY.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.clear]
   split <;> simp_all [permutation.empty_slot]
 
 def tuple10Finish (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) (s6 : permutation.Slot O6) (s7 : permutation.Slot O7) (s8 : permutation.Slot O8) (s9 : permutation.Slot O9) : core.result.Result (O0 × O1 × O2 × O3 × O4 × O5 × O6 × O7 × O8 × O9) ParseError :=
@@ -908,7 +908,7 @@ def tuple10Finish (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : pe
 
 theorem tuple10_finish (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (g7 : Grammar P7 O7) (g8 : Grammar P8 O8) (g9 : Grammar P9 O9) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6 × P7 × P8 × P9)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) (s6 : permutation.Slot O6) (s7 : permutation.Slot O7) (s8 : permutation.Slot O8) (s9 : permutation.Slot O9) :
     (layout g0 g1 g2 g3 g4 g5 g6 g7 g8 g9).finish parsers (s0, s1, s2, s3, s4, s5, s6, s7, s8, s9) = ok (tuple10Finish s0 s1 s2 s3 s4 s5 s6 s7 s8 s9) := by
-  simp only [TuplePQRSTUVWXY.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.finish, permutation.slot_value, tuple10Finish]
+  simp only [TuplePQRSTUVWXY.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.finish, permutation.slot_value, tuple10Finish]
   repeat' (split <;> simp_all)
 
 theorem tuple10_output_order (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (g7 : Grammar P7 O7) (g8 : Grammar P8 O8) (g9 : Grammar P9 O9) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6 × P7 × P8 × P9))
@@ -955,20 +955,20 @@ theorem tuple10_dispatch {B : Type}
   rcases r7 with ⟨⟨a7, slot7⟩, b7⟩
   rcases r8 with ⟨⟨a8, slot8⟩, b8⟩
   rcases r9 with ⟨⟨a9, slot9⟩, b9⟩
-  simp only [TuplePQRSTUVWXY.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_Output.attempt]
+  simp only [TuplePQRSTUVWXY.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_Output.attempt]
   split <;> simp_all
 
 end Tuple10
 
 section Tuple11
 variable {P0 P1 P2 P3 P4 P5 P6 P7 P8 P9 P10 O0 O1 O2 O3 O4 O5 O6 O7 O8 O9 O10 : Type}
-local notation "layout" => TuplePQRSTUVWXYZ.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output
-local notation "entries" => TuplePQRSTUVWXYZ.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_OutputClause10_Clause0_Output
+local notation "layout" => TuplePQRSTUVWXYZ.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output
+local notation "entries" => TuplePQRSTUVWXYZ.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_OutputClause10_Clause0_Output
 
 theorem tuple11_initial (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (g7 : Grammar P7 O7) (g8 : Grammar P8 O8) (g9 : Grammar P9 O9) (g10 : Grammar P10 O10) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6 × P7 × P8 × P9 × P10)) :
     (layout g0 g1 g2 g3 g4 g5 g6 g7 g8 g9 g10).count parsers = ok 11#usize ∧
     (layout g0 g1 g2 g3 g4 g5 g6 g7 g8 g9 g10).empty parsers = ok ((⟨false, none⟩ : permutation.Slot O0), (⟨false, none⟩ : permutation.Slot O1), (⟨false, none⟩ : permutation.Slot O2), (⟨false, none⟩ : permutation.Slot O3), (⟨false, none⟩ : permutation.Slot O4), (⟨false, none⟩ : permutation.Slot O5), (⟨false, none⟩ : permutation.Slot O6), (⟨false, none⟩ : permutation.Slot O7), (⟨false, none⟩ : permutation.Slot O8), (⟨false, none⟩ : permutation.Slot O9), (⟨false, none⟩ : permutation.Slot O10)) := by
-  simp [TuplePQRSTUVWXYZ.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.count, TuplePQRSTUVWXYZ.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.empty, permutation.empty_slot]
+  simp [TuplePQRSTUVWXYZ.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.count, TuplePQRSTUVWXYZ.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.empty, permutation.empty_slot]
 
 theorem tuple11_matched (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (g7 : Grammar P7 O7) (g8 : Grammar P8 O8) (g9 : Grammar P9 O9) (g10 : Grammar P10 O10) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6 × P7 × P8 × P9 × P10)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) (s6 : permutation.Slot O6) (s7 : permutation.Slot O7) (s8 : permutation.Slot O8) (s9 : permutation.Slot O9) (s10 : permutation.Slot O10)
     (index : Usize) :
@@ -985,7 +985,7 @@ theorem tuple11_matched (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar 
       | 9 => s9.matched
       | 10 => s10.matched
       | _ => false) := by
-  simp only [TuplePQRSTUVWXYZ.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.matched]
+  simp only [TuplePQRSTUVWXYZ.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.matched]
   split <;> simp_all
 
 theorem tuple11_clear (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (g7 : Grammar P7 O7) (g8 : Grammar P8 O8) (g9 : Grammar P9 O9) (g10 : Grammar P10 O10) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6 × P7 × P8 × P9 × P10)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) (s6 : permutation.Slot O6) (s7 : permutation.Slot O7) (s8 : permutation.Slot O8) (s9 : permutation.Slot O9) (s10 : permutation.Slot O10)
@@ -1003,7 +1003,7 @@ theorem tuple11_clear (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2
       | 9 => (s0, s1, s2, s3, s4, s5, s6, s7, s8, ⟨false, none⟩, s10)
       | 10 => (s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, ⟨false, none⟩)
       | _ => (s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10)) := by
-  simp only [TuplePQRSTUVWXYZ.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.clear]
+  simp only [TuplePQRSTUVWXYZ.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.clear]
   split <;> simp_all [permutation.empty_slot]
 
 def tuple11Finish (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) (s6 : permutation.Slot O6) (s7 : permutation.Slot O7) (s8 : permutation.Slot O8) (s9 : permutation.Slot O9) (s10 : permutation.Slot O10) : core.result.Result (O0 × O1 × O2 × O3 × O4 × O5 × O6 × O7 × O8 × O9 × O10) ParseError :=
@@ -1044,7 +1044,7 @@ def tuple11Finish (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : pe
 
 theorem tuple11_finish (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (g7 : Grammar P7 O7) (g8 : Grammar P8 O8) (g9 : Grammar P9 O9) (g10 : Grammar P10 O10) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6 × P7 × P8 × P9 × P10)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) (s6 : permutation.Slot O6) (s7 : permutation.Slot O7) (s8 : permutation.Slot O8) (s9 : permutation.Slot O9) (s10 : permutation.Slot O10) :
     (layout g0 g1 g2 g3 g4 g5 g6 g7 g8 g9 g10).finish parsers (s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10) = ok (tuple11Finish s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10) := by
-  simp only [TuplePQRSTUVWXYZ.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.finish, permutation.slot_value, tuple11Finish]
+  simp only [TuplePQRSTUVWXYZ.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.finish, permutation.slot_value, tuple11Finish]
   repeat' (split <;> simp_all)
 
 theorem tuple11_output_order (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (g7 : Grammar P7 O7) (g8 : Grammar P8 O8) (g9 : Grammar P9 O9) (g10 : Grammar P10 O10) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6 × P7 × P8 × P9 × P10))
@@ -1094,20 +1094,20 @@ theorem tuple11_dispatch {B : Type}
   rcases r8 with ⟨⟨a8, slot8⟩, b8⟩
   rcases r9 with ⟨⟨a9, slot9⟩, b9⟩
   rcases r10 with ⟨⟨a10, slot10⟩, b10⟩
-  simp only [TuplePQRSTUVWXYZ.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_OutputClause10_Clause0_Output.attempt]
+  simp only [TuplePQRSTUVWXYZ.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_OutputClause10_Clause0_Output.attempt]
   split <;> simp_all
 
 end Tuple11
 
 section Tuple12
 variable {P0 P1 P2 P3 P4 P5 P6 P7 P8 P9 P10 P11 O0 O1 O2 O3 O4 O5 O6 O7 O8 O9 O10 O11 : Type}
-local notation "layout" => TuplePQRSTUVWXYZA.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output
-local notation "entries" => TuplePQRSTUVWXYZA.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_OutputClause10_Clause0_OutputClause11_Clause0_Output
+local notation "layout" => TuplePQRSTUVWXYZA.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output
+local notation "entries" => TuplePQRSTUVWXYZA.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_OutputClause10_Clause0_OutputClause11_Clause0_Output
 
 theorem tuple12_initial (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (g7 : Grammar P7 O7) (g8 : Grammar P8 O8) (g9 : Grammar P9 O9) (g10 : Grammar P10 O10) (g11 : Grammar P11 O11) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6 × P7 × P8 × P9 × P10 × P11)) :
     (layout g0 g1 g2 g3 g4 g5 g6 g7 g8 g9 g10 g11).count parsers = ok 12#usize ∧
     (layout g0 g1 g2 g3 g4 g5 g6 g7 g8 g9 g10 g11).empty parsers = ok ((⟨false, none⟩ : permutation.Slot O0), (⟨false, none⟩ : permutation.Slot O1), (⟨false, none⟩ : permutation.Slot O2), (⟨false, none⟩ : permutation.Slot O3), (⟨false, none⟩ : permutation.Slot O4), (⟨false, none⟩ : permutation.Slot O5), (⟨false, none⟩ : permutation.Slot O6), (⟨false, none⟩ : permutation.Slot O7), (⟨false, none⟩ : permutation.Slot O8), (⟨false, none⟩ : permutation.Slot O9), (⟨false, none⟩ : permutation.Slot O10), (⟨false, none⟩ : permutation.Slot O11)) := by
-  simp [TuplePQRSTUVWXYZA.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.count, TuplePQRSTUVWXYZA.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.empty, permutation.empty_slot]
+  simp [TuplePQRSTUVWXYZA.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.count, TuplePQRSTUVWXYZA.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.empty, permutation.empty_slot]
 
 theorem tuple12_matched (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (g7 : Grammar P7 O7) (g8 : Grammar P8 O8) (g9 : Grammar P9 O9) (g10 : Grammar P10 O10) (g11 : Grammar P11 O11) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6 × P7 × P8 × P9 × P10 × P11)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) (s6 : permutation.Slot O6) (s7 : permutation.Slot O7) (s8 : permutation.Slot O8) (s9 : permutation.Slot O9) (s10 : permutation.Slot O10) (s11 : permutation.Slot O11)
     (index : Usize) :
@@ -1125,7 +1125,7 @@ theorem tuple12_matched (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar 
       | 10 => s10.matched
       | 11 => s11.matched
       | _ => false) := by
-  simp only [TuplePQRSTUVWXYZA.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.matched]
+  simp only [TuplePQRSTUVWXYZA.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.matched]
   split <;> simp_all
 
 theorem tuple12_clear (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (g7 : Grammar P7 O7) (g8 : Grammar P8 O8) (g9 : Grammar P9 O9) (g10 : Grammar P10 O10) (g11 : Grammar P11 O11) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6 × P7 × P8 × P9 × P10 × P11)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) (s6 : permutation.Slot O6) (s7 : permutation.Slot O7) (s8 : permutation.Slot O8) (s9 : permutation.Slot O9) (s10 : permutation.Slot O10) (s11 : permutation.Slot O11)
@@ -1144,7 +1144,7 @@ theorem tuple12_clear (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2
       | 10 => (s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, ⟨false, none⟩, s11)
       | 11 => (s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, ⟨false, none⟩)
       | _ => (s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11)) := by
-  simp only [TuplePQRSTUVWXYZA.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.clear]
+  simp only [TuplePQRSTUVWXYZA.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.clear]
   split <;> simp_all [permutation.empty_slot]
 
 def tuple12Finish (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) (s6 : permutation.Slot O6) (s7 : permutation.Slot O7) (s8 : permutation.Slot O8) (s9 : permutation.Slot O9) (s10 : permutation.Slot O10) (s11 : permutation.Slot O11) : core.result.Result (O0 × O1 × O2 × O3 × O4 × O5 × O6 × O7 × O8 × O9 × O10 × O11) ParseError :=
@@ -1188,7 +1188,7 @@ def tuple12Finish (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : pe
 
 theorem tuple12_finish (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (g7 : Grammar P7 O7) (g8 : Grammar P8 O8) (g9 : Grammar P9 O9) (g10 : Grammar P10 O10) (g11 : Grammar P11 O11) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6 × P7 × P8 × P9 × P10 × P11)) (s0 : permutation.Slot O0) (s1 : permutation.Slot O1) (s2 : permutation.Slot O2) (s3 : permutation.Slot O3) (s4 : permutation.Slot O4) (s5 : permutation.Slot O5) (s6 : permutation.Slot O6) (s7 : permutation.Slot O7) (s8 : permutation.Slot O8) (s9 : permutation.Slot O9) (s10 : permutation.Slot O10) (s11 : permutation.Slot O11) :
     (layout g0 g1 g2 g3 g4 g5 g6 g7 g8 g9 g10 g11).finish parsers (s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11) = ok (tuple12Finish s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11) := by
-  simp only [TuplePQRSTUVWXYZA.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.finish, permutation.slot_value, tuple12Finish]
+  simp only [TuplePQRSTUVWXYZA.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.finish, permutation.slot_value, tuple12Finish]
   repeat' (split <;> simp_all)
 
 theorem tuple12_output_order (g0 : Grammar P0 O0) (g1 : Grammar P1 O1) (g2 : Grammar P2 O2) (g3 : Grammar P3 O3) (g4 : Grammar P4 O4) (g5 : Grammar P5 O5) (g6 : Grammar P6 O6) (g7 : Grammar P7 O7) (g8 : Grammar P8 O8) (g9 : Grammar P9 O9) (g10 : Grammar P10 O10) (g11 : Grammar P11 O11) (parsers : (P0 × P1 × P2 × P3 × P4 × P5 × P6 × P7 × P8 × P9 × P10 × P11))
@@ -1241,7 +1241,7 @@ theorem tuple12_dispatch {B : Type}
   rcases r9 with ⟨⟨a9, slot9⟩, b9⟩
   rcases r10 with ⟨⟨a10, slot10⟩, b10⟩
   rcases r11 with ⟨⟨a11, slot11⟩, b11⟩
-  simp only [TuplePQRSTUVWXYZA.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_OutputClause10_Clause0_OutputClause11_Clause0_Output.attempt]
+  simp only [TuplePQRSTUVWXYZA.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_OutputClause10_Clause0_OutputClause11_Clause0_Output.attempt]
   split <;> simp_all
 
 end Tuple12

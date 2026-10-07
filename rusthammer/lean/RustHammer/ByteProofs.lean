@@ -1,6 +1,10 @@
 import RustHammer.ByteSpec
 import RustHammer.PartialProofs
 
+open RustHammer.Code.grammar.bytes
+  RustHammer.Code.grammar.numeric
+  RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Proofs
@@ -12,9 +16,9 @@ private theorem primitive_ok {α : Type} (status : InputStatus) (next : Cursor) 
 
 /-- The narrowing cast is lossless: eight decoded bits are strictly below 256. -/
 theorem byte_with_spec (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
-    Byte.Insts.RusthammerParserInputU8.parse_with () input cursor (Spec.defaultContext status)
+    Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8.parse_with () input cursor (Spec.defaultContext status)
       ⦃ result => Partial.primitive status (Spec.byteOutcome input cursor) result ⦄ := by
-  rw [Byte.Insts.RusthammerParserInputU8.parse_with_eq]
+  rw [Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8.parse_with_eq]
   step with bits_with_spec { width := 8#u8 } input cursor status (by decide) as ⟨outcome, houtcome⟩
   rcases houtcome with ⟨parsed, hparsed, rfl⟩
   by_cases hvalid : Spec.validCursor input cursor
@@ -39,10 +43,10 @@ theorem byte_with_spec (input : Slice U8) (cursor : Cursor) (status : InputStatu
     all_goals exact ⟨.Err .InvalidCursor, by simp only [Spec.byteOutcome, if_neg hvalid], rfl⟩
 
 theorem byte_spec (input : Slice U8) (cursor : Cursor) :
-    DirectParser.parse Byte.Insts.RusthammerParserInputU8 () input cursor
+    DirectParser.parse Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8 () input cursor
       ⦃ result => Spec.byteOutcome input cursor result ⦄ := by
   apply complete_spec
-  simpa only [Byte.Insts.RusthammerParserInputU8.parse_with, ParseContext.FINAL,
+  simpa only [Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8.parse_with, ParseContext.FINAL,
     Spec.defaultContext, Partial.primitive, Partial.primitiveResult, Spec.completed] using
     byte_with_spec input cursor .Final
 
@@ -69,7 +73,7 @@ theorem match_byte_pattern_spec (pattern input : Slice U8) (cursor : Cursor) (st
         Spec.matchBytes input status pattern.val cursor outcome)
   · rintro ⟨⟨⟩, next, index⟩ ⟨hindex, hcont⟩
     unfold match_byte_pattern_loop.body
-    simp only [Byte.Insts.RusthammerParserInputU8.parse_with_lift, Std.bind_assoc, bind_ok]
+    simp only [Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8.parse_with_lift, Std.bind_assoc, bind_ok]
     by_cases hlt : index < pattern.len
     · have hlen : index.val < pattern.val.length := by scalar_tac
       have hdrop : pattern.val.drop index.val =

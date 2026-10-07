@@ -2,6 +2,11 @@ import RustHammer.IntRangeSpec
 import RustHammer.SelectionProofs
 import RustHammer.IntegerProofs
 
+open RustHammer.Code.grammar.numeric
+  RustHammer.Code.grammar.transform
+  RustHammer.Code.input_types
+  RustHammer.Code.parser_traits
+
 open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Proofs
@@ -175,15 +180,15 @@ theorem int_range_u8_new_spec {P : Type} (pi : Grammar P Std.U8)
   exact int_range_new_spec pi core.cmp.OrdU8 child lower upper
     (fun a b => a.val ≤ b.val) (int_range_u8_comparisons lower upper).2
 
-theorem byte_integer_range_with_spec (parser : IntRange Code.Byte Std.U8)
+theorem byte_integer_range_with_spec (parser : IntRange Code.grammar.numeric.Byte Std.U8)
     (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
-    IntRange.Insts.RusthammerParser.parse_with Byte.Insts.RusthammerParserInputU8 core.cmp.OrdU8
+    IntRange.Insts.RusthammerParser.parse_with Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8 core.cmp.OrdU8
       parser input cursor (Spec.defaultContext status)
       ⦃ result => Partial.verify
         (fun start => Partial.primitive status (Spec.unsignedIntegerOutcome .U8 input start))
         (Spec.inRange (fun a b => a.val ≤ b.val) parser.lower parser.upper) cursor result ⦄ := by
   rcases parser with ⟨⟨⟩, lower, upper⟩
-  exact int_range_with_spec Byte.Insts.RusthammerParserInputU8 core.cmp.OrdU8
+  exact int_range_with_spec Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8 core.cmp.OrdU8
     { parser := (), lower, upper } input cursor (Spec.defaultContext status) _ (fun a b => a.val ≤ b.val)
     (byte_integer_with_spec input cursor status)
     (fun a b => (int_range_u8_comparisons a b).1)
@@ -255,15 +260,15 @@ theorem int_range_i8_new_spec {P : Type} (pi : Grammar P Std.I8)
   exact int_range_new_spec pi core.cmp.OrdI8 child lower upper
     (fun a b => a.val ≤ b.val) (int_range_i8_comparisons lower upper).2
 
-theorem i8_range_with_spec (parser : IntRange Code.I8 Std.I8)
+theorem i8_range_with_spec (parser : IntRange Code.grammar.numeric.I8 Std.I8)
     (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
-    IntRange.Insts.RusthammerParser.parse_with Code.I8.Insts.RusthammerParserInputI8 core.cmp.OrdI8
+    IntRange.Insts.RusthammerParser.parse_with Code.grammar.numeric.I8.Insts.RusthammerParserInputI8 core.cmp.OrdI8
       parser input cursor (Spec.defaultContext status)
       ⦃ result => Partial.verify
         (fun start => Partial.primitive status (Spec.signedIntegerOutcome .I8 input start))
         (Spec.inRange (fun a b => a.val ≤ b.val) parser.lower parser.upper) cursor result ⦄ := by
   rcases parser with ⟨⟨⟩, lower, upper⟩
-  exact int_range_with_spec Code.I8.Insts.RusthammerParserInputI8 core.cmp.OrdI8
+  exact int_range_with_spec Code.grammar.numeric.I8.Insts.RusthammerParserInputI8 core.cmp.OrdI8
     { parser := (), lower, upper } input cursor (Spec.defaultContext status) _ (fun a b => a.val ≤ b.val)
     (i8_with_spec input cursor status)
     (fun a b => (int_range_i8_comparisons a b).1)

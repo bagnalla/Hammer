@@ -3,6 +3,12 @@ import RustHammer.BindProofs
 import RustHammer.CompositionProofs
 import RustHammer.RepeatProofs
 
+open RustHammer.Code.grammar.bytes
+  RustHammer.Code.grammar.numeric
+  RustHammer.Code.grammar.repeat
+  RustHammer.Code.grammar.transform
+  RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Proofs

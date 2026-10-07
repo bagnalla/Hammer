@@ -1,5 +1,8 @@
 import RustHammer.ControlSpec
 
+open RustHammer.Code.grammar
+  RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std
 
 namespace RustHammer.Permutation

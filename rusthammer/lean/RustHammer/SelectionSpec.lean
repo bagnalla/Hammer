@@ -1,5 +1,8 @@
 import RustHammer.PartialSpec
 
+open RustHammer.Code.grammar.transform
+  RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std
 
 namespace RustHammer

@@ -1,5 +1,10 @@
 import RustHammer.RepeatProofs
 
+open RustHammer.Code.grammar.bytes
+  RustHammer.Code.grammar.numeric
+  RustHammer.Code.grammar.repeat
+  RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Proofs
@@ -15,12 +20,12 @@ theorem repeat_unbounded_with_spec {P α : Type} (pi : DirectParser P α) (parse
     Repeat.Insts.RusthammerParserInputVec.parse_with pi { parser, bounds := { min, max := none } }
       input cursor context ⦃ result => Spec.unboundedRepeat input child min.val cursor result ⦄ := by
   rw [Repeat.Insts.RusthammerParserInputVec.parse_with_eq]
-  step with repeat_run_unbounded_spec pi (Collect.Insts.RusthammerRepeatAccumulatorAVec α)
+  step with repeat_run_unbounded_spec pi (Collect.Insts.RusthammerGrammarRepeatRepeatAccumulatorAVec α)
     parser min () input cursor context child (fun values state => state.val = values) hp
-    (by simp [Collect.Insts.RusthammerRepeatAccumulatorAVec.init, spec_ok])
+    (by simp [Collect.Insts.RusthammerGrammarRepeatRepeatAccumulatorAVec.init, spec_ok])
     (by
       intro values next after value state _ _ hlen hstate
-      simp only [Collect.Insts.RusthammerRepeatAccumulatorAVec.step]
+      simp only [Collect.Insts.RusthammerGrammarRepeatRepeatAccumulatorAVec.step]
       step with alloc.vec.Vec.push_spec state value (by simpa only [hstate] using hlen) as ⟨appended, happended⟩
       simpa [hstate] using happended) as ⟨outcome, houtcome⟩
   exact (accumulated_collection _ outcome).mp houtcome

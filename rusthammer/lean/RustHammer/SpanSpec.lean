@@ -1,5 +1,8 @@
 import RustHammer.PositionSpec
 
+open RustHammer.Code.input_types
+  RustHammer.Code.span_types
+
 open Aeneas Aeneas.Std
 
 namespace RustHammer.Span

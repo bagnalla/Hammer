@@ -9,6 +9,26 @@ families and their implementation order; public additions must have a durable
 role beyond an implementation or proof milestone. The features below describe
 what is implemented today.
 
+Grammar-building types and constructors are grouped in the public
+[`grammar`](src/grammar/mod.rs) namespace, with private implementation files for
+each family. Existing crate-root imports remain available. For example:
+
+```rust
+use rusthammer::grammar::{seq, BeU16, Byte};
+use rusthammer::{Cursor, Parser};
+
+let header = seq(Byte, BeU16);
+assert_eq!(header.parse(&[7, 0, 3, 99], Cursor::start()),
+    Ok((Cursor { byte: 3, bit: 0 }, (7, 3))));
+```
+
+The [design and verification overview](OVERVIEW.md) explains the architecture,
+source organization, and proved properties. Shared interfaces live in
+[`src/parser_traits.rs`](src/parser_traits.rs), input and outcome types in
+[`src/input_types.rs`](src/input_types.rs), and the `BitSpan` result type in
+[`src/span_types.rs`](src/span_types.rs). Grammar nodes retain their constructors and `Eval`
+implementations together under [`src/grammar/`](src/grammar/).
+
 The prototype supports:
 
 - A cursor with a byte index and a bit offset, passed separately from the input.

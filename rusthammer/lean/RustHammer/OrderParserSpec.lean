@@ -2,6 +2,8 @@ import RustHammer.OrderMath
 import RustHammer.IntegerSpec
 import RustHammer.ByteSpec
 
+open RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std
 
 namespace RustHammer.Ordering

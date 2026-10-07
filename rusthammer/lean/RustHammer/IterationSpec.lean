@@ -1,5 +1,7 @@
 import RustHammer.RepeatSpec
 
+open RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std
 
 namespace RustHammer.Spec

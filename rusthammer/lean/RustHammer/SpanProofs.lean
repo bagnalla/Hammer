@@ -1,6 +1,11 @@
 import RustHammer.SpanSpec
 import RustHammer.PartialProofs
 
+open RustHammer.Code.grammar.span
+  RustHammer.Code.input_types
+  RustHammer.Code.parser_traits
+  RustHammer.Code.span_types
+
 open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Span
@@ -110,10 +115,10 @@ theorem with_span_eval_spec {State P α : Type} (inst : Eval P State α)
     (child : ParseOutcome α × State → Prop)
     (hp : validCursor input.val.length cursor →
       inst.eval parser.parser state input cursor ctx ⦃ result => child result ⦄) :
-    WithSpan.Insts.RusthammerEvalInputBackendPairClause0_Clause0_OutputBitSpan.eval
+    WithSpan.Insts.RusthammerParser_traitsEvalInputBackendPairClause0_Clause0_OutputBitSpan.eval
       inst parser state input cursor ctx
       ⦃ result => capture input cursor ctx.order.bit state child result ⦄ := by
-  unfold WithSpan.Insts.RusthammerEvalInputBackendPairClause0_Clause0_OutputBitSpan.eval
+  unfold WithSpan.Insts.RusthammerParser_traitsEvalInputBackendPairClause0_Clause0_OutputBitSpan.eval
   step with cursor_valid_spec input.len cursor as ⟨allowed, hallowed⟩
   by_cases hv : validCursor input.val.length cursor
   · have ha : allowed = true := by simpa [hv] using hallowed
@@ -140,10 +145,10 @@ theorem recognize_eval_spec {State P α : Type} (inst : Eval P State α)
     (child : ParseOutcome α × State → Prop)
     (hp : validCursor input.val.length cursor →
       inst.eval parser.parser state input cursor ctx ⦃ result => child result ⦄) :
-    Recognize.Insts.RusthammerEvalInputBackendBitSpan.eval inst parser state input cursor ctx
+    Recognize.Insts.RusthammerParser_traitsEvalInputBackendBitSpan.eval inst parser state input cursor ctx
       ⦃ result => recognize input cursor ctx.order.bit state child result ⦄ := by
-  unfold Recognize.Insts.RusthammerEvalInputBackendBitSpan.eval
-  step with with_span_eval_spec (Shared0P.Insts.RusthammerEval inst) ⟨parser.parser⟩
+  unfold Recognize.Insts.RusthammerParser_traitsEvalInputBackendBitSpan.eval
+  step with with_span_eval_spec (Shared0P.Insts.RusthammerParser_traitsEval inst) ⟨parser.parser⟩
     state input cursor ctx child hp as ⟨captured, final, hcaptured⟩
   cases captured <;> simp only [spec_ok]
   all_goals exact ⟨_, final, hcaptured, rfl⟩
@@ -153,7 +158,7 @@ theorem with_span_with_spec {P α : Type} (inst : DirectParser P α)
     (child : ParseOutcome α → Prop)
     (hp : validCursor input.val.length cursor →
       inst.parse_with parser.parser input cursor ctx ⦃ result => child result ⦄) :
-    DirectParser.parse_with (WithSpan.Insts.RusthammerEvalInputBackendPairClause0_Clause0_OutputBitSpan inst)
+    DirectParser.parse_with (WithSpan.Insts.RusthammerParser_traitsEvalInputBackendPairClause0_Clause0_OutputBitSpan inst)
       parser input cursor ctx
       ⦃ result => capture input cursor ctx.order.bit () (fun pair => child pair.1) (result, ()) ⦄ := by
   apply direct_projection_spec
@@ -168,7 +173,7 @@ theorem recognize_with_spec {P α : Type} (inst : DirectParser P α)
     (child : ParseOutcome α → Prop)
     (hp : validCursor input.val.length cursor →
       inst.parse_with parser.parser input cursor ctx ⦃ result => child result ⦄) :
-    DirectParser.parse_with (Recognize.Insts.RusthammerEvalInputBackendBitSpan inst) parser input cursor ctx
+    DirectParser.parse_with (Recognize.Insts.RusthammerParser_traitsEvalInputBackendBitSpan inst) parser input cursor ctx
       ⦃ result => recognize input cursor ctx.order.bit () (fun pair => child pair.1) (result, ()) ⦄ := by
   apply direct_projection_spec
   apply recognize_eval_spec
@@ -213,7 +218,7 @@ theorem with_span_complete_spec {P α : Type} (inst : DirectParser P α)
     (hp : validCursor input.val.length cursor →
       inst.parse_with parser.parser input cursor ParseContext.FINAL ⦃ result => child result ⦄)
     (hfinal : ¬child .NeedMore) :
-    DirectParser.parse (WithSpan.Insts.RusthammerEvalInputBackendPairClause0_Clause0_OutputBitSpan inst)
+    DirectParser.parse (WithSpan.Insts.RusthammerParser_traitsEvalInputBackendPairClause0_Clause0_OutputBitSpan inst)
       parser input cursor
       ⦃ result => capture input cursor .HighFirst () (fun pair => child pair.1)
         (Spec.completedResult result, ()) ⦄ := by
@@ -231,7 +236,7 @@ theorem recognize_complete_spec {P α : Type} (inst : DirectParser P α)
     (hp : validCursor input.val.length cursor →
       inst.parse_with parser.parser input cursor ParseContext.FINAL ⦃ result => child result ⦄)
     (hfinal : ¬child .NeedMore) :
-    DirectParser.parse (Recognize.Insts.RusthammerEvalInputBackendBitSpan inst) parser input cursor
+    DirectParser.parse (Recognize.Insts.RusthammerParser_traitsEvalInputBackendBitSpan inst) parser input cursor
       ⦃ result => recognize input cursor .HighFirst () (fun pair => child pair.1)
         (Spec.completedResult result, ()) ⦄ := by
   apply Proofs.complete_spec

@@ -2,6 +2,9 @@ import RustHammer.IntegerSpec
 import RustHammer.SignedBitsProofs
 import RustHammer.ByteProofs
 
+open RustHammer.Code.grammar.numeric
+  RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Proofs
@@ -129,9 +132,9 @@ theorem be_u64_with_spec (input : Slice U8) (cursor : Cursor) (status : InputSta
   cases outcome <;> simpa only [spec_ok] using h
 
 theorem i8_with_spec (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
-    Code.I8.Insts.RusthammerParserInputI8.parse_with () input cursor (Spec.defaultContext status)
+    Code.grammar.numeric.I8.Insts.RusthammerParserInputI8.parse_with () input cursor (Spec.defaultContext status)
       ⦃ result => Partial.primitive status (Spec.signedIntegerOutcome .I8 input cursor) result ⦄ := by
-  rw [Code.I8.Insts.RusthammerParserInputI8.parse_with_eq]
+  rw [Code.grammar.numeric.I8.Insts.RusthammerParserInputI8.parse_with_eq]
   exact narrow_signed_spec .I8 8#u8 input cursor status rfl (by decide)
 
 theorem be_i16_with_spec (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
@@ -162,7 +165,7 @@ theorem be_i64_with_spec (input : Slice U8) (cursor : Cursor) (status : InputSta
 
 /-- The existing byte reader is the unsigned eight-bit member of this family. -/
 theorem byte_integer_with_spec (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
-    Byte.Insts.RusthammerParserInputU8.parse_with () input cursor (Spec.defaultContext status)
+    Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8.parse_with () input cursor (Spec.defaultContext status)
       ⦃ result => Partial.primitive status (Spec.unsignedIntegerOutcome .U8 input cursor) result ⦄ := by
   simpa only [Partial.primitive, Spec.byteOutcome, Spec.byteSuccess, Spec.unsignedIntegerOutcome,
     Spec.unsignedIntegerSuccess, UScalarTy.U8_numBits_eq] using byte_with_spec input cursor status
@@ -204,15 +207,15 @@ theorem be_u64_spec (input : Slice U8) (cursor : Cursor) :
     (Spec.unsignedIntegerOutcome .U64 input cursor) (be_u64_final_spec input cursor)
 
 theorem i8_final_spec (input : Slice U8) (cursor : Cursor) :
-    Code.I8.Insts.RusthammerParserInputI8.parse_with () input cursor ParseContext.FINAL
+    Code.grammar.numeric.I8.Insts.RusthammerParserInputI8.parse_with () input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.signedIntegerOutcome .I8 input cursor) result ⦄ := by
   simpa only [ParseContext.FINAL, Partial.primitive, Partial.primitiveResult, Spec.completed] using
     i8_with_spec input cursor .Final
 
 theorem i8_spec (input : Slice U8) (cursor : Cursor) :
-    DirectParser.parse Code.I8.Insts.RusthammerParserInputI8 () input cursor
+    DirectParser.parse Code.grammar.numeric.I8.Insts.RusthammerParserInputI8 () input cursor
       ⦃ result => Spec.signedIntegerOutcome .I8 input cursor result ⦄ := by
-  exact complete_spec Code.I8.Insts.RusthammerParserInputI8 () input cursor
+  exact complete_spec Code.grammar.numeric.I8.Insts.RusthammerParserInputI8 () input cursor
     (Spec.signedIntegerOutcome .I8 input cursor) (i8_final_spec input cursor)
 
 theorem be_i16_final_spec (input : Slice U8) (cursor : Cursor) :

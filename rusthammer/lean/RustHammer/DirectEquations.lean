@@ -1,5 +1,15 @@
 import RustHammer.Direct
 
+open RustHammer.Code.grammar.bytes
+  RustHammer.Code.grammar.control
+  RustHammer.Code.grammar.numeric
+  RustHammer.Code.grammar.order
+  RustHammer.Code.grammar.position
+  RustHammer.Code.grammar.repeat
+  RustHammer.Code.grammar.sequence
+  RustHammer.Code.grammar.transform
+  RustHammer.Code.input_types
+
 /-! Equations for the direct views, proved against the extracted evaluators.
 They expose one layer of control flow while projecting away `Direct`'s unit
 state, so existing compositional specifications apply to the refactored Rust.
@@ -20,15 +30,15 @@ macro "direct_equation" : tactic => `(tactic| (
     all_goals try split
     all_goals try (congr 1; funext parsed; cases parsed))))
 
-theorem Bits.Insts.RusthammerParserInputU64.parse_with_eq (self : Bits) (input : Slice Std.U8) (cursor : Cursor)
+theorem grammar.numeric.Bits.Insts.RusthammerParserInputU64.parse_with_eq (self : Bits) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
   Bits.Insts.RusthammerParserInputU64.parse_with self input cursor context = (do
   let r ← read_ordered_bits input cursor self context.order
   InputStatus.classify context.status r) := by
   conv_lhs =>
     unfold Bits.Insts.RusthammerParserInputU64.parse_with DirectParser.parse_with
-    dsimp only [Bits.Insts.RusthammerParserInputU64, Bits.Insts.RusthammerEvalInputBackendU64]
-    unfold Bits.Insts.RusthammerEvalInputBackendU64.eval
+    dsimp only [Bits.Insts.RusthammerParserInputU64, Bits.Insts.RusthammerParser_traitsEvalInputBackendU64]
+    unfold Bits.Insts.RusthammerParser_traitsEvalInputBackendU64.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
@@ -41,37 +51,37 @@ theorem dependent_examples.CountPrefix.Insts.RusthammerParserInputUsize.parse_wi
     { parser := b, map := () } input cursor context) := by
   conv_lhs =>
     unfold dependent_examples.CountPrefix.Insts.RusthammerParserInputUsize.parse_with DirectParser.parse_with
-    dsimp only [dependent_examples.CountPrefix.Insts.RusthammerParserInputUsize, dependent_examples.CountPrefix.Insts.RusthammerEvalInputBackendUsize]
-    unfold dependent_examples.CountPrefix.Insts.RusthammerEvalInputBackendUsize.eval
+    dsimp only [dependent_examples.CountPrefix.Insts.RusthammerParserInputUsize, dependent_examples.CountPrefix.Insts.RusthammerParser_traitsEvalInputBackendUsize]
+    unfold dependent_examples.CountPrefix.Insts.RusthammerParser_traitsEvalInputBackendUsize.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem TakeAligned.Insts.RusthammerParserInputSharedInputSliceU8.parse_with_eq (self : TakeAligned) (input : Slice Std.U8) (cursor : Cursor)
+theorem grammar.bytes.TakeAligned.Insts.RusthammerParserInputSharedInputSliceU8.parse_with_eq (self : TakeAligned) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
   TakeAligned.Insts.RusthammerParserInputSharedInputSliceU8.parse_with self input cursor context = (do
   let r ← take_aligned input cursor self.count
   InputStatus.classify context.status r) := by
   conv_lhs =>
     unfold TakeAligned.Insts.RusthammerParserInputSharedInputSliceU8.parse_with DirectParser.parse_with
-    dsimp only [TakeAligned.Insts.RusthammerParserInputSharedInputSliceU8, TakeAligned.Insts.RusthammerEvalInputBackendSharedSliceU8]
-    unfold TakeAligned.Insts.RusthammerEvalInputBackendSharedSliceU8.eval
+    dsimp only [TakeAligned.Insts.RusthammerParserInputSharedInputSliceU8, TakeAligned.Insts.RusthammerParser_traitsEvalInputBackendSharedSliceU8]
+    unfold TakeAligned.Insts.RusthammerParser_traitsEvalInputBackendSharedSliceU8.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem Repeat.Insts.RusthammerParserInputVec.parse_with_eq {P : Type} {Clause0_Output : Type} (ParserInst : DirectParser P Clause0_Output)
+theorem grammar.repeat.Repeat.Insts.RusthammerParserInputVec.parse_with_eq {P : Type} {Clause0_Output : Type} (ParserInst : DirectParser P Clause0_Output)
   (self : Repeat P) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
   Repeat.Insts.RusthammerParserInputVec.parse_with ParserInst self input cursor context = (do
-  DirectRun.repeat_run ParserInst (Collect.Insts.RusthammerRepeatAccumulatorAVec
+  DirectRun.repeat_run ParserInst (Collect.Insts.RusthammerGrammarRepeatRepeatAccumulatorAVec
     Clause0_Output) self.parser self.bounds () input cursor context) := by
   conv_lhs =>
     unfold Repeat.Insts.RusthammerParserInputVec.parse_with DirectParser.parse_with
-    dsimp only [Repeat.Insts.RusthammerParserInputVec, Repeat.Insts.RusthammerEvalInputBackendVec]
-    unfold Repeat.Insts.RusthammerEvalInputBackendVec.eval
+    dsimp only [Repeat.Insts.RusthammerParserInputVec, Repeat.Insts.RusthammerParser_traitsEvalInputBackendVec]
+    unfold Repeat.Insts.RusthammerParser_traitsEvalInputBackendVec.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem Map.Insts.RusthammerParser.parse_with_eq {P : Type} {F : Type} {O : Type} {Clause0_Output : Type} (ParserInst : DirectParser
+theorem grammar.transform.Map.Insts.RusthammerParser.parse_with_eq {P : Type} {F : Type} {O : Type} {Clause0_Output : Type} (ParserInst : DirectParser
   P Clause0_Output) (coreopsfunctionFnFTupleClause0_OutputOInst :
   core.ops.function.Fn F Clause0_Output O) (self : Map P F)
   (input : Slice Std.U8) (cursor : Cursor) (context : ParseContext) :
@@ -85,12 +95,12 @@ theorem Map.Insts.RusthammerParser.parse_with_eq {P : Type} {F : Type} {O : Type
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
     unfold Map.Insts.RusthammerParser.parse_with DirectParser.parse_with
-    dsimp only [Map.Insts.RusthammerParser, Map.Insts.RusthammerEval]
-    unfold Map.Insts.RusthammerEval.eval
+    dsimp only [Map.Insts.RusthammerParser, Map.Insts.RusthammerParser_traitsEval]
+    unfold Map.Insts.RusthammerParser_traitsEval.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem Seq.Insts.RusthammerParserInputPair.parse_with_eq {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+theorem grammar.sequence.Seq.Insts.RusthammerParserInputPair.parse_with_eq {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
   (ParserInst : DirectParser P Clause0_Output) (ParserInst1 : DirectParser Q
   Clause1_Output) (self : Seq P Q) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
@@ -108,24 +118,24 @@ theorem Seq.Insts.RusthammerParserInputPair.parse_with_eq {P : Type} {Q : Type} 
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
     unfold Seq.Insts.RusthammerParserInputPair.parse_with DirectParser.parse_with
-    dsimp only [Seq.Insts.RusthammerParserInputPair, Seq.Insts.RusthammerEvalInputBackendPair]
-    unfold Seq.Insts.RusthammerEvalInputBackendPair.eval
+    dsimp only [Seq.Insts.RusthammerParserInputPair, Seq.Insts.RusthammerParser_traitsEvalInputBackendPair]
+    unfold Seq.Insts.RusthammerParser_traitsEvalInputBackendPair.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem Bit.Insts.RusthammerParserInputBool.parse_with_eq (self : Bit) (input : Slice Std.U8) (cursor : Cursor)
+theorem grammar.numeric.Bit.Insts.RusthammerParserInputBool.parse_with_eq (self : Bit) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
   Bit.Insts.RusthammerParserInputBool.parse_with self input cursor context = (do
   let r ← read_bit_ordered input cursor context.order.bit
   InputStatus.classify context.status r) := by
   conv_lhs =>
     unfold Bit.Insts.RusthammerParserInputBool.parse_with DirectParser.parse_with
-    dsimp only [Bit.Insts.RusthammerParserInputBool, Bit.Insts.RusthammerEvalInputBackendBool]
-    unfold Bit.Insts.RusthammerEvalInputBackendBool.eval
+    dsimp only [Bit.Insts.RusthammerParserInputBool, Bit.Insts.RusthammerParser_traitsEvalInputBackendBool]
+    unfold Bit.Insts.RusthammerParser_traitsEvalInputBackendBool.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem Choice.Insts.RusthammerParser.parse_with_eq {P : Type} {Q : Type} {Clause0_Output : Type} (ParserInst : DirectParser P
+theorem grammar.control.Choice.Insts.RusthammerParser.parse_with_eq {P : Type} {Q : Type} {Clause0_Output : Type} (ParserInst : DirectParser P
   Clause0_Output) (ParserInst1 : DirectParser Q Clause0_Output) (self : Choice P Q)
   (input : Slice Std.U8) (cursor : Cursor) (context : ParseContext) :
   Choice.Insts.RusthammerParser.parse_with ParserInst ParserInst1 self input cursor context = (do
@@ -140,12 +150,12 @@ theorem Choice.Insts.RusthammerParser.parse_with_eq {P : Type} {Q : Type} {Claus
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
     unfold Choice.Insts.RusthammerParser.parse_with DirectParser.parse_with
-    dsimp only [Choice.Insts.RusthammerParser, Choice.Insts.RusthammerEval]
-    unfold Choice.Insts.RusthammerEval.eval
+    dsimp only [Choice.Insts.RusthammerParser, Choice.Insts.RusthammerParser_traitsEval]
+    unfold Choice.Insts.RusthammerParser_traitsEval.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem End.Insts.RusthammerParserInputTuple.parse_with_eq (self : End) (input : Slice Std.U8) (cursor : Cursor)
+theorem grammar.position.End.Insts.RusthammerParserInputTuple.parse_with_eq (self : End) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
   End.Insts.RusthammerParserInputTuple.parse_with self input cursor context = (do
   if cursor.bit >= 8#u8
@@ -178,20 +188,20 @@ theorem End.Insts.RusthammerParserInputTuple.parse_with_eq (self : End) (input :
         else ok (ParseOutcome.Error ParseError.TrailingInput)) := by
   conv_lhs =>
     unfold End.Insts.RusthammerParserInputTuple.parse_with DirectParser.parse_with
-    dsimp only [End.Insts.RusthammerParserInputTuple, End.Insts.RusthammerEvalInputBackendTuple]
-    unfold End.Insts.RusthammerEvalInputBackendTuple.eval
+    dsimp only [End.Insts.RusthammerParserInputTuple, End.Insts.RusthammerParser_traitsEvalInputBackendTuple]
+    unfold End.Insts.RusthammerParser_traitsEvalInputBackendTuple.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem Literal.Insts.RusthammerParserInputU64.parse_with_eq (self : Literal) (input : Slice Std.U8) (cursor : Cursor)
+theorem grammar.numeric.Literal.Insts.RusthammerParserInputU64.parse_with_eq (self : Literal) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
   Literal.Insts.RusthammerParserInputU64.parse_with self input cursor context = (do
   let r ← read_literal input cursor self context.order
   InputStatus.classify context.status r) := by
   conv_lhs =>
     unfold Literal.Insts.RusthammerParserInputU64.parse_with DirectParser.parse_with
-    dsimp only [Literal.Insts.RusthammerParserInputU64, Literal.Insts.RusthammerEvalInputBackendU64]
-    unfold Literal.Insts.RusthammerEvalInputBackendU64.eval
+    dsimp only [Literal.Insts.RusthammerParserInputU64, Literal.Insts.RusthammerParser_traitsEvalInputBackendU64]
+    unfold Literal.Insts.RusthammerParser_traitsEvalInputBackendU64.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
@@ -211,8 +221,8 @@ theorem marker_example.Marker.Insts.RusthammerParserInputU64.parse_with_eq (self
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
     unfold marker_example.Marker.Insts.RusthammerParserInputU64.parse_with DirectParser.parse_with
-    dsimp only [marker_example.Marker.Insts.RusthammerParserInputU64, marker_example.Marker.Insts.RusthammerEvalInputBackendU64]
-    unfold marker_example.Marker.Insts.RusthammerEvalInputBackendU64.eval
+    dsimp only [marker_example.Marker.Insts.RusthammerParserInputU64, marker_example.Marker.Insts.RusthammerParser_traitsEvalInputBackendU64]
+    unfold marker_example.Marker.Insts.RusthammerParser_traitsEvalInputBackendU64.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
@@ -251,12 +261,12 @@ theorem record_example.RecordParser.Insts.RusthammerParserInputRecord.parse_with
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
     unfold record_example.RecordParser.Insts.RusthammerParserInputRecord.parse_with DirectParser.parse_with
-    dsimp only [record_example.RecordParser.Insts.RusthammerParserInputRecord, record_example.RecordParser.Insts.RusthammerEvalInputBackendRecord]
-    unfold record_example.RecordParser.Insts.RusthammerEvalInputBackendRecord.eval
+    dsimp only [record_example.RecordParser.Insts.RusthammerParserInputRecord, record_example.RecordParser.Insts.RusthammerParser_traitsEvalInputBackendRecord]
+    unfold record_example.RecordParser.Insts.RusthammerParser_traitsEvalInputBackendRecord.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem SkipBits.Insts.RusthammerParserInputTuple.parse_with_eq (self : SkipBits) (input : Slice Std.U8) (cursor : Cursor)
+theorem grammar.position.SkipBits.Insts.RusthammerParserInputTuple.parse_with_eq (self : SkipBits) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
   SkipBits.Insts.RusthammerParserInputTuple.parse_with self input cursor context = (do
   let i := Slice.len input
@@ -268,12 +278,12 @@ theorem SkipBits.Insts.RusthammerParserInputTuple.parse_with_eq (self : SkipBits
   InputStatus.classify context.status result) := by
   conv_lhs =>
     unfold SkipBits.Insts.RusthammerParserInputTuple.parse_with DirectParser.parse_with
-    dsimp only [SkipBits.Insts.RusthammerParserInputTuple, SkipBits.Insts.RusthammerEvalInputBackendTuple]
-    unfold SkipBits.Insts.RusthammerEvalInputBackendTuple.eval
+    dsimp only [SkipBits.Insts.RusthammerParserInputTuple, SkipBits.Insts.RusthammerParser_traitsEvalInputBackendTuple]
+    unfold SkipBits.Insts.RusthammerParser_traitsEvalInputBackendTuple.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem Tell.Insts.RusthammerParserInputCursor.parse_with_eq (self : Tell) (input : Slice Std.U8) (cursor : Cursor)
+theorem grammar.position.Tell.Insts.RusthammerParserInputCursor.parse_with_eq (self : Tell) (input : Slice Std.U8) (cursor : Cursor)
   (_context : ParseContext) :
   Tell.Insts.RusthammerParserInputCursor.parse_with self input cursor _context = (do
   let i := Slice.len input
@@ -283,8 +293,8 @@ theorem Tell.Insts.RusthammerParserInputCursor.parse_with_eq (self : Tell) (inpu
   | core.result.Result.Err error => ok (ParseOutcome.Error error)) := by
   conv_lhs =>
     unfold Tell.Insts.RusthammerParserInputCursor.parse_with DirectParser.parse_with
-    dsimp only [Tell.Insts.RusthammerParserInputCursor, Tell.Insts.RusthammerEvalInputBackendCursor]
-    unfold Tell.Insts.RusthammerEvalInputBackendCursor.eval
+    dsimp only [Tell.Insts.RusthammerParserInputCursor, Tell.Insts.RusthammerParser_traitsEvalInputBackendCursor]
+    unfold Tell.Insts.RusthammerParser_traitsEvalInputBackendCursor.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
@@ -294,12 +304,12 @@ theorem Shared0P.Insts.RusthammerParser.parse_with_eq {P : Type} {Clause0_Output
   ParserInst.parse_with self input cursor context) := by
   conv_lhs =>
     unfold Shared0P.Insts.RusthammerParser.parse_with DirectParser.parse_with
-    dsimp only [Shared0P.Insts.RusthammerParser, Shared0P.Insts.RusthammerEval]
-    unfold Shared0P.Insts.RusthammerEval.eval
+    dsimp only [Shared0P.Insts.RusthammerParser, Shared0P.Insts.RusthammerParser_traitsEval]
+    unfold Shared0P.Insts.RusthammerParser_traitsEval.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem WithOrder.Insts.RusthammerParser.parse_with_eq {P : Type} {Clause0_Output : Type} (ParserInst : DirectParser P Clause0_Output)
+theorem grammar.order.WithOrder.Insts.RusthammerParser.parse_with_eq {P : Type} {Clause0_Output : Type} (ParserInst : DirectParser P Clause0_Output)
   (self : WithOrder P) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
   WithOrder.Insts.RusthammerParser.parse_with ParserInst self input cursor context = (do
@@ -326,12 +336,12 @@ theorem WithOrder.Insts.RusthammerParser.parse_with_eq {P : Type} {Clause0_Outpu
     finish_order_scope i changed result) := by
   conv_lhs =>
     unfold WithOrder.Insts.RusthammerParser.parse_with DirectParser.parse_with
-    dsimp only [WithOrder.Insts.RusthammerParser, WithOrder.Insts.RusthammerEval]
-    unfold WithOrder.Insts.RusthammerEval.eval
+    dsimp only [WithOrder.Insts.RusthammerParser, WithOrder.Insts.RusthammerParser_traitsEval]
+    unfold WithOrder.Insts.RusthammerParser_traitsEval.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem SignedBits.Insts.RusthammerParserInputI64.parse_with_eq (self : SignedBits) (input : Slice Std.U8) (cursor : Cursor)
+theorem grammar.numeric.SignedBits.Insts.RusthammerParserInputI64.parse_with_eq (self : SignedBits) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
   SignedBits.Insts.RusthammerParserInputI64.parse_with self input cursor context = (do
   let po ←
@@ -345,14 +355,14 @@ theorem SignedBits.Insts.RusthammerParserInputI64.parse_with_eq (self : SignedBi
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
     unfold SignedBits.Insts.RusthammerParserInputI64.parse_with DirectParser.parse_with
-    dsimp only [SignedBits.Insts.RusthammerParserInputI64, SignedBits.Insts.RusthammerEvalInputBackendI64]
-    unfold SignedBits.Insts.RusthammerEvalInputBackendI64.eval
+    dsimp only [SignedBits.Insts.RusthammerParserInputI64, SignedBits.Insts.RusthammerParser_traitsEvalInputBackendI64]
+    unfold SignedBits.Insts.RusthammerParser_traitsEvalInputBackendI64.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem Byte.Insts.RusthammerParserInputU8.parse_with_eq (self : Byte) (input : Slice Std.U8) (cursor : Cursor)
+theorem grammar.numeric.Byte.Insts.RusthammerParserInputU8.parse_with_eq (self : Code.grammar.numeric.Byte) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
-  Byte.Insts.RusthammerParserInputU8.parse_with self input cursor context = (do
+  Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8.parse_with self input cursor context = (do
   let po ←
     Bits.Insts.RusthammerParserInputU64.parse_with { width := 8#u8 } input
       cursor context
@@ -363,13 +373,13 @@ theorem Byte.Insts.RusthammerParserInputU8.parse_with_eq (self : Byte) (input : 
   | ParseOutcome.Error error => ok (ParseOutcome.Error error)
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
-    unfold Byte.Insts.RusthammerParserInputU8.parse_with DirectParser.parse_with
-    dsimp only [Byte.Insts.RusthammerParserInputU8, Byte.Insts.RusthammerEvalInputBackendU8]
-    unfold Byte.Insts.RusthammerEvalInputBackendU8.eval
+    unfold Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8.parse_with DirectParser.parse_with
+    dsimp only [Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8, Code.grammar.numeric.Byte.Insts.RusthammerParser_traitsEvalInputBackendU8]
+    unfold Code.grammar.numeric.Byte.Insts.RusthammerParser_traitsEvalInputBackendU8.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem BeU16.Insts.RusthammerParserInputU16.parse_with_eq (self : BeU16) (input : Slice Std.U8) (cursor : Cursor)
+theorem grammar.numeric.BeU16.Insts.RusthammerParserInputU16.parse_with_eq (self : BeU16) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
   BeU16.Insts.RusthammerParserInputU16.parse_with self input cursor context = (do
   let po ←
@@ -384,12 +394,12 @@ theorem BeU16.Insts.RusthammerParserInputU16.parse_with_eq (self : BeU16) (input
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
     unfold BeU16.Insts.RusthammerParserInputU16.parse_with DirectParser.parse_with
-    dsimp only [BeU16.Insts.RusthammerParserInputU16, BeU16.Insts.RusthammerEvalInputBackendU16]
-    unfold BeU16.Insts.RusthammerEvalInputBackendU16.eval
+    dsimp only [BeU16.Insts.RusthammerParserInputU16, BeU16.Insts.RusthammerParser_traitsEvalInputBackendU16]
+    unfold BeU16.Insts.RusthammerParser_traitsEvalInputBackendU16.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem BeU32.Insts.RusthammerParserInputU32.parse_with_eq (self : BeU32) (input : Slice Std.U8) (cursor : Cursor)
+theorem grammar.numeric.BeU32.Insts.RusthammerParserInputU32.parse_with_eq (self : BeU32) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
   BeU32.Insts.RusthammerParserInputU32.parse_with self input cursor context = (do
   let po ←
@@ -404,12 +414,12 @@ theorem BeU32.Insts.RusthammerParserInputU32.parse_with_eq (self : BeU32) (input
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
     unfold BeU32.Insts.RusthammerParserInputU32.parse_with DirectParser.parse_with
-    dsimp only [BeU32.Insts.RusthammerParserInputU32, BeU32.Insts.RusthammerEvalInputBackendU32]
-    unfold BeU32.Insts.RusthammerEvalInputBackendU32.eval
+    dsimp only [BeU32.Insts.RusthammerParserInputU32, BeU32.Insts.RusthammerParser_traitsEvalInputBackendU32]
+    unfold BeU32.Insts.RusthammerParser_traitsEvalInputBackendU32.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem BeU64.Insts.RusthammerParserInputU64.parse_with_eq (self : BeU64) (input : Slice Std.U8) (cursor : Cursor)
+theorem grammar.numeric.BeU64.Insts.RusthammerParserInputU64.parse_with_eq (self : BeU64) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
   BeU64.Insts.RusthammerParserInputU64.parse_with self input cursor context = (do
   let po ←
@@ -422,13 +432,13 @@ theorem BeU64.Insts.RusthammerParserInputU64.parse_with_eq (self : BeU64) (input
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
     unfold BeU64.Insts.RusthammerParserInputU64.parse_with DirectParser.parse_with
-    dsimp only [BeU64.Insts.RusthammerParserInputU64, BeU64.Insts.RusthammerEvalInputBackendU64]
-    unfold BeU64.Insts.RusthammerEvalInputBackendU64.eval
+    dsimp only [BeU64.Insts.RusthammerParserInputU64, BeU64.Insts.RusthammerParser_traitsEvalInputBackendU64]
+    unfold BeU64.Insts.RusthammerParser_traitsEvalInputBackendU64.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem I8.Insts.RusthammerParserInputI8.parse_with_eq (self : I8) (input : Slice Std.U8) (cursor : Cursor) (context : ParseContext) :
-  I8.Insts.RusthammerParserInputI8.parse_with self input cursor context = (do
+theorem grammar.numeric.I8.Insts.RusthammerParserInputI8.parse_with_eq (self : Code.grammar.numeric.I8) (input : Slice Std.U8) (cursor : Cursor) (context : ParseContext) :
+  Code.grammar.numeric.I8.Insts.RusthammerParserInputI8.parse_with self input cursor context = (do
   let po ←
     SignedBits.Insts.RusthammerParserInputI64.parse_with
       { bits := { width := 8#u8 } } input cursor context
@@ -439,13 +449,13 @@ theorem I8.Insts.RusthammerParserInputI8.parse_with_eq (self : I8) (input : Slic
   | ParseOutcome.Error error => ok (ParseOutcome.Error error)
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
-    unfold I8.Insts.RusthammerParserInputI8.parse_with DirectParser.parse_with
-    dsimp only [I8.Insts.RusthammerParserInputI8, I8.Insts.RusthammerEvalInputBackendI8]
-    unfold I8.Insts.RusthammerEvalInputBackendI8.eval
+    unfold Code.grammar.numeric.I8.Insts.RusthammerParserInputI8.parse_with DirectParser.parse_with
+    dsimp only [Code.grammar.numeric.I8.Insts.RusthammerParserInputI8, Code.grammar.numeric.I8.Insts.RusthammerParser_traitsEvalInputBackendI8]
+    unfold Code.grammar.numeric.I8.Insts.RusthammerParser_traitsEvalInputBackendI8.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem BeI16.Insts.RusthammerParserInputI16.parse_with_eq (self : BeI16) (input : Slice Std.U8) (cursor : Cursor)
+theorem grammar.numeric.BeI16.Insts.RusthammerParserInputI16.parse_with_eq (self : BeI16) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
   BeI16.Insts.RusthammerParserInputI16.parse_with self input cursor context = (do
   let po ←
@@ -460,12 +470,12 @@ theorem BeI16.Insts.RusthammerParserInputI16.parse_with_eq (self : BeI16) (input
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
     unfold BeI16.Insts.RusthammerParserInputI16.parse_with DirectParser.parse_with
-    dsimp only [BeI16.Insts.RusthammerParserInputI16, BeI16.Insts.RusthammerEvalInputBackendI16]
-    unfold BeI16.Insts.RusthammerEvalInputBackendI16.eval
+    dsimp only [BeI16.Insts.RusthammerParserInputI16, BeI16.Insts.RusthammerParser_traitsEvalInputBackendI16]
+    unfold BeI16.Insts.RusthammerParser_traitsEvalInputBackendI16.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem BeI32.Insts.RusthammerParserInputI32.parse_with_eq (self : BeI32) (input : Slice Std.U8) (cursor : Cursor)
+theorem grammar.numeric.BeI32.Insts.RusthammerParserInputI32.parse_with_eq (self : BeI32) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
   BeI32.Insts.RusthammerParserInputI32.parse_with self input cursor context = (do
   let po ←
@@ -480,12 +490,12 @@ theorem BeI32.Insts.RusthammerParserInputI32.parse_with_eq (self : BeI32) (input
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
     unfold BeI32.Insts.RusthammerParserInputI32.parse_with DirectParser.parse_with
-    dsimp only [BeI32.Insts.RusthammerParserInputI32, BeI32.Insts.RusthammerEvalInputBackendI32]
-    unfold BeI32.Insts.RusthammerEvalInputBackendI32.eval
+    dsimp only [BeI32.Insts.RusthammerParserInputI32, BeI32.Insts.RusthammerParser_traitsEvalInputBackendI32]
+    unfold BeI32.Insts.RusthammerParser_traitsEvalInputBackendI32.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem BeI64.Insts.RusthammerParserInputI64.parse_with_eq (self : BeI64) (input : Slice Std.U8) (cursor : Cursor)
+theorem grammar.numeric.BeI64.Insts.RusthammerParserInputI64.parse_with_eq (self : BeI64) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
   BeI64.Insts.RusthammerParserInputI64.parse_with self input cursor context = (do
   let po ←
@@ -498,38 +508,38 @@ theorem BeI64.Insts.RusthammerParserInputI64.parse_with_eq (self : BeI64) (input
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
     unfold BeI64.Insts.RusthammerParserInputI64.parse_with DirectParser.parse_with
-    dsimp only [BeI64.Insts.RusthammerParserInputI64, BeI64.Insts.RusthammerEvalInputBackendI64]
-    unfold BeI64.Insts.RusthammerEvalInputBackendI64.eval
+    dsimp only [BeI64.Insts.RusthammerParserInputI64, BeI64.Insts.RusthammerParser_traitsEvalInputBackendI64]
+    unfold BeI64.Insts.RusthammerParser_traitsEvalInputBackendI64.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem ByteIn.Insts.RusthammerParserInputU8.parse_with_eq (self : ByteIn) (input : Slice Std.U8) (cursor : Cursor)
+theorem grammar.bytes.ByteIn.Insts.RusthammerParserInputU8.parse_with_eq (self : ByteIn) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
   ByteIn.Insts.RusthammerParserInputU8.parse_with self input cursor context = (do
-  Verify.Insts.RusthammerParser.parse_with Byte.Insts.RusthammerParserInputU8
+  Verify.Insts.RusthammerParser.parse_with Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8
     ParserInputByteInU8.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool
     { parser := (), predicate := self } input cursor context) := by
   conv_lhs =>
     unfold ByteIn.Insts.RusthammerParserInputU8.parse_with DirectParser.parse_with
-    dsimp only [ByteIn.Insts.RusthammerParserInputU8, ByteIn.Insts.RusthammerEvalInputBackendU8]
-    unfold ByteIn.Insts.RusthammerEvalInputBackendU8.eval
+    dsimp only [ByteIn.Insts.RusthammerParserInputU8, ByteIn.Insts.RusthammerParser_traitsEvalInputBackendU8]
+    unfold ByteIn.Insts.RusthammerParser_traitsEvalInputBackendU8.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem ByteNotIn.Insts.RusthammerParserInputU8.parse_with_eq (self : ByteNotIn) (input : Slice Std.U8) (cursor : Cursor)
+theorem grammar.bytes.ByteNotIn.Insts.RusthammerParserInputU8.parse_with_eq (self : ByteNotIn) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
   ByteNotIn.Insts.RusthammerParserInputU8.parse_with self input cursor context = (do
-  Verify.Insts.RusthammerParser.parse_with Byte.Insts.RusthammerParserInputU8
+  Verify.Insts.RusthammerParser.parse_with Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8
     ParserInputByteNotInU8.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool
     { parser := (), predicate := self } input cursor context) := by
   conv_lhs =>
     unfold ByteNotIn.Insts.RusthammerParserInputU8.parse_with DirectParser.parse_with
-    dsimp only [ByteNotIn.Insts.RusthammerParserInputU8, ByteNotIn.Insts.RusthammerEvalInputBackendU8]
-    unfold ByteNotIn.Insts.RusthammerEvalInputBackendU8.eval
+    dsimp only [ByteNotIn.Insts.RusthammerParserInputU8, ByteNotIn.Insts.RusthammerParser_traitsEvalInputBackendU8]
+    unfold ByteNotIn.Insts.RusthammerParser_traitsEvalInputBackendU8.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem BytePattern.Insts.RusthammerParserInputSharedPatternSliceU8.parse_with_eq (self : BytePattern) (input : Slice Std.U8) (cursor : Cursor)
+theorem grammar.bytes.BytePattern.Insts.RusthammerParserInputSharedPatternSliceU8.parse_with_eq (self : BytePattern) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
   BytePattern.Insts.RusthammerParserInputSharedPatternSliceU8.parse_with self input cursor context = (do
   let po ← DirectRun.match_byte_pattern self.pattern input cursor context
@@ -539,33 +549,33 @@ theorem BytePattern.Insts.RusthammerParserInputSharedPatternSliceU8.parse_with_e
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
     unfold BytePattern.Insts.RusthammerParserInputSharedPatternSliceU8.parse_with DirectParser.parse_with
-    dsimp only [BytePattern.Insts.RusthammerParserInputSharedPatternSliceU8, BytePattern.Insts.RusthammerEvalInputBackendSharedSliceU8]
-    unfold BytePattern.Insts.RusthammerEvalInputBackendSharedSliceU8.eval
+    dsimp only [BytePattern.Insts.RusthammerParserInputSharedPatternSliceU8, BytePattern.Insts.RusthammerParser_traitsEvalInputBackendSharedSliceU8]
+    unfold BytePattern.Insts.RusthammerParser_traitsEvalInputBackendSharedSliceU8.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem Epsilon.Insts.RusthammerParserInputTuple.parse_with_eq (self : Epsilon) (s : Slice Std.U8) (cursor : Cursor) (pc : ParseContext) :
+theorem grammar.control.Epsilon.Insts.RusthammerParserInputTuple.parse_with_eq (self : Epsilon) (s : Slice Std.U8) (cursor : Cursor) (pc : ParseContext) :
   Epsilon.Insts.RusthammerParserInputTuple.parse_with self s cursor pc = (do
   ok (ParseOutcome.Success cursor ())) := by
   conv_lhs =>
     unfold Epsilon.Insts.RusthammerParserInputTuple.parse_with DirectParser.parse_with
-    dsimp only [Epsilon.Insts.RusthammerParserInputTuple, Epsilon.Insts.RusthammerEvalInputBackendTuple]
-    unfold Epsilon.Insts.RusthammerEvalInputBackendTuple.eval
+    dsimp only [Epsilon.Insts.RusthammerParserInputTuple, Epsilon.Insts.RusthammerParser_traitsEvalInputBackendTuple]
+    unfold Epsilon.Insts.RusthammerParser_traitsEvalInputBackendTuple.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem Fail.Insts.RusthammerParser.parse_with_eq {T : Type} (self : Fail T) (s : Slice Std.U8) (c : Cursor)
+theorem grammar.control.Fail.Insts.RusthammerParser.parse_with_eq {T : Type} (self : Fail T) (s : Slice Std.U8) (c : Cursor)
   (pc : ParseContext) :
   Fail.Insts.RusthammerParser.parse_with self s c pc = (do
   ok (ParseOutcome.Error ParseError.Mismatch)) := by
   conv_lhs =>
     unfold Fail.Insts.RusthammerParser.parse_with DirectParser.parse_with
-    dsimp only [Fail.Insts.RusthammerParser, Fail.Insts.RusthammerEval]
-    unfold Fail.Insts.RusthammerEval.eval
+    dsimp only [Fail.Insts.RusthammerParser, Fail.Insts.RusthammerParser_traitsEval]
+    unfold Fail.Insts.RusthammerParser_traitsEval.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem Bind.Insts.RusthammerParser.parse_with_eq {P : Type} {F : Type} {Q : Type} {Clause0_Output : Type} {Clause2_Output :
+theorem grammar.sequence.Bind.Insts.RusthammerParser.parse_with_eq {P : Type} {F : Type} {Q : Type} {Clause0_Output : Type} {Clause2_Output :
   Type} (ParserInst : DirectParser P Clause0_Output)
   (coreopsfunctionFnFTupleClause0_OutputQInst : core.ops.function.Fn F
   Clause0_Output Q) (ParserInst1 : DirectParser Q Clause2_Output) (self : Bind P F)
@@ -580,12 +590,12 @@ theorem Bind.Insts.RusthammerParser.parse_with_eq {P : Type} {F : Type} {Q : Typ
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
     unfold Bind.Insts.RusthammerParser.parse_with DirectParser.parse_with
-    dsimp only [Bind.Insts.RusthammerParser, Bind.Insts.RusthammerEval]
-    unfold Bind.Insts.RusthammerEval.eval
+    dsimp only [Bind.Insts.RusthammerParser, Bind.Insts.RusthammerParser_traitsEval]
+    unfold Bind.Insts.RusthammerParser_traitsEval.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem Left.Insts.RusthammerParser.parse_with_eq {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+theorem grammar.sequence.Left.Insts.RusthammerParser.parse_with_eq {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
   (ParserInst : DirectParser P Clause0_Output) (ParserInst1 : DirectParser Q
   Clause1_Output) (self : Left P Q) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
@@ -603,12 +613,12 @@ theorem Left.Insts.RusthammerParser.parse_with_eq {P : Type} {Q : Type} {Clause0
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
     unfold Left.Insts.RusthammerParser.parse_with DirectParser.parse_with
-    dsimp only [Left.Insts.RusthammerParser, Left.Insts.RusthammerEval]
-    unfold Left.Insts.RusthammerEval.eval
+    dsimp only [Left.Insts.RusthammerParser, Left.Insts.RusthammerParser_traitsEval]
+    unfold Left.Insts.RusthammerParser_traitsEval.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem Right.Insts.RusthammerParser.parse_with_eq {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+theorem grammar.sequence.Right.Insts.RusthammerParser.parse_with_eq {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
   (ParserInst : DirectParser P Clause0_Output) (ParserInst1 : DirectParser Q
   Clause1_Output) (self : Right P Q) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
@@ -626,12 +636,12 @@ theorem Right.Insts.RusthammerParser.parse_with_eq {P : Type} {Q : Type} {Clause
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
     unfold Right.Insts.RusthammerParser.parse_with DirectParser.parse_with
-    dsimp only [Right.Insts.RusthammerParser, Right.Insts.RusthammerEval]
-    unfold Right.Insts.RusthammerEval.eval
+    dsimp only [Right.Insts.RusthammerParser, Right.Insts.RusthammerParser_traitsEval]
+    unfold Right.Insts.RusthammerParser_traitsEval.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem Middle.Insts.RusthammerParser.parse_with_eq {L : Type} {P : Type} {R : Type} {Clause0_Output : Type} {Clause1_Output :
+theorem grammar.sequence.Middle.Insts.RusthammerParser.parse_with_eq {L : Type} {P : Type} {R : Type} {Clause0_Output : Type} {Clause1_Output :
   Type} {Clause2_Output : Type} (ParserInst : DirectParser L Clause0_Output)
   (ParserInst1 : DirectParser P Clause1_Output) (ParserInst2 : DirectParser R
   Clause2_Output) (self : Middle L P R) (input : Slice Std.U8)
@@ -654,12 +664,12 @@ theorem Middle.Insts.RusthammerParser.parse_with_eq {L : Type} {P : Type} {R : T
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
     unfold Middle.Insts.RusthammerParser.parse_with DirectParser.parse_with
-    dsimp only [Middle.Insts.RusthammerParser, Middle.Insts.RusthammerEval]
-    unfold Middle.Insts.RusthammerEval.eval
+    dsimp only [Middle.Insts.RusthammerParser, Middle.Insts.RusthammerParser_traitsEval]
+    unfold Middle.Insts.RusthammerParser_traitsEval.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem Ignore.Insts.RusthammerParserInputTuple.parse_with_eq {P : Type} {Clause0_Output : Type} (ParserInst : DirectParser P Clause0_Output)
+theorem grammar.sequence.Ignore.Insts.RusthammerParserInputTuple.parse_with_eq {P : Type} {Clause0_Output : Type} (ParserInst : DirectParser P Clause0_Output)
   (self : Ignore P) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
   Ignore.Insts.RusthammerParserInputTuple.parse_with ParserInst self input cursor context = (do
@@ -670,28 +680,28 @@ theorem Ignore.Insts.RusthammerParserInputTuple.parse_with_eq {P : Type} {Clause
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
     unfold Ignore.Insts.RusthammerParserInputTuple.parse_with DirectParser.parse_with
-    dsimp only [Ignore.Insts.RusthammerParserInputTuple, Ignore.Insts.RusthammerEvalInputBackendTuple]
-    unfold Ignore.Insts.RusthammerEvalInputBackendTuple.eval
+    dsimp only [Ignore.Insts.RusthammerParserInputTuple, Ignore.Insts.RusthammerParser_traitsEvalInputBackendTuple]
+    unfold Ignore.Insts.RusthammerParser_traitsEvalInputBackendTuple.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem FoldRepeat.Insts.RusthammerParser.parse_with_eq {P : Type} {I : Type} {F : Type} {R : Type} {Clause0_Output : Type}
+theorem grammar.repeat.FoldRepeat.Insts.RusthammerParser.parse_with_eq {P : Type} {I : Type} {F : Type} {R : Type} {Clause0_Output : Type}
   (ParserInst : DirectParser P Clause0_Output) (coreopsfunctionFnITupleRInst :
   core.ops.function.Fn I Unit R) (coreopsfunctionFnFPairRInst :
   core.ops.function.Fn F (R × Clause0_Output) R) (self : FoldRepeat P I F)
   (input : Slice Std.U8) (cursor : Cursor) (context : ParseContext) :
   FoldRepeat.Insts.RusthammerParser.parse_with ParserInst coreopsfunctionFnITupleRInst coreopsfunctionFnFPairRInst self input cursor context = (do
-  DirectRun.repeat_run ParserInst (FoldRepeat.Insts.RusthammerRepeatAccumulator P
+  DirectRun.repeat_run ParserInst (FoldRepeat.Insts.RusthammerGrammarRepeatRepeatAccumulator P
     coreopsfunctionFnITupleRInst coreopsfunctionFnFPairRInst) self.parser
     self.bounds self input cursor context) := by
   conv_lhs =>
     unfold FoldRepeat.Insts.RusthammerParser.parse_with DirectParser.parse_with
-    dsimp only [FoldRepeat.Insts.RusthammerParser, FoldRepeat.Insts.RusthammerEval]
-    unfold FoldRepeat.Insts.RusthammerEval.eval
+    dsimp only [FoldRepeat.Insts.RusthammerParser, FoldRepeat.Insts.RusthammerParser_traitsEval]
+    unfold FoldRepeat.Insts.RusthammerParser_traitsEval.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem SepBy.Insts.RusthammerParserInputVec.parse_with_eq {P : Type} {S : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+theorem grammar.repeat.SepBy.Insts.RusthammerParserInputVec.parse_with_eq {P : Type} {S : Type} {Clause0_Output : Type} {Clause1_Output : Type}
   (ParserInst : DirectParser P Clause0_Output) (ParserInst1 : DirectParser S
   Clause1_Output) (self : SepBy P S) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
@@ -699,17 +709,17 @@ theorem SepBy.Insts.RusthammerParserInputVec.parse_with_eq {P : Type} {S : Type}
   DirectRun.repeat_run_with ParserInst (Right.Insts.RusthammerParser
     (Shared0P.Insts.RusthammerParser ParserInst1)
     (Shared0P.Insts.RusthammerParser ParserInst))
-    (Collect.Insts.RusthammerRepeatAccumulatorAVec Clause0_Output) self.parser
+    (Collect.Insts.RusthammerGrammarRepeatRepeatAccumulatorAVec Clause0_Output) self.parser
     { first := self.separator, second := self.parser } self.bounds () input
     cursor context) := by
   conv_lhs =>
     unfold SepBy.Insts.RusthammerParserInputVec.parse_with DirectParser.parse_with
-    dsimp only [SepBy.Insts.RusthammerParserInputVec, SepBy.Insts.RusthammerEvalInputBackendVec]
-    unfold SepBy.Insts.RusthammerEvalInputBackendVec.eval
+    dsimp only [SepBy.Insts.RusthammerParserInputVec, SepBy.Insts.RusthammerParser_traitsEvalInputBackendVec]
+    unfold SepBy.Insts.RusthammerParser_traitsEvalInputBackendVec.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem FoldSepBy.Insts.RusthammerParser.parse_with_eq {P : Type} {S : Type} {I : Type} {F : Type} {R : Type} {Clause0_Output :
+theorem grammar.repeat.FoldSepBy.Insts.RusthammerParser.parse_with_eq {P : Type} {S : Type} {I : Type} {F : Type} {R : Type} {Clause0_Output :
   Type} {Clause1_Output : Type} (ParserInst : DirectParser P Clause0_Output)
   (ParserInst1 : DirectParser S Clause1_Output) (coreopsfunctionFnITupleRInst :
   core.ops.function.Fn I Unit R) (coreopsfunctionFnFPairRInst :
@@ -719,18 +729,18 @@ theorem FoldSepBy.Insts.RusthammerParser.parse_with_eq {P : Type} {S : Type} {I 
   DirectRun.repeat_run_with ParserInst (Right.Insts.RusthammerParser
     (Shared0P.Insts.RusthammerParser ParserInst1)
     (Shared0P.Insts.RusthammerParser ParserInst))
-    (FoldSepBy.Insts.RusthammerRepeatAccumulator P S
+    (FoldSepBy.Insts.RusthammerGrammarRepeatRepeatAccumulator P S
     coreopsfunctionFnITupleRInst coreopsfunctionFnFPairRInst) self.parser
     { first := self.separator, second := self.parser } self.bounds self input
     cursor context) := by
   conv_lhs =>
     unfold FoldSepBy.Insts.RusthammerParser.parse_with DirectParser.parse_with
-    dsimp only [FoldSepBy.Insts.RusthammerParser, FoldSepBy.Insts.RusthammerEval]
-    unfold FoldSepBy.Insts.RusthammerEval.eval
+    dsimp only [FoldSepBy.Insts.RusthammerParser, FoldSepBy.Insts.RusthammerParser_traitsEval]
+    unfold FoldSepBy.Insts.RusthammerParser_traitsEval.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem TryMap.Insts.RusthammerParser.parse_with_eq {P : Type} {F : Type} {O : Type} {E : Type} {Clause0_Output : Type}
+theorem grammar.transform.TryMap.Insts.RusthammerParser.parse_with_eq {P : Type} {F : Type} {O : Type} {E : Type} {Clause0_Output : Type}
   (ParserInst : DirectParser P Clause0_Output)
   (coreopsfunctionFnFTupleClause0_OutputResultInst : core.ops.function.Fn F
   Clause0_Output (core.result.Result O E)) (self : TryMap P F)
@@ -748,12 +758,12 @@ theorem TryMap.Insts.RusthammerParser.parse_with_eq {P : Type} {F : Type} {O : T
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
     unfold TryMap.Insts.RusthammerParser.parse_with DirectParser.parse_with
-    dsimp only [TryMap.Insts.RusthammerParser, TryMap.Insts.RusthammerEval]
-    unfold TryMap.Insts.RusthammerEval.eval
+    dsimp only [TryMap.Insts.RusthammerParser, TryMap.Insts.RusthammerParser_traitsEval]
+    unfold TryMap.Insts.RusthammerParser_traitsEval.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem Verify.Insts.RusthammerParser.parse_with_eq {P : Type} {F : Type} {Clause0_Output : Type} (ParserInst : DirectParser P
+theorem grammar.transform.Verify.Insts.RusthammerParser.parse_with_eq {P : Type} {F : Type} {Clause0_Output : Type} (ParserInst : DirectParser P
   Clause0_Output) (coreopsfunctionFnFTupleSharedInputClause0_OutputBoolInst :
   core.ops.function.Fn F Clause0_Output Bool) (self : Verify P F)
   (input : Slice Std.U8) (cursor : Cursor) (context : ParseContext) :
@@ -771,12 +781,12 @@ theorem Verify.Insts.RusthammerParser.parse_with_eq {P : Type} {F : Type} {Claus
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
     unfold Verify.Insts.RusthammerParser.parse_with DirectParser.parse_with
-    dsimp only [Verify.Insts.RusthammerParser, Verify.Insts.RusthammerEval]
-    unfold Verify.Insts.RusthammerEval.eval
+    dsimp only [Verify.Insts.RusthammerParser, Verify.Insts.RusthammerParser_traitsEval]
+    unfold Verify.Insts.RusthammerParser_traitsEval.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem IntRange.Insts.RusthammerParser.parse_with_eq {P : Type} {T : Type} (ParserInst : DirectParser P T) (corecmpOrdInst :
+theorem grammar.transform.IntRange.Insts.RusthammerParser.parse_with_eq {P : Type} {T : Type} (ParserInst : DirectParser P T) (corecmpOrdInst :
   core.cmp.Ord T) (self : IntRange P T) (input : Slice Std.U8)
   (cursor : Cursor) (context : ParseContext) :
   IntRange.Insts.RusthammerParser.parse_with ParserInst corecmpOrdInst self input cursor context = (do
@@ -787,12 +797,12 @@ theorem IntRange.Insts.RusthammerParser.parse_with_eq {P : Type} {T : Type} (Par
     input cursor context) := by
   conv_lhs =>
     unfold IntRange.Insts.RusthammerParser.parse_with DirectParser.parse_with
-    dsimp only [IntRange.Insts.RusthammerParser, IntRange.Insts.RusthammerEval]
-    unfold IntRange.Insts.RusthammerEval.eval
+    dsimp only [IntRange.Insts.RusthammerParser, IntRange.Insts.RusthammerParser_traitsEval]
+    unfold IntRange.Insts.RusthammerParser_traitsEval.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem ButNot.Insts.RusthammerParser.parse_with_eq {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+theorem grammar.control.ButNot.Insts.RusthammerParser.parse_with_eq {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
   (ParserInst : DirectParser P Clause0_Output) (ParserInst1 : DirectParser Q
   Clause1_Output) (self : ButNot P Q) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
@@ -801,12 +811,12 @@ theorem ButNot.Insts.RusthammerParser.parse_with_eq {P : Type} {Q : Type} {Claus
     context false) := by
   conv_lhs =>
     unfold ButNot.Insts.RusthammerParser.parse_with DirectParser.parse_with
-    dsimp only [ButNot.Insts.RusthammerParser, ButNot.Insts.RusthammerEval]
-    unfold ButNot.Insts.RusthammerEval.eval
+    dsimp only [ButNot.Insts.RusthammerParser, ButNot.Insts.RusthammerParser_traitsEval]
+    unfold ButNot.Insts.RusthammerParser_traitsEval.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem Difference.Insts.RusthammerParser.parse_with_eq {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+theorem grammar.control.Difference.Insts.RusthammerParser.parse_with_eq {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
   (ParserInst : DirectParser P Clause0_Output) (ParserInst1 : DirectParser Q
   Clause1_Output) (self : Difference P Q) (input : Slice Std.U8)
   (cursor : Cursor) (context : ParseContext) :
@@ -815,12 +825,12 @@ theorem Difference.Insts.RusthammerParser.parse_with_eq {P : Type} {Q : Type} {C
     context true) := by
   conv_lhs =>
     unfold Difference.Insts.RusthammerParser.parse_with DirectParser.parse_with
-    dsimp only [Difference.Insts.RusthammerParser, Difference.Insts.RusthammerEval]
-    unfold Difference.Insts.RusthammerEval.eval
+    dsimp only [Difference.Insts.RusthammerParser, Difference.Insts.RusthammerParser_traitsEval]
+    unfold Difference.Insts.RusthammerParser_traitsEval.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem Xor.Insts.RusthammerParser.parse_with_eq {P : Type} {Q : Type} {Clause0_Output : Type} (ParserInst : DirectParser P
+theorem grammar.control.Xor.Insts.RusthammerParser.parse_with_eq {P : Type} {Q : Type} {Clause0_Output : Type} (ParserInst : DirectParser P
   Clause0_Output) (ParserInst1 : DirectParser Q Clause0_Output) (self : Xor P Q)
   (input : Slice Std.U8) (cursor : Cursor) (context : ParseContext) :
   Xor.Insts.RusthammerParser.parse_with ParserInst ParserInst1 self input cursor context = (do
@@ -844,12 +854,12 @@ theorem Xor.Insts.RusthammerParser.parse_with_eq {P : Type} {Q : Type} {Clause0_
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
     unfold Xor.Insts.RusthammerParser.parse_with DirectParser.parse_with
-    dsimp only [Xor.Insts.RusthammerParser, Xor.Insts.RusthammerEval]
-    unfold Xor.Insts.RusthammerEval.eval
+    dsimp only [Xor.Insts.RusthammerParser, Xor.Insts.RusthammerParser_traitsEval]
+    unfold Xor.Insts.RusthammerParser_traitsEval.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem Optional.Insts.RusthammerParserInputOption.parse_with_eq {P : Type} {Clause0_Output : Type} (ParserInst : DirectParser P Clause0_Output)
+theorem grammar.control.Optional.Insts.RusthammerParserInputOption.parse_with_eq {P : Type} {Clause0_Output : Type} (ParserInst : DirectParser P Clause0_Output)
   (self : Optional P) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
   Optional.Insts.RusthammerParserInputOption.parse_with ParserInst self input cursor context = (do
@@ -865,12 +875,12 @@ theorem Optional.Insts.RusthammerParserInputOption.parse_with_eq {P : Type} {Cla
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
     unfold Optional.Insts.RusthammerParserInputOption.parse_with DirectParser.parse_with
-    dsimp only [Optional.Insts.RusthammerParserInputOption, Optional.Insts.RusthammerEvalInputBackendOption]
-    unfold Optional.Insts.RusthammerEvalInputBackendOption.eval
+    dsimp only [Optional.Insts.RusthammerParserInputOption, Optional.Insts.RusthammerParser_traitsEvalInputBackendOption]
+    unfold Optional.Insts.RusthammerParser_traitsEvalInputBackendOption.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem And.Insts.RusthammerParserInputTuple.parse_with_eq {P : Type} {Clause0_Output : Type} (ParserInst : DirectParser P Clause0_Output)
+theorem grammar.control.And.Insts.RusthammerParserInputTuple.parse_with_eq {P : Type} {Clause0_Output : Type} (ParserInst : DirectParser P Clause0_Output)
   (self : And P) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
   And.Insts.RusthammerParserInputTuple.parse_with ParserInst self input cursor context = (do
@@ -881,12 +891,12 @@ theorem And.Insts.RusthammerParserInputTuple.parse_with_eq {P : Type} {Clause0_O
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
     unfold And.Insts.RusthammerParserInputTuple.parse_with DirectParser.parse_with
-    dsimp only [And.Insts.RusthammerParserInputTuple, And.Insts.RusthammerEvalInputBackendTuple]
-    unfold And.Insts.RusthammerEvalInputBackendTuple.eval
+    dsimp only [And.Insts.RusthammerParserInputTuple, And.Insts.RusthammerParser_traitsEvalInputBackendTuple]
+    unfold And.Insts.RusthammerParser_traitsEvalInputBackendTuple.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
-theorem Not.Insts.RusthammerParserInputTuple.parse_with_eq {P : Type} {Clause0_Output : Type} (ParserInst : DirectParser P Clause0_Output)
+theorem grammar.control.Not.Insts.RusthammerParserInputTuple.parse_with_eq {P : Type} {Clause0_Output : Type} (ParserInst : DirectParser P Clause0_Output)
   (self : Not P) (input : Slice Std.U8) (cursor : Cursor)
   (context : ParseContext) :
   Not.Insts.RusthammerParserInputTuple.parse_with ParserInst self input cursor context = (do
@@ -901,8 +911,8 @@ theorem Not.Insts.RusthammerParserInputTuple.parse_with_eq {P : Type} {Clause0_O
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
     unfold Not.Insts.RusthammerParserInputTuple.parse_with DirectParser.parse_with
-    dsimp only [Not.Insts.RusthammerParserInputTuple, Not.Insts.RusthammerEvalInputBackendTuple]
-    unfold Not.Insts.RusthammerEvalInputBackendTuple.eval
+    dsimp only [Not.Insts.RusthammerParserInputTuple, Not.Insts.RusthammerParser_traitsEvalInputBackendTuple]
+    unfold Not.Insts.RusthammerParser_traitsEvalInputBackendTuple.eval
   try simp only [dependent_examples.count_parser, record_example.record_header, bind_ok]
   direct_equation
 
@@ -915,7 +925,7 @@ theorem DirectRun.repeat_parse_eq {P : Type} {Q : Type} {Clause0_Output : Type} 
   then ParserInst.parse_with parser input cursor context
   else ParserInst1.parse_with following input cursor context) := by
   conv_lhs =>
-    unfold DirectRun.repeat_parse RustHammer.Code.repeat_parse
+    unfold DirectRun.repeat_parse RustHammer.Code.grammar.repeat.repeat_parse
   direct_equation
 
 theorem DirectRun.repeat_run_eq {P : Type} {A : Type} {Clause0_Output : Type} {Clause1_Output : Type}
@@ -927,7 +937,7 @@ theorem DirectRun.repeat_run_eq {P : Type} {A : Type} {Clause0_Output : Type} {C
   DirectRun.repeat_run_with ParserInst ParserInst RepeatAccumulatorInst parser parser
     bounds accumulator input cursor context) := by
   conv_lhs =>
-    unfold DirectRun.repeat_run RustHammer.Code.repeat_run
+    unfold DirectRun.repeat_run RustHammer.Code.grammar.repeat.repeat_run
   direct_equation
 
 theorem DirectRun.repeat_run_with_eq {P : Type} {Q : Type} {A : Type} {Clause0_Output : Type} {Clause2_Output :
@@ -947,7 +957,7 @@ theorem DirectRun.repeat_run_with_eq {P : Type} {Q : Type} {A : Type} {Clause0_O
       values cursor 0#usize
   | core.result.Result.Err error => ok (ParseOutcome.Error error)) := by
   conv_lhs =>
-    unfold DirectRun.repeat_run_with RustHammer.Code.repeat_run_with
+    unfold DirectRun.repeat_run_with RustHammer.Code.grammar.repeat.repeat_run_with
   direct_equation
 
 theorem DirectRun.restrict_match_eq {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
@@ -974,7 +984,7 @@ theorem DirectRun.restrict_match_eq {P : Type} {Q : Type} {Clause0_Output : Type
   | ParseOutcome.Error _ => ok po
   | ParseOutcome.NeedMore => ok ParseOutcome.NeedMore) := by
   conv_lhs =>
-    unfold DirectRun.restrict_match RustHammer.Code.restrict_match
+    unfold DirectRun.restrict_match RustHammer.Code.grammar.control.restrict_match
   direct_equation
 
 theorem DirectRun.record_example.parse_record_body_eq (input : Slice Std.U8) (cursor : Cursor) (version : Std.U64)
@@ -1000,7 +1010,7 @@ theorem DirectRun.match_byte_pattern_eq (pattern : Slice Std.U8) (input : Slice 
   DirectRun.match_byte_pattern pattern input cursor context = (do
   DirectRun.match_byte_pattern_loop pattern input context cursor 0#usize) := by
   conv_lhs =>
-    unfold DirectRun.match_byte_pattern RustHammer.Code.match_byte_pattern
+    unfold DirectRun.match_byte_pattern RustHammer.Code.grammar.bytes.match_byte_pattern
   direct_equation
 
 end RustHammer.Code

@@ -4,6 +4,11 @@ import RustHammer.IntegerProofs
 import RustHammer.PositionProofs
 import RustHammer.ByteSetProofs
 
+open RustHammer.Code.grammar.bytes
+  RustHammer.Code.grammar.numeric
+  RustHammer.Code.grammar.position
+  RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Ordering
@@ -208,10 +213,10 @@ private theorem narrow_signed_spec (ty : IScalarTy) (width : U8)
       by simp only [signedIntegerOutcome, if_neg hvalid], rfl⟩
 
 theorem byte_with_spec (input : Slice U8) (cursor : Cursor) (context : ParseContext) :
-    Byte.Insts.RusthammerParserInputU8.parse_with () input cursor context
+    Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8.parse_with () input cursor context
       ⦃ result => Partial.primitive context.status
         (unsignedIntegerOutcome .U8 input cursor context.order) result ⦄ := by
-  rw [Byte.Insts.RusthammerParserInputU8.parse_with_eq]
+  rw [Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8.parse_with_eq]
   exact narrow_unsigned_spec .U8 8#u8 input cursor context rfl (by decide)
 
 abbrev bigContext (context : ParseContext) : ParseContext :=
@@ -246,10 +251,10 @@ theorem be_i32_with_spec (input : Slice U8) (cursor : Cursor) (context : ParseCo
   exact narrow_signed_spec .I32 32#u8 input cursor (bigContext context) rfl (by decide)
 
 theorem i8_with_spec (input : Slice U8) (cursor : Cursor) (context : ParseContext) :
-    I8.Insts.RusthammerParserInputI8.parse_with () input cursor context
+    Code.grammar.numeric.I8.Insts.RusthammerParserInputI8.parse_with () input cursor context
       ⦃ result => Partial.primitive context.status
         (signedIntegerOutcome .I8 input cursor context.order) result ⦄ := by
-  rw [I8.Insts.RusthammerParserInputI8.parse_with_eq]
+  rw [Code.grammar.numeric.I8.Insts.RusthammerParserInputI8.parse_with_eq]
   exact narrow_signed_spec .I8 8#u8 input cursor context rfl (by decide)
 
 theorem be_u64_with_spec (input : Slice U8) (cursor : Cursor) (context : ParseContext) :
@@ -287,7 +292,7 @@ theorem match_byte_pattern_spec (pattern input : Slice U8) (cursor : Cursor) (co
         matchBytes input context pattern.val cursor outcome)
   · rintro ⟨⟨⟩, next, index⟩ ⟨hindex, hcont⟩
     unfold match_byte_pattern_loop.body
-    simp only [Byte.Insts.RusthammerParserInputU8.parse_with_lift, Std.bind_assoc, bind_ok]
+    simp only [Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8.parse_with_lift, Std.bind_assoc, bind_ok]
     by_cases hlt : index < pattern.len
     · have hlen : index.val < pattern.val.length := by scalar_tac
       have hdrop : pattern.val.drop index.val =
@@ -348,11 +353,11 @@ theorem byte_in_with_spec (parser : ByteIn) (input : Slice U8) (cursor : Cursor)
         (fun start => Partial.primitive context.status (unsignedIntegerOutcome .U8 input start context.order))
         (Spec.bitmapPredicate parser.set false) cursor result ⦄ := by
   rw [ByteIn.Insts.RusthammerParserInputU8.parse_with_eq]
-  apply verify_with_spec Byte.Insts.RusthammerParserInputU8
+  apply verify_with_spec Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8
     ParserInputByteInU8.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool
     { parser := (), predicate := parser } input cursor context _
     (Spec.bitmapPredicate parser.set false) (by
-      simpa only [Byte.Insts.RusthammerParserInputU8.parse_with] using
+      simpa only [Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8.parse_with] using
         byte_with_spec input cursor context)
   intro next value _
   exact byte_in_predicate_spec parser value
@@ -364,11 +369,11 @@ theorem byte_not_in_with_spec (parser : ByteNotIn) (input : Slice U8) (cursor : 
         (fun start => Partial.primitive context.status (unsignedIntegerOutcome .U8 input start context.order))
         (Spec.bitmapPredicate parser.set true) cursor result ⦄ := by
   rw [ByteNotIn.Insts.RusthammerParserInputU8.parse_with_eq]
-  apply verify_with_spec Byte.Insts.RusthammerParserInputU8
+  apply verify_with_spec Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8
     ParserInputByteNotInU8.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool
     { parser := (), predicate := parser } input cursor context _
     (Spec.bitmapPredicate parser.set true) (by
-      simpa only [Byte.Insts.RusthammerParserInputU8.parse_with] using
+      simpa only [Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8.parse_with] using
         byte_with_spec input cursor context)
   intro next value _
   exact byte_not_in_predicate_spec parser value

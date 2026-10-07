@@ -1,5 +1,8 @@
 import RustHammer.Spec
 
+open RustHammer.Code.grammar.numeric
+  RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std
 
 namespace RustHammer.Spec

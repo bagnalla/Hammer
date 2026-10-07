@@ -1,4 +1,4 @@
-use crate::{Cursor, Eval, Grammar, Optional, ParseContext, ParseError, ParseOutcome};
+use super::super::{Cursor, Eval, Grammar, Optional, ParseContext, ParseError, ParseOutcome};
 
 /// Mark a parser as a required entry in a permutation.
 ///

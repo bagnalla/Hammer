@@ -1,6 +1,9 @@
 import RustHammer.FoldRepeatSpec
 import RustHammer.RepeatDriverProofs
 
+open RustHammer.Code.grammar.repeat
+  RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Proofs
@@ -68,14 +71,14 @@ theorem fold_repeat_with_spec {P I F α R : Type} (pi : DirectParser P α)
     cases h : parser.bounds; simp_all
   rw [FoldRepeat.Insts.RusthammerParser.parse_with_eq]
   rw [hb]
-  apply repeat_run_bounded_spec pi (FoldRepeat.Insts.RusthammerRepeatAccumulator P ii fi)
+  apply repeat_run_bounded_spec pi (FoldRepeat.Insts.RusthammerGrammarRepeatRepeatAccumulator P ii fi)
     parser.parser parser.bounds.min max parser input cursor context (hconfig max hmax) child
     (Spec.folds initial fold) hp
-  · simp only [FoldRepeat.Insts.RusthammerRepeatAccumulator.init]
+  · simp only [FoldRepeat.Insts.RusthammerGrammarRepeatRepeatAccumulator.init]
     step with hi as ⟨state, hstate⟩
     exact Spec.folds.empty hstate
   · intro values next after value state hprefix hchild hlen hstate
-    simp only [FoldRepeat.Insts.RusthammerRepeatAccumulator.step]
+    simp only [FoldRepeat.Insts.RusthammerGrammarRepeatRepeatAccumulator.step]
     step with hf values next after value state hprefix hchild hlen hstate as ⟨following, hfollowing⟩
     exact Spec.folds.append hstate hfollowing
 
@@ -99,13 +102,13 @@ theorem fold_repeat_unbounded_with_spec {P I F α R : Type} (pi : DirectParser P
     cases h : parser.bounds; simp_all
   rw [FoldRepeat.Insts.RusthammerParser.parse_with_eq]
   rw [hb]
-  apply repeat_run_unbounded_spec pi (FoldRepeat.Insts.RusthammerRepeatAccumulator P ii fi)
+  apply repeat_run_unbounded_spec pi (FoldRepeat.Insts.RusthammerGrammarRepeatRepeatAccumulator P ii fi)
     parser.parser parser.bounds.min parser input cursor context child (Spec.folds initial fold) hp
-  · simp only [FoldRepeat.Insts.RusthammerRepeatAccumulator.init]
+  · simp only [FoldRepeat.Insts.RusthammerGrammarRepeatRepeatAccumulator.init]
     step with hi as ⟨state, hstate⟩
     exact Spec.folds.empty hstate
   · intro values next after value state hprefix hchild hlen hstate
-    simp only [FoldRepeat.Insts.RusthammerRepeatAccumulator.step]
+    simp only [FoldRepeat.Insts.RusthammerGrammarRepeatRepeatAccumulator.step]
     step with hf values next after value state hprefix hchild hlen hstate as ⟨following, hfollowing⟩
     exact Spec.folds.append hstate hfollowing
 
@@ -136,8 +139,8 @@ theorem fold_repeat_zero {P I F α R : Type} (pi : DirectParser P α)
       ⦃ result => ∃ state, initial state ∧ result = .Success cursor state ⦄ := by
   rw [FoldRepeat.Insts.RusthammerParser.parse_with_eq, DirectRun.repeat_run_eq, DirectRun.repeat_run_with_eq]
   simp only [core.option.Option.is_none, Option.isNone, repeat_start, Bool.false_eq_true,
-    ↓reduceIte, bind_ok, FoldRepeat.Insts.RusthammerRepeatAccumulator,
-    FoldRepeat.Insts.RusthammerRepeatAccumulator.init]
+    ↓reduceIte, bind_ok, FoldRepeat.Insts.RusthammerGrammarRepeatRepeatAccumulator,
+    FoldRepeat.Insts.RusthammerGrammarRepeatRepeatAccumulator.init]
   step with hi as ⟨state, hstate⟩
   unfold DirectRun.repeat_run_with_loop
   apply direct_projection_spec

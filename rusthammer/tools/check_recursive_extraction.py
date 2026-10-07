@@ -141,7 +141,7 @@ def main():
                     diagnostic = logged(["lake", "env", "lean", "-DwarningAsError=true", generated[0]],
                                         directory, "lean", cwd=ROOT / "lean", failure=expected)
                     if recursive:
-                        impl_name = "Named.Insts.RusthammerEvalInputDirectTuple" if is_parser else "Rule.Insts.Backend_recursive_traitEvalDirect"
+                        impl_name = "Named.Insts.RusthammerParser_traitsEvalInputDirectTuple" if is_parser else "Rule.Insts.Backend_recursive_traitEvalDirect"
                         if impl_name not in diagnostic:
                             raise RuntimeError(f"unexpected unknown constant; see {directory / 'lean.log'}")
                 print(f"{tool_name} {mir} {root}: {expected or 'Lean checked'}", flush=True)

@@ -1,5 +1,11 @@
 import RustHammer.BitsProofs
 
+open RustHammer.Code.grammar.bytes
+  RustHammer.Code.grammar.numeric
+  RustHammer.Code.grammar.sequence
+  RustHammer.Code.grammar.transform
+  RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Proofs

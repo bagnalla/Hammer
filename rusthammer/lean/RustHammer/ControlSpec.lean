@@ -1,5 +1,11 @@
 import RustHammer.BitsSpec
 
+open RustHammer.Code.grammar.control
+  RustHammer.Code.grammar.numeric
+  RustHammer.Code.grammar.position
+  RustHammer.Code.grammar.sequence
+  RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std
 
 namespace RustHammer.Spec

@@ -1,5 +1,9 @@
 import RustHammer.SepByProofs
 
+open RustHammer.Code.grammar.repeat
+  RustHammer.Code.grammar.sequence
+  RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Proofs
@@ -28,10 +32,10 @@ theorem sep_by_zero {P S α β : Type} (pi : DirectParser P α) (si : DirectPars
       ⦃ result => result = .Success cursor (alloc.vec.Vec.new α) ⦄ := by
   rw [SepBy.Insts.RusthammerParserInputVec.parse_with_eq]
   have h := repeat_run_with_zero pi
-    (Right.Insts.RusthammerParser (Shared0P.Insts.RusthammerParser si) (Shared0P.Insts.RusthammerParser pi)) (Collect.Insts.RusthammerRepeatAccumulatorAVec α)
+    (Right.Insts.RusthammerParser (Shared0P.Insts.RusthammerParser si) (Shared0P.Insts.RusthammerParser pi)) (Collect.Insts.RusthammerGrammarRepeatRepeatAccumulatorAVec α)
     parser { first := separator, second := parser } () input cursor context
     (fun state => state = alloc.vec.Vec.new α)
-    (by simp [Collect.Insts.RusthammerRepeatAccumulatorAVec.init, spec_ok])
+    (by simp [Collect.Insts.RusthammerGrammarRepeatRepeatAccumulatorAVec.init, spec_ok])
   simpa using h
 
 theorem fold_sep_by_zero {P S I F α β R : Type} (pi : DirectParser P α) (si : DirectParser S β)
@@ -44,7 +48,7 @@ theorem fold_sep_by_zero {P S I F α β R : Type} (pi : DirectParser P α) (si :
       ⦃ result => ∃ state, initial state ∧ result = .Success cursor state ⦄ := by
   rw [FoldSepBy.Insts.RusthammerParser.parse_with_eq]
   apply repeat_run_with_zero pi
-    (Right.Insts.RusthammerParser (Shared0P.Insts.RusthammerParser si) (Shared0P.Insts.RusthammerParser pi)) (FoldSepBy.Insts.RusthammerRepeatAccumulator P S ii fi)
+    (Right.Insts.RusthammerParser (Shared0P.Insts.RusthammerParser si) (Shared0P.Insts.RusthammerParser pi)) (FoldSepBy.Insts.RusthammerGrammarRepeatRepeatAccumulator P S ii fi)
     parser { first := separator, second := parser }
     { parser, separator, bounds := { min := 0#usize, max := some 0#usize }, init, fold }
     input cursor context initial hi

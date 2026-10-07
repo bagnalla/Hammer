@@ -1,6 +1,9 @@
 import RustHammer.MatchSpec
 import RustHammer.PartialProofs
 
+open RustHammer.Code.grammar.control
+  RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Proofs

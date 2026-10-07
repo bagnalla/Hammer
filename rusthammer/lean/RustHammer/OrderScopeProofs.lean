@@ -1,5 +1,8 @@
 import RustHammer.OrderProofs
 
+open RustHammer.Code.grammar.order
+  RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Ordering

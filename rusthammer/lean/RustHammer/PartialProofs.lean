@@ -1,6 +1,14 @@
 import RustHammer.ControlProofs
 import RustHammer.PartialSpec
 
+open RustHammer.Code.grammar.bytes
+  RustHammer.Code.grammar.control
+  RustHammer.Code.grammar.numeric
+  RustHammer.Code.grammar.position
+  RustHammer.Code.grammar.sequence
+  RustHammer.Code.grammar.transform
+  RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Proofs
@@ -189,26 +197,26 @@ theorem optional_with_spec {P α : Type} (pi : DirectParser P α) (parser : Opti
       simp only [hfalse, Bool.false_eq_true, ↓reduceIte, spec_ok]
       exact ⟨.Error error, hparsed, by simp [h]⟩
 
-theorem and_with_spec {P α : Type} (pi : DirectParser P α) (parser : Code.And P)
+theorem and_with_spec {P α : Type} (pi : DirectParser P α) (parser : Code.grammar.control.And P)
     (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (child : Cursor → ParseOutcome α → Prop)
     (hp : pi.parse_with parser.parser input cursor context ⦃ result => child cursor result ⦄) :
-    Code.And.Insts.RusthammerParserInputTuple.parse_with pi parser input cursor context
+    Code.grammar.control.And.Insts.RusthammerParserInputTuple.parse_with pi parser input cursor context
       ⦃ result => Partial.and child cursor result ⦄ := by
-  rw [Code.And.Insts.RusthammerParserInputTuple.parse_with_eq]
+  rw [Code.grammar.control.And.Insts.RusthammerParserInputTuple.parse_with_eq]
   step with hp as ⟨parsed, hparsed⟩
   cases parsed with
   | NeedMore => simp only [spec_ok]; exact ⟨.NeedMore, hparsed, rfl⟩
   | Error error => simp only [spec_ok]; exact ⟨.Error error, hparsed, rfl⟩
   | Success next value => simp only [spec_ok]; exact ⟨.Success next value, hparsed, rfl⟩
 
-theorem not_with_spec {P α : Type} (pi : DirectParser P α) (parser : Code.Not P)
+theorem not_with_spec {P α : Type} (pi : DirectParser P α) (parser : Code.grammar.control.Not P)
     (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (child : Cursor → ParseOutcome α → Prop)
     (hp : pi.parse_with parser.parser input cursor context ⦃ result => child cursor result ⦄) :
-    Code.Not.Insts.RusthammerParserInputTuple.parse_with pi parser input cursor context
+    Code.grammar.control.Not.Insts.RusthammerParserInputTuple.parse_with pi parser input cursor context
       ⦃ result => Partial.not child cursor result ⦄ := by
-  rw [Code.Not.Insts.RusthammerParserInputTuple.parse_with_eq]
+  rw [Code.grammar.control.Not.Insts.RusthammerParserInputTuple.parse_with_eq]
   step with hp as ⟨parsed, hparsed⟩
   cases parsed with
   | NeedMore => simp only [spec_ok]; exact ⟨.NeedMore, hparsed, rfl⟩

@@ -1,5 +1,8 @@
 import RustHammer.Rusthammer
 
+open RustHammer.Code.input_types
+  RustHammer.Code.parser_traits
+
 open Aeneas Aeneas.Std Result
 
 /-! Direct-execution views of the extracted evaluators. These definitions only

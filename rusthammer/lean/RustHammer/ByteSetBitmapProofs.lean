@@ -1,6 +1,8 @@
 import RustHammer.ByteSetSpec
 import Mathlib.Data.Nat.Bitwise
 
+open RustHammer.Code.grammar.bytes
+
 open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Proofs

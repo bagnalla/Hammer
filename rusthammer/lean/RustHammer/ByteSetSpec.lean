@@ -1,5 +1,9 @@
 import RustHammer.ByteSpec
 
+open RustHammer.Code.grammar.bytes
+  RustHammer.Code.grammar.transform
+  RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std
 
 namespace RustHammer.Spec

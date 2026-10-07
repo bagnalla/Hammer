@@ -2,6 +2,9 @@ import RustHammer.SepBySpec
 import RustHammer.RepeatDriverProofs
 import RustHammer.SelectionProofs
 
+open RustHammer.Code.grammar.sequence
+  RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Proofs

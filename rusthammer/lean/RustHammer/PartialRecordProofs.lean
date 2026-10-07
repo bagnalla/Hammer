@@ -2,6 +2,13 @@ import RustHammer.PartialProofs
 import RustHammer.RecordProofs
 import RustHammer.PartialRecordSpec
 
+open RustHammer.Code.grammar.bytes
+  RustHammer.Code.grammar.control
+  RustHammer.Code.grammar.numeric
+  RustHammer.Code.grammar.position
+  RustHammer.Code.grammar.sequence
+  RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Proofs
@@ -77,7 +84,6 @@ theorem record_header_with_spec (input : Slice U8) (cursor : Cursor) (status : I
       (fun start => Spec.bitsOutcome input start 16#u8) start)) hv htail as ⟨outcome, houtcome⟩
   rcases sequence_primitive status _ _ cursor outcome houtcome with ⟨result, hresult, heq⟩
   exact ⟨result, record_fields_decode input cursor result hvalid haligned hresult, heq⟩
-
 
 theorem marker_with_spec (parser : Marker) (input : Slice U8) (cursor : Cursor)
     (status : InputStatus) (hconfig : Spec.validMarker parser) :
@@ -163,7 +169,6 @@ theorem record_body_partial_spec (input : Slice U8) (cursor : Cursor) (version f
     cases hrest
     have hnotTrailing : ¬cursor.byte.val + count.val < input.val.length := by omega
     simp only [spec_ok, Partial.recordBodyOutcome, if_neg hnotTrailing]
-
 
 /-- Exact partial-input behavior for all raw cursors and byte buffers. -/
 theorem record_partial_spec (parser : RecordParser) (input : Slice U8) (cursor : Cursor)

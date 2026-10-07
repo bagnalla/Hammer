@@ -1,6 +1,10 @@
 import RustHammer.ByteSetBitmapProofs
 import RustHammer.ByteProofs
 
+open RustHammer.Code.grammar.bytes
+  RustHammer.Code.grammar.numeric
+  RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Proofs
@@ -45,11 +49,11 @@ theorem byte_in_bitmap_with_spec (parser : ByteIn) (input : Slice U8)
     ByteIn.Insts.RusthammerParserInputU8.parse_with parser input cursor (Spec.defaultContext status)
       ⦃ result => Spec.bitmapOutcome input status parser.set false cursor result ⦄ := by
   rw [ByteIn.Insts.RusthammerParserInputU8.parse_with_eq]
-  apply verify_with_spec Byte.Insts.RusthammerParserInputU8
+  apply verify_with_spec Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8
     ParserInputByteInU8.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool
     { parser := (), predicate := parser } input cursor (Spec.defaultContext status) _
     (Spec.bitmapPredicate parser.set false) (by
-      simpa only [Byte.Insts.RusthammerParserInputU8.parse_with] using
+      simpa only [Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8.parse_with] using
         byte_with_spec input cursor status)
   intro next value _hvalue
   exact byte_in_predicate_spec parser value
@@ -67,11 +71,11 @@ theorem byte_in_final_spec (parser : ByteIn) (input : Slice U8) (cursor : Cursor
     ByteIn.Insts.RusthammerParserInputU8.parse_with parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.bitmapComplete input parser.set false cursor) result ⦄ := by
   rw [ByteIn.Insts.RusthammerParserInputU8.parse_with_eq]
-  apply verify_spec Byte.Insts.RusthammerParserInputU8
+  apply verify_spec Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8
     ParserInputByteInU8.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool
     { parser := (), predicate := parser } input cursor _
     (Spec.bitmapPredicate parser.set false)
-  · simpa only [Byte.Insts.RusthammerParserInputU8.parse_with,
+  · simpa only [Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8.parse_with,
       Spec.defaultContext, ParseContext.FINAL, Partial.primitive, Partial.primitiveResult, Spec.completed] using
       byte_with_spec input cursor .Final
   · intro next value _hvalue
@@ -119,11 +123,11 @@ theorem byte_not_in_bitmap_with_spec (parser : ByteNotIn) (input : Slice U8)
     ByteNotIn.Insts.RusthammerParserInputU8.parse_with parser input cursor (Spec.defaultContext status)
       ⦃ result => Spec.bitmapOutcome input status parser.set true cursor result ⦄ := by
   rw [ByteNotIn.Insts.RusthammerParserInputU8.parse_with_eq]
-  apply verify_with_spec Byte.Insts.RusthammerParserInputU8
+  apply verify_with_spec Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8
     ParserInputByteNotInU8.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool
     { parser := (), predicate := parser } input cursor (Spec.defaultContext status) _
     (Spec.bitmapPredicate parser.set true) (by
-      simpa only [Byte.Insts.RusthammerParserInputU8.parse_with] using
+      simpa only [Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8.parse_with] using
         byte_with_spec input cursor status)
   intro next value _hvalue
   exact byte_not_in_predicate_spec parser value
@@ -141,11 +145,11 @@ theorem byte_not_in_final_spec (parser : ByteNotIn) (input : Slice U8) (cursor :
     ByteNotIn.Insts.RusthammerParserInputU8.parse_with parser input cursor ParseContext.FINAL
       ⦃ result => Spec.completed (Spec.bitmapComplete input parser.set true cursor) result ⦄ := by
   rw [ByteNotIn.Insts.RusthammerParserInputU8.parse_with_eq]
-  apply verify_spec Byte.Insts.RusthammerParserInputU8
+  apply verify_spec Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8
     ParserInputByteNotInU8.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool
     { parser := (), predicate := parser } input cursor _
     (Spec.bitmapPredicate parser.set true)
-  · simpa only [Byte.Insts.RusthammerParserInputU8.parse_with,
+  · simpa only [Code.grammar.numeric.Byte.Insts.RusthammerParserInputU8.parse_with,
       Spec.defaultContext, ParseContext.FINAL, Partial.primitive, Partial.primitiveResult, Spec.completed] using
       byte_with_spec input cursor .Final
   · intro next value _hvalue

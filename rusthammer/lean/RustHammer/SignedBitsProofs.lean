@@ -1,6 +1,9 @@
 import RustHammer.SignedBitsSpec
 import RustHammer.PartialProofs
 
+open RustHammer.Code.grammar.numeric
+  RustHammer.Code.input_types
+
 open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Proofs

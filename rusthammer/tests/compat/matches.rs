@@ -4,8 +4,8 @@
 mod rusthammer;
 
 use rusthammer::{
-    And, ButNot, Cursor, Difference, Epsilon, Fail, ParseContext, Left, Literal, Map, ParseOutcome,
-    Parser, Right, SkipBits, Xor,
+    And, ButNot, Cursor, Difference, Epsilon, Eval, Fail, Grammar, Left, Literal, Map,
+    ParseContext, ParseOutcome, Parser, Right, SkipBits, Xor,
 };
 use std::io::{self, BufRead};
 
@@ -28,11 +28,14 @@ impl Atom {
 }
 
 // Normalize C's discarded/unit AST to zero only in this test adapter.
-impl<'input> Parser<'input> for Atom {
+impl<'input> Grammar<'input> for Atom {
     type Output = u64;
+}
 
-    fn parse_with(
+impl<'input, Backend> Eval<'input, Backend> for Atom {
+    fn eval(
         &self,
+        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
         context: ParseContext,
@@ -42,32 +45,32 @@ impl<'input> Parser<'input> for Atom {
                 parser: SkipBits::new(usize::from(self.width)),
                 map: |()| 0,
             }
-            .parse_with(input, cursor, context),
+            .eval(backend, input, cursor, context),
             5 => Map {
                 parser: Epsilon,
                 map: |()| 0,
             }
-            .parse_with(input, cursor, context),
-            6 => Fail::<u64>::new().parse_with(input, cursor, context),
+            .eval(backend, input, cursor, context),
+            6 => Fail::<u64>::new().eval(backend, input, cursor, context),
             _ => {
                 let literal = Literal::new(self.width, self.expected).unwrap();
                 match self.kind {
-                    0 => literal.parse_with(input, cursor, context),
+                    0 => literal.eval(backend, input, cursor, context),
                     2 => Map {
                         parser: And { parser: literal },
                         map: |()| 0,
                     }
-                    .parse_with(input, cursor, context),
+                    .eval(backend, input, cursor, context),
                     3 => Right {
                         first: SkipBits::new(3),
                         second: literal,
                     }
-                    .parse_with(input, cursor, context),
+                    .eval(backend, input, cursor, context),
                     4 => Left {
                         first: literal,
                         second: SkipBits::new(3),
                     }
-                    .parse_with(input, cursor, context),
+                    .eval(backend, input, cursor, context),
                     _ => panic!("unsupported atom"),
                 }
             }

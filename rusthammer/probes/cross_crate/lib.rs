@@ -53,12 +53,12 @@ pub fn backend_payload(input: &[u8], context: ParseContext) -> (ParseOutcome<&[u
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
-use rusthammer::{
+use rusthammer::grammar::{
     BeI16, BeI32, BeI64, BeU16, BeU32, BeU64, Bind, Bit, Bits, ButNot, Byte, ByteIn, ByteNotIn,
-    BytePattern, ConfigError, Cursor, Difference, End, FoldRepeat, Ignore, IntRange, Left, Literal,
-    Map, Middle, Order, ParseContext, ParseError, ParseOutcome, Parser, Right, Seq, SignedBits,
-    SkipBits, TakeAligned, Tell, TryMap, WithOrder, Xor, I8,
+    BytePattern, Difference, End, FoldRepeat, Ignore, IntRange, Left, Literal, Map, Middle, Right,
+    Seq, SignedBits, SkipBits, TakeAligned, Tell, TryMap, WithOrder, Xor, I8,
 };
+use rusthammer::{ConfigError, Cursor, Order, ParseContext, ParseError, ParseOutcome, Parser};
 
 #[path = "../../examples/support/constructors.rs"]
 mod constructor_example;
@@ -715,7 +715,7 @@ pub fn bound_blocks(input: &[u8], context: ParseContext) -> ParseOutcome<alloc::
                 }
             },
         },
-        then: |count| rusthammer::Repeat::exact(element, count),
+        then: |count| rusthammer::grammar::Repeat::exact(element, count),
     }
     .parse_with(input, Cursor::start(), context)
 }
@@ -770,11 +770,8 @@ pub fn separated_blocks(
     count: usize,
     context: ParseContext,
 ) -> ParseOutcome<alloc::vec::Vec<&[u8]>> {
-    rusthammer::SepBy::exact(TakeAligned { count: 1 }, TakeAligned { count: 1 }, count).parse_with(
-        input,
-        Cursor::start(),
-        context,
-    )
+    rusthammer::grammar::SepBy::exact(TakeAligned { count: 1 }, TakeAligned { count: 1 }, count)
+        .parse_with(input, Cursor::start(), context)
 }
 
 pub struct Separator;
@@ -807,7 +804,7 @@ pub fn blocks(
     count: usize,
     context: ParseContext,
 ) -> ParseOutcome<alloc::vec::Vec<&[u8]>> {
-    rusthammer::Repeat::exact(TakeAligned { count: 1 }, count).parse_with(
+    rusthammer::grammar::Repeat::exact(TakeAligned { count: 1 }, count).parse_with(
         input,
         Cursor::start(),
         context,
@@ -816,7 +813,7 @@ pub fn blocks(
 
 #[cfg(feature = "alloc")]
 pub fn leading_ones(input: &[u8], context: ParseContext) -> ParseOutcome<alloc::vec::Vec<u64>> {
-    rusthammer::Repeat::at_least(Literal::new(1, 1).unwrap(), 0).parse_with(
+    rusthammer::grammar::Repeat::at_least(Literal::new(1, 1).unwrap(), 0).parse_with(
         input,
         Cursor::start(),
         context,

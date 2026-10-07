@@ -1,6 +1,11 @@
 import RustHammer.PermutationSpec
 import RustHammer.BackendProofs
 
+open RustHammer.Code.grammar
+  RustHammer.Code.grammar.control
+  RustHammer.Code.input_types
+  RustHammer.Code.parser_traits
+
 open Aeneas Aeneas.Std Result WP
 
 namespace RustHammer.Permutation
@@ -108,10 +113,10 @@ theorem eval_spec {L S B O : Type} (li : permutation.Items L B S O)
     (he : li.LayoutInst.empty parser.items = ok empty)
     (hf : ∀ state, li.LayoutInst.finish parser.items state = ok (finish state))
     (backend : B) (cursor : Cursor) :
-    permutation.Permutation.Insts.RusthammerEval.eval li parser backend input cursor context
+    permutation.Permutation.Insts.RusthammerParser_traitsEval.eval li parser backend input cursor context
       ⦃ result => result = finishModel finish
         (searchModel count.val used clear attempt count.val 0 true empty backend cursor) ⦄ := by
-  unfold permutation.Permutation.Insts.RusthammerEval.eval
+  unfold permutation.Permutation.Insts.RusthammerParser_traitsEval.eval
   simp only [he, hc, bind_ok]
   step with search_spec li parser.items count used clear attempt input context hc hm hl ha
     count 0#usize true empty backend cursor as ⟨outcome, state, finalBackend, hsearch⟩
@@ -134,7 +139,7 @@ theorem required_eval_spec {P B O : Type} (pi : Eval P B O) (parser : permutatio
     (backend : B) (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (post : ParseOutcome O × B → Prop)
     (hp : pi.eval parser.parser backend input cursor context ⦃ result => post result ⦄) :
-    permutation.Required.Insts.RusthammerEval.eval pi parser backend input cursor context
+    permutation.Required.Insts.RusthammerParser_traitsEval.eval pi parser backend input cursor context
       ⦃ result => post result ⦄ := hp
 
 def requiredSlot {O : Type} (outcome : ParseOutcome O) : permutation.Attempt × permutation.Slot O :=
@@ -167,9 +172,9 @@ theorem required_entry_spec {P B O : Type} (pi : Eval P B O) (parser : permutati
     (backend : B) (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (child : ParseOutcome O × B → Prop)
     (hp : pi.eval parser.parser backend input cursor context ⦃ result => child result ⦄) :
-    permutation.Required.Insts.RusthammerPermutationItemEval.eval_slot pi parser backend input cursor context
+    permutation.Required.Insts.RusthammerGrammarPermutationItemEval.eval_slot pi parser backend input cursor context
       ⦃ result => ∃ outcome final, child (outcome, final) ∧ result = (requiredSlot outcome, final) ⦄ := by
-  unfold permutation.Required.Insts.RusthammerPermutationItemEval.eval_slot
+  unfold permutation.Required.Insts.RusthammerGrammarPermutationItemEval.eval_slot
   step with hp as ⟨outcome, final, hchild⟩
   simp only [required_slot_spec, bind_ok, spec_ok]
   exact ⟨outcome, final, hchild, rfl⟩
@@ -178,24 +183,24 @@ theorem optional_entry_spec {P B O : Type} (pi : Eval P B O) (parser : Optional 
     (backend : B) (input : Slice U8) (cursor : Cursor) (context : ParseContext)
     (child : ParseOutcome O × B → Prop)
     (hp : pi.eval parser.parser backend input cursor context ⦃ result => child result ⦄) :
-    Optional.Insts.RusthammerPermutationItemEvalInputBOption.eval_slot pi parser backend input cursor context
+    Optional.Insts.RusthammerGrammarPermutationItemEvalInputBOption.eval_slot pi parser backend input cursor context
       ⦃ result => ∃ outcome final, child (outcome, final) ∧ result = (optionalSlot outcome, final) ⦄ := by
-  unfold Optional.Insts.RusthammerPermutationItemEvalInputBOption.eval_slot
+  unfold Optional.Insts.RusthammerGrammarPermutationItemEvalInputBOption.eval_slot
   step with hp as ⟨outcome, final, hchild⟩
   simp only [optional_slot_spec, bind_ok, spec_ok]
   exact ⟨outcome, final, hchild, rfl⟩
 
 theorem empty_eval_spec {B : Type} (backend : B) (input : Slice U8)
     (cursor : Cursor) (context : ParseContext) :
-    permutation.Permutation.Insts.RusthammerEval.eval
-      (Tuple.Insts.RusthammerPermutationItems0BTupleTuple B) ⟨()⟩ backend input cursor context
+    permutation.Permutation.Insts.RusthammerParser_traitsEval.eval
+      (Tuple.Insts.RusthammerGrammarPermutationItems0BTupleTuple B) ⟨()⟩ backend input cursor context
       = ok (.Success cursor (), backend) := by
-  unfold permutation.Permutation.Insts.RusthammerEval.eval
-  simp only [Tuple.Insts.RusthammerPermutationItems0BTupleTuple,
-    Tuple.Insts.RusthammerPermutationLayout0TupleTuple,
-    Tuple.Insts.RusthammerPermutationLayout0TupleTuple.empty,
-    Tuple.Insts.RusthammerPermutationLayout0TupleTuple.count, bind_ok]
+  unfold permutation.Permutation.Insts.RusthammerParser_traitsEval.eval
+  simp only [Tuple.Insts.RusthammerGrammarPermutationItems0BTupleTuple,
+    Tuple.Insts.RusthammerGrammarPermutationLayout0TupleTuple,
+    Tuple.Insts.RusthammerGrammarPermutationLayout0TupleTuple.empty,
+    Tuple.Insts.RusthammerGrammarPermutationLayout0TupleTuple.count, bind_ok]
   rw [permutation.search]
-  simp [Tuple.Insts.RusthammerPermutationLayout0TupleTuple.finish]
+  simp [Tuple.Insts.RusthammerGrammarPermutationLayout0TupleTuple.finish]
 
 end RustHammer.Permutation

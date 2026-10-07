@@ -898,6 +898,21 @@ positions need independent specifications and boundary checks.
 
 ## Grammar structure and execution
 
+Grammar-building operations are grouped under the public `rusthammer::grammar`
+namespace. Private family modules in [`src/grammar/`](../rusthammer/src/grammar/)
+keep types, constructors, evaluators, and their helpers together. Crate-root
+re-exports remain available; callers do not depend on the family file layout.
+Shared interfaces live in [`parser_traits.rs`](../rusthammer/src/parser_traits.rs), input and
+outcome types in [`input_types.rs`](../rusthammer/src/input_types.rs), and the `BitSpan`
+result type in [`span_types.rs`](../rusthammer/src/span_types.rs). Extraction roots and Lean
+references follow the definitions' module paths, including generated trait
+dictionaries. Reorganizing Rust source therefore requires regenerating the
+translation and checking the existing contracts against it.
+The private support modules use the specific names `input_types`, `parser_traits`,
+and `span_types`: the pinned Aeneas backend emits relative Lean namespace paths,
+and shorter names such as `input` can be shadowed by local variables. The
+generated translation is still produced directly by the pinned tools.
+
 The [backend plan](rusthammer-backends.md) fixes the execution boundary:
 `Grammar` determines output types, `Eval<Backend>` carries invocation state, and
 `Parser` supplies direct convenience entry points. All child invocations retain

@@ -1,6 +1,6 @@
 # Permutation compatibility cases
 
-The production implementation lives in [`src/permutation.rs`](../../src/permutation.rs).
+The production implementation lives in [`src/grammar/permutation.rs`](../../src/grammar/permutation.rs).
 This package runs it as an ordinary dependency to generate the complete-input
 corpus for [`check_permutation_c.py`](../../tools/check_permutation_c.py):
 
