@@ -385,8 +385,11 @@ configuration errors with `?`. Bounds remain in their native type, including
 the full `u64` range and signed minima. The generic implementation uses `Ord`,
 so integer newtypes and other ordered outputs also work. Neither the child,
 bounds, nor outputs need `Copy` or `Clone`; the range has those traits when its
-stored fields do. Floating-point values lack `Ord` and need an explicit `Verify`
-predicate with the desired NaN policy. The generic constructor is not `const`.
+stored fields do. Floating-point values lack `Ord`; native Rust code can use an
+explicit `Verify` predicate with the desired NaN policy, but floating-point
+extraction and verification are
+[deferred beyond the first release](probes/floating_point/README.md).
+The generic constructor is not `const`.
 
 Parsing delegates to `Verify`. It runs the child once, preserves an accepted
 value and cursor, maps an out-of-range value to recoverable `Mismatch`, and
@@ -1802,14 +1805,24 @@ remain in scope.
 
 Typed permutation is implemented and proved. The
 [agreed API scope](../plans/rusthammer-combinators.md#agreed-api-scope) retains
-floating-point fields/ranges, seeking, and diagnostic annotations as intended
-capabilities; their first-version inclusion and implementation order remain to
-be selected. Diagnostic annotations will label parser occurrences and
-optionally record where they were constructed, while preserving parsing behavior.
+seeking and diagnostic annotations as candidates for the first version; their
+inclusion and implementation order remain to be selected. Floating-point
+fields/ranges are deferred beyond the first version due to Aeneas limitations.
+Diagnostic annotations will label parser occurrences and optionally record where
+they were constructed, while preserving parsing behavior.
 Deferred actions and a dedicated `h_dispatch` counterpart are omitted from the
 intended API. Named parse-local value storage is outside the first version, with
 its longer-term role undecided pending a concrete use case. Explicit typed values,
 `Bind`, and `Choice` remain the basis for field dependencies and tagged formats.
+
+The [floating-point investigation](probes/floating_point/README.md) found that
+native Rust decoding works, but the pinned extraction tools lack the float
+types, conversion models, and comparison support needed for verified readers
+and ranges. Integer wire encodings remain supported. The private probe records
+native tests, both MIR stages, and Cargo-consumer results; production float
+readers/ranges and their tool/model work are excluded from the first release.
+The investigation is retained for later work when Aeneas support is available
+or that tooling effort is explicitly reprioritized.
 
 Follow the [combinator API plan](../plans/rusthammer-combinators.md):
 

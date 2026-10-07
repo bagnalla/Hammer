@@ -1,8 +1,8 @@
 //! Small, experimental parsing core for translation and verification with Aeneas.
 //!
 //! Bit and byte ordering are configurable. Changes of bit direction require
-//! byte-aligned scope boundaries. Chunk buffering, recursion, and compiled
-//! backends are not implemented.
+//! byte-aligned scope boundaries; see [`WithOrder`] for details. Chunk buffering,
+//! recursion, and compiled backends are not implemented.
 //!
 //! Build concrete grammar nodes with [`seq`], [`choice`], [`optional`], [`map`],
 //! [`try_map`], [`verify`], and [`bind`]. These functions store their arguments;

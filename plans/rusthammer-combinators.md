@@ -19,13 +19,15 @@ not requirements for finishing the first version.
 
 ## Agreed API scope
 
-The parity review on 2026-10-07 selected the following scope. RustHammer does not
-require a counterpart for every C combinator.
+The parity review and subsequent floating-point investigation on 2026-10-07
+selected the following scope. RustHammer does not require a counterpart for
+every C combinator.
 
 | Capability | Decision |
 | --- | --- |
 | Permutation | Implemented and proved as a retained nonrecursive capability; see the contract below. |
-| Floating-point fields/ranges, seeking, and diagnostic annotations | Retain as intended capabilities. Their contracts, implementation order, and inclusion in the first version remain to be selected. |
+| Floating-point fields/ranges | Exclude from the first version due to the pinned Aeneas limitations. Retain as a later capability; the [probe report](../rusthammer/probes/floating_point/README.md) preserves the evidence and required tool/model work. |
+| Seeking and diagnostic annotations | Retain as intended capabilities. Their contracts, implementation order, and inclusion in the first version remain to be selected. |
 | Deferred actions (`h_action_stash`, `h_action_apply`) | Omit from the intended API. Ordinary transformations through `Map`, `TryMap`, and predicates remain supported; application effects can follow successful parsing. |
 | Dedicated dispatch (`h_dispatch`) | Omit from the intended API. Express tagged formats through `Choice` or `Bind`, using explicit typed parser alternatives where needed. |
 | Named parse-local value storage (`h_put_value`, `h_get_value`, `h_free_value`) | Exclude from the first version; its longer-term role is undecided. Use explicit typed values and `Bind` for field dependencies. Revisit only when a concrete grammar motivates shared storage, considering an explicit typed environment before a string-keyed store. |
@@ -415,7 +417,7 @@ The combinators above also need a deliberate primitive and extension inventory:
 | Byte sequences | Keep `TakeAligned` for borrowed slices. `Repeat::exact(Byte, count)` now supplies `h_bytes`-style decoded `Vec<u8>` with `alloc`; a named convenience can be added if useful. Never silently align unaligned input. |
 | Skipping and position | Implemented and proved: `SkipBits::new(bits)` discards any `usize` bit count and returns `()`; `Tell` reports the validated `Cursor` without consuming. Both validate even at zero consumption and preserve `h_skip` and `h_tell` capabilities. Skips advance in constant time, classify exhaustion by input finality, and have an infallible `const` constructor and `bits()` accessor. Position reporting avoids an absolute machine bit count; see the [known C overflow issue](rusthammer.md#known-c-issue-absolute-bit-position-overflow). |
 | Recognizing matched input | Implemented and proved: `BitSpan`, `Recognize`, and `WithSpan`, retaining validated `(byte, bit)` endpoints and the enclosing bit direction. `WithSpan` returns the decoded value with its span; `Recognize` runs the child and discards its value. Partial-bit matches need not be byte slices; `as_bytes()` requires both endpoints aligned. No direct C combinator counterparts; these provide optional source retention. See the [input plan](rusthammer-input.md#matched-input-spans). |
-| Floating-point fields/ranges | Retain counterparts of `h_float16`, `h_float32`, `h_float64`, and `h_float_range` as intended capabilities. Specify bit decoding, NaNs, infinities, signed zero, rounding where applicable, and available Aeneas models before exporting readers or range helpers. First-version inclusion remains open. |
+| Floating-point fields/ranges | Deferred beyond the first version due to the pinned Aeneas limitations. Retain counterparts of `h_float16`, `h_float32`, `h_float64`, and `h_float_range` as later capabilities. Settle bit decoding, NaNs, infinities, signed zero, range-bound precision, and the required Aeneas models/translation support before exporting readers or range helpers. |
 | Bit and byte order | Implemented and proved with the [input plan's restriction](rusthammer-input.md#ordering-scopes): a changed bit direction requires aligned entry and successful exit, otherwise fatal `Unaligned`. Unaligned fields and unrestricted byte-order changes remain supported. Retain `(byte, bit)` with immutable `ParseContext`. Numeric-reader, contextual primitive, and generic scope/combinator proofs pass; `Be*` pins big byte order while inheriting bit direction. |
 | Recursion | Deferred beyond the first nonrecursive version, including the related extraction-tool work. Retain `recursive(|self_ref| body)` as a proposal using ordinary combinator bodies; see the [writeup](rusthammer-recursive-rules.md) for representation, translation soundness, ownership, and termination gates. Keep construction usable by a later packrat compiler, whose intended production algorithm includes left recursion. C uses `h_indirect`/`h_bind_indirect` for two-step fixed-point construction; a declaration DSL is not required. |
 | Named parse-local value storage | Outside the first version; longer-term support is undecided. Express ordinary dependencies with typed values and `Bind`. A concrete shared-environment use case must motivate reconsideration, with explicit value types, ownership, scope, backtracking, and eventual memoization semantics. |
@@ -428,6 +430,15 @@ The combinators above also need a deliberate primitive and extension inventory:
 C allocator variants, variadic/array calling variants, dynamic AST extraction,
 and vtable plumbing do not need one-for-one public replacements. Permanent Rust
 helpers should represent grammar operations or output needs.
+
+The [2026-10-07 floating-point probe](../rusthammer/probes/floating_point/README.md)
+records the current extraction gate: integer encodings translate, but native
+float outputs and range comparisons do not meet the pinned toolchain's Lean
+requirements. It also records C's binary16-to-binary32 widening and its use of
+double-precision bounds even for binary32 values. Those range-precision and
+special-value contracts must be settled along with tool/model support before
+exporting float readers or range helpers. Native floats and their tool/model work
+are deferred at the user's request; the probe remains evidence for later work.
 
 ## Implementation order and migration
 
@@ -527,7 +538,7 @@ helpers should represent grammar operations or output needs.
    proofs bring the axiom-audit total to 156. See the contract above.
 8. **Select and finish the first-version nonrecursive API.** Review the retained
    capabilities in the [scope decision](#agreed-api-scope):
-   floating-point fields/ranges, seeking, and diagnostics. Consider the remaining
+   seeking and diagnostics. Consider the remaining
    [dependent helpers](#dependent-parsing-and-reusable-helpers), including
    length/count wrappers and ASCII whitespace, alongside those substantive gaps.
    Select the operations needed for the first version and their implementation
@@ -536,6 +547,11 @@ helpers should represent grammar operations or output needs.
    Keep ordinary downstream examples, extraction checks, and compositional proofs
    with each chosen increment. The full future feature inventory is not an
    implicit first-release requirement.
+
+**Native floating-point support is deferred.** The
+[investigation](../rusthammer/probes/floating_point/README.md) and reproductions
+remain available. Float readers, range helpers, and the required Aeneas work
+are outside the first version; no placeholder float API is planned.
 
 **Recursive construction and direct execution are deferred.** The
 [writeup](rusthammer-recursive-rules.md) preserves the proposed constructor,

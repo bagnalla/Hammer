@@ -10,6 +10,11 @@ pub trait Grammar<'input> {
 
 /// Execute a grammar with a selected backend and its invocation-local state.
 ///
+/// The [`Direct`] backend runs each node's Rust parsing code, with combinators
+/// calling their children's [`eval`](Eval::eval) methods as needed. This is
+/// *direct execution*: the grammar is evaluated through ordinary function calls,
+/// with no separate grammar-compilation step or memoization of parse results.
+///
 /// Every child invocation must use `eval` with the same backend, including
 /// lookahead, retries, and parsers constructed by `Bind`. Calling `parse` or
 /// `parse_with` inside an evaluator would start a separate direct execution.
@@ -19,7 +24,11 @@ pub trait Grammar<'input> {
 /// execution state so returned values can borrow the input independently.
 /// Implementations propagate `NeedMore` before trying alternatives or deciding
 /// absence; on final input they return success or an error, never `NeedMore`.
-/// A stateful backend must bind its state to the input and grammar it describes.
+///
+/// A backend that caches parse results must ensure cached entries remain valid
+/// for the input snapshot and grammar configuration being parsed. For example,
+/// it can clear the cache at the start of each top-level parse. This trait does
+/// not enforce that association; it is the backend's responsibility.
 pub trait Eval<'input, Backend>: Grammar<'input> {
     fn eval(
         &self,
@@ -30,7 +39,9 @@ pub trait Eval<'input, Backend>: Grammar<'input> {
     ) -> ParseOutcome<Self::Output>;
 }
 
-/// Direct recursive interpretation, with no retained execution state.
+/// The backend for direct execution through Rust calls, with no retained state.
+///
+/// [`Parser::parse`] and [`Parser::parse_with`] use this backend automatically.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Direct;
 

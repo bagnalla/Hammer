@@ -309,8 +309,9 @@ The limits are explicit:
 - C comparisons cover selected operations and corpora; there is no general
   proof of equivalence with C Hammer.
 - Recursive grammars, production packrat, and buffering/resumption are not
-  implemented. Floating-point fields, seeking, and diagnostics remain intended
-  capabilities.
+  implemented. Native floating-point fields/ranges are excluded from the first
+  release due to the [pinned Aeneas limitations](probes/floating_point/README.md).
+  Seeking and diagnostics remain candidates for the first version.
 
 ## Suggested reading path
 

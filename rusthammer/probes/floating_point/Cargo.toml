@@ -1,0 +1,11 @@
+[package]
+name = "rusthammer_float_probe"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+path = "lib.rs"
+
+[dependencies]
+rusthammer = { path = "../.." }

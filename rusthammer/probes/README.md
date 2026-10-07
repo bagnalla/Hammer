@@ -6,6 +6,26 @@ mapping probe includes the actual library source to exercise a concrete callback
 The `cross_crate` fixture instead uses a normal Cargo dependency and is checked
 by the local verification command.
 
+## Floating-point fields and ranges
+
+Native floating-point support and its Aeneas tool/model work are deferred beyond
+the first version at the user's request. These probes are retained evidence for
+later work, not first-version completion gates.
+
+The [floating-point investigation](floating_point/README.md) checks native
+binary16/32/64 decoding, range semantics, and the pinned extraction boundary.
+Integer decoding and binary16-to-binary32 encoding conversion translate and
+Lean type-check, including through a separate Cargo consumer. Native float
+types, bit conversions, and comparisons lack the required extraction/models.
+Default conversion extraction emits unproved external axioms; float ordering
+fails in Aeneas. Strict Lean checking also catches undefined float type names
+that could otherwise become implicit type parameters.
+
+Run `python3 tools/check_floating_point.py` from `rusthammer/`. The runner checks
+native behavior and reproduces both successful integer controls and specific
+unsupported float cases. A successful runner exit does not mean floats are
+supported. No production float API or extraction-tool change is included.
+
 ## Typed permutation
 
 The [permutation corpus](permutation/README.md) compares the production tuple

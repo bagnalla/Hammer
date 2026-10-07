@@ -1,6 +1,6 @@
 # RustHammer design and verification plan
 
-Status: verified prototype with an explicit backend execution boundary, scoped ordering, spans, constructor helpers, typed permutation, match restrictions, skipping/position, byte sets, typed ranges, native integer readers, signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection; API scope reviewed 2026-10-07. The first version targets nonrecursive grammars; recursion and its extraction-tool investigation are deferred at the user's request.
+Status: verified prototype with an explicit backend execution boundary, scoped ordering, spans, constructor helpers, typed permutation, match restrictions, skipping/position, byte sets, typed ranges, native integer readers, signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection; API scope reviewed 2026-10-07. The first version targets nonrecursive grammars; recursion, native floating-point support, and their extraction-tool work are deferred at the user's request.
 
 RustHammer will be a Rust rewrite of Hammer whose parsers can be translated
 through Charon and Aeneas and proved correct in Lean. It should preserve Hammer's
@@ -123,13 +123,23 @@ pending a concrete use case. Ordinary field dependencies and tagged formats
 remain expressible through typed values, `Bind`, and `Choice`. This scope does
 not make all retained capabilities mandatory for the first release.
 
+The [floating-point investigation](../rusthammer/probes/floating_point/README.md)
+records a tool/model gate for native float readers and ranges. Integer wire
+decoding and binary16-to-binary32 encoding conversion pass extraction and strict
+Lean checking, but native float types, bit conversions, and comparisons lack
+the required support in the pinned tools. Native tests and a separate Cargo
+consumer isolate that boundary. Following that investigation, native float
+readers/ranges and their tool/model work are excluded from the first release
+at the user's request. Retain the probes and report for later work; revisit
+production support when the required Aeneas models and translation support are
+available or that tooling work is explicitly reprioritized.
+
 Continue from the existing nonrecursive API:
 
 1. Review the remaining nonrecursive gaps in the
    [combinator inventory](rusthammer-combinators.md) and select the next retained
-   increment. Consider floating-point parsing, seeking, and
-   diagnostics alongside conveniences such as length-counted elements,
-   length-prefixed bytes, and ASCII whitespace. Decide the first-version scope
+   increment. Consider seeking and diagnostics alongside conveniences such as
+   length-counted elements, length-prefixed bytes, and ASCII whitespace. Decide the first-version scope
    and implementation order rather than treating the entire future inventory
    as a release requirement.
 2. Specify and implement selected operations using the current core, with
@@ -695,7 +705,8 @@ every historical behavior are not established requirements.
 | Uniform dynamically tagged AST | Make optional. Use tuples, enums, structs, options, collections, and borrowed views for ordinary outputs. |
 | Arenas, memoization, and runtime graphs | Evaluate individually. These solve real allocation, performance, and grammar-representation problems and are not inherently C-specific. |
 | Manual graph ownership and cleanup | Replace with Rust ownership where possible; choose an explicit ownership scheme for shared or recursive graphs. |
-| Permutation, seeking, diagnostics, and floating-point fields | Retain as intended capabilities under the [scope decision](rusthammer-combinators.md#agreed-api-scope), with first-version inclusion and implementation order still to be selected. |
+| Permutation, seeking, and diagnostics | Retain as intended capabilities under the [scope decision](rusthammer-combinators.md#agreed-api-scope). Permutation is complete; first-version inclusion and implementation order for seeking and diagnostics remain to be selected. |
+| Floating-point fields and ranges | Exclude from the first release due to the pinned Aeneas limitations. Retain as a later capability, with the investigation and required tool/model work recorded in the [probe report](../rusthammer/probes/floating_point/README.md). |
 | Streaming | Preserve as a separately specified later capability beyond the existing snapshot API with `NeedMore`. |
 
 Hammer's [parser vtable](../src/internal.h) includes grammar classification,
@@ -1390,7 +1401,7 @@ before its full correctness argument is complete.
 | 4. First verified application parser | Parse a small binary record with bit fields, a constrained header, a bounded length-prefixed payload, and explicit end-of-input behavior. | An independent format specification and a Lean-checked application theorem covering values, consumption, valid-input acceptance, safe rejection, and termination under documented bounds. |
 | 5. Backend execution boundary | Separate grammar outputs and evaluator capabilities, thread the backend through all child calls, and migrate direct parsing and proofs. See the [backend plan](rusthammer-backends.md). | Existing direct contracts, native backend propagation tests, both MIR stages, and the separate Cargo consumer. |
 | 6. First nonrecursive version | Spans, construction helpers, and typed permutation are implemented and proved. Finish selected nonrecursive API gaps, downstream examples, supported-source documentation, and proof coverage using `Direct`. | The agreed first-version API passes native tests, both MIR stages, downstream extraction, and Lean proofs; remaining omissions are explicit. |
-| 7. Deferred capabilities and optimization | Reprioritize recursion and its tool/soundness work separately. Memoization, runtime grammars, streaming, other compiled backends, and retained nonrecursive capabilities outside the chosen first release keep their own contracts. Optimize measured bottlenecks. | Correctness proofs on explicit supported subsets, documented complexity assumptions, differential tests, and benchmarks; no implicit claim of full Hammer coverage. |
+| 7. Deferred capabilities and optimization | Reprioritize recursion and its tool/soundness work separately. Native floats require the recorded Aeneas model/translation work. Memoization, runtime grammars, streaming, other compiled backends, and retained nonrecursive capabilities outside the chosen first release keep their own contracts. Optimize measured bottlenecks. | Correctness proofs on explicit supported subsets, documented complexity assumptions, differential tests, and benchmarks; no implicit claim of full Hammer coverage. |
 
 Use native Rust tests, focused property tests, and differential tests with C Hammer
 to catch integration and specification mistakes. Compare acceptance, decoded
@@ -1403,15 +1414,17 @@ A complete NTP or DNS parser is not a prerequisite for the next core increment.
 
 ## Open decisions
 
-- What are the exact contracts for the retained floating-point,
-  seeking, and diagnostic capabilities? The
+- What are the exact contracts for seeking and diagnostics? The
   [input plan](rusthammer-input.md) intentionally restricts bit-direction
   changes to byte boundaries, while retaining byte-order control.
 - Which retained nonrecursive capabilities and conveniences are required for the
   first RustHammer release, and in what implementation order? Deferred actions
-  and dedicated dispatch are intentionally omitted. Recursive grammar support
-  and its extraction-tool work are explicitly deferred; their eventual priority
-  and supported class remain future decisions.
+  and dedicated dispatch are intentionally omitted. Recursive grammars, native
+  floating-point support, and their extraction-tool work are explicitly deferred.
+- When floating-point support is revisited, what bit-pattern models, conversion
+  semantics, range-bound precision, and extraction support should it use? The
+  [investigation](../rusthammer/probes/floating_point/README.md) records the gates;
+  they are not requirements for completing the first release.
 - Does a concrete application justify shared parse-local value storage beyond
   the first version? If so, what explicit typed environment and state semantics
   would it need? Existing field dependencies continue to use `Bind` and typed
