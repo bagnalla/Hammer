@@ -14,6 +14,7 @@ The prototype supports:
 - A cursor with a byte index and a bit offset, passed separately from the input.
 - Reading bits from either end of each byte and independent big/little byte order.
 - `WithOrder` scopes, with aligned entry and successful exit when bit direction changes.
+- `WithSpan<P>` retaining `(P::Output, BitSpan)` and `Recognize<P>` returning only the matched span.
 - Unsigned numeric fields of 0 through 64 bits, producing `u64` values and
   supporting unaligned starts and byte-boundary crossing.
 - Signed two's-complement fields of 0 through 64 bits, producing `i64` with
@@ -69,6 +70,7 @@ cargo test --features alloc
 cargo run --example flags
 cargo run --example fields
 cargo run --example ordering
+cargo run --example spans
 cargo run --example signed_fields
 cargo run --example integers
 cargo run --example ranges
@@ -428,6 +430,51 @@ for comparison. C `h_int_range` accepts `int64_t` endpoints even for unsigned
 children and then casts them to `uint64_t` for comparison. The adapter encodes
 unsigned endpoints modulo `2^64` to preserve that interpretation; Rust keeps
 native typed endpoints throughout.
+
+## Matched input spans
+
+`WithSpan { parser: P }` returns `(P::Output, BitSpan<'input>)`;
+`Recognize { parser: P }` returns just `BitSpan<'input>`. Both execute the child
+fully. `Recognize` drops its decoded output, including any value created by a
+callback. Neither wrapper allocates. Spans are opt-in at each wrapped node;
+wrapping a whole grammar does not annotate all nested output values.
+
+For example, on `[0x12, 0x34]`, `WithSpan { parser: BeU16 }` returns the number
+`0x1234` together with a span whose `as_bytes()` is `Some(&[0x12, 0x34])`.
+`Recognize { parser: BeU16 }` returns only that span. See the runnable
+[spans example](examples/spans.rs), which also retains a partial low-first span
+after its enclosing order scope finishes.
+
+`BitSpan::new(input, start, end, bit_order)` returns `Result<BitSpan, ParseError>`.
+Its private fields preserve valid, forward endpoints. `input()`, `start()`,
+`end()`, and `bit_order()` expose the original buffer and boundary coordinates;
+`is_empty()` tests equal endpoints. `as_bytes()` borrows the exact original bytes
+when **both** endpoints are aligned, regardless of decoding order. An aligned
+empty span returns `Some(&[])`; an unaligned empty span returns `None`.
+These borrows can outlive the parser and span object, but not the input.
+There is no unchecked absolute bit count or runtime bit iterator.
+
+The wrappers validate the starting cursor before calling the child, then its
+ending cursor only on success. Invalid bounds yield `InvalidCursor`; a valid
+backward endpoint yields fatal `NonProgress`. Empty spans are allowed.
+Child errors and `NeedMore` propagate unchanged, and backend effects persist
+even if endpoint validation rejects a success. Retrying uses the new accumulated
+buffer. A span measures consumed input: wrapping lookahead produces an empty
+span, even when the child inspects more input.
+
+Partial-byte spans record the enclosing bit direction. They identify source
+bits without recording internal field grouping or order scopes. Custom children
+must obey the ordering discipline; endpoint checks alone cannot establish which
+bits they inspected. These are Rust conveniences for optional source retention,
+not direct counterparts of C combinators. They do not replace the cursor
+comparisons used by `ButNot` and `Difference`.
+
+The independent [span specification](lean/RustHammer/SpanSpec.lean) and
+[proofs](lean/RustHammer/SpanProofs.lean) cover construction, accessors, safe
+slicing, generic backend state, both parsing entry points, cloning, and physical
+bit geometry. The mathematical enumeration selects each bit once and has length
+equal to the unbounded endpoint difference. Native tests additionally check
+pointer identity, lifetimes, output destruction, and backend call counts.
 
 ## Bit and byte order
 
@@ -1219,11 +1266,13 @@ available for dependency bodies and checks a
 tests in both allocation configurations; its extraction includes RustHammer's
 implementation with `alloc` enabled. Both extra translations are checked for
 admitted/opaque declarations and Lean type-checked. They stay under `target/`.
-All 44 consumer entry points pass, including an evaluator that uses a local
-mutable backend while returning a borrowed input slice.
+All 49 consumer entry points pass, including evaluators that use a local
+mutable backend while returning a borrowed input slice or span. The normal
+verification command also audits all 34 new span theorems, for 65 audited
+ordering/backend/span theorems in total.
 
 The cross-crate investigation found that cleanup code can recheck an enum's tag
-after a payload move, which the pinned Aeneas rejects. Five internal pattern
+after a payload move, which the pinned Aeneas rejects. Internal pattern
 matches now move whole payloads before unpacking or discarding them to avoid
 that code. This preserves the API and existing proofs. The
 [minimal reproductions and explanation](probes/cross_crate/README.md#cause-of-the-original-failure)
@@ -1621,11 +1670,17 @@ semantic and differential checks. Scoped ordering and its context interface are
 also implemented and proved; see the [input plan](../plans/rusthammer-input.md).
 The [backend execution boundary](../plans/rusthammer-backends.md) separates
 `Grammar` output types from `Eval<Backend>`, with `Parser` providing direct parsing
-entry points. Continue with `BitSpan`, `Recognize`, and `WithSpan` and their
+entry points. `BitSpan`, `Recognize`, and `WithSpan` now implement their
 physical-boundary and borrowed-view contracts. Memoization, cached-output ownership,
 rule identities, and recursive grammar construction remain later work, guided by
 representative protocol benchmarks. The private cache probe remains design evidence.
 Design permutation separately.
+
+Next, add the planned
+[construction helpers](../plans/rusthammer-combinators.md#construction-functions-and-return-types)
+over the existing concrete nodes. Their private extraction checks are complete;
+production exports and construction proofs remain future work. Use `Grammar`
+bounds where needed and preserve backend capabilities through the return type.
 
 Keep future application grammars in shared example/proof-support source. The
 original `Flags`, `Marker`, and `Record` fixtures have been migrated out of the

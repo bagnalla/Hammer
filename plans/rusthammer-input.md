@@ -1,6 +1,6 @@
 # RustHammer input, ordering, and spans
 
-Status: restricted ordering implemented and proved, 2026-10-05; spans remain planned.
+Status: restricted ordering implemented and proved, 2026-10-05; spans implemented and proved, 2026-10-06.
 This document extends the
 [main plan](rusthammer.md) and [combinator plan](rusthammer-combinators.md).
 The production library implements the context and scope contract below, with
@@ -261,12 +261,32 @@ order: increasing byte index and highest selected bit first within each byte.
 Avoid an unchecked scalar `usize` bit length; retain positions or use a checked
 conversion.
 
-`Recognize<P>` would discard the child's value and return the span;
-`WithSpan<P>` would return `(P::Output, BitSpan<'input>)`. Restricted ordering and
-the backend boundary are established; this family is the next increment.
-Constructor/accessor signatures and wrapper validation precedence still need to
-be specified before implementation. Build the wrappers through `Grammar` and
-backend-generic `Eval`, retaining the child's backend state and context rules.
+`Recognize<P>` discards the child's value and returns the span;
+`WithSpan<P>` returns `(P::Output, BitSpan<'input>)`. Both are now implemented
+through `Grammar` and backend-generic `Eval`. They run the child fully and retain
+its backend state on success, rejection, or incompleteness. Entry validation
+precedes the child call; exit validation applies only to a successful child.
+Invalid bounds take precedence over backward movement. Empty spans are allowed,
+including at EOF, and wrapping lookahead measures its zero consumption.
+
+The public constructor is
+`BitSpan::new(input, start, end, bit_order) -> Result<BitSpan, ParseError>`.
+Private fields maintain the invariant. Read-only `input()`, `start()`, `end()`,
+and `bit_order()` accessors expose its coordinates; `is_empty()` checks equality.
+`as_bytes()` borrows the original input for its original lifetime. Aligned empty
+spans yield `Some(&[])`; unaligned ones yield `None`. No iterator or scalar bit
+length is exposed. Wrappers use named `parser` fields and conditional `Copy`/`Clone`
+without imposing those traits on child outputs.
+
+The production [specification](../rusthammer/lean/RustHammer/SpanSpec.lean) and
+[proofs](../rusthammer/lean/RustHammer/SpanProofs.lean) establish bounds, exact
+borrowed byte views, error precedence, generic backend and direct contracts,
+and physical geometry. A mathematical bit enumeration is injective and has
+length equal to the endpoint difference; same-byte intervals, both crossing
+boundaries, interior bytes, and aligned raw regions are characterized separately.
+Native tests cover lifetimes, pointer identity, owned-output destruction, and
+custom backends. Both library MIR stages and five new separate-Cargo-consumer
+entry points extract and type-check. See the [example](../rusthammer/examples/spans.rs).
 
 ## Production implementation and evidence
 
@@ -377,7 +397,8 @@ physical span geometry, and concrete application grammars do not yet have
 full correctness theorems. Rust lifetime checking and native pointer/drop
 tests supply evidence outside the functional scope contracts. The production
 integration above supplies its own reader/combinator proofs and preserves the
-existing default application theorems; physical span proofs remain future work.
+existing default application theorems; production spans now have separate
+physical-geometry and parser contracts as described above.
 
 ## Earlier unrestricted probe
 

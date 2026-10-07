@@ -60,6 +60,89 @@ use rusthammer::{
     SkipBits, TakeAligned, Tell, TryMap, WithOrder, Xor, I8,
 };
 
+pub fn spanned_pattern<'pattern, 'input>(
+    pattern: &'pattern [u8],
+    input: &'input [u8],
+    context: ParseContext,
+) -> ParseOutcome<(&'pattern [u8], rusthammer::BitSpan<'input>)> {
+    rusthammer::WithSpan {
+        parser: BytePattern::new(pattern),
+    }
+    .parse_with(input, Cursor::start(), context)
+}
+
+pub fn recognized_payload(
+    input: &[u8],
+    count: usize,
+) -> Result<(Cursor, rusthammer::BitSpan<'_>), ParseError> {
+    rusthammer::Recognize {
+        parser: TakeAligned { count },
+    }
+    .parse(input, Cursor::start())
+}
+
+pub fn scoped_span(
+    input: &[u8],
+    context: ParseContext,
+) -> ParseOutcome<((u64, rusthammer::BitSpan<'_>), ())> {
+    WithOrder {
+        order: Order {
+            bit: rusthammer::BitOrder::LowFirst,
+            byte: rusthammer::ByteOrder::Little,
+        },
+        parser: Seq {
+            first: rusthammer::WithSpan {
+                parser: Bits::new(3).unwrap(),
+            },
+            second: SkipBits::new(5),
+        },
+    }
+    .parse_with(input, Cursor::start(), context)
+}
+
+pub fn span_views(
+    input: &[u8],
+    start: Cursor,
+    end: Cursor,
+    order: rusthammer::BitOrder,
+) -> Result<
+    (
+        &[u8],
+        Cursor,
+        Cursor,
+        rusthammer::BitOrder,
+        bool,
+        Option<&[u8]>,
+    ),
+    ParseError,
+> {
+    let span = rusthammer::BitSpan::new(input, start, end, order)?;
+    let copied = span;
+    Ok((
+        copied.input(),
+        copied.start(),
+        copied.end(),
+        copied.bit_order(),
+        copied.is_empty(),
+        copied.as_bytes(),
+    ))
+}
+
+pub fn backend_span(
+    input: &[u8],
+    context: ParseContext,
+) -> (ParseOutcome<rusthammer::BitSpan<'_>>, u8) {
+    use rusthammer::Eval;
+    let parser = rusthammer::Recognize {
+        parser: rusthammer::WithSpan {
+            parser: Counted(Byte),
+        },
+    };
+    let mut backend = Counter { calls: 0 };
+    let outcome = parser.eval(&mut backend, input, Cursor::start(), context);
+    (outcome, backend.calls)
+}
+
 pub fn ordered_fields(
     input: &[u8],
     width: u8,
@@ -624,6 +707,48 @@ pub fn leading_ones(input: &[u8], context: ParseContext) -> ParseOutcome<alloc::
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn spans_escape_parsers_scopes_and_backends() {
+        use super::*;
+        use rusthammer::{BitOrder, BitSpan};
+        let input = [0x96, 0x53];
+        let end = Cursor { byte: 1, bit: 0 };
+        let expected = BitSpan::new(&input, Cursor::start(), end, BitOrder::HighFirst).unwrap();
+        let pattern = [0x96];
+        assert_eq!(
+            spanned_pattern(&pattern, &input, ParseContext::FINAL),
+            ParseOutcome::Success(end, (pattern.as_slice(), expected))
+        );
+        assert_eq!(recognized_payload(&input, 1), Ok((end, expected)));
+        let ParseOutcome::Success(_, ((value, partial), ())) =
+            scoped_span(&input, ParseContext::FINAL)
+        else {
+            panic!()
+        };
+        assert_eq!(value, 6);
+        assert_eq!(partial.bit_order(), BitOrder::LowFirst);
+        assert_eq!(partial.end(), Cursor { byte: 0, bit: 3 });
+        assert_eq!(
+            span_views(&input, Cursor::start(), end, BitOrder::HighFirst),
+            Ok((
+                input.as_slice(),
+                Cursor::start(),
+                end,
+                BitOrder::HighFirst,
+                false,
+                Some(&input[..1])
+            ))
+        );
+        assert_eq!(
+            backend_span(&input, ParseContext::FINAL),
+            (ParseOutcome::Success(end, expected), 1)
+        );
+        assert_eq!(
+            backend_span(&[], ParseContext::PARTIAL),
+            (ParseOutcome::NeedMore, 1)
+        );
+    }
+
     #[test]
     fn backend_state_and_borrowed_output_survive_nested_calls() {
         let input = [2, b'a', b'b'];

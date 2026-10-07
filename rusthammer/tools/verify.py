@@ -34,6 +34,17 @@ BACKEND_THEOREMS = (
     "RustHammer.Backend.choice_eval_spec",
 )
 
+SPAN_THEOREMS = tuple(f"RustHammer.Span.{name}" for name in (
+    "cursor_valid_spec", "new_spec", "checked_success", "input_spec", "start_spec",
+    "end_spec", "bit_order_spec", "clone_spec", "is_empty_spec", "as_bytes_spec",
+    "with_span_eval_spec", "recognize_eval_spec", "with_span_with_spec", "recognize_with_spec",
+    "capture_need_more", "recognize_need_more", "with_span_complete_spec", "recognize_complete_spec",
+    "with_span_clone_spec", "recognize_clone_spec", "capture_success",
+    "offset_physical", "physical_offset", "physical_injective", "consumed_length",
+    "bits_distinct", "mem_bits", "selected_in_input", "high_same_byte", "low_same_byte",
+    "interior_byte", "crossing_start", "crossing_end", "aligned_region",
+))
+
 
 def output(*args, cwd=None):
     return subprocess.check_output(args, cwd=cwd, text=True).strip()
@@ -53,7 +64,7 @@ def translate(aeneas, llbc, destination, namespace):
 
 
 def audit_proofs():
-    theorems = ORDER_THEOREMS + BACKEND_THEOREMS
+    theorems = ORDER_THEOREMS + BACKEND_THEOREMS + SPAN_THEOREMS
     audit = ROOT / "target" / "proof-axioms.lean"
     audit.write_text("import RustHammer\n" + "".join(
         f"#print axioms {name}\n" for name in theorems
@@ -67,7 +78,7 @@ def audit_proofs():
     for name, axioms in audits:
         if set(filter(None, map(str.strip, axioms.split(",")))) - {"propext", "Classical.choice", "Quot.sound"}:
             raise RuntimeError(f"unexpected axioms in {name}: {axioms}")
-    print(f"Proof axiom audit: {len(audits)} ordering/backend theorems use only standard Lean axioms.", flush=True)
+    print(f"Proof axiom audit: {len(audits)} ordering/backend/span theorems use only standard Lean axioms.", flush=True)
 
 
 def main():
@@ -112,6 +123,13 @@ def main():
         "--start-from", "rusthammer::record_example::parse_record",
         "--start-from", "rusthammer::Bits::new",
         "--start-from", "rusthammer::Bits::width",
+        "--start-from", "rusthammer::BitSpan::new",
+        "--start-from", "rusthammer::BitSpan::input",
+        "--start-from", "rusthammer::BitSpan::start",
+        "--start-from", "rusthammer::BitSpan::end",
+        "--start-from", "rusthammer::BitSpan::bit_order",
+        "--start-from", "rusthammer::BitSpan::is_empty",
+        "--start-from", "rusthammer::BitSpan::as_bytes",
         "--start-from", "rusthammer::SkipBits::new",
         "--start-from", "rusthammer::SkipBits::bits",
         "--start-from", "rusthammer::SignedBits::new",
@@ -200,6 +218,7 @@ def main():
         "restricted_payload", "difference_pattern", "exclusive_patterns", "exclusive_value",
         "complete_matches",
         "ordered_fields", "scoped_payload", "scoped_pattern",
+        "spanned_pattern", "recognized_payload", "scoped_span", "span_views", "backend_span",
     )
     entry_args = [
         arg for name in entries

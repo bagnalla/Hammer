@@ -1,13 +1,15 @@
 # RustHammer combinator API plan
 
-Status: target API and implementation order, with scoped ordering, signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection verified,
-2026-10-05. Unimplemented features remain proposals. See the
+Status: target API and implementation order, with spans, scoped ordering, signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection verified,
+2026-10-06. Unimplemented features remain proposals. See the
 [main plan](rusthammer.md) and [prototype README](../rusthammer/README.md) for
 current implementation and proof coverage.
 
 The [backend execution boundary](rusthammer-backends.md) is implemented and
-verified. Span and recognition combinators can follow it. The private
+verified, as are span and recognition combinators. The private
 memoization probes remain design evidence outside the public API.
+Constructor helpers have also passed a private extraction compatibility check;
+their production implementation is the next increment below.
 
 ## API policy
 
@@ -24,6 +26,49 @@ it. Changes supported by new evidence remain possible while the API is experimen
 Convenience operations are useful permanent API when they express common grammar
 intent. They should compose existing operations or share their implementation.
 Different names do not require different parsing algorithms or independent proofs.
+
+## Construction functions and return types
+
+Retain `Grammar<'input>::Output`, concrete grammar nodes, and the separate
+`Eval<'input, Backend>` capability. The associated type records the output fixed
+by a grammar type for an input lifetime; it does not require an output type to
+uniquely identify a grammar. Generic construction functions fit this design and
+preserve the separation of grammar construction from interpretation.
+
+Add a small set of free construction functions over the existing nodes:
+`seq`, `choice`, `optional`, `map`, `try_map`, `verify`, and `bind`. Return the
+concrete node, such as `Seq<P, Q>` or `Map<P, F>`. Use `Grammar` bounds where they
+establish output relationships or help infer callback parameters; construction
+must not require `Parser` or `Eval<Direct>`. Existing validated constructors
+retain their configuration checks. These helpers add syntax and inference
+support, with no new parsing algorithm or runtime grammar representation.
+
+Use opaque returns selectively. A grammar factory may hide an unnameable
+callback as `Map<P, impl Fn(...) -> ...>` while retaining the node's generic
+backend implementations. A whole-grammar `impl Parser<...>` return is suitable
+when its exposed capabilities are the intended caller contract; it hides other
+backend implementations and unlisted `Copy`/`Clone` capabilities. Do not make
+it the default return type of the core construction helpers. Expose additional
+bounds when they are part of the intended contract, and require borrowed-output
+factories to preserve the appropriate input-lifetime relationships.
+
+The [constructor probes](../rusthammer/probes/constructors/README.md), checked on
+2026-10-06 with the pinned tools, establish compatibility for the generic
+helpers, backend-only children, independent borrows, partially opaque callbacks,
+and whole-parser opaque returns with owned or borrowed outputs. Both MIR stages
+and downstream Cargo use pass extraction and Lean checking for these shapes.
+This is compatibility evidence, not production implementation or correctness
+proofs. Borrowed identity mapping callbacks fail with both the helper and direct
+`Map` construction; a named callback also fails with a distinct lifetime
+diagnostic. Keep those negative probes and the callback investigation separate
+from the constructor work.
+
+Implement these helpers in a small API convenience increment after
+`BitSpan`, `Recognize`, and `WithSpan`, before stabilizing the public construction
+API. They are not prerequisites for spans, memoization, or recursive grammars,
+and do not need to wait for the latter capabilities. Apply the return-type and
+backend-bound policy to new APIs immediately; no migration to opaque returns or
+revision of the associated-output design is planned.
 
 ## Core combinator families
 
@@ -288,7 +333,7 @@ The combinators above also need a deliberate primitive and extension inventory:
 | Byte/token parsing | Implemented and proved: `Byte` (`h_uint8`) returns `u8`; `BytePattern::new(&pattern)` (`h_token` / `h_literal`) borrows an arbitrary byte pattern and returns that configured slice on success. Input and pattern lifetimes are independent. Both support unaligned starts without allocation. Empty patterns succeed without cursor validation; nonempty patterns compare complete bytes in order. `h_ch` can be a later literal-reader convenience. |
 | Byte sequences | Keep `TakeAligned` for borrowed slices. `Repeat::exact(Byte, count)` now supplies `h_bytes`-style decoded `Vec<u8>` with `alloc`; a named convenience can be added if useful. Never silently align unaligned input. |
 | Skipping and position | Implemented and proved: `SkipBits::new(bits)` discards any `usize` bit count and returns `()`; `Tell` reports the validated `Cursor` without consuming. Both validate even at zero consumption and preserve `h_skip` and `h_tell` capabilities. Skips advance in constant time, classify exhaustion by input finality, and have an infallible `const` constructor and `bits()` accessor. Position reporting avoids an absolute machine bit count; see the [known C overflow issue](rusthammer.md#known-c-issue-absolute-bit-position-overflow). |
-| Recognizing matched input | The [input plan](rusthammer-input.md#matched-input-spans) specifies `BitSpan`, `Recognize`, and `WithSpan`, retaining `(byte, bit)` endpoints and the enclosing bit direction. Restricted ordering and the backend execution boundary are complete. Partial-bit matches need not be byte slices; spans do not retain internal order scopes or field grouping. |
+| Recognizing matched input | Implemented and proved: `BitSpan`, `Recognize`, and `WithSpan`, retaining validated `(byte, bit)` endpoints and the enclosing bit direction. `WithSpan` returns the decoded value with its span; `Recognize` runs the child and discards its value. Partial-bit matches need not be byte slices; `as_bytes()` requires both endpoints aligned. No direct C combinator counterparts; these provide optional source retention. See the [input plan](rusthammer-input.md#matched-input-spans). |
 | Floating-point fields/ranges | Preserve as a later capability; specify bit decoding, NaNs, infinities, rounding where applicable, and available Aeneas models before exporting readers or range helpers. |
 | Bit and byte order | Implemented and proved with the [input plan's restriction](rusthammer-input.md#ordering-scopes): a changed bit direction requires aligned entry and successful exit, otherwise fatal `Unaligned`. Unaligned fields and unrestricted byte-order changes remain supported. Retain `(byte, bit)` with immutable `ParseContext`. Numeric-reader, contextual primitive, and generic scope/combinator proofs pass; `Be*` pins big byte order while inheriting bit direction. |
 | Recursion | Start with named typed parsers and guarded recursion. Design runtime rule graphs and left-recursive execution separately; `h_indirect`/`h_bind_indirect` are C's construction mechanism, not the required Rust interface. |
@@ -378,9 +423,21 @@ helpers should represent grammar operations or output needs.
    C comparisons add 107,364 agreements and 2,848 expected scope rejections.
    The subsequent backend migration is complete, with all existing proofs,
    stateful backend tests, 44 consumer entries, and 31 ordering/backend theorem
-   axiom audits passing. Next implement and prove `BitSpan`, `Recognize`, and `WithSpan`.
+   axiom audits passing. `BitSpan`, `Recognize`, and `WithSpan` are now implemented
+   and proved, with safe raw byte views, physical-bit geometry, backend-generic
+   validation and propagation, native tests, and 49 consumer entries passing.
    The isolated probes remain design evidence.
    Plan permutation, recursion, and the other larger capabilities separately.
+6. **Add construction conveniences (next).** Promote the seven
+   [construction helpers](#construction-functions-and-return-types) from the
+   private probe into the library, retaining concrete node returns and bounds
+   independent of the evaluator. Document representative usage, including a
+   grammar factory with an opaque callback, without requiring an immediate
+   rewrite of all existing grammars. Add explicit extraction roots for the
+   generic helpers and ordinary Cargo-consumer coverage. Prove their construction
+   equations and reuse the existing node contracts for parsing behavior; run
+   the full verification command. Keep the negative callback cases in the
+   separate diagnostic runner, whose default run intentionally reports failures.
 
 **Application fixture migration is complete.** `Flags`, `Marker`, `Record`,
 `RecordParser`, their parsing helpers, and the example payload limit now live in

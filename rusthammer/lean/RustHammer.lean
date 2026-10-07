@@ -16,3 +16,4 @@ import RustHammer.PositionProofs
 import RustHammer.MatchProofs
 import RustHammer.OrderParserProofs
 import RustHammer.BackendProofs
+import RustHammer.SpanProofs

@@ -33,8 +33,8 @@ according to the work being resumed:
 | Document | Context to carry forward |
 | --- | --- |
 | [Backend plan](rusthammer-backends.md) | The implemented execution boundary, its verification evidence, and the separate future memoization/recursion design. |
-| [Input plan](rusthammer-input.md#matched-input-spans) | The next proposed APIs: `BitSpan`, `Recognize`, and `WithSpan`, their physical-bit meaning, and the permanent ordering restriction. |
-| [Combinator plan](rusthammer-combinators.md) | Implemented and proposed families, Hammer counterparts, and the rule against temporary public APIs. |
+| [Input plan](rusthammer-input.md#matched-input-spans) | Implemented `BitSpan`, `Recognize`, and `WithSpan`, their physical-bit meaning, and the permanent ordering restriction. |
+| [Combinator plan](rusthammer-combinators.md) | Implemented and proposed families, Hammer counterparts, constructor/return-type policy, and the rule against temporary public APIs. |
 | [Prototype README](../rusthammer/README.md) | Current usage, source/proof map, verification commands, and proof-model limits. |
 | [Compatibility probes](../rusthammer/probes/README.md) | Supported source forms and minimized failures for the pinned extraction tools. Some diagnostic probes intentionally fail. |
 
@@ -64,19 +64,25 @@ continuation. Do not reopen these decisions as missing prerequisites for spans.
 
 ### Next increment
 
-Implement the span/recognition family from the
-[input plan](rusthammer-input.md#matched-input-spans). First settle the durable
-constructor/accessor signatures and write the independent span contract. Preserve
-valid, forward endpoints and the enclosing bit direction; distinguish physical
-source-bit geometry from decoding order, and expose a raw byte view only for
-aligned endpoints. Define wrapper validation/error precedence for custom children
-as part of that contract. Do not introduce an unchecked absolute `usize` bit
-length. An iterator is optional and needs its own stated ordering if exposed.
+The span/recognition family from the
+[input plan](rusthammer-input.md#matched-input-spans) is implemented and proved.
+`BitSpan::new` validates private bounds; accessors expose the input, endpoints,
+direction, emptiness, and an aligned raw byte view. `WithSpan` retains the decoded
+value; `Recognize` discards it after running the child. Generic contracts preserve
+backend state and context, validate entries before child calls, and validate
+successful exits. Physical geometry and consumption use unbounded arithmetic.
+Native tests and both MIR stages pass, including 49 Cargo-consumer entries with
+independent borrows and escaping partial spans. The historical restricted-order
+probe remains design evidence; production spans have their own specification.
 
-Then implement through `Grammar` and backend-generic `Eval`, with native tests,
-generic Lean contracts, and separate-Cargo-consumer coverage for borrowed output.
-The restricted-order probe contains span experiments, not a finished production
-API or a proof of span geometry. Extend the actual library and its proofs.
+Next, add the small
+[construction-function increment](rusthammer-combinators.md#construction-functions-and-return-types):
+generic helpers returning existing concrete nodes, with `Grammar` bounds where
+needed for inference and output relationships. Their private compatibility check
+is complete; production helpers and construction proofs remain planned. Apply
+the policy to new APIs now.
+Retain associated outputs and use `impl Trait` selectively, preserving the
+backend capabilities callers need.
 
 Memoization, recursion, permutation, seeking, live streaming, deferred effects,
 and other engines remain separate increments. CI and investigation of the older
@@ -91,8 +97,8 @@ From `rusthammer/`, run `python3 tools/verify.py` after a production increment.
 It checks formatting and both allocation configurations, regenerates the
 promoted-MIR Lean module, extracts the library at optimized MIR and an ordinary
 Cargo consumer, builds all proofs, and checks for admitted/opaque project
-declarations. The checkpoint above passes all these checks: 44 consumer entry
-points, 19/22 consumer tests without/with `alloc`, and 31 ordering/backend theorem
+declarations. The checkpoint above passes all these checks: 49 consumer entry
+points, 20/23 consumer tests without/with `alloc`, and 65 ordering/backend/span theorem
 axiom audits. `python3 tools/check_backend_memo.py` also passes; it separately
 checks the private cache probe when relevant backend or tool changes are made.
 For a proof-only edit, `lake build` from `rusthammer/lean/` checks existing Lean
@@ -1086,6 +1092,19 @@ The current `Grammar` and `Eval` dictionaries retain that representation of
 associated output types. Thus, the associated type is a Rust API choice, not an
 assumption that Lean requires that particular source syntax.
 
+On 2026-10-06, the durable
+[constructor/opaque-return probes](../rusthammer/probes/constructors/README.md)
+passed six native tests and 16 extraction/Lean checks across promoted and
+optimized MIR, including downstream Cargo use. The generic construction helpers
+themselves are extraction roots. Concrete node returns, `Grammar` bounds allowing
+backend-only children, independent borrows, opaque callbacks with owned output,
+and opaque parsers with owned or borrowed output pass. Ten isolated negative
+checks fail in Aeneas on borrowed mapping callbacks: the closure fails with or
+without the construction helper, while a named function produces a distinct
+higher-ranked/free-lifetime diagnostic. The default probe runner includes these
+failures and exits unsuccessfully; the results are not an all-passing suite or
+semantic correctness proofs. No public constructor helpers have been added yet.
+
 Subsequent prototype work has now type-checked and proved the generic `Map` and
 `Verify` implementations, the concrete `Flags` mapping callback, the record header
 predicate, and the complete borrowed record parser. This provides stronger
@@ -1156,6 +1175,13 @@ Use nom as a reference for typed composition, borrowed outputs, explicit error
 categories, and repetition progress checks. Its complete-versus-streaming distinction informs the explicit finality contract;
 RustHammer keeps its own smaller interface and bit-cursor semantics.
 
+Adopt lightweight construction functions over structured nodes, following the
+[construction policy](rusthammer-combinators.md#construction-functions-and-return-types).
+Keep concrete returns for core combinators so their backend capabilities remain
+available. Opaque callback and parser returns are extraction-compatible in the
+tested forms, but hiding a whole grammar is an API capability choice. The
+constructor increment is next; no trait redesign is required.
+
 Do not assume its input semantics match Hammer's. In particular, nom's
 [bit-to-byte adapter](https://docs.rs/nom/8.0.0/nom/bits/fn.bytes.html) skips a
 remaining partial byte; Hammer's `h_bytes` can parse bytes at unaligned positions.
@@ -1180,7 +1206,7 @@ types that are intended to be discarded.
 | 3. Compositional core | Implement sequence, ordered choice, optionality, lookahead, bounded repetition, mapping, predicates, and the data dependencies needed by the first format. Add unbounded repetition only with progress semantics. | Reusable combinator theorems, checked callback assumptions, and tests for backtracking, empty success, truncation, and error propagation. |
 | 4. First verified application parser | Parse a small binary record with bit fields, a constrained header, a bounded length-prefixed payload, and explicit end-of-input behavior. | An independent format specification and a Lean-checked application theorem covering values, consumption, valid-input acceptance, safe rejection, and termination under documented bounds. |
 | 5. Backend execution boundary | Separate grammar outputs and evaluator capabilities, thread the backend through all child calls, and migrate direct parsing and proofs. See the [backend plan](rusthammer-backends.md). | Existing direct contracts, native backend propagation tests, both MIR stages, and the separate Cargo consumer. |
-| 6. Further capabilities and optimization | Add spans, then prioritize memoization, recursion, runtime grammars, seeking, streaming, deferred effects, richer diagnostics, or other compiled backends according to separately reviewed contracts. Optimize measured bottlenecks. | Correctness proofs on explicit supported subsets, documented complexity assumptions, differential tests, and benchmarks; no implicit claim of full Hammer coverage. |
+| 6. Further capabilities and optimization | Spans are implemented and proved. Add construction helpers, then prioritize memoization, recursion, runtime grammars, seeking, streaming, deferred effects, richer diagnostics, or other compiled backends according to separately reviewed contracts. Optimize measured bottlenecks. | Correctness proofs on explicit supported subsets, documented complexity assumptions, differential tests, and benchmarks; no implicit claim of full Hammer coverage. |
 
 Use native Rust tests, focused property tests, and differential tests with C Hammer
 to catch integration and specification mistakes. Compare acceptance, decoded
@@ -1219,7 +1245,7 @@ the implementation. The prototype now provides a verified record parser and
 reusable primitive, sequencing, choice, mapping, predicate, optionality, lookahead,
 finite/unbounded repetition, parser-reference, output-selection, empty/failing
 grammar, checked-mapping, folding, separated-list, and `Bind` contracts, plus
-verified dependent-format examples. The backend boundary is complete; next add
-the span/recognition family specified in the input plan.
+verified dependent-format examples. The backend boundary and span/recognition
+family are complete; the construction-helper increment is next.
 Continue focused semantic and differential checks. CI and the Aeneas callback
 investigation remain deferred.

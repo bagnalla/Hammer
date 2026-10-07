@@ -246,7 +246,7 @@ pub enum ParseError {
     Unaligned,
     Mismatch,
     TrailingInput,
-    /// An unbounded repetition's successful child did not strictly advance the cursor.
+    /// An unbounded repetition did not strictly advance, or a span's end precedes its start.
     NonProgress,
     /// Another successful repetition would exceed the largest representable count.
     CountOverflow,
@@ -1645,6 +1645,187 @@ impl<
             ParseOutcome::Success(next, values) => {
                 let (_, (middle, _)) = values;
                 ParseOutcome::Success(next, middle)
+            }
+            ParseOutcome::Error(error) => ParseOutcome::Error(error),
+            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+        }
+    }
+}
+
+/// A validated region of the original input, including partial boundary bytes.
+///
+/// Positions count bits consumed from the end of each byte selected by
+/// `bit_order`. The span retains that direction after parsing returns. It
+/// identifies source bits, not the field grouping or internal ordering scopes
+/// used to decode them. Byte order does not affect the source region.
+///
+/// Both endpoints are normalized, within `input`, and in forward order; equal
+/// endpoints describe an empty span. Fields are private to preserve those bounds.
+/// Use [`Self::as_bytes`] for a borrowed byte view when both endpoints are aligned.
+/// Partial-byte spans expose their input, positions, and direction instead.
+/// No absolute machine-sized bit count is needed.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct BitSpan<'input> {
+    input: &'input [u8],
+    start: Cursor,
+    end: Cursor,
+    bit_order: BitOrder,
+}
+
+fn span_cursor_valid(length: usize, cursor: Cursor) -> bool {
+    cursor.bit < 8 && (cursor.byte < length || (cursor.byte == length && cursor.bit == 0))
+}
+
+impl<'input> BitSpan<'input> {
+    /// Validate a region. Invalid endpoints yield `InvalidCursor` before checking
+    /// for a backward span (`NonProgress`). Empty and unaligned spans are valid.
+    pub fn new(
+        input: &'input [u8],
+        start: Cursor,
+        end: Cursor,
+        bit_order: BitOrder,
+    ) -> Result<Self, ParseError> {
+        if !span_cursor_valid(input.len(), start) || !span_cursor_valid(input.len(), end) {
+            return Err(ParseError::InvalidCursor);
+        }
+        if end.byte < start.byte || (end.byte == start.byte && end.bit < start.bit) {
+            return Err(ParseError::NonProgress);
+        }
+        Ok(Self {
+            input,
+            start,
+            end,
+            bit_order,
+        })
+    }
+
+    /// The complete input buffer from which this region was selected.
+    pub const fn input(&self) -> &'input [u8] {
+        self.input
+    }
+
+    pub const fn start(&self) -> Cursor {
+        self.start
+    }
+
+    pub const fn end(&self) -> Cursor {
+        self.end
+    }
+
+    /// Direction used to identify the selected bits in partial boundary bytes.
+    pub const fn bit_order(&self) -> BitOrder {
+        self.bit_order
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.start.byte == self.end.byte && self.start.bit == self.end.bit
+    }
+
+    /// Original source bytes, without reordering or copying, if both endpoints
+    /// are aligned. An aligned empty span returns `Some(&[])`; an unaligned
+    /// empty span returns `None`. The borrow lasts as long as the original input.
+    pub fn as_bytes(&self) -> Option<&'input [u8]> {
+        if self.start.bit != 0 || self.end.bit != 0 {
+            return None;
+        }
+        Some(&self.input[self.start.byte..self.end.byte])
+    }
+}
+
+/// Retain a child's decoded value together with its matched input span.
+///
+/// The output is `(P::Output, BitSpan<'input>)`. This wrapper annotates only its
+/// own result; nested values acquire spans only where explicitly wrapped.
+/// The starting cursor is validated before the child runs. On success, the
+/// ending cursor is validated and backward movement rejected with `NonProgress`.
+/// Empty matches are allowed. Child errors and `NeedMore` propagate unchanged.
+/// Backend state and context follow the child, including on a rejected exit.
+///
+/// Custom children must obey the ordering scope rules: endpoint checks cannot
+/// establish which bits an arbitrary parser inspected. Lookahead contributes
+/// no consumed input, and therefore has an empty span when wrapped.
+///
+/// ```
+/// use rusthammer::{BeU16, Cursor, Parser, WithSpan};
+/// let input = [0x12, 0x34];
+/// let (_, (value, span)) = WithSpan { parser: BeU16 }
+///     .parse(&input, Cursor::start()).unwrap();
+/// assert_eq!(value, 0x1234);
+/// assert_eq!(span.as_bytes(), Some(input.as_slice()));
+/// ```
+#[derive(Clone, Copy)]
+pub struct WithSpan<P> {
+    pub parser: P,
+}
+
+impl<'input, P: Grammar<'input>> Grammar<'input> for WithSpan<P> {
+    type Output = (P::Output, BitSpan<'input>);
+}
+
+impl<'input, Backend, P: Eval<'input, Backend>> Eval<'input, Backend> for WithSpan<P> {
+    fn eval(
+        &self,
+        backend: &mut Backend,
+        input: &'input [u8],
+        cursor: Cursor,
+        context: ParseContext,
+    ) -> ParseOutcome<Self::Output> {
+        if !span_cursor_valid(input.len(), cursor) {
+            return ParseOutcome::Error(ParseError::InvalidCursor);
+        }
+        match self.parser.eval(backend, input, cursor, context) {
+            ParseOutcome::Success(next, value) => {
+                let span = match BitSpan::new(input, cursor, next, context.order.bit) {
+                    Ok(span) => span,
+                    Err(error) => return ParseOutcome::Error(error),
+                };
+                ParseOutcome::Success(next, (value, span))
+            }
+            ParseOutcome::Error(error) => ParseOutcome::Error(error),
+            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+        }
+    }
+}
+
+/// Return the matched input span, discarding the child's decoded value.
+///
+/// Uses the same validation and consumption rules as [`WithSpan`]. The child
+/// still runs and constructs its output, including allocations and callback
+/// effects; that value is then dropped. Grammar nodes remain backend-generic.
+///
+/// ```
+/// use rusthammer::{BeU16, Cursor, Parser, Recognize};
+/// let input = [0x12, 0x34];
+/// let (_, span) = Recognize { parser: BeU16 }
+///     .parse(&input, Cursor::start()).unwrap();
+/// assert_eq!(span.as_bytes(), Some(input.as_slice()));
+/// ```
+#[derive(Clone, Copy)]
+pub struct Recognize<P> {
+    pub parser: P,
+}
+
+impl<'input, P: Grammar<'input>> Grammar<'input> for Recognize<P> {
+    type Output = BitSpan<'input>;
+}
+
+impl<'input, Backend, P: Eval<'input, Backend>> Eval<'input, Backend> for Recognize<P> {
+    fn eval(
+        &self,
+        backend: &mut Backend,
+        input: &'input [u8],
+        cursor: Cursor,
+        context: ParseContext,
+    ) -> ParseOutcome<Self::Output> {
+        let spanned = WithSpan {
+            parser: &self.parser,
+        };
+        match spanned.eval(backend, input, cursor, context) {
+            // Move the complete tuple before destructuring for dependency MIR;
+            // see InputStatus::classify and probes/cross_crate/README.md.
+            ParseOutcome::Success(next, output) => {
+                let (_, span) = output;
+                ParseOutcome::Success(next, span)
             }
             ParseOutcome::Error(error) => ParseOutcome::Error(error),
             ParseOutcome::NeedMore => ParseOutcome::NeedMore,

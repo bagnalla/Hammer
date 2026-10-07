@@ -6,6 +6,21 @@ mapping probe includes the actual library source to exercise a concrete callback
 The `cross_crate` fixture instead uses a normal Cargo dependency and is checked
 by the local verification command.
 
+## Constructor functions and opaque returns
+
+The private [`constructors`](constructors/README.md) package checks generic
+functions returning existing grammar nodes, `Grammar` bounds that permit
+backend-only children, and opaque returns for callbacks and whole parsers.
+It includes borrowed outputs, independent configuration/input lifetimes, and a
+separate Cargo consumer. Run `python3 tools/check_constructor_api.py` from
+`rusthammer/` with the pinned extraction tools and Lean dependencies available.
+The runner checks both MIR stages and Lean type-checking; it does not add public
+library functions or prove semantic correctness of this experimental API.
+The constructor and opaque-return cases pass at both stages. The default run
+also includes isolated failing borrowed-callback controls and therefore exits
+unsuccessfully; the linked results distinguish those failures from the passing
+API shapes.
+
 ## Backend interpretation and typed memo tables
 
 [`backend_memo.rs`](backend_memo.rs) checks the proposed
@@ -101,7 +116,7 @@ The library now implements and proves this restricted ordering model, including
 numeric decoding and the separate Cargo consumer. See the
 [production evidence](../../plans/rusthammer-input.md#production-implementation-and-evidence).
 This probe remains an isolated record of the preceding design check, including
-span experiments that are not yet part of the public API.
+historical span experiments that preceded the production API.
 
 From `rusthammer/`, with the pinned tools and Lean dependencies:
 
@@ -139,7 +154,7 @@ comparisons; partial behavior is tested natively.
 
 This probe does not prove its reader's numeric correctness, physical span
 geometry, or concrete application grammars. The production library has its own
-numeric-reader proofs and Cargo-consumer checks; span proofs remain future work.
+numeric-reader and span proofs, with separate Cargo-consumer checks.
 This probe remains outside
 the library and its normal verification command; all build/proof artifacts go
 under ignored `target/restricted-order/`.
