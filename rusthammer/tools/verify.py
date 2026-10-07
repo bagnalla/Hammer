@@ -50,6 +50,14 @@ CONSTRUCTOR_THEOREMS = tuple(f"RustHammer.Constructors.{name}" for name in (
     "reuse_spec", "seq_eval_spec",
 ))
 
+PERMUTATION_THEOREMS = tuple(f"RustHammer.Permutation.{name}" for name in (
+    "search_spec", "eval_spec", "required_eq", "permutation_eq", "required_eval_spec",
+    "required_slot_spec", "optional_slot_spec", "required_entry_spec", "optional_entry_spec",
+    "empty_eval_spec",
+    *(f"tuple{arity}_{operation}" for arity in range(1, 13)
+      for operation in ("initial", "matched", "clear", "finish", "output_order", "dispatch")),
+))
+
 
 def output(*args, cwd=None):
     return subprocess.check_output(args, cwd=cwd, text=True).strip()
@@ -69,7 +77,8 @@ def translate(aeneas, llbc, destination, namespace):
 
 
 def audit_proofs():
-    theorems = ORDER_THEOREMS + BACKEND_THEOREMS + SPAN_THEOREMS + CONSTRUCTOR_THEOREMS
+    theorems = (ORDER_THEOREMS + BACKEND_THEOREMS + SPAN_THEOREMS
+                + CONSTRUCTOR_THEOREMS + PERMUTATION_THEOREMS)
     audit = ROOT / "target" / "proof-axioms.lean"
     audit.write_text("import RustHammer\n" + "".join(
         f"#print axioms {name}\n" for name in theorems
@@ -131,6 +140,13 @@ def main():
         "--start-from", "rusthammer::try_map",
         "--start-from", "rusthammer::verify",
         "--start-from", "rusthammer::bind",
+        "--start-from", "rusthammer::permutation::permutation",
+        "--start-from", "rusthammer::permutation::required",
+        "--start-from", "{impl rusthammer::permutation::Layout for _}",
+        "--start-from", "{impl rusthammer::permutation::Items for _}",
+        "--start-from", "{impl rusthammer::permutation::ItemEval for _}",
+        "--start-from", "{impl core::clone::Clone for rusthammer::permutation::Permutation}",
+        "--start-from", "{impl core::clone::Clone for rusthammer::permutation::Required}",
         "--start-from", "rusthammer::marker_example::parse_marker",
         "--start-from", "rusthammer::record_example::parse_record",
         "--start-from", "rusthammer::Bits::new",
@@ -195,6 +211,7 @@ def main():
         "--dest-file", "target/rusthammer.llbc", "--", "--lib", "--locked", "--features", "alloc",
     )
     translate(aeneas, "target/rusthammer.llbc", "lean/RustHammer", "RustHammer.Code")
+    run("python3", ROOT / "tools/generate_permutation_tuple_proofs.py", "--check")
 
     optimized = ROOT / "target" / "optimized"
     optimized.mkdir(parents=True, exist_ok=True)
@@ -232,6 +249,7 @@ def main():
         "ordered_fields", "scoped_payload", "scoped_pattern",
         "spanned_pattern", "recognized_payload", "scoped_span", "span_views", "backend_span",
         "constructor_header", "constructor_choice", "constructor_payload",
+        "permuted_borrows", "permuted_headers", "permuted_backend", "permuted_empty", "permuted_twelve",
     )
     entry_args = [
         arg for name in entries

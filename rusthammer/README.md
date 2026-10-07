@@ -38,6 +38,7 @@ The prototype supports:
   and `Verify<P, F>` for predicates.
 - `Epsilon` for empty success and `Fail<T>` for definite rejection with a chosen output type.
 - `Choice<P, Q>`, which tries ordered alternatives with the same output type.
+- `Permutation<T>`, which matches required/optional tuple entries in any order and returns values in declaration order.
 - `ButNot<P, Q>` and `Difference<P, Q>` for match-length restrictions, and `Xor<P, Q>` for exclusive alternatives.
 - `Optional<P>` for optional typed values, and `And<P>` / `Not<P>` for lookahead.
 - Exact, bounded, and unbounded `Repeat<P>` collecting typed outputs, with optional `alloc`.
@@ -73,6 +74,7 @@ cargo run --example fields
 cargo run --example ordering
 cargo run --example spans
 cargo run --example constructors
+cargo run --example permutation
 cargo run --example signed_fields
 cargo run --example integers
 cargo run --example ranges
@@ -137,6 +139,8 @@ The free construction functions return the existing node types:
 | `try_map(p, f)` | `TryMap<P, F>` | `P: Grammar`; `f` returns a `Result`. |
 | `verify(p, f)` | `Verify<P, F>` | `P: Grammar`; `f` borrows its output and returns `bool`. |
 | `bind(p, f)` | `Bind<P, F>` | `P: Grammar`; `f` returns another `Grammar`. |
+| `required(p)` | `Required<P>` | None; `const fn`. Marks a required permutation entry. |
+| `permutation(items)` | `Permutation<T>` | None at construction; `const fn`. Evaluation supports tuples of zero through twelve explicit entries. |
 
 The callback bounds infer argument types without selecting an interpreter.
 Construction stores the children and callbacks without running them. Evaluation
@@ -172,6 +176,76 @@ composition. The ordinary verification command covers the generic helper bodies
 at both MIR stages, downstream use, and the new theorem axiom audits.
 Borrowed-output callbacks are valid Rust and covered by native tests; the known
 Aeneas failures for those callbacks remain in the separate diagnostic runner.
+
+## Permutation
+
+`permutation((required(a), optional(b), required(c)))` is the typed counterpart
+of C Hammer's `h_permutation`. It accepts the entries in any input order and
+returns a tuple in their declaration order. The existing `optional` wrapper
+marks optional entries; every other entry uses `required` explicitly.
+
+```rust
+use rusthammer::{optional, permutation, required, BytePattern, Cursor, Parser};
+
+let parser = permutation((
+    required(BytePattern::new(b"a")),
+    required(BytePattern::new(b"ab")),
+    optional(BytePattern::new(b"!")),
+));
+// Matching "a" first leaves no match for "ab", so the search retries "ab" first.
+let (next, values) = parser.parse(b"aba!", Cursor::start()).unwrap();
+assert_eq!(values, (&b"a"[..], &b"ab"[..], Some(&b"!"[..])));
+assert_eq!(next, Cursor { byte: 4, bit: 0 });
+```
+
+Tuples of zero through twelve entries support heterogeneous, borrowed, and
+non-`Clone` outputs without heap allocation. The [example](examples/permutation.rs)
+parses tagged numeric fields supplied in a different order from their output tuple.
+The search follows declaration priority, backtracking over entry orderings after
+recoverable suffix failure. Each child retains its own choice semantics: the
+search does not retry alternatives inside a child that already succeeded.
+
+An optional entry is absent only when every remaining entry is optional and
+rejects at the current cursor. Empty actual successes still fill their slots.
+`required(optional(p))` fills a required slot even if its value is `None`.
+`NeedMore` and fatal errors propagate immediately; partial exhaustion does not
+establish absence. Exhausted orderings return recoverable `Mismatch`. The empty
+tuple succeeds at the supplied cursor without validating it.
+
+Cursor backtracking retains backend state and callback effects, as `Choice`
+does. Speculative outputs are dropped; accepted outputs are moved. The finite
+search terminates when its children terminate, including nullable children.
+It uses the call stack and can require factorial work on ambiguous inputs.
+
+The termination proof does not establish freedom from stack overflow. Candidate
+scanning is also recursive: inspecting the control flow gives a conservative
+bound of `n² + 1` active search calls for `n` entries (145 at the twelve-entry
+limit), excluding child calls and surrounding combinators. Stack consumption in
+bytes depends on compilation and output-storage sizes; large inline outputs,
+nested permutations, or small stacks can still overflow. Stack usage has not
+been measured or formally bounded in bytes. An iterative search with bounded
+explicit backtracking storage remains an implementation option to investigate.
+
+[Search and entry proofs](lean/RustHammer/PermutationProofs.lean) establish total
+agreement with an unbounded-counter search model under child/storage contracts,
+including state transitions and safe machine arithmetic.
+[Tuple proofs](lean/RustHammer/PermutationTupleProofs.lean) check storage,
+declaration-order output assembly, and selected-child dispatch for arities one
+through twelve; the empty tuple has its own theorem. Native tests additionally
+check Rust ownership/destruction and compare 13,608 required-pattern cases with
+an independent concatenation oracle. The optional
+[C comparison](probes/permutation/README.md) checks 217,728 complete-input cases:
+
+```sh
+python3 tools/check_permutation_c.py
+```
+
+Both library MIR stages and downstream extraction pass without changing the
+pinned tools. The comparison notes record the extraction constraints encountered
+during implementation. The separate recursive-grammar and callback investigations
+remain deferred.
+
+## Validated configuration
 
 The configuration fields of `Bits` and `Literal` are private. Read-only `width()`
 and `value()` accessors expose their settings; there are no setters or unchecked
@@ -1315,10 +1389,10 @@ available for dependency bodies and checks a
 tests in both allocation configurations; its extraction includes RustHammer's
 implementation with `alloc` enabled. Both extra translations are checked for
 admitted/opaque declarations and Lean type-checked. They stay under `target/`.
-All 52 consumer entry points pass, including evaluators that use a local
-mutable backend while returning a borrowed input slice or span. The normal
-verification command also audits all 34 new span theorems, for 65 audited
-ordering/backend/span theorems, plus nine construction theorems, for 74 in total.
+All 57 consumer entry points pass, including evaluators that use a local
+mutable backend while returning borrowed input, spans, or permutation outputs.
+The normal verification command audits 156 ordering/backend/span/construction/
+permutation theorems, including all 82 new permutation theorems.
 
 The cross-crate investigation found that cleanup code can recheck an enum's tag
 after a payload move, which the pinned Aeneas rejects. Internal pattern
@@ -1706,6 +1780,17 @@ grammar construction and its extraction-tool investigation are deferred at the
 user's request. Existing repetition, lists, folds, and data-dependent `Bind`
 remain in scope.
 
+Typed permutation is implemented and proved. The
+[agreed API scope](../plans/rusthammer-combinators.md#agreed-api-scope) retains
+floating-point fields/ranges, seeking, and diagnostic annotations as intended
+capabilities; their first-version inclusion and implementation order remain to
+be selected. Diagnostic annotations will label parser occurrences and
+optionally record where they were constructed, while preserving parsing behavior.
+Deferred actions and a dedicated `h_dispatch` counterpart are omitted from the
+intended API. Named parse-local value storage is outside the first version, with
+its longer-term role undecided pending a concrete use case. Explicit typed values,
+`Bind`, and `Choice` remain the basis for field dependencies and tagged formats.
+
 Follow the [combinator API plan](../plans/rusthammer-combinators.md):
 
 Basic composition is implemented and proved, including parser references,
@@ -1728,7 +1813,6 @@ entry points. `BitSpan`, `Recognize`, and `WithSpan` now implement their
 physical-boundary and borrowed-view contracts. Memoization, cached-output ownership,
 rule identities, and recursive grammar construction remain later work, guided by
 representative protocol benchmarks. The private cache probe remains design evidence.
-Design permutation separately.
 
 The [deferred recursion writeup](../plans/rusthammer-recursive-rules.md) records
 the proposed `recursive(|self_ref| body)` API, direct-execution probes, extraction
@@ -1742,8 +1826,9 @@ The
 over the existing concrete nodes are implemented and proved. They use `Grammar`
 bounds where needed and preserve backend capabilities through concrete returns.
 Their generic bodies and ordinary consumer uses pass both extraction checks.
-Continue with selected nonrecursive conveniences and first-version API/proof
-coverage, following the [active plan](../plans/rusthammer.md#first-version-scope-and-next-steps).
+Continue with selected nonrecursive capabilities, conveniences, and first-version
+API/proof coverage, following the
+[active plan](../plans/rusthammer.md#first-version-scope-and-next-steps).
 
 Keep future application grammars in shared example/proof-support source. The
 original `Flags`, `Marker`, and `Record` fixtures have been migrated out of the
@@ -1755,8 +1840,7 @@ work, including its error precedence and proof updates.
 
 After each production increment, run `python3 tools/verify.py`. Packrat and its
 recursion support follow the backend plan above. Keep chunk buffering and
-resumption, seeking, deferred effects, and other engines as separately specified
-additions.
+resumption and other engines as separately specified additions.
 
 CI integration and further investigation of the recorded borrowed-callback
 extraction limitation are deferred. Continue running verification locally.

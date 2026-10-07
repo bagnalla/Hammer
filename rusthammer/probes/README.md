@@ -6,6 +6,16 @@ mapping probe includes the actual library source to exercise a concrete callback
 The `cross_crate` fixture instead uses a normal Cargo dependency and is checked
 by the local verification command.
 
+## Typed permutation
+
+The [permutation corpus](permutation/README.md) compares the production tuple
+implementation with C Hammer, including ambiguous prefixes, nullable/optional
+entries, declaration-order values, and unaligned starts. It also records the
+source shapes that passed the pinned extraction tools. The initial candidate
+was replaced by production code; the normal verifier now checks both library
+MIR stages, every tuple implementation, and downstream permutation examples.
+The optional C comparison runs with `python3 tools/check_permutation_c.py`.
+
 ## Constructor functions and opaque returns
 
 The private [`constructors`](constructors/README.md) package checks generic

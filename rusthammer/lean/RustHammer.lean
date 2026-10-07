@@ -18,3 +18,4 @@ import RustHammer.OrderParserProofs
 import RustHammer.BackendProofs
 import RustHammer.SpanProofs
 import RustHammer.ConstructorProofs
+import RustHammer.PermutationTupleProofs

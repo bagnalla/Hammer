@@ -63,6 +63,74 @@ use rusthammer::{
 #[path = "../../examples/support/constructors.rs"]
 mod constructor_example;
 
+/// Input and grammar configuration remain independently borrowed through tuples.
+pub fn permuted_borrows<'input, 'config>(
+    input: &'input [u8],
+    pattern: &'config [u8],
+    context: ParseContext,
+) -> ParseOutcome<(&'config [u8], &'input [u8], Option<bool>)> {
+    rusthammer::permutation((
+        rusthammer::required(BytePattern::new(pattern)),
+        rusthammer::required(TakeAligned { count: 1 }),
+        rusthammer::optional(Bit),
+    ))
+    .parse_with(input, Cursor::start(), context)
+}
+
+/// Neither output implements Clone or Copy.
+pub fn permuted_headers(
+    input: &[u8],
+    context: ParseContext,
+) -> ParseOutcome<(
+    constructor_example::Header,
+    Option<constructor_example::Header>,
+)> {
+    rusthammer::permutation((
+        rusthammer::required(constructor_example::header()),
+        rusthammer::optional(constructor_example::header()),
+    ))
+    .parse_with(input, Cursor::start(), context)
+}
+
+/// Backtracking restores the cursor while retaining interpreter state.
+pub fn permuted_backend(input: &[u8], context: ParseContext) -> (ParseOutcome<()>, u8) {
+    use rusthammer::Eval;
+    let parser = Ignore {
+        parser: rusthammer::permutation((
+            rusthammer::required(Counted(BytePattern::new(b"a"))),
+            rusthammer::required(Counted(BytePattern::new(b"ab"))),
+        )),
+    };
+    let mut backend = Counter { calls: 0 };
+    let outcome = parser.eval(&mut backend, input, Cursor::start(), context);
+    (outcome, backend.calls)
+}
+
+pub fn permuted_empty(input: &[u8], context: ParseContext) -> ParseOutcome<()> {
+    rusthammer::permutation(()).parse_with(input, Cursor::start(), context)
+}
+
+pub fn permuted_twelve(input: &[u8], context: ParseContext) -> ParseOutcome<()> {
+    use rusthammer::required;
+    Ignore {
+        parser: rusthammer::permutation((
+            required(Byte),
+            required(Byte),
+            required(Byte),
+            required(Byte),
+            required(Byte),
+            required(Byte),
+            required(Byte),
+            required(Byte),
+            required(Byte),
+            required(Byte),
+            required(Byte),
+            required(Byte),
+        )),
+    }
+    .parse_with(input, Cursor::start(), context)
+}
+
 /// Concrete nodes with opaque callbacks retain interpretation by any backend.
 pub fn constructor_header<Backend>(
     backend: &mut Backend,
@@ -757,6 +825,45 @@ pub fn leading_ones(input: &[u8], context: ParseContext) -> ParseOutcome<alloc::
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn permutation_outputs_and_backend_survive_local_grammar() {
+        use super::*;
+        let pattern = [b'!'];
+        let input = [b'!', b'x'];
+        match permuted_borrows(&input, &pattern, ParseContext::FINAL) {
+            ParseOutcome::Success(next, (configured, borrowed, optional)) => {
+                assert_eq!(next, Cursor { byte: 2, bit: 0 });
+                assert!(core::ptr::eq(configured.as_ptr(), pattern.as_ptr()));
+                assert!(core::ptr::eq(borrowed.as_ptr(), input[1..].as_ptr()));
+                assert_eq!(optional, None);
+            }
+            _ => panic!("expected borrowed values"),
+        }
+        assert_eq!(
+            permuted_borrows(&input, &pattern, ParseContext::PARTIAL),
+            ParseOutcome::NeedMore
+        );
+        assert_eq!(
+            permuted_headers(&[1, 0, 3], ParseContext::FINAL),
+            ParseOutcome::Success(
+                Cursor { byte: 3, bit: 0 },
+                (constructor_example::Header { tag: 1, length: 3 }, None)
+            ),
+        );
+        assert_eq!(
+            permuted_backend(b"aba", ParseContext::FINAL),
+            (ParseOutcome::Success(Cursor { byte: 3, bit: 0 }, ()), 4)
+        );
+        assert_eq!(
+            permuted_empty(b"", ParseContext::PARTIAL),
+            ParseOutcome::Success(Cursor::start(), ())
+        );
+        assert_eq!(
+            permuted_twelve(b"abcdefghijkl", ParseContext::FINAL),
+            ParseOutcome::Success(Cursor { byte: 12, bit: 0 }, ())
+        );
+    }
+
     #[test]
     fn constructor_callbacks_infer_types_and_preserve_alternative_priority() {
         use super::*;

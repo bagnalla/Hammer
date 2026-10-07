@@ -388,11 +388,15 @@ dictionary transformation or new packrat engine is required for the first versio
    combinator control flow, migrated examples and Lean proofs, a stateful test
    backend, and normal Cargo consumers pass the checks described above.
 2. **Finish the selected nonrecursive API and its verification.** Spans and
-   constructor helpers are complete. Use the
+   constructor helpers and typed permutation are complete. Permutation shares
+   one backend-generic search and retains backend effects when retrying an
+   ordering. Use the
    [combinator plan](rusthammer-combinators.md#implementation-order-and-migration)
-   to select remaining conveniences and review first-version coverage. Preserve
-   the existing backend boundary. Measurements of representative grammars can
-   later guide cache boundaries, storage, and replay costs.
+   to select remaining capabilities and conveniences under the
+   [agreed API scope](rusthammer-combinators.md#agreed-api-scope) and review
+   first-version coverage. Preserve the existing backend boundary. Measurements
+   of representative grammars can later guide cache boundaries, storage, and
+   replay costs.
 3. **Recursive construction and direct execution (deferred).** On resumption,
    validate a finite typed recursive reference inside actual combinator bodies, including mutual
    recursion, configuration/input borrows, and non-`Clone` outputs. Resolve the

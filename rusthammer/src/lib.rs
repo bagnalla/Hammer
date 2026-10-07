@@ -38,6 +38,9 @@
 
 use core::marker::PhantomData;
 
+mod permutation;
+pub use permutation::{permutation, required, Permutation, Required};
+
 // Extract the same application code used by the examples and tests without
 // adding example formats to the library API or ordinary builds.
 #[cfg(rusthammer_verify)]

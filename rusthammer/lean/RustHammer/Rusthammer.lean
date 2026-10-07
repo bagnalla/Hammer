@@ -27,13 +27,13 @@ namespace RustHammer.Code
 def core.marker.PhantomData (T : Type) := Unit
 
 /-- [rusthammer::Bits]
-    Source: 'src/lib.rs', lines 538:0-540:1
+    Source: 'src/lib.rs', lines 541:0-543:1
     Visibility: public -/
 structure Bits where
   width : Std.U8
 
 /-- [rusthammer::ConfigError]
-    Source: 'src/lib.rs', lines 237:0-244:1
+    Source: 'src/lib.rs', lines 240:0-247:1
     Visibility: public -/
 @[discriminant isize]
 inductive ConfigError where
@@ -42,7 +42,7 @@ inductive ConfigError where
 | InvalidBounds : ConfigError
 
 /-- [rusthammer::{rusthammer::Bits}::new]:
-    Source: 'src/lib.rs', lines 544:4-550:5
+    Source: 'src/lib.rs', lines 547:4-553:5
     Visibility: public -/
 def Bits.new
   (width : Std.U8) : Result (core.result.Result Bits ConfigError) := do
@@ -65,7 +65,7 @@ def dependent_examples.fixed_bits (width : Std.U8) : Result Bits := do
 def dependent_examples.CountPrefix := Unit
 
 /-- Trait declaration: [rusthammer::Grammar]
-    Source: 'src/lib.rs', lines 384:0-386:1
+    Source: 'src/lib.rs', lines 387:0-389:1
     Visibility: public -/
 structure Grammar (Self : Type) (Self_Output : Type) where
 
@@ -77,7 +77,7 @@ def dependent_examples.CountPrefix.Insts.RusthammerGrammarInputUsize : Grammar
 }
 
 /-- [rusthammer::TryMap]
-    Source: 'src/lib.rs', lines 2662:0-2665:1
+    Source: 'src/lib.rs', lines 2665:0-2668:1
     Visibility: public -/
 structure TryMap (P : Type) (F : Type) where
   parser : P
@@ -171,7 +171,7 @@ def
 }
 
 /-- [rusthammer::ParseError]
-    Source: 'src/lib.rs', lines 248:0-258:1
+    Source: 'src/lib.rs', lines 251:0-261:1
     Visibility: public -/
 @[discriminant isize]
 inductive ParseError where
@@ -184,14 +184,14 @@ inductive ParseError where
 | CountOverflow : ParseError
 
 /-- [rusthammer::Cursor]
-    Source: 'src/lib.rs', lines 76:0-79:1
+    Source: 'src/lib.rs', lines 79:0-82:1
     Visibility: public -/
 structure Cursor where
   byte : Std.Usize
   bit : Std.U8
 
 /-- [rusthammer::ParseOutcome]
-    Source: 'src/lib.rs', lines 340:0-344:1
+    Source: 'src/lib.rs', lines 343:0-347:1
     Visibility: public -/
 @[discriminant isize]
 inductive ParseOutcome (T : Type) where
@@ -200,7 +200,7 @@ inductive ParseOutcome (T : Type) where
 | NeedMore : ParseOutcome T
 
 /-- [rusthammer::ByteOrder]
-    Source: 'src/lib.rs', lines 293:0-296:1
+    Source: 'src/lib.rs', lines 296:0-299:1
     Visibility: public -/
 @[discriminant isize]
 inductive ByteOrder where
@@ -208,7 +208,7 @@ inductive ByteOrder where
 | Little : ByteOrder
 
 /-- [rusthammer::BitOrder]
-    Source: 'src/lib.rs', lines 286:0-289:1
+    Source: 'src/lib.rs', lines 289:0-292:1
     Visibility: public -/
 @[discriminant isize]
 inductive BitOrder where
@@ -216,14 +216,14 @@ inductive BitOrder where
 | LowFirst : BitOrder
 
 /-- [rusthammer::Order]
-    Source: 'src/lib.rs', lines 300:0-303:1
+    Source: 'src/lib.rs', lines 303:0-306:1
     Visibility: public -/
 structure Order where
   bit : BitOrder
   byte : ByteOrder
 
 /-- [rusthammer::InputStatus]
-    Source: 'src/lib.rs', lines 276:0-281:1
+    Source: 'src/lib.rs', lines 279:0-284:1
     Visibility: public -/
 @[discriminant isize]
 inductive InputStatus where
@@ -231,14 +231,14 @@ inductive InputStatus where
 | Final : InputStatus
 
 /-- [rusthammer::ParseContext]
-    Source: 'src/lib.rs', lines 318:0-321:1
+    Source: 'src/lib.rs', lines 321:0-324:1
     Visibility: public -/
 structure ParseContext where
   order : Order
   status : InputStatus
 
 /-- Trait declaration: [rusthammer::Eval]
-    Source: 'src/lib.rs', lines 400:0-408:1
+    Source: 'src/lib.rs', lines 403:0-411:1
     Visibility: public -/
 structure Eval (Self : Type) (Backend : Type) (Self_Clause0_Output : Type)
   where
@@ -247,7 +247,7 @@ structure Eval (Self : Type) (Backend : Type) (Self_Clause0_Output : Type)
     Result ((ParseOutcome Self_Clause0_Output) × Backend)
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, O> for rusthammer::TryMap<P, F>}::eval]:
-    Source: 'src/lib.rs', lines 2697:4-2715:5
+    Source: 'src/lib.rs', lines 2700:4-2718:5
     Visibility: public -/
 def TryMap.Insts.RusthammerEval.eval
   {Backend : Type} {P : Type} {F : Type} {O : Type} {E : Type}
@@ -274,7 +274,7 @@ def TryMap.Insts.RusthammerEval.eval
   | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
 
 /-- [rusthammer::advance_fragment]:
-    Source: 'src/lib.rs', lines 635:0-648:1 -/
+    Source: 'src/lib.rs', lines 638:0-651:1 -/
 def advance_fragment (cursor : Cursor) (take : Std.U8) : Result Cursor := do
   let bit ← cursor.bit + take
   if bit = 8#u8
@@ -283,7 +283,7 @@ def advance_fragment (cursor : Cursor) (take : Std.U8) : Result Cursor := do
   else ok { cursor with bit }
 
 /-- [rusthammer::append_fragment]:
-    Source: 'src/lib.rs', lines 628:0-633:1 -/
+    Source: 'src/lib.rs', lines 631:0-636:1 -/
 def append_fragment
   (value : Std.U64) (fragment : Std.U64) (done1 : Std.U8) (take : Std.U8)
   (order : ByteOrder) :
@@ -300,7 +300,7 @@ def append_fragment
     value + i1
 
 /-- [rusthammer::fragment_offset]:
-    Source: 'src/lib.rs', lines 621:0-626:1 -/
+    Source: 'src/lib.rs', lines 624:0-629:1 -/
 def fragment_offset
   (bit : Std.U8) (take : Std.U8) (order : BitOrder) : Result Std.U8 := do
   match order with
@@ -309,7 +309,7 @@ def fragment_offset
                          i - take
 
 /-- [rusthammer::read_bit_ordered]:
-    Source: 'src/lib.rs', lines 471:0-504:1 -/
+    Source: 'src/lib.rs', lines 474:0-507:1 -/
 def read_bit_ordered
   (input : Slice Std.U8) (cursor : Cursor) (order : BitOrder) :
   Result (core.result.Result (Cursor × Bool) ParseError)
@@ -344,7 +344,7 @@ def read_bit_ordered
         ok (core.result.Result.Ok ({ cursor with bit := i4 }, i3 != 0#u8))
 
 /-- [rusthammer::read_bit]:
-    Source: 'src/lib.rs', lines 467:0-469:1
+    Source: 'src/lib.rs', lines 470:0-472:1
     Visibility: public -/
 def read_bit
   (input : Slice Std.U8) (cursor : Cursor) :
@@ -353,7 +353,7 @@ def read_bit
   read_bit_ordered input cursor BitOrder.HighFirst
 
 /-- [rusthammer::read_bits]: loop body 0:
-    Source: 'src/lib.rs', lines 588:4-600:1
+    Source: 'src/lib.rs', lines 591:4-603:1
     Visibility: public -/
 @[rust_loop_body]
 def read_bits_loop0.body
@@ -379,7 +379,7 @@ def read_bits_loop0.body
   else ok (done (core.result.Result.Ok (next, value)))
 
 /-- [rusthammer::read_bits]: loop 0:
-    Source: 'src/lib.rs', lines 588:4-600:1
+    Source: 'src/lib.rs', lines 591:4-603:1
     Visibility: public -/
 @[rust_loop]
 def read_bits_loop0
@@ -393,7 +393,7 @@ def read_bits_loop0
     (next, remaining, value)
 
 /-- [rusthammer::read_bits]: loop body 1:
-    Source: 'src/lib.rs', lines 588:4-600:1
+    Source: 'src/lib.rs', lines 591:4-603:1
     Visibility: public -/
 @[rust_loop_body]
 def read_bits_loop1.body
@@ -419,7 +419,7 @@ def read_bits_loop1.body
   else ok (done (core.result.Result.Ok (next, value)))
 
 /-- [rusthammer::read_bits]: loop 1:
-    Source: 'src/lib.rs', lines 588:4-600:1
+    Source: 'src/lib.rs', lines 591:4-603:1
     Visibility: public -/
 @[rust_loop]
 def read_bits_loop1
@@ -433,7 +433,7 @@ def read_bits_loop1
     (next, remaining, value)
 
 /-- [rusthammer::read_bits]:
-    Source: 'src/lib.rs', lines 578:0-600:1
+    Source: 'src/lib.rs', lines 581:0-603:1
     Visibility: public -/
 def read_bits
   (input : Slice Std.U8) (cursor : Cursor) (parser : Bits) :
@@ -455,7 +455,7 @@ def read_bits
       else read_bits_loop1 input cursor parser.width 0#u64
 
 /-- [rusthammer::read_fragments]: loop body 0:
-    Source: 'src/lib.rs', lines 1:0-692:1 -/
+    Source: 'src/lib.rs', lines 1:0-695:1 -/
 @[rust_loop_body]
 def read_fragments_loop0.body
   (input : Slice Std.U8) (width : Std.U8) (order : Order) (next : Cursor)
@@ -487,7 +487,7 @@ def read_fragments_loop0.body
   else ok (done (core.result.Result.Ok (next, value)))
 
 /-- [rusthammer::read_fragments]: loop 0:
-    Source: 'src/lib.rs', lines 1:0-692:1 -/
+    Source: 'src/lib.rs', lines 1:0-695:1 -/
 @[rust_loop]
 def read_fragments_loop0
   (input : Slice Std.U8) (width : Std.U8) (order : Order) (next : Cursor)
@@ -500,7 +500,7 @@ def read_fragments_loop0
     (next, remaining, value)
 
 /-- [rusthammer::read_fragments]: loop body 1:
-    Source: 'src/lib.rs', lines 1:0-692:1 -/
+    Source: 'src/lib.rs', lines 1:0-695:1 -/
 @[rust_loop_body]
 def read_fragments_loop1.body
   (input : Slice Std.U8) (width : Std.U8) (order : Order) (next : Cursor)
@@ -532,7 +532,7 @@ def read_fragments_loop1.body
   else ok (done (core.result.Result.Ok (next, value)))
 
 /-- [rusthammer::read_fragments]: loop 1:
-    Source: 'src/lib.rs', lines 1:0-692:1 -/
+    Source: 'src/lib.rs', lines 1:0-695:1 -/
 @[rust_loop]
 def read_fragments_loop1
   (input : Slice Std.U8) (width : Std.U8) (order : Order) (next : Cursor)
@@ -545,7 +545,7 @@ def read_fragments_loop1
     (next, remaining, value)
 
 /-- [rusthammer::read_fragments]:
-    Source: 'src/lib.rs', lines 650:0-692:1 -/
+    Source: 'src/lib.rs', lines 653:0-695:1 -/
 def read_fragments
   (input : Slice Std.U8) (cursor : Cursor) (width : Std.U8) (order : Order) :
   Result (core.result.Result (Cursor × Std.U64) ParseError)
@@ -566,7 +566,7 @@ def read_fragments
       else read_fragments_loop1 input width order cursor width 0#u64
 
 /-- [rusthammer::read_ordered_bits]:
-    Source: 'src/lib.rs', lines 605:0-619:1 -/
+    Source: 'src/lib.rs', lines 608:0-622:1 -/
 def read_ordered_bits
   (input : Slice Std.U8) (cursor : Cursor) (parser : Bits) (order : Order) :
   Result (core.result.Result (Cursor × Std.U64) ParseError)
@@ -581,7 +581,7 @@ def read_ordered_bits
   | BitOrder.LowFirst => read_fragments input cursor parser.width order
 
 /-- [rusthammer::{rusthammer::InputStatus}::classify]:
-    Source: 'src/lib.rs', lines 349:4-365:5 -/
+    Source: 'src/lib.rs', lines 352:4-368:5 -/
 def InputStatus.classify
   {T : Type} (self : InputStatus)
   (result : core.result.Result (Cursor × T) ParseError) :
@@ -608,7 +608,7 @@ def InputStatus.classify
       ok (ParseOutcome.Error ParseError.CountOverflow)
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, u64> for rusthammer::Bits}::eval]:
-    Source: 'src/lib.rs', lines 563:4-573:5
+    Source: 'src/lib.rs', lines 566:4-576:5
     Visibility: public -/
 def Bits.Insts.RusthammerEvalInputBackendU64.eval
   {Backend : Type} (self : Bits) (t : Backend) (input : Slice Std.U8)
@@ -620,13 +620,13 @@ def Bits.Insts.RusthammerEvalInputBackendU64.eval
   ok (po, t)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, u64> for rusthammer::Bits}]
-    Source: 'src/lib.rs', lines 558:0-560:1 -/
+    Source: 'src/lib.rs', lines 561:0-563:1 -/
 @[reducible]
 def Bits.Insts.RusthammerGrammarInputU64 : Grammar Bits Std.U64 := {
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, u64> for rusthammer::Bits}]
-    Source: 'src/lib.rs', lines 562:0-574:1 -/
+    Source: 'src/lib.rs', lines 565:0-577:1 -/
 @[reducible]
 def Bits.Insts.RusthammerEvalInputBackendU64 (Backend : Type) : Eval Bits
   Backend Std.U64 := {
@@ -660,7 +660,7 @@ def dependent_examples.CountPrefix.Insts.RusthammerEvalInputBackendUsize
 }
 
 /-- [rusthammer::take_aligned]:
-    Source: 'src/lib.rs', lines 3310:0-3329:1
+    Source: 'src/lib.rs', lines 3313:0-3332:1
     Visibility: public -/
 def take_aligned
   (input : Slice Std.U8) (cursor : Cursor) (count : Std.Usize) :
@@ -710,13 +710,13 @@ def take_aligned
             ok (core.result.Result.Ok ({ byte := «end», bit := 0#u8 }, s))
 
 /-- [rusthammer::TakeAligned]
-    Source: 'src/lib.rs', lines 3287:0-3289:1
+    Source: 'src/lib.rs', lines 3290:0-3292:1
     Visibility: public -/
 structure TakeAligned where
   count : Std.Usize
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, &'_ [u8]> for rusthammer::TakeAligned}::eval]:
-    Source: 'src/lib.rs', lines 3296:4-3306:5
+    Source: 'src/lib.rs', lines 3299:4-3309:5
     Visibility: public -/
 def TakeAligned.Insts.RusthammerEvalInputBackendSharedSliceU8.eval
   {Backend : Type} (self : TakeAligned) (t : Backend) (input : Slice Std.U8)
@@ -728,14 +728,14 @@ def TakeAligned.Insts.RusthammerEvalInputBackendSharedSliceU8.eval
   ok (po, t)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, &'input [u8]> for rusthammer::TakeAligned}]
-    Source: 'src/lib.rs', lines 3291:0-3293:1 -/
+    Source: 'src/lib.rs', lines 3294:0-3296:1 -/
 @[reducible]
 def TakeAligned.Insts.RusthammerGrammarInputSharedInputSliceU8 : Grammar
   TakeAligned (Slice Std.U8) := {
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, &'_ [u8]> for rusthammer::TakeAligned}]
-    Source: 'src/lib.rs', lines 3295:0-3307:1 -/
+    Source: 'src/lib.rs', lines 3298:0-3310:1 -/
 @[reducible]
 def TakeAligned.Insts.RusthammerEvalInputBackendSharedSliceU8 (Backend : Type)
   : Eval TakeAligned Backend (Slice Std.U8) := {
@@ -744,14 +744,14 @@ def TakeAligned.Insts.RusthammerEvalInputBackendSharedSliceU8 (Backend : Type)
 }
 
 /-- [rusthammer::Bind]
-    Source: 'src/lib.rs', lines 1506:0-1509:1
+    Source: 'src/lib.rs', lines 1509:0-1512:1
     Visibility: public -/
 structure Bind (P : Type) (F : Type) where
   parser : P
   «then» : F
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, Clause2_Clause0_Output> for rusthammer::Bind<P, F>}::eval]:
-    Source: 'src/lib.rs', lines 1545:4-1559:5
+    Source: 'src/lib.rs', lines 1548:4-1562:5
     Visibility: public -/
 def Bind.Insts.RusthammerEval.eval
   {Backend : Type} {P : Type} {F : Type} {Q : Type} {Clause0_Clause0_Output :
@@ -772,7 +772,7 @@ def Bind.Insts.RusthammerEval.eval
   | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, Clause2_Output> for rusthammer::Bind<P, F>}]
-    Source: 'src/lib.rs', lines 1530:0-1537:1 -/
+    Source: 'src/lib.rs', lines 1533:0-1540:1 -/
 @[reducible]
 def Bind.Insts.RusthammerGrammar {P : Type} {F : Type} {Q : Type}
   {Clause0_Output : Type} {Clause2_Output : Type} (GrammarInst : Grammar P
@@ -782,7 +782,7 @@ def Bind.Insts.RusthammerGrammar {P : Type} {F : Type} {Q : Type}
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, Clause2_Clause0_Output> for rusthammer::Bind<P, F>}]
-    Source: 'src/lib.rs', lines 1539:0-1560:1 -/
+    Source: 'src/lib.rs', lines 1542:0-1563:1 -/
 @[reducible]
 def Bind.Insts.RusthammerEval {Backend : Type} {P : Type} {F : Type} {Q : Type}
   {Clause0_Clause0_Output : Type} {Clause2_Clause0_Output : Type} (EvalInst :
@@ -797,13 +797,13 @@ def Bind.Insts.RusthammerEval {Backend : Type} {P : Type} {F : Type} {Q : Type}
 }
 
 /-- [rusthammer::Direct]
-    Source: 'src/lib.rs', lines 412:0-412:18
+    Source: 'src/lib.rs', lines 415:0-415:18
     Visibility: public -/
 @[reducible]
 def Direct := Unit
 
 /-- Trait declaration: [rusthammer::Parser]
-    Source: 'src/lib.rs', lines 418:0-443:1
+    Source: 'src/lib.rs', lines 421:0-446:1
     Visibility: public -/
 structure Parser (Self : Type) (Self_Clause0_Clause0_Output : Type) where
   EvalInputSelfDirectSelf_Clause0_Clause0_OutputInst : Eval Self Direct
@@ -814,7 +814,7 @@ structure Parser (Self : Type) (Self_Clause0_Clause0_Output : Type) where
     (Cursor × Self_Clause0_Clause0_Output) ParseError)
 
 /-- [rusthammer::{rusthammer::ParseOutcome<T>}::into_complete]:
-    Source: 'src/lib.rs', lines 369:4-377:5 -/
+    Source: 'src/lib.rs', lines 372:4-380:5 -/
 def ParseOutcome.into_complete
   {T : Type} (self : ParseOutcome T) :
   Result (core.result.Result (Cursor × T) ParseError)
@@ -826,21 +826,21 @@ def ParseOutcome.into_complete
     ok (core.result.Result.Err ParseError.UnexpectedEnd)
 
 /-- [rusthammer::{rusthammer::Order}::DEFAULT]
-    Source: 'src/lib.rs', lines 306:4-309:6
+    Source: 'src/lib.rs', lines 309:4-312:6
     Visibility: public -/
 @[global_simps, irreducible]
 def Order.DEFAULT : Order :=
   { bit := BitOrder.HighFirst, byte := ByteOrder.Big }
 
 /-- [rusthammer::{rusthammer::ParseContext}::FINAL]
-    Source: 'src/lib.rs', lines 325:4-328:6
+    Source: 'src/lib.rs', lines 328:4-331:6
     Visibility: public -/
 @[global_simps, irreducible]
 def ParseContext.FINAL : ParseContext :=
   { order := Order.DEFAULT, status := InputStatus.Final }
 
 /-- [rusthammer::Parser::parse]:
-    Source: 'src/lib.rs', lines 435:4-442:5
+    Source: 'src/lib.rs', lines 438:4-445:5
     Visibility: public -/
 @[trait_default]
 def Parser.parse.default
@@ -854,7 +854,7 @@ def Parser.parse.default
   ParseOutcome.into_complete po
 
 /-- [rusthammer::Parser::parse_with]:
-    Source: 'src/lib.rs', lines 424:4-431:5
+    Source: 'src/lib.rs', lines 427:4-434:5
     Visibility: public -/
 @[trait_default]
 def Parser.parse_with.default
@@ -869,7 +869,7 @@ def Parser.parse_with.default
   ok po
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Parser<'input, Clause0_Clause0_Output> for P}]
-    Source: 'src/lib.rs', lines 445:0-445:61 -/
+    Source: 'src/lib.rs', lines 448:0-448:61 -/
 @[reducible]
 impl_def Parser.Blanket {P : Type} {Clause0_Clause0_Output : Type}
   (EvalInputPDirectClause0_Clause0_OutputInst : Eval P Direct
@@ -972,7 +972,7 @@ def dependent_examples.payload
     { parser := (), «then» := () } input cursor context
 
 /-- [rusthammer::repeat_parse]:
-    Source: 'src/lib.rs', lines 2517:0-2535:1 -/
+    Source: 'src/lib.rs', lines 2520:0-2538:1 -/
 def repeat_parse
   {Backend : Type} {P : Type} {Q : Type} {Clause0_Clause0_Output : Type}
   (EvalInst : Eval P Backend Clause0_Clause0_Output) (EvalInst1 : Eval Q
@@ -986,7 +986,7 @@ def repeat_parse
   else EvalInst1.eval following backend input cursor context
 
 /-- [rusthammer::repeat_next_count]:
-    Source: 'src/lib.rs', lines 2349:0-2355:1 -/
+    Source: 'src/lib.rs', lines 2352:0-2358:1 -/
 def repeat_next_count
   (count : Std.Usize) : Result (core.result.Result Std.Usize ParseError) := do
   if count = core.num.Usize.MAX
@@ -995,7 +995,7 @@ def repeat_next_count
        ok (core.result.Result.Ok i)
 
 /-- [rusthammer::repeat_cursor_valid]:
-    Source: 'src/lib.rs', lines 2320:0-2322:1 -/
+    Source: 'src/lib.rs', lines 2323:0-2325:1 -/
 def repeat_cursor_valid
   (input : Slice Std.U8) (cursor : Cursor) : Result Bool := do
   if cursor.bit < 8#u8
@@ -1011,7 +1011,7 @@ def repeat_cursor_valid
   else ok false
 
 /-- [rusthammer::repeat_progress]:
-    Source: 'src/lib.rs', lines 2339:0-2347:1 -/
+    Source: 'src/lib.rs', lines 2342:0-2350:1 -/
 def repeat_progress
   (input : Slice Std.U8) (before : Cursor) (after : Cursor) :
   Result (core.result.Result Unit ParseError)
@@ -1031,7 +1031,7 @@ def repeat_progress
   else ok (core.result.Result.Err ParseError.InvalidCursor)
 
 /-- [rusthammer::repeat_below_max]:
-    Source: 'src/lib.rs', lines 2332:0-2337:1 -/
+    Source: 'src/lib.rs', lines 2335:0-2340:1 -/
 def repeat_below_max
   (count : Std.Usize) (max : Option Std.Usize) : Result Bool := do
   match max with
@@ -1039,7 +1039,7 @@ def repeat_below_max
   | some max1 => ok (count < max1)
 
 /-- [rusthammer::repeat_start]:
-    Source: 'src/lib.rs', lines 2324:0-2330:1 -/
+    Source: 'src/lib.rs', lines 2327:0-2333:1 -/
 def repeat_start
   (input : Slice Std.U8) (cursor : Cursor) (unbounded : Bool) :
   Result (core.result.Result Unit ParseError)
@@ -1053,19 +1053,19 @@ def repeat_start
   else ok (core.result.Result.Ok ())
 
 /-- Trait declaration: [rusthammer::RepeatAccumulator]
-    Source: 'src/lib.rs', lines 2270:0-2274:1 -/
+    Source: 'src/lib.rs', lines 2273:0-2277:1 -/
 structure RepeatAccumulator (Self : Type) (A : Type) (Self_Output : Type) where
   init : Self → Result Self_Output
   step : Self → Self_Output → A → Result Self_Output
 
 /-- [rusthammer::RepeatBounds]
-    Source: 'src/lib.rs', lines 2240:0-2243:1 -/
+    Source: 'src/lib.rs', lines 2243:0-2246:1 -/
 structure RepeatBounds where
   min : Std.Usize
   max : Option Std.Usize
 
 /-- [rusthammer::{rusthammer::ParseError}::is_recoverable]:
-    Source: 'src/lib.rs', lines 264:4-271:5
+    Source: 'src/lib.rs', lines 267:4-274:5
     Visibility: public -/
 def ParseError.is_recoverable (self : ParseError) : Result Bool := do
   match self with
@@ -1078,7 +1078,7 @@ def ParseError.is_recoverable (self : ParseError) : Result Bool := do
   | ParseError.CountOverflow => ok false
 
 /-- [rusthammer::repeat_run_with]: loop body 0:
-    Source: 'src/lib.rs', lines 1:0-2590:5 -/
+    Source: 'src/lib.rs', lines 1:0-2593:5 -/
 @[rust_loop_body]
 def repeat_run_with_loop.body
   {Backend : Type} {P : Type} {Q : Type} {A : Type} {Clause0_Clause0_Output :
@@ -1134,7 +1134,7 @@ def repeat_run_with_loop.body
   else ok (done (ParseOutcome.Success next values, backend))
 
 /-- [rusthammer::repeat_run_with]: loop 0:
-    Source: 'src/lib.rs', lines 1:0-2590:5 -/
+    Source: 'src/lib.rs', lines 1:0-2593:5 -/
 @[rust_loop]
 def repeat_run_with_loop
   {Backend : Type} {P : Type} {Q : Type} {A : Type} {Clause0_Clause0_Output :
@@ -1154,7 +1154,7 @@ def repeat_run_with_loop
     (backend, values, next, count)
 
 /-- [rusthammer::repeat_run_with]:
-    Source: 'src/lib.rs', lines 2540:0-2591:1 -/
+    Source: 'src/lib.rs', lines 2543:0-2594:1 -/
 def repeat_run_with
   {Backend : Type} {P : Type} {Q : Type} {A : Type} {Clause0_Clause0_Output :
   Type} {Clause2_Output : Type} (EvalInst : Eval P Backend
@@ -1176,7 +1176,7 @@ def repeat_run_with
   | core.result.Result.Err error => ok (ParseOutcome.Error error, backend)
 
 /-- [rusthammer::repeat_run]:
-    Source: 'src/lib.rs', lines 2417:0-2440:1 -/
+    Source: 'src/lib.rs', lines 2420:0-2443:1 -/
 def repeat_run
   {Backend : Type} {P : Type} {A : Type} {Clause0_Clause0_Output : Type}
   {Clause1_Output : Type} (EvalInst : Eval P Backend Clause0_Clause0_Output)
@@ -1190,12 +1190,12 @@ def repeat_run
     bounds accumulator input cursor context
 
 /-- [rusthammer::Collect]
-    Source: 'src/lib.rs', lines 2277:0-2277:15 -/
+    Source: 'src/lib.rs', lines 2280:0-2280:15 -/
 @[reducible]
 def Collect := Unit
 
 /-- [rusthammer::{impl rusthammer::RepeatAccumulator<A, alloc::vec::Vec<A>> for rusthammer::Collect}::step]:
-    Source: 'src/lib.rs', lines 2285:4-2288:5 -/
+    Source: 'src/lib.rs', lines 2288:4-2291:5 -/
 def Collect.Insts.RusthammerRepeatAccumulatorAVec.step
   {A : Type} (self : Collect) (accumulated : alloc.vec.Vec A) (value : A) :
   Result (alloc.vec.Vec A)
@@ -1203,13 +1203,13 @@ def Collect.Insts.RusthammerRepeatAccumulatorAVec.step
   alloc.vec.Vec.push accumulated value
 
 /-- [rusthammer::{impl rusthammer::RepeatAccumulator<A, alloc::vec::Vec<A>> for rusthammer::Collect}::init]:
-    Source: 'src/lib.rs', lines 2282:4-2284:5 -/
+    Source: 'src/lib.rs', lines 2285:4-2287:5 -/
 def Collect.Insts.RusthammerRepeatAccumulatorAVec.init
   (A : Type) (self : Collect) : Result (alloc.vec.Vec A) := do
   ok (alloc.vec.Vec.new A)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::RepeatAccumulator<A, alloc::vec::Vec<A>> for rusthammer::Collect}]
-    Source: 'src/lib.rs', lines 2280:0-2289:1 -/
+    Source: 'src/lib.rs', lines 2283:0-2292:1 -/
 @[reducible]
 def Collect.Insts.RusthammerRepeatAccumulatorAVec (A : Type) :
   RepeatAccumulator Collect A (alloc.vec.Vec A) := {
@@ -1218,14 +1218,14 @@ def Collect.Insts.RusthammerRepeatAccumulatorAVec (A : Type) :
 }
 
 /-- [rusthammer::Repeat]
-    Source: 'src/lib.rs', lines 1944:0-1947:1
+    Source: 'src/lib.rs', lines 1947:0-1950:1
     Visibility: public -/
 structure Repeat (P : Type) where
   parser : P
   bounds : RepeatBounds
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, alloc::vec::Vec<Clause0_Clause0_Output>> for rusthammer::Repeat<P>}::eval]:
-    Source: 'src/lib.rs', lines 2364:4-2380:5
+    Source: 'src/lib.rs', lines 2367:4-2383:5
     Visibility: public -/
 def Repeat.Insts.RusthammerEvalInputBackendVec.eval
   {Backend : Type} {P : Type} {Clause0_Clause0_Output : Type} (EvalInst : Eval
@@ -1238,7 +1238,7 @@ def Repeat.Insts.RusthammerEvalInputBackendVec.eval
     context
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, alloc::vec::Vec<Clause0_Output>> for rusthammer::Repeat<P>}]
-    Source: 'src/lib.rs', lines 2358:0-2360:1 -/
+    Source: 'src/lib.rs', lines 2361:0-2363:1 -/
 @[reducible]
 def Repeat.Insts.RusthammerGrammarInputVec {P : Type} {Clause0_Output : Type}
   (GrammarInst : Grammar P Clause0_Output) : Grammar (Repeat P) (alloc.vec.Vec
@@ -1246,7 +1246,7 @@ def Repeat.Insts.RusthammerGrammarInputVec {P : Type} {Clause0_Output : Type}
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, alloc::vec::Vec<Clause0_Clause0_Output>> for rusthammer::Repeat<P>}]
-    Source: 'src/lib.rs', lines 2363:0-2381:1 -/
+    Source: 'src/lib.rs', lines 2366:0-2384:1 -/
 @[reducible]
 def Repeat.Insts.RusthammerEvalInputBackendVec {Backend : Type} {P : Type}
   {Clause0_Clause0_Output : Type} (EvalInst : Eval P Backend
@@ -1257,12 +1257,12 @@ def Repeat.Insts.RusthammerEvalInputBackendVec {Backend : Type} {P : Type}
 }
 
 /-- [rusthammer::{rusthammer::RepeatBounds}::exact]:
-    Source: 'src/lib.rs', lines 2257:4-2262:5 -/
+    Source: 'src/lib.rs', lines 2260:4-2265:5 -/
 def RepeatBounds.exact (count : Std.Usize) : Result RepeatBounds := do
   ok { min := count, max := (some count) }
 
 /-- [rusthammer::{rusthammer::Repeat<P>}::exact]:
-    Source: 'src/lib.rs', lines 1958:4-1963:5
+    Source: 'src/lib.rs', lines 1961:4-1966:5
     Visibility: public -/
 def Repeat.exact
   {P : Type} (parser : P) (count : Std.Usize) : Result (Repeat P) := do
@@ -1369,14 +1369,14 @@ structure flags_example.Flags where
   compressed : Bool
 
 /-- [rusthammer::Map]
-    Source: 'src/lib.rs', lines 2600:0-2603:1
+    Source: 'src/lib.rs', lines 2603:0-2606:1
     Visibility: public -/
 structure Map (P : Type) (F : Type) where
   parser : P
   map : F
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, O> for rusthammer::Map<P, F>}::eval]:
-    Source: 'src/lib.rs', lines 2637:4-2649:5
+    Source: 'src/lib.rs', lines 2640:4-2652:5
     Visibility: public -/
 def Map.Insts.RusthammerEval.eval
   {Backend : Type} {P : Type} {F : Type} {O : Type} {Clause0_Clause0_Output :
@@ -1396,7 +1396,7 @@ def Map.Insts.RusthammerEval.eval
   | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, O> for rusthammer::Map<P, F>}]
-    Source: 'src/lib.rs', lines 2624:0-2630:1 -/
+    Source: 'src/lib.rs', lines 2627:0-2633:1 -/
 @[reducible]
 def Map.Insts.RusthammerGrammar {P : Type} {F : Type} {O : Type}
   {Clause0_Output : Type} (GrammarInst : Grammar P Clause0_Output)
@@ -1405,7 +1405,7 @@ def Map.Insts.RusthammerGrammar {P : Type} {F : Type} {O : Type}
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, O> for rusthammer::Map<P, F>}]
-    Source: 'src/lib.rs', lines 2632:0-2650:1 -/
+    Source: 'src/lib.rs', lines 2635:0-2653:1 -/
 @[reducible]
 def Map.Insts.RusthammerEval {Backend : Type} {P : Type} {F : Type} {O : Type}
   {Clause0_Clause0_Output : Type} (EvalInst : Eval P Backend
@@ -1419,14 +1419,14 @@ def Map.Insts.RusthammerEval {Backend : Type} {P : Type} {F : Type} {O : Type}
 }
 
 /-- [rusthammer::Seq]
-    Source: 'src/lib.rs', lines 1426:0-1429:1
+    Source: 'src/lib.rs', lines 1429:0-1432:1
     Visibility: public -/
 structure Seq (P : Type) (Q : Type) where
   first : P
   second : Q
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, (Clause0_Clause0_Output, Clause1_Clause0_Output)> for rusthammer::Seq<P, Q>}::eval]:
-    Source: 'src/lib.rs', lines 1452:4-1472:5
+    Source: 'src/lib.rs', lines 1455:4-1475:5
     Visibility: public -/
 def Seq.Insts.RusthammerEvalInputBackendPair.eval
   {Backend : Type} {P : Type} {Q : Type} {Clause0_Clause0_Output : Type}
@@ -1451,7 +1451,7 @@ def Seq.Insts.RusthammerEvalInputBackendPair.eval
   | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, (Clause0_Output, Clause1_Output)> for rusthammer::Seq<P, Q>}]
-    Source: 'src/lib.rs', lines 1445:0-1447:1 -/
+    Source: 'src/lib.rs', lines 1448:0-1450:1 -/
 @[reducible]
 def Seq.Insts.RusthammerGrammarInputPair {P : Type} {Q : Type} {Clause0_Output
   : Type} {Clause1_Output : Type} (GrammarInst : Grammar P Clause0_Output)
@@ -1460,7 +1460,7 @@ def Seq.Insts.RusthammerGrammarInputPair {P : Type} {Q : Type} {Clause0_Output
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, (Clause0_Clause0_Output, Clause1_Clause0_Output)> for rusthammer::Seq<P, Q>}]
-    Source: 'src/lib.rs', lines 1449:0-1473:1 -/
+    Source: 'src/lib.rs', lines 1452:0-1476:1 -/
 @[reducible]
 def Seq.Insts.RusthammerEvalInputBackendPair {Backend : Type} {P : Type} {Q :
   Type} {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
@@ -1473,13 +1473,13 @@ def Seq.Insts.RusthammerEvalInputBackendPair {Backend : Type} {P : Type} {Q :
 }
 
 /-- [rusthammer::Bit]
-    Source: 'src/lib.rs', lines 507:0-507:15
+    Source: 'src/lib.rs', lines 510:0-510:15
     Visibility: public -/
 @[reducible]
 def Bit := Unit
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, bool> for rusthammer::Bit}::eval]:
-    Source: 'src/lib.rs', lines 514:4-524:5
+    Source: 'src/lib.rs', lines 517:4-527:5
     Visibility: public -/
 def Bit.Insts.RusthammerEvalInputBackendBool.eval
   {Backend : Type} (self : Bit) (t : Backend) (input : Slice Std.U8)
@@ -1491,13 +1491,13 @@ def Bit.Insts.RusthammerEvalInputBackendBool.eval
   ok (po, t)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, bool> for rusthammer::Bit}]
-    Source: 'src/lib.rs', lines 509:0-511:1 -/
+    Source: 'src/lib.rs', lines 512:0-514:1 -/
 @[reducible]
 def Bit.Insts.RusthammerGrammarInputBool : Grammar Bit Bool := {
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, bool> for rusthammer::Bit}]
-    Source: 'src/lib.rs', lines 513:0-525:1 -/
+    Source: 'src/lib.rs', lines 516:0-528:1 -/
 @[reducible]
 def Bit.Insts.RusthammerEvalInputBackendBool (Backend : Type) : Eval Bit
   Backend Bool := {
@@ -1603,20 +1603,20 @@ def flags_example.parse_flags
     } input cursor
 
 /-- [rusthammer::Choice]
-    Source: 'src/lib.rs', lines 2883:0-2886:1
+    Source: 'src/lib.rs', lines 2886:0-2889:1
     Visibility: public -/
 structure Choice (P : Type) (Q : Type) where
   first : P
   second : Q
 
 /-- [rusthammer::End]
-    Source: 'src/lib.rs', lines 1324:0-1324:15
+    Source: 'src/lib.rs', lines 1327:0-1327:15
     Visibility: public -/
 @[reducible]
 def End := Unit
 
 /-- [rusthammer::Literal]
-    Source: 'src/lib.rs', lines 1253:0-1256:1
+    Source: 'src/lib.rs', lines 1256:0-1259:1
     Visibility: public -/
 structure Literal where
   bits : Bits
@@ -1644,7 +1644,7 @@ def marker_example.Marker.Insts.CoreCloneClone : core.clone.Clone
 }
 
 /-- [rusthammer::{rusthammer::Literal}::new]:
-    Source: 'src/lib.rs', lines 1261:4-1271:5
+    Source: 'src/lib.rs', lines 1264:4-1274:5
     Visibility: public -/
 def Literal.new
   (width : Std.U8) (value : Std.U64) :
@@ -1689,7 +1689,7 @@ def marker_example.Marker.Insts.RusthammerGrammarInputU64 : Grammar
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::Choice<P, Q>}::eval]:
-    Source: 'src/lib.rs', lines 2925:4-2943:5
+    Source: 'src/lib.rs', lines 2928:4-2946:5
     Visibility: public -/
 def Choice.Insts.RusthammerEval.eval
   {Backend : Type} {P : Type} {Q : Type} {Clause0_Clause0_Output : Type}
@@ -1709,7 +1709,7 @@ def Choice.Insts.RusthammerEval.eval
   | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, Clause0_Output> for rusthammer::Choice<P, Q>}]
-    Source: 'src/lib.rs', lines 2912:0-2918:1 -/
+    Source: 'src/lib.rs', lines 2915:0-2921:1 -/
 @[reducible]
 def Choice.Insts.RusthammerGrammar {P : Type} {Q : Type} {Clause0_Output :
   Type} (GrammarInst : Grammar P Clause0_Output) (GrammarInst1 : Grammar Q
@@ -1717,7 +1717,7 @@ def Choice.Insts.RusthammerGrammar {P : Type} {Q : Type} {Clause0_Output :
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::Choice<P, Q>}]
-    Source: 'src/lib.rs', lines 2920:0-2944:1 -/
+    Source: 'src/lib.rs', lines 2923:0-2947:1 -/
 @[reducible]
 def Choice.Insts.RusthammerEval {Backend : Type} {P : Type} {Q : Type}
   {Clause0_Clause0_Output : Type} (EvalInst : Eval P Backend
@@ -1729,7 +1729,7 @@ def Choice.Insts.RusthammerEval {Backend : Type} {P : Type} {Q : Type}
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, ()> for rusthammer::End}::eval]:
-    Source: 'src/lib.rs', lines 1331:4-1352:5
+    Source: 'src/lib.rs', lines 1334:4-1355:5
     Visibility: public -/
 def End.Insts.RusthammerEvalInputBackendTuple.eval
   {Backend : Type} (self : End) (t : Backend) (input : Slice Std.U8)
@@ -1766,13 +1766,13 @@ def End.Insts.RusthammerEvalInputBackendTuple.eval
         else ok (ParseOutcome.Error ParseError.TrailingInput, t)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, ()> for rusthammer::End}]
-    Source: 'src/lib.rs', lines 1326:0-1328:1 -/
+    Source: 'src/lib.rs', lines 1329:0-1331:1 -/
 @[reducible]
 def End.Insts.RusthammerGrammarInputTuple : Grammar End Unit := {
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, ()> for rusthammer::End}]
-    Source: 'src/lib.rs', lines 1330:0-1353:1 -/
+    Source: 'src/lib.rs', lines 1333:0-1356:1 -/
 @[reducible]
 def End.Insts.RusthammerEvalInputBackendTuple (Backend : Type) : Eval End
   Backend Unit := {
@@ -1781,7 +1781,7 @@ def End.Insts.RusthammerEvalInputBackendTuple (Backend : Type) : Eval End
 }
 
 /-- [rusthammer::read_literal]:
-    Source: 'src/lib.rs', lines 1302:0-1318:1 -/
+    Source: 'src/lib.rs', lines 1305:0-1321:1 -/
 def read_literal
   (input : Slice Std.U8) (cursor : Cursor) (parser : Literal) (order : Order) :
   Result (core.result.Result (Cursor × Std.U64) ParseError)
@@ -1796,7 +1796,7 @@ def read_literal
   | core.result.Result.Err _ => ok r
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, u64> for rusthammer::Literal}::eval]:
-    Source: 'src/lib.rs', lines 1289:4-1299:5
+    Source: 'src/lib.rs', lines 1292:4-1302:5
     Visibility: public -/
 def Literal.Insts.RusthammerEvalInputBackendU64.eval
   {Backend : Type} (self : Literal) (t : Backend) (input : Slice Std.U8)
@@ -1808,13 +1808,13 @@ def Literal.Insts.RusthammerEvalInputBackendU64.eval
   ok (po, t)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, u64> for rusthammer::Literal}]
-    Source: 'src/lib.rs', lines 1284:0-1286:1 -/
+    Source: 'src/lib.rs', lines 1287:0-1289:1 -/
 @[reducible]
 def Literal.Insts.RusthammerGrammarInputU64 : Grammar Literal Std.U64 := {
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, u64> for rusthammer::Literal}]
-    Source: 'src/lib.rs', lines 1288:0-1300:1 -/
+    Source: 'src/lib.rs', lines 1291:0-1303:1 -/
 @[reducible]
 def Literal.Insts.RusthammerEvalInputBackendU64 (Backend : Type) : Eval Literal
   Backend Std.U64 := {
@@ -1930,7 +1930,7 @@ def record_example.RecordParser.Insts.RusthammerGrammarInputRecord : Grammar
 }
 
 /-- [rusthammer::Verify]
-    Source: 'src/lib.rs', lines 2725:0-2728:1
+    Source: 'src/lib.rs', lines 2728:0-2731:1
     Visibility: public -/
 structure Verify (P : Type) (F : Type) where
   parser : P
@@ -2033,7 +2033,7 @@ def
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::Verify<P, F>}::eval]:
-    Source: 'src/lib.rs', lines 2759:4-2777:5
+    Source: 'src/lib.rs', lines 2762:4-2780:5
     Visibility: public -/
 def Verify.Insts.RusthammerEval.eval
   {Backend : Type} {P : Type} {F : Type} {Clause0_Clause0_Output : Type}
@@ -2134,20 +2134,20 @@ def record_example.parse_record
     Direct)) parser input cursor
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Cursor}::clone]:
-    Source: 'src/lib.rs', lines 75:9-75:14
+    Source: 'src/lib.rs', lines 78:9-78:14
     Visibility: public -/
 def Cursor.Insts.CoreCloneClone.clone (self : Cursor) : Result Cursor := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Cursor}]
-    Source: 'src/lib.rs', lines 75:9-75:14 -/
+    Source: 'src/lib.rs', lines 78:9-78:14 -/
 @[reducible]
 def Cursor.Insts.CoreCloneClone : core.clone.Clone Cursor := {
   clone := Cursor.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::advance_cursor]:
-    Source: 'src/lib.rs', lines 91:0-106:1 -/
+    Source: 'src/lib.rs', lines 94:0-109:1 -/
 def advance_cursor
   (length : Std.Usize) (cursor : Cursor) (bits : Std.Usize) :
   Result (core.result.Result Cursor ParseError)
@@ -2204,45 +2204,45 @@ def advance_cursor
           else ok (core.result.Result.Ok { byte, bit })
 
 /-- [rusthammer::SkipBits]
-    Source: 'src/lib.rs', lines 165:0-167:1
+    Source: 'src/lib.rs', lines 168:0-170:1
     Visibility: public -/
 structure SkipBits where
   bits : Std.Usize
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::SkipBits}::clone]:
-    Source: 'src/lib.rs', lines 164:9-164:14
+    Source: 'src/lib.rs', lines 167:9-167:14
     Visibility: public -/
 def SkipBits.Insts.CoreCloneClone.clone
   (self : SkipBits) : Result SkipBits := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::SkipBits}]
-    Source: 'src/lib.rs', lines 164:9-164:14 -/
+    Source: 'src/lib.rs', lines 167:9-167:14 -/
 @[reducible]
 def SkipBits.Insts.CoreCloneClone : core.clone.Clone SkipBits := {
   clone := SkipBits.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::{rusthammer::SkipBits}::new]:
-    Source: 'src/lib.rs', lines 171:4-173:5
+    Source: 'src/lib.rs', lines 174:4-176:5
     Visibility: public -/
 def SkipBits.new (bits : Std.Usize) : Result SkipBits := do
   ok { bits }
 
 /-- [rusthammer::{rusthammer::SkipBits}::bits]:
-    Source: 'src/lib.rs', lines 176:4-178:5
+    Source: 'src/lib.rs', lines 179:4-181:5
     Visibility: public -/
 def SkipBits.impl.bits (self : SkipBits) : Result Std.Usize := do
   ok self.bits
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, ()> for rusthammer::SkipBits}]
-    Source: 'src/lib.rs', lines 181:0-183:1 -/
+    Source: 'src/lib.rs', lines 184:0-186:1 -/
 @[reducible]
 def SkipBits.Insts.RusthammerGrammarInputTuple : Grammar SkipBits Unit := {
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, ()> for rusthammer::SkipBits}::eval]:
-    Source: 'src/lib.rs', lines 186:4-198:5
+    Source: 'src/lib.rs', lines 189:4-201:5
     Visibility: public -/
 def SkipBits.Insts.RusthammerEvalInputBackendTuple.eval
   {Backend : Type} (self : SkipBits) (t : Backend) (input : Slice Std.U8)
@@ -2259,7 +2259,7 @@ def SkipBits.Insts.RusthammerEvalInputBackendTuple.eval
   ok (po, t)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, ()> for rusthammer::SkipBits}]
-    Source: 'src/lib.rs', lines 185:0-199:1 -/
+    Source: 'src/lib.rs', lines 188:0-202:1 -/
 @[reducible]
 def SkipBits.Insts.RusthammerEvalInputBackendTuple (Backend : Type) : Eval
   SkipBits Backend Unit := {
@@ -2268,32 +2268,32 @@ def SkipBits.Insts.RusthammerEvalInputBackendTuple (Backend : Type) : Eval
 }
 
 /-- [rusthammer::Tell]
-    Source: 'src/lib.rs', lines 214:0-214:16
+    Source: 'src/lib.rs', lines 217:0-217:16
     Visibility: public -/
 @[reducible]
 def Tell := Unit
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Tell}::clone]:
-    Source: 'src/lib.rs', lines 213:9-213:14
+    Source: 'src/lib.rs', lines 216:9-216:14
     Visibility: public -/
 def Tell.Insts.CoreCloneClone.clone (self : Tell) : Result Tell := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Tell}]
-    Source: 'src/lib.rs', lines 213:9-213:14 -/
+    Source: 'src/lib.rs', lines 216:9-216:14 -/
 @[reducible]
 def Tell.Insts.CoreCloneClone : core.clone.Clone Tell := {
   clone := Tell.Insts.CoreCloneClone.clone
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, rusthammer::Cursor> for rusthammer::Tell}]
-    Source: 'src/lib.rs', lines 216:0-218:1 -/
+    Source: 'src/lib.rs', lines 219:0-221:1 -/
 @[reducible]
 def Tell.Insts.RusthammerGrammarInputCursor : Grammar Tell Cursor := {
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, rusthammer::Cursor> for rusthammer::Tell}::eval]:
-    Source: 'src/lib.rs', lines 221:4-232:5
+    Source: 'src/lib.rs', lines 224:4-235:5
     Visibility: public -/
 def Tell.Insts.RusthammerEvalInputBackendCursor.eval
   {Backend : Type} (self : Tell) (t : Backend) (input : Slice Std.U8)
@@ -2307,7 +2307,7 @@ def Tell.Insts.RusthammerEvalInputBackendCursor.eval
   | core.result.Result.Err error => ok (ParseOutcome.Error error, t)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, rusthammer::Cursor> for rusthammer::Tell}]
-    Source: 'src/lib.rs', lines 220:0-233:1 -/
+    Source: 'src/lib.rs', lines 223:0-236:1 -/
 @[reducible]
 def Tell.Insts.RusthammerEvalInputBackendCursor (Backend : Type) : Eval Tell
   Backend Cursor := {
@@ -2316,63 +2316,63 @@ def Tell.Insts.RusthammerEvalInputBackendCursor (Backend : Type) : Eval Tell
 }
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::ConfigError}::clone]:
-    Source: 'src/lib.rs', lines 236:9-236:14
+    Source: 'src/lib.rs', lines 239:9-239:14
     Visibility: public -/
 def ConfigError.Insts.CoreCloneClone.clone
   (self : ConfigError) : Result ConfigError := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::ConfigError}]
-    Source: 'src/lib.rs', lines 236:9-236:14 -/
+    Source: 'src/lib.rs', lines 239:9-239:14 -/
 @[reducible]
 def ConfigError.Insts.CoreCloneClone : core.clone.Clone ConfigError := {
   clone := ConfigError.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::ParseError}::clone]:
-    Source: 'src/lib.rs', lines 247:9-247:14
+    Source: 'src/lib.rs', lines 250:9-250:14
     Visibility: public -/
 def ParseError.Insts.CoreCloneClone.clone
   (self : ParseError) : Result ParseError := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::ParseError}]
-    Source: 'src/lib.rs', lines 247:9-247:14 -/
+    Source: 'src/lib.rs', lines 250:9-250:14 -/
 @[reducible]
 def ParseError.Insts.CoreCloneClone : core.clone.Clone ParseError := {
   clone := ParseError.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::InputStatus}::clone]:
-    Source: 'src/lib.rs', lines 275:9-275:14
+    Source: 'src/lib.rs', lines 278:9-278:14
     Visibility: public -/
 def InputStatus.Insts.CoreCloneClone.clone
   (self : InputStatus) : Result InputStatus := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::InputStatus}]
-    Source: 'src/lib.rs', lines 275:9-275:14 -/
+    Source: 'src/lib.rs', lines 278:9-278:14 -/
 @[reducible]
 def InputStatus.Insts.CoreCloneClone : core.clone.Clone InputStatus := {
   clone := InputStatus.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::BitOrder}::clone]:
-    Source: 'src/lib.rs', lines 285:9-285:14
+    Source: 'src/lib.rs', lines 288:9-288:14
     Visibility: public -/
 def BitOrder.Insts.CoreCloneClone.clone
   (self : BitOrder) : Result BitOrder := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::BitOrder}]
-    Source: 'src/lib.rs', lines 285:9-285:14 -/
+    Source: 'src/lib.rs', lines 288:9-288:14 -/
 @[reducible]
 def BitOrder.Insts.CoreCloneClone : core.clone.Clone BitOrder := {
   clone := BitOrder.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::{impl core::cmp::PartialEq<rusthammer::BitOrder> for rusthammer::BitOrder}::eq]:
-    Source: 'src/lib.rs', lines 285:29-285:38
+    Source: 'src/lib.rs', lines 288:29-288:38
     Visibility: public -/
 def BitOrder.Insts.CoreCmpPartialEqBitOrder.eq
   (self : BitOrder) (other : BitOrder) : Result Bool := do
@@ -2381,7 +2381,7 @@ def BitOrder.Insts.CoreCmpPartialEqBitOrder.eq
   ok (self1 = other1)
 
 /-- Trait implementation: [rusthammer::{impl core::cmp::PartialEq<rusthammer::BitOrder> for rusthammer::BitOrder}]
-    Source: 'src/lib.rs', lines 285:29-285:38 -/
+    Source: 'src/lib.rs', lines 288:29-288:38 -/
 @[reducible]
 impl_def BitOrder.Insts.CoreCmpPartialEqBitOrder : core.cmp.PartialEq BitOrder
   BitOrder := {
@@ -2391,75 +2391,75 @@ impl_def BitOrder.Insts.CoreCmpPartialEqBitOrder : core.cmp.PartialEq BitOrder
 }
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::ByteOrder}::clone]:
-    Source: 'src/lib.rs', lines 292:9-292:14
+    Source: 'src/lib.rs', lines 295:9-295:14
     Visibility: public -/
 def ByteOrder.Insts.CoreCloneClone.clone
   (self : ByteOrder) : Result ByteOrder := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::ByteOrder}]
-    Source: 'src/lib.rs', lines 292:9-292:14 -/
+    Source: 'src/lib.rs', lines 295:9-295:14 -/
 @[reducible]
 def ByteOrder.Insts.CoreCloneClone : core.clone.Clone ByteOrder := {
   clone := ByteOrder.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Order}::clone]:
-    Source: 'src/lib.rs', lines 299:9-299:14
+    Source: 'src/lib.rs', lines 302:9-302:14
     Visibility: public -/
 def Order.Insts.CoreCloneClone.clone (self : Order) : Result Order := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Order}]
-    Source: 'src/lib.rs', lines 299:9-299:14 -/
+    Source: 'src/lib.rs', lines 302:9-302:14 -/
 @[reducible]
 def Order.Insts.CoreCloneClone : core.clone.Clone Order := {
   clone := Order.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::ParseContext}::clone]:
-    Source: 'src/lib.rs', lines 317:9-317:14
+    Source: 'src/lib.rs', lines 320:9-320:14
     Visibility: public -/
 def ParseContext.Insts.CoreCloneClone.clone
   (self : ParseContext) : Result ParseContext := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::ParseContext}]
-    Source: 'src/lib.rs', lines 317:9-317:14 -/
+    Source: 'src/lib.rs', lines 320:9-320:14 -/
 @[reducible]
 def ParseContext.Insts.CoreCloneClone : core.clone.Clone ParseContext := {
   clone := ParseContext.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::{rusthammer::ParseContext}::PARTIAL]
-    Source: 'src/lib.rs', lines 330:4-333:6
+    Source: 'src/lib.rs', lines 333:4-336:6
     Visibility: public -/
 @[global_simps, irreducible]
 def ParseContext.PARTIAL : ParseContext :=
   { order := Order.DEFAULT, status := InputStatus.Partial }
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Direct}::clone]:
-    Source: 'src/lib.rs', lines 411:9-411:14
+    Source: 'src/lib.rs', lines 414:9-414:14
     Visibility: public -/
 def Direct.Insts.CoreCloneClone.clone (self : Direct) : Result Direct := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Direct}]
-    Source: 'src/lib.rs', lines 411:9-411:14 -/
+    Source: 'src/lib.rs', lines 414:9-414:14 -/
 @[reducible]
 def Direct.Insts.CoreCloneClone : core.clone.Clone Direct := {
   clone := Direct.Insts.CoreCloneClone.clone
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, Clause0_Output> for &'_1 P}]
-    Source: 'src/lib.rs', lines 449:0-451:1 -/
+    Source: 'src/lib.rs', lines 452:0-454:1 -/
 @[reducible]
 def Shared0P.Insts.RusthammerGrammar {P : Type} {Clause0_Output : Type}
   (GrammarInst : Grammar P Clause0_Output) : Grammar P Clause0_Output := {
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, Clause0_Clause0_Output> for &'_1 P}::eval]:
-    Source: 'src/lib.rs', lines 454:4-462:5
+    Source: 'src/lib.rs', lines 457:4-465:5
     Visibility: public -/
 def Shared0P.Insts.RusthammerEval.eval
   {Backend : Type} {P : Type} {Clause0_Clause0_Output : Type} (EvalInst : Eval
@@ -2470,7 +2470,7 @@ def Shared0P.Insts.RusthammerEval.eval
   EvalInst.eval self backend input cursor context
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, Clause0_Clause0_Output> for &'_1 P}]
-    Source: 'src/lib.rs', lines 453:0-463:1 -/
+    Source: 'src/lib.rs', lines 456:0-466:1 -/
 @[reducible]
 def Shared0P.Insts.RusthammerEval {Backend : Type} {P : Type}
   {Clause0_Clause0_Output : Type} (EvalInst : Eval P Backend
@@ -2480,46 +2480,46 @@ def Shared0P.Insts.RusthammerEval {Backend : Type} {P : Type}
 }
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Bit}::clone]:
-    Source: 'src/lib.rs', lines 506:9-506:14
+    Source: 'src/lib.rs', lines 509:9-509:14
     Visibility: public -/
 def Bit.Insts.CoreCloneClone.clone (self : Bit) : Result Bit := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Bit}]
-    Source: 'src/lib.rs', lines 506:9-506:14 -/
+    Source: 'src/lib.rs', lines 509:9-509:14 -/
 @[reducible]
 def Bit.Insts.CoreCloneClone : core.clone.Clone Bit := {
   clone := Bit.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Bits}::clone]:
-    Source: 'src/lib.rs', lines 537:9-537:14
+    Source: 'src/lib.rs', lines 540:9-540:14
     Visibility: public -/
 def Bits.Insts.CoreCloneClone.clone (self : Bits) : Result Bits := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Bits}]
-    Source: 'src/lib.rs', lines 537:9-537:14 -/
+    Source: 'src/lib.rs', lines 540:9-540:14 -/
 @[reducible]
 def Bits.Insts.CoreCloneClone : core.clone.Clone Bits := {
   clone := Bits.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::{rusthammer::Bits}::width]:
-    Source: 'src/lib.rs', lines 553:4-555:5
+    Source: 'src/lib.rs', lines 556:4-558:5
     Visibility: public -/
 def Bits.impl.width (self : Bits) : Result Std.U8 := do
   ok self.width
 
 /-- [rusthammer::WithOrder]
-    Source: 'src/lib.rs', lines 716:0-719:1
+    Source: 'src/lib.rs', lines 719:0-722:1
     Visibility: public -/
 structure WithOrder (P : Type) where
   parser : P
   order : Order
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::WithOrder<P>}::clone]:
-    Source: 'src/lib.rs', lines 715:9-715:14
+    Source: 'src/lib.rs', lines 718:9-718:14
     Visibility: public -/
 def WithOrder.Insts.CoreCloneClone.clone
   {P : Type} (corecloneCloneInst : core.clone.Clone P) (self : WithOrder P) :
@@ -2530,7 +2530,7 @@ def WithOrder.Insts.CoreCloneClone.clone
   ok { parser := t, order := o }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::WithOrder<P>}]
-    Source: 'src/lib.rs', lines 715:9-715:14 -/
+    Source: 'src/lib.rs', lines 718:9-718:14 -/
 @[reducible]
 def WithOrder.Insts.CoreCloneClone {P : Type} (corecloneCloneInst :
   core.clone.Clone P) : core.clone.Clone (WithOrder P) := {
@@ -2538,7 +2538,7 @@ def WithOrder.Insts.CoreCloneClone {P : Type} (corecloneCloneInst :
 }
 
 /-- [rusthammer::scope_boundary_error]:
-    Source: 'src/lib.rs', lines 721:0-729:1 -/
+    Source: 'src/lib.rs', lines 724:0-732:1 -/
 def scope_boundary_error
   (length : Std.Usize) (cursor : Cursor) : Result (Option ParseError) := do
   if cursor.bit >= 8#u8
@@ -2561,7 +2561,7 @@ def scope_boundary_error
         else ok none
 
 /-- [rusthammer::finish_order_scope]:
-    Source: 'src/lib.rs', lines 731:0-743:1 -/
+    Source: 'src/lib.rs', lines 734:0-746:1 -/
 def finish_order_scope
   {T : Type} (length : Std.Usize) (changed : Bool) (result : ParseOutcome T) :
   Result (ParseOutcome T)
@@ -2579,7 +2579,7 @@ def finish_order_scope
   else ok result
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, Clause0_Output> for rusthammer::WithOrder<P>}]
-    Source: 'src/lib.rs', lines 745:0-747:1 -/
+    Source: 'src/lib.rs', lines 748:0-750:1 -/
 @[reducible]
 def WithOrder.Insts.RusthammerGrammar {P : Type} {Clause0_Output : Type}
   (GrammarInst : Grammar P Clause0_Output) : Grammar (WithOrder P)
@@ -2587,7 +2587,7 @@ def WithOrder.Insts.RusthammerGrammar {P : Type} {Clause0_Output : Type}
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::WithOrder<P>}::eval]:
-    Source: 'src/lib.rs', lines 750:4-773:5
+    Source: 'src/lib.rs', lines 753:4-776:5
     Visibility: public -/
 def WithOrder.Insts.RusthammerEval.eval
   {Backend : Type} {P : Type} {Clause0_Clause0_Output : Type} (EvalInst : Eval
@@ -2620,7 +2620,7 @@ def WithOrder.Insts.RusthammerEval.eval
     ok (po, backend1)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::WithOrder<P>}]
-    Source: 'src/lib.rs', lines 749:0-774:1 -/
+    Source: 'src/lib.rs', lines 752:0-777:1 -/
 @[reducible]
 def WithOrder.Insts.RusthammerEval {Backend : Type} {P : Type}
   {Clause0_Clause0_Output : Type} (EvalInst : Eval P Backend
@@ -2631,27 +2631,27 @@ def WithOrder.Insts.RusthammerEval {Backend : Type} {P : Type}
 }
 
 /-- [rusthammer::SignedBits]
-    Source: 'src/lib.rs', lines 793:0-795:1
+    Source: 'src/lib.rs', lines 796:0-798:1
     Visibility: public -/
 structure SignedBits where
   bits : Bits
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::SignedBits}::clone]:
-    Source: 'src/lib.rs', lines 792:9-792:14
+    Source: 'src/lib.rs', lines 795:9-795:14
     Visibility: public -/
 def SignedBits.Insts.CoreCloneClone.clone
   (self : SignedBits) : Result SignedBits := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::SignedBits}]
-    Source: 'src/lib.rs', lines 792:9-792:14 -/
+    Source: 'src/lib.rs', lines 795:9-795:14 -/
 @[reducible]
 def SignedBits.Insts.CoreCloneClone : core.clone.Clone SignedBits := {
   clone := SignedBits.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::{rusthammer::SignedBits}::new]:
-    Source: 'src/lib.rs', lines 799:4-805:5
+    Source: 'src/lib.rs', lines 802:4-808:5
     Visibility: public -/
 def SignedBits.new
   (width : Std.U8) : Result (core.result.Result SignedBits ConfigError) := do
@@ -2661,20 +2661,20 @@ def SignedBits.new
   | core.result.Result.Err error => ok (core.result.Result.Err error)
 
 /-- [rusthammer::{rusthammer::SignedBits}::width]:
-    Source: 'src/lib.rs', lines 808:4-810:5
+    Source: 'src/lib.rs', lines 811:4-813:5
     Visibility: public -/
 def SignedBits.width (self : SignedBits) : Result Std.U8 := do
   Bits.impl.width self.bits
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, i64> for rusthammer::SignedBits}]
-    Source: 'src/lib.rs', lines 813:0-815:1 -/
+    Source: 'src/lib.rs', lines 816:0-818:1 -/
 @[reducible]
 def SignedBits.Insts.RusthammerGrammarInputI64 : Grammar SignedBits Std.I64
   := {
 }
 
 /-- [rusthammer::sign_extend]:
-    Source: 'src/lib.rs', lines 836:0-850:1 -/
+    Source: 'src/lib.rs', lines 839:0-853:1 -/
 def sign_extend (value : Std.U64) (width : Std.U8) : Result Std.I64 := do
   if width = 0#u8
   then ok 0#i64
@@ -2691,7 +2691,7 @@ def sign_extend (value : Std.U64) (width : Std.U8) : Result Std.I64 := do
       (-1)#i64 - i3
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, i64> for rusthammer::SignedBits}::eval]:
-    Source: 'src/lib.rs', lines 818:4-832:5
+    Source: 'src/lib.rs', lines 821:4-835:5
     Visibility: public -/
 def SignedBits.Insts.RusthammerEvalInputBackendI64.eval
   {Backend : Type} (self : SignedBits) (backend : Backend)
@@ -2709,7 +2709,7 @@ def SignedBits.Insts.RusthammerEvalInputBackendI64.eval
   | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, i64> for rusthammer::SignedBits}]
-    Source: 'src/lib.rs', lines 817:0-833:1 -/
+    Source: 'src/lib.rs', lines 820:0-836:1 -/
 @[reducible]
 def SignedBits.Insts.RusthammerEvalInputBackendI64 (Backend : Type) : Eval
   SignedBits Backend Std.I64 := {
@@ -2718,32 +2718,32 @@ def SignedBits.Insts.RusthammerEvalInputBackendI64 (Backend : Type) : Eval
 }
 
 /-- [rusthammer::Byte]
-    Source: 'src/lib.rs', lines 854:0-854:16
+    Source: 'src/lib.rs', lines 857:0-857:16
     Visibility: public -/
 @[reducible]
 def Byte := Unit
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Byte}::clone]:
-    Source: 'src/lib.rs', lines 853:9-853:14
+    Source: 'src/lib.rs', lines 856:9-856:14
     Visibility: public -/
 def Byte.Insts.CoreCloneClone.clone (self : Byte) : Result Byte := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Byte}]
-    Source: 'src/lib.rs', lines 853:9-853:14 -/
+    Source: 'src/lib.rs', lines 856:9-856:14 -/
 @[reducible]
 def Byte.Insts.CoreCloneClone : core.clone.Clone Byte := {
   clone := Byte.Insts.CoreCloneClone.clone
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, u8> for rusthammer::Byte}]
-    Source: 'src/lib.rs', lines 856:0-858:1 -/
+    Source: 'src/lib.rs', lines 859:0-861:1 -/
 @[reducible]
 def Byte.Insts.RusthammerGrammarInputU8 : Grammar Byte Std.U8 := {
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::Byte}::eval]:
-    Source: 'src/lib.rs', lines 861:4-874:5
+    Source: 'src/lib.rs', lines 864:4-877:5
     Visibility: public -/
 def Byte.Insts.RusthammerEvalInputBackendU8.eval
   {Backend : Type} (self : Byte) (backend : Backend) (input : Slice Std.U8)
@@ -2761,7 +2761,7 @@ def Byte.Insts.RusthammerEvalInputBackendU8.eval
   | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::Byte}]
-    Source: 'src/lib.rs', lines 860:0-875:1 -/
+    Source: 'src/lib.rs', lines 863:0-878:1 -/
 @[reducible]
 def Byte.Insts.RusthammerEvalInputBackendU8 (Backend : Type) : Eval Byte
   Backend Std.U8 := {
@@ -2770,182 +2770,182 @@ def Byte.Insts.RusthammerEvalInputBackendU8 (Backend : Type) : Eval Byte
 }
 
 /-- [rusthammer::BeU16]
-    Source: 'src/lib.rs', lines 884:8-884:25
+    Source: 'src/lib.rs', lines 887:8-887:25
     Visibility: public -/
 @[reducible]
 def BeU16 := Unit
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::BeU16}::clone]:
-    Source: 'src/lib.rs', lines 883:17-883:22
+    Source: 'src/lib.rs', lines 886:17-886:22
     Visibility: public -/
 def BeU16.Insts.CoreCloneClone.clone (self : BeU16) : Result BeU16 := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::BeU16}]
-    Source: 'src/lib.rs', lines 883:17-883:22 -/
+    Source: 'src/lib.rs', lines 886:17-886:22 -/
 @[reducible]
 def BeU16.Insts.CoreCloneClone : core.clone.Clone BeU16 := {
   clone := BeU16.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::BeU32]
-    Source: 'src/lib.rs', lines 884:8-884:25
+    Source: 'src/lib.rs', lines 887:8-887:25
     Visibility: public -/
 @[reducible]
 def BeU32 := Unit
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::BeU32}::clone]:
-    Source: 'src/lib.rs', lines 883:17-883:22
+    Source: 'src/lib.rs', lines 886:17-886:22
     Visibility: public -/
 def BeU32.Insts.CoreCloneClone.clone (self : BeU32) : Result BeU32 := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::BeU32}]
-    Source: 'src/lib.rs', lines 883:17-883:22 -/
+    Source: 'src/lib.rs', lines 886:17-886:22 -/
 @[reducible]
 def BeU32.Insts.CoreCloneClone : core.clone.Clone BeU32 := {
   clone := BeU32.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::BeU64]
-    Source: 'src/lib.rs', lines 884:8-884:25
+    Source: 'src/lib.rs', lines 887:8-887:25
     Visibility: public -/
 @[reducible]
 def BeU64 := Unit
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::BeU64}::clone]:
-    Source: 'src/lib.rs', lines 883:17-883:22
+    Source: 'src/lib.rs', lines 886:17-886:22
     Visibility: public -/
 def BeU64.Insts.CoreCloneClone.clone (self : BeU64) : Result BeU64 := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::BeU64}]
-    Source: 'src/lib.rs', lines 883:17-883:22 -/
+    Source: 'src/lib.rs', lines 886:17-886:22 -/
 @[reducible]
 def BeU64.Insts.CoreCloneClone : core.clone.Clone BeU64 := {
   clone := BeU64.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::I8]
-    Source: 'src/lib.rs', lines 884:8-884:25
+    Source: 'src/lib.rs', lines 887:8-887:25
     Visibility: public -/
 @[reducible]
 def I8 := Unit
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::I8}::clone]:
-    Source: 'src/lib.rs', lines 883:17-883:22
+    Source: 'src/lib.rs', lines 886:17-886:22
     Visibility: public -/
 def I8.Insts.CoreCloneClone.clone (self : I8) : Result I8 := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::I8}]
-    Source: 'src/lib.rs', lines 883:17-883:22 -/
+    Source: 'src/lib.rs', lines 886:17-886:22 -/
 @[reducible]
 def I8.Insts.CoreCloneClone : core.clone.Clone I8 := {
   clone := I8.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::BeI16]
-    Source: 'src/lib.rs', lines 884:8-884:25
+    Source: 'src/lib.rs', lines 887:8-887:25
     Visibility: public -/
 @[reducible]
 def BeI16 := Unit
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::BeI16}::clone]:
-    Source: 'src/lib.rs', lines 883:17-883:22
+    Source: 'src/lib.rs', lines 886:17-886:22
     Visibility: public -/
 def BeI16.Insts.CoreCloneClone.clone (self : BeI16) : Result BeI16 := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::BeI16}]
-    Source: 'src/lib.rs', lines 883:17-883:22 -/
+    Source: 'src/lib.rs', lines 886:17-886:22 -/
 @[reducible]
 def BeI16.Insts.CoreCloneClone : core.clone.Clone BeI16 := {
   clone := BeI16.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::BeI32]
-    Source: 'src/lib.rs', lines 884:8-884:25
+    Source: 'src/lib.rs', lines 887:8-887:25
     Visibility: public -/
 @[reducible]
 def BeI32 := Unit
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::BeI32}::clone]:
-    Source: 'src/lib.rs', lines 883:17-883:22
+    Source: 'src/lib.rs', lines 886:17-886:22
     Visibility: public -/
 def BeI32.Insts.CoreCloneClone.clone (self : BeI32) : Result BeI32 := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::BeI32}]
-    Source: 'src/lib.rs', lines 883:17-883:22 -/
+    Source: 'src/lib.rs', lines 886:17-886:22 -/
 @[reducible]
 def BeI32.Insts.CoreCloneClone : core.clone.Clone BeI32 := {
   clone := BeI32.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::BeI64]
-    Source: 'src/lib.rs', lines 884:8-884:25
+    Source: 'src/lib.rs', lines 887:8-887:25
     Visibility: public -/
 @[reducible]
 def BeI64 := Unit
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::BeI64}::clone]:
-    Source: 'src/lib.rs', lines 883:17-883:22
+    Source: 'src/lib.rs', lines 886:17-886:22
     Visibility: public -/
 def BeI64.Insts.CoreCloneClone.clone (self : BeI64) : Result BeI64 := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::BeI64}]
-    Source: 'src/lib.rs', lines 883:17-883:22 -/
+    Source: 'src/lib.rs', lines 886:17-886:22 -/
 @[reducible]
 def BeI64.Insts.CoreCloneClone : core.clone.Clone BeI64 := {
   clone := BeI64.Insts.CoreCloneClone.clone
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, u16> for rusthammer::BeU16}]
-    Source: 'src/lib.rs', lines 886:8-888:9 -/
+    Source: 'src/lib.rs', lines 889:8-891:9 -/
 @[reducible]
 def BeU16.Insts.RusthammerGrammarInputU16 : Grammar BeU16 Std.U16 := {
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, u32> for rusthammer::BeU32}]
-    Source: 'src/lib.rs', lines 886:8-888:9 -/
+    Source: 'src/lib.rs', lines 889:8-891:9 -/
 @[reducible]
 def BeU32.Insts.RusthammerGrammarInputU32 : Grammar BeU32 Std.U32 := {
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, u64> for rusthammer::BeU64}]
-    Source: 'src/lib.rs', lines 886:8-888:9 -/
+    Source: 'src/lib.rs', lines 889:8-891:9 -/
 @[reducible]
 def BeU64.Insts.RusthammerGrammarInputU64 : Grammar BeU64 Std.U64 := {
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, i8> for rusthammer::I8}]
-    Source: 'src/lib.rs', lines 886:8-888:9 -/
+    Source: 'src/lib.rs', lines 889:8-891:9 -/
 @[reducible]
 def I8.Insts.RusthammerGrammarInputI8 : Grammar I8 Std.I8 := {
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, i16> for rusthammer::BeI16}]
-    Source: 'src/lib.rs', lines 886:8-888:9 -/
+    Source: 'src/lib.rs', lines 889:8-891:9 -/
 @[reducible]
 def BeI16.Insts.RusthammerGrammarInputI16 : Grammar BeI16 Std.I16 := {
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, i32> for rusthammer::BeI32}]
-    Source: 'src/lib.rs', lines 886:8-888:9 -/
+    Source: 'src/lib.rs', lines 889:8-891:9 -/
 @[reducible]
 def BeI32.Insts.RusthammerGrammarInputI32 : Grammar BeI32 Std.I32 := {
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, i64> for rusthammer::BeI64}]
-    Source: 'src/lib.rs', lines 886:8-888:9 -/
+    Source: 'src/lib.rs', lines 889:8-891:9 -/
 @[reducible]
 def BeI64.Insts.RusthammerGrammarInputI64 : Grammar BeI64 Std.I64 := {
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, u16> for rusthammer::BeU16}::eval]:
-    Source: 'src/lib.rs', lines 891:12-906:13
+    Source: 'src/lib.rs', lines 894:12-909:13
     Visibility: public -/
 def BeU16.Insts.RusthammerEvalInputBackendU16.eval
   {Backend : Type} (self : BeU16) (backend : Backend) (input : Slice Std.U8)
@@ -2964,7 +2964,7 @@ def BeU16.Insts.RusthammerEvalInputBackendU16.eval
   | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, u16> for rusthammer::BeU16}]
-    Source: 'src/lib.rs', lines 890:8-907:9 -/
+    Source: 'src/lib.rs', lines 893:8-910:9 -/
 @[reducible]
 def BeU16.Insts.RusthammerEvalInputBackendU16 (Backend : Type) : Eval BeU16
   Backend Std.U16 := {
@@ -2973,7 +2973,7 @@ def BeU16.Insts.RusthammerEvalInputBackendU16 (Backend : Type) : Eval BeU16
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, u32> for rusthammer::BeU32}::eval]:
-    Source: 'src/lib.rs', lines 891:12-906:13
+    Source: 'src/lib.rs', lines 894:12-909:13
     Visibility: public -/
 def BeU32.Insts.RusthammerEvalInputBackendU32.eval
   {Backend : Type} (self : BeU32) (backend : Backend) (input : Slice Std.U8)
@@ -2992,7 +2992,7 @@ def BeU32.Insts.RusthammerEvalInputBackendU32.eval
   | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, u32> for rusthammer::BeU32}]
-    Source: 'src/lib.rs', lines 890:8-907:9 -/
+    Source: 'src/lib.rs', lines 893:8-910:9 -/
 @[reducible]
 def BeU32.Insts.RusthammerEvalInputBackendU32 (Backend : Type) : Eval BeU32
   Backend Std.U32 := {
@@ -3001,7 +3001,7 @@ def BeU32.Insts.RusthammerEvalInputBackendU32 (Backend : Type) : Eval BeU32
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, u64> for rusthammer::BeU64}::eval]:
-    Source: 'src/lib.rs', lines 891:12-906:13
+    Source: 'src/lib.rs', lines 894:12-909:13
     Visibility: public -/
 def BeU64.Insts.RusthammerEvalInputBackendU64.eval
   {Backend : Type} (self : BeU64) (backend : Backend) (input : Slice Std.U8)
@@ -3018,7 +3018,7 @@ def BeU64.Insts.RusthammerEvalInputBackendU64.eval
   | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, u64> for rusthammer::BeU64}]
-    Source: 'src/lib.rs', lines 890:8-907:9 -/
+    Source: 'src/lib.rs', lines 893:8-910:9 -/
 @[reducible]
 def BeU64.Insts.RusthammerEvalInputBackendU64 (Backend : Type) : Eval BeU64
   Backend Std.U64 := {
@@ -3027,7 +3027,7 @@ def BeU64.Insts.RusthammerEvalInputBackendU64 (Backend : Type) : Eval BeU64
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, i8> for rusthammer::I8}::eval]:
-    Source: 'src/lib.rs', lines 891:12-906:13
+    Source: 'src/lib.rs', lines 894:12-909:13
     Visibility: public -/
 def I8.Insts.RusthammerEvalInputBackendI8.eval
   {Backend : Type} (self : I8) (backend : Backend) (input : Slice Std.U8)
@@ -3045,7 +3045,7 @@ def I8.Insts.RusthammerEvalInputBackendI8.eval
   | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, i8> for rusthammer::I8}]
-    Source: 'src/lib.rs', lines 890:8-907:9 -/
+    Source: 'src/lib.rs', lines 893:8-910:9 -/
 @[reducible]
 def I8.Insts.RusthammerEvalInputBackendI8 (Backend : Type) : Eval I8 Backend
   Std.I8 := {
@@ -3054,7 +3054,7 @@ def I8.Insts.RusthammerEvalInputBackendI8 (Backend : Type) : Eval I8 Backend
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, i16> for rusthammer::BeI16}::eval]:
-    Source: 'src/lib.rs', lines 891:12-906:13
+    Source: 'src/lib.rs', lines 894:12-909:13
     Visibility: public -/
 def BeI16.Insts.RusthammerEvalInputBackendI16.eval
   {Backend : Type} (self : BeI16) (backend : Backend) (input : Slice Std.U8)
@@ -3073,7 +3073,7 @@ def BeI16.Insts.RusthammerEvalInputBackendI16.eval
   | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, i16> for rusthammer::BeI16}]
-    Source: 'src/lib.rs', lines 890:8-907:9 -/
+    Source: 'src/lib.rs', lines 893:8-910:9 -/
 @[reducible]
 def BeI16.Insts.RusthammerEvalInputBackendI16 (Backend : Type) : Eval BeI16
   Backend Std.I16 := {
@@ -3082,7 +3082,7 @@ def BeI16.Insts.RusthammerEvalInputBackendI16 (Backend : Type) : Eval BeI16
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, i32> for rusthammer::BeI32}::eval]:
-    Source: 'src/lib.rs', lines 891:12-906:13
+    Source: 'src/lib.rs', lines 894:12-909:13
     Visibility: public -/
 def BeI32.Insts.RusthammerEvalInputBackendI32.eval
   {Backend : Type} (self : BeI32) (backend : Backend) (input : Slice Std.U8)
@@ -3101,7 +3101,7 @@ def BeI32.Insts.RusthammerEvalInputBackendI32.eval
   | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, i32> for rusthammer::BeI32}]
-    Source: 'src/lib.rs', lines 890:8-907:9 -/
+    Source: 'src/lib.rs', lines 893:8-910:9 -/
 @[reducible]
 def BeI32.Insts.RusthammerEvalInputBackendI32 (Backend : Type) : Eval BeI32
   Backend Std.I32 := {
@@ -3110,7 +3110,7 @@ def BeI32.Insts.RusthammerEvalInputBackendI32 (Backend : Type) : Eval BeI32
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, i64> for rusthammer::BeI64}::eval]:
-    Source: 'src/lib.rs', lines 891:12-906:13
+    Source: 'src/lib.rs', lines 894:12-909:13
     Visibility: public -/
 def BeI64.Insts.RusthammerEvalInputBackendI64.eval
   {Backend : Type} (self : BeI64) (backend : Backend) (input : Slice Std.U8)
@@ -3127,7 +3127,7 @@ def BeI64.Insts.RusthammerEvalInputBackendI64.eval
   | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, i64> for rusthammer::BeI64}]
-    Source: 'src/lib.rs', lines 890:8-907:9 -/
+    Source: 'src/lib.rs', lines 893:8-910:9 -/
 @[reducible]
 def BeI64.Insts.RusthammerEvalInputBackendI64 (Backend : Type) : Eval BeI64
   Backend Std.I64 := {
@@ -3136,25 +3136,25 @@ def BeI64.Insts.RusthammerEvalInputBackendI64 (Backend : Type) : Eval BeI64
 }
 
 /-- [rusthammer::ByteSet]
-    Source: 'src/lib.rs', lines 1007:0-1009:1 -/
+    Source: 'src/lib.rs', lines 1010:0-1012:1 -/
 structure ByteSet where
   words : Array Std.U64 4#usize
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::ByteSet}::clone]:
-    Source: 'src/lib.rs', lines 1006:9-1006:14
+    Source: 'src/lib.rs', lines 1009:9-1009:14
     Visibility: public -/
 def ByteSet.Insts.CoreCloneClone.clone (self : ByteSet) : Result ByteSet := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::ByteSet}]
-    Source: 'src/lib.rs', lines 1006:9-1006:14 -/
+    Source: 'src/lib.rs', lines 1009:9-1009:14 -/
 @[reducible]
 def ByteSet.Insts.CoreCloneClone : core.clone.Clone ByteSet := {
   clone := ByteSet.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::{rusthammer::ByteSet}::new]: loop body 0:
-    Source: 'src/lib.rs', lines 1015:8-1019:9 -/
+    Source: 'src/lib.rs', lines 1018:8-1022:9 -/
 @[rust_loop_body]
 def ByteSet.new_loop.body
   (bytes : Slice Std.U8) (words : Array Std.U64 4#usize) (index : Std.Usize) :
@@ -3177,7 +3177,7 @@ def ByteSet.new_loop.body
   else ok (done words)
 
 /-- [rusthammer::{rusthammer::ByteSet}::new]: loop 0:
-    Source: 'src/lib.rs', lines 1015:8-1019:9 -/
+    Source: 'src/lib.rs', lines 1018:8-1022:9 -/
 @[rust_loop]
 def ByteSet.new_loop
   (bytes : Slice Std.U8) (words : Array Std.U64 4#usize) (index : Std.Usize) :
@@ -3188,14 +3188,14 @@ def ByteSet.new_loop
     (words, index)
 
 /-- [rusthammer::{rusthammer::ByteSet}::new]:
-    Source: 'src/lib.rs', lines 1012:4-1021:5 -/
+    Source: 'src/lib.rs', lines 1015:4-1024:5 -/
 def ByteSet.new (bytes : Slice Std.U8) : Result ByteSet := do
   let words := Array.repeat 4#usize 0#u64
   let words1 ← ByteSet.new_loop bytes words 0#usize
   ok { words := words1 }
 
 /-- [rusthammer::{rusthammer::ByteSet}::contains]:
-    Source: 'src/lib.rs', lines 1023:4-1025:5 -/
+    Source: 'src/lib.rs', lines 1026:4-1028:5 -/
 def ByteSet.contains (self : ByteSet) (byte : Std.U8) : Result Bool := do
   let i ← byte / 64#u8
   let i1 ← lift (UScalar.cast .Usize i)
@@ -3206,50 +3206,50 @@ def ByteSet.contains (self : ByteSet) (byte : Std.U8) : Result Bool := do
   ok (i5 != 0#u64)
 
 /-- [rusthammer::ByteIn]
-    Source: 'src/lib.rs', lines 1055:0-1057:1
+    Source: 'src/lib.rs', lines 1058:0-1060:1
     Visibility: public -/
 structure ByteIn where
   set : ByteSet
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::ByteIn}::clone]:
-    Source: 'src/lib.rs', lines 1054:9-1054:14
+    Source: 'src/lib.rs', lines 1057:9-1057:14
     Visibility: public -/
 def ByteIn.Insts.CoreCloneClone.clone (self : ByteIn) : Result ByteIn := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::ByteIn}]
-    Source: 'src/lib.rs', lines 1054:9-1054:14 -/
+    Source: 'src/lib.rs', lines 1057:9-1057:14 -/
 @[reducible]
 def ByteIn.Insts.CoreCloneClone : core.clone.Clone ByteIn := {
   clone := ByteIn.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::{rusthammer::ByteIn}::new]:
-    Source: 'src/lib.rs', lines 1061:4-1065:5
+    Source: 'src/lib.rs', lines 1064:4-1068:5
     Visibility: public -/
 def ByteIn.new (bytes : Slice Std.U8) : Result ByteIn := do
   let bs ← ByteSet.new bytes
   ok { set := bs }
 
 /-- [rusthammer::{rusthammer::ByteIn}::accepts]:
-    Source: 'src/lib.rs', lines 1068:4-1070:5
+    Source: 'src/lib.rs', lines 1071:4-1073:5
     Visibility: public -/
 def ByteIn.accepts (self : ByteIn) (byte : Std.U8) : Result Bool := do
   ByteSet.contains self.set byte
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, u8> for rusthammer::ByteIn}]
-    Source: 'src/lib.rs', lines 1073:0-1075:1 -/
+    Source: 'src/lib.rs', lines 1076:0-1078:1 -/
 @[reducible]
 def ByteIn.Insts.RusthammerGrammarInputU8 : Grammar ByteIn Std.U8 := {
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteIn}::eval::{closure}]
-    Source: 'src/lib.rs', lines 1087:23-1087:56 -/
+    Source: 'src/lib.rs', lines 1090:23-1090:56 -/
 @[reducible]
 def EvalInputByteInBackendU8.eval.closure (Backend : Type) := ByteIn
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteIn}::eval::{impl core::ops::function::Fn<(&'_2 u8,), bool> for rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteIn}::eval::{closure}<'input, '_1, Backend>}::call]:
-    Source: 'src/lib.rs', lines 1087:23-1087:56 -/
+    Source: 'src/lib.rs', lines 1090:23-1090:56 -/
 def
   EvalInputByteInBackendU8.eval.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool.call
   {Backend : Type} (c : EvalInputByteInBackendU8.eval.closure Backend)
@@ -3259,7 +3259,7 @@ def
   ByteIn.accepts c tupled_args
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteIn}::eval::{impl core::ops::function::FnMut<(&'_2 u8,), bool> for rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteIn}::eval::{closure}<'input, '_1, Backend>}::call_mut]:
-    Source: 'src/lib.rs', lines 1087:23-1087:56 -/
+    Source: 'src/lib.rs', lines 1090:23-1090:56 -/
 def
   EvalInputByteInBackendU8.eval.closure.Insts.CoreOpsFunctionFnMutTupleShared1U8Bool.call_mut
   {Backend : Type} (state : EvalInputByteInBackendU8.eval.closure Backend)
@@ -3272,7 +3272,7 @@ def
   ok (b, state)
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteIn}::eval::{impl core::ops::function::FnOnce<(&'_2 u8,), bool> for rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteIn}::eval::{closure}<'input, '_1, Backend>}::call_once]:
-    Source: 'src/lib.rs', lines 1087:23-1087:56 -/
+    Source: 'src/lib.rs', lines 1090:23-1090:56 -/
 def
   EvalInputByteInBackendU8.eval.closure.Insts.CoreOpsFunctionFnOnceTupleShared1U8Bool.call_once
   {Backend : Type} (c : EvalInputByteInBackendU8.eval.closure Backend)
@@ -3285,7 +3285,7 @@ def
   ok b
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteIn}::eval::{impl core::ops::function::FnOnce<(&'_2 u8,), bool> for rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteIn}::eval::{closure}<'input, '_1, Backend>}]
-    Source: 'src/lib.rs', lines 1087:23-1087:56 -/
+    Source: 'src/lib.rs', lines 1090:23-1090:56 -/
 @[reducible]
 def
   EvalInputByteInBackendU8.eval.closure.Insts.CoreOpsFunctionFnOnceTupleShared1U8Bool
@@ -3296,7 +3296,7 @@ def
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteIn}::eval::{impl core::ops::function::FnMut<(&'_2 u8,), bool> for rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteIn}::eval::{closure}<'input, '_1, Backend>}]
-    Source: 'src/lib.rs', lines 1087:23-1087:56 -/
+    Source: 'src/lib.rs', lines 1090:23-1090:56 -/
 @[reducible]
 def
   EvalInputByteInBackendU8.eval.closure.Insts.CoreOpsFunctionFnMutTupleShared1U8Bool
@@ -3310,7 +3310,7 @@ def
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteIn}::eval::{impl core::ops::function::Fn<(&'_2 u8,), bool> for rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteIn}::eval::{closure}<'input, '_1, Backend>}]
-    Source: 'src/lib.rs', lines 1087:23-1087:56 -/
+    Source: 'src/lib.rs', lines 1090:23-1090:56 -/
 @[reducible]
 def
   EvalInputByteInBackendU8.eval.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool
@@ -3324,7 +3324,7 @@ def
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteIn}::eval]:
-    Source: 'src/lib.rs', lines 1078:4-1090:5
+    Source: 'src/lib.rs', lines 1081:4-1093:5
     Visibility: public -/
 def ByteIn.Insts.RusthammerEvalInputBackendU8.eval
   {Backend : Type} (self : ByteIn) (backend : Backend) (input : Slice Std.U8)
@@ -3337,7 +3337,7 @@ def ByteIn.Insts.RusthammerEvalInputBackendU8.eval
     Backend) { parser := (), predicate := self } backend input cursor context
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteIn}]
-    Source: 'src/lib.rs', lines 1077:0-1091:1 -/
+    Source: 'src/lib.rs', lines 1080:0-1094:1 -/
 @[reducible]
 def ByteIn.Insts.RusthammerEvalInputBackendU8 (Backend : Type) : Eval ByteIn
   Backend Std.U8 := {
@@ -3346,52 +3346,52 @@ def ByteIn.Insts.RusthammerEvalInputBackendU8 (Backend : Type) : Eval ByteIn
 }
 
 /-- [rusthammer::ByteNotIn]
-    Source: 'src/lib.rs', lines 1117:0-1119:1
+    Source: 'src/lib.rs', lines 1120:0-1122:1
     Visibility: public -/
 structure ByteNotIn where
   set : ByteSet
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::ByteNotIn}::clone]:
-    Source: 'src/lib.rs', lines 1116:9-1116:14
+    Source: 'src/lib.rs', lines 1119:9-1119:14
     Visibility: public -/
 def ByteNotIn.Insts.CoreCloneClone.clone
   (self : ByteNotIn) : Result ByteNotIn := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::ByteNotIn}]
-    Source: 'src/lib.rs', lines 1116:9-1116:14 -/
+    Source: 'src/lib.rs', lines 1119:9-1119:14 -/
 @[reducible]
 def ByteNotIn.Insts.CoreCloneClone : core.clone.Clone ByteNotIn := {
   clone := ByteNotIn.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::{rusthammer::ByteNotIn}::new]:
-    Source: 'src/lib.rs', lines 1123:4-1127:5
+    Source: 'src/lib.rs', lines 1126:4-1130:5
     Visibility: public -/
 def ByteNotIn.new (bytes : Slice Std.U8) : Result ByteNotIn := do
   let bs ← ByteSet.new bytes
   ok { set := bs }
 
 /-- [rusthammer::{rusthammer::ByteNotIn}::accepts]:
-    Source: 'src/lib.rs', lines 1131:4-1133:5
+    Source: 'src/lib.rs', lines 1134:4-1136:5
     Visibility: public -/
 def ByteNotIn.accepts (self : ByteNotIn) (byte : Std.U8) : Result Bool := do
   let b ← ByteSet.contains self.set byte
   ok (¬ b)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, u8> for rusthammer::ByteNotIn}]
-    Source: 'src/lib.rs', lines 1136:0-1138:1 -/
+    Source: 'src/lib.rs', lines 1139:0-1141:1 -/
 @[reducible]
 def ByteNotIn.Insts.RusthammerGrammarInputU8 : Grammar ByteNotIn Std.U8 := {
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteNotIn}::eval::{closure}]
-    Source: 'src/lib.rs', lines 1150:23-1150:56 -/
+    Source: 'src/lib.rs', lines 1153:23-1153:56 -/
 @[reducible]
 def EvalInputByteNotInBackendU8.eval.closure (Backend : Type) := ByteNotIn
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteNotIn}::eval::{impl core::ops::function::Fn<(&'_2 u8,), bool> for rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteNotIn}::eval::{closure}<'input, '_1, Backend>}::call]:
-    Source: 'src/lib.rs', lines 1150:23-1150:56 -/
+    Source: 'src/lib.rs', lines 1153:23-1153:56 -/
 def
   EvalInputByteNotInBackendU8.eval.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool.call
   {Backend : Type} (c : EvalInputByteNotInBackendU8.eval.closure Backend)
@@ -3401,7 +3401,7 @@ def
   ByteNotIn.accepts c tupled_args
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteNotIn}::eval::{impl core::ops::function::FnMut<(&'_2 u8,), bool> for rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteNotIn}::eval::{closure}<'input, '_1, Backend>}::call_mut]:
-    Source: 'src/lib.rs', lines 1150:23-1150:56 -/
+    Source: 'src/lib.rs', lines 1153:23-1153:56 -/
 def
   EvalInputByteNotInBackendU8.eval.closure.Insts.CoreOpsFunctionFnMutTupleShared1U8Bool.call_mut
   {Backend : Type} (state : EvalInputByteNotInBackendU8.eval.closure Backend)
@@ -3414,7 +3414,7 @@ def
   ok (b, state)
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteNotIn}::eval::{impl core::ops::function::FnOnce<(&'_2 u8,), bool> for rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteNotIn}::eval::{closure}<'input, '_1, Backend>}::call_once]:
-    Source: 'src/lib.rs', lines 1150:23-1150:56 -/
+    Source: 'src/lib.rs', lines 1153:23-1153:56 -/
 def
   EvalInputByteNotInBackendU8.eval.closure.Insts.CoreOpsFunctionFnOnceTupleShared1U8Bool.call_once
   {Backend : Type} (c : EvalInputByteNotInBackendU8.eval.closure Backend)
@@ -3427,7 +3427,7 @@ def
   ok b
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteNotIn}::eval::{impl core::ops::function::FnOnce<(&'_2 u8,), bool> for rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteNotIn}::eval::{closure}<'input, '_1, Backend>}]
-    Source: 'src/lib.rs', lines 1150:23-1150:56 -/
+    Source: 'src/lib.rs', lines 1153:23-1153:56 -/
 @[reducible]
 def
   EvalInputByteNotInBackendU8.eval.closure.Insts.CoreOpsFunctionFnOnceTupleShared1U8Bool
@@ -3438,7 +3438,7 @@ def
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteNotIn}::eval::{impl core::ops::function::FnMut<(&'_2 u8,), bool> for rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteNotIn}::eval::{closure}<'input, '_1, Backend>}]
-    Source: 'src/lib.rs', lines 1150:23-1150:56 -/
+    Source: 'src/lib.rs', lines 1153:23-1153:56 -/
 @[reducible]
 def
   EvalInputByteNotInBackendU8.eval.closure.Insts.CoreOpsFunctionFnMutTupleShared1U8Bool
@@ -3452,7 +3452,7 @@ def
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteNotIn}::eval::{impl core::ops::function::Fn<(&'_2 u8,), bool> for rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteNotIn}::eval::{closure}<'input, '_1, Backend>}]
-    Source: 'src/lib.rs', lines 1150:23-1150:56 -/
+    Source: 'src/lib.rs', lines 1153:23-1153:56 -/
 @[reducible]
 def
   EvalInputByteNotInBackendU8.eval.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool
@@ -3466,7 +3466,7 @@ def
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteNotIn}::eval]:
-    Source: 'src/lib.rs', lines 1141:4-1153:5
+    Source: 'src/lib.rs', lines 1144:4-1156:5
     Visibility: public -/
 def ByteNotIn.Insts.RusthammerEvalInputBackendU8.eval
   {Backend : Type} (self : ByteNotIn) (backend : Backend)
@@ -3479,7 +3479,7 @@ def ByteNotIn.Insts.RusthammerEvalInputBackendU8.eval
     Backend) { parser := (), predicate := self } backend input cursor context
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, u8> for rusthammer::ByteNotIn}]
-    Source: 'src/lib.rs', lines 1140:0-1154:1 -/
+    Source: 'src/lib.rs', lines 1143:0-1157:1 -/
 @[reducible]
 def ByteNotIn.Insts.RusthammerEvalInputBackendU8 (Backend : Type) : Eval
   ByteNotIn Backend Std.U8 := {
@@ -3488,46 +3488,46 @@ def ByteNotIn.Insts.RusthammerEvalInputBackendU8 (Backend : Type) : Eval
 }
 
 /-- [rusthammer::BytePattern]
-    Source: 'src/lib.rs', lines 1177:0-1179:1
+    Source: 'src/lib.rs', lines 1180:0-1182:1
     Visibility: public -/
 structure BytePattern where
   pattern : Slice Std.U8
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::BytePattern<'pattern>}::clone]:
-    Source: 'src/lib.rs', lines 1176:9-1176:14
+    Source: 'src/lib.rs', lines 1179:9-1179:14
     Visibility: public -/
 def BytePattern.Insts.CoreCloneClone.clone
   (self : BytePattern) : Result BytePattern := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::BytePattern<'pattern>}]
-    Source: 'src/lib.rs', lines 1176:9-1176:14 -/
+    Source: 'src/lib.rs', lines 1179:9-1179:14 -/
 @[reducible]
 def BytePattern.Insts.CoreCloneClone : core.clone.Clone BytePattern := {
   clone := BytePattern.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::{rusthammer::BytePattern<'pattern>}::new]:
-    Source: 'src/lib.rs', lines 1183:4-1185:5
+    Source: 'src/lib.rs', lines 1186:4-1188:5
     Visibility: public -/
 def BytePattern.new (pattern : Slice Std.U8) : Result BytePattern := do
   ok { pattern }
 
 /-- [rusthammer::{rusthammer::BytePattern<'pattern>}::pattern]:
-    Source: 'src/lib.rs', lines 1188:4-1190:5
+    Source: 'src/lib.rs', lines 1191:4-1193:5
     Visibility: public -/
 def BytePattern.impl.pattern (self : BytePattern) : Result (Slice Std.U8) := do
   ok self.pattern
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, &'pattern [u8]> for rusthammer::BytePattern<'pattern>}]
-    Source: 'src/lib.rs', lines 1193:0-1195:1 -/
+    Source: 'src/lib.rs', lines 1196:0-1198:1 -/
 @[reducible]
 def BytePattern.Insts.RusthammerGrammarInputSharedPatternSliceU8 : Grammar
   BytePattern (Slice Std.U8) := {
 }
 
 /-- [rusthammer::match_byte_pattern]: loop body 0:
-    Source: 'src/lib.rs', lines 0:0-1239:1 -/
+    Source: 'src/lib.rs', lines 0:0-1242:1 -/
 @[rust_loop_body]
 def match_byte_pattern_loop.body
   {Backend : Type} (pattern : Slice Std.U8) (input : Slice Std.U8)
@@ -3555,7 +3555,7 @@ def match_byte_pattern_loop.body
   else ok (done (ParseOutcome.Success next (), backend))
 
 /-- [rusthammer::match_byte_pattern]: loop 0:
-    Source: 'src/lib.rs', lines 0:0-1239:1 -/
+    Source: 'src/lib.rs', lines 0:0-1242:1 -/
 @[rust_loop]
 def match_byte_pattern_loop
   {Backend : Type} (backend : Backend) (pattern : Slice Std.U8)
@@ -3569,7 +3569,7 @@ def match_byte_pattern_loop
     (backend, next, index)
 
 /-- [rusthammer::match_byte_pattern]:
-    Source: 'src/lib.rs', lines 1216:0-1239:1 -/
+    Source: 'src/lib.rs', lines 1219:0-1242:1 -/
 @[reducible]
 def match_byte_pattern
   {Backend : Type} (backend : Backend) (pattern : Slice Std.U8)
@@ -3579,7 +3579,7 @@ def match_byte_pattern
   match_byte_pattern_loop backend pattern input context cursor 0#usize
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, &'_ [u8]> for rusthammer::BytePattern<'pattern>}::eval]:
-    Source: 'src/lib.rs', lines 1198:4-1213:5
+    Source: 'src/lib.rs', lines 1201:4-1216:5
     Visibility: public -/
 def BytePattern.Insts.RusthammerEvalInputBackendSharedSliceU8.eval
   {Backend : Type} (self : BytePattern) (backend : Backend)
@@ -3595,7 +3595,7 @@ def BytePattern.Insts.RusthammerEvalInputBackendSharedSliceU8.eval
   | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, &'_ [u8]> for rusthammer::BytePattern<'pattern>}]
-    Source: 'src/lib.rs', lines 1197:0-1214:1 -/
+    Source: 'src/lib.rs', lines 1200:0-1217:1 -/
 @[reducible]
 def BytePattern.Insts.RusthammerEvalInputBackendSharedSliceU8 (Backend : Type)
   : Eval BytePattern Backend (Slice Std.U8) := {
@@ -3604,70 +3604,70 @@ def BytePattern.Insts.RusthammerEvalInputBackendSharedSliceU8 (Backend : Type)
 }
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Literal}::clone]:
-    Source: 'src/lib.rs', lines 1252:9-1252:14
+    Source: 'src/lib.rs', lines 1255:9-1255:14
     Visibility: public -/
 def Literal.Insts.CoreCloneClone.clone (self : Literal) : Result Literal := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Literal}]
-    Source: 'src/lib.rs', lines 1252:9-1252:14 -/
+    Source: 'src/lib.rs', lines 1255:9-1255:14 -/
 @[reducible]
 def Literal.Insts.CoreCloneClone : core.clone.Clone Literal := {
   clone := Literal.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::{rusthammer::Literal}::width]:
-    Source: 'src/lib.rs', lines 1274:4-1276:5
+    Source: 'src/lib.rs', lines 1277:4-1279:5
     Visibility: public -/
 def Literal.width (self : Literal) : Result Std.U8 := do
   Bits.impl.width self.bits
 
 /-- [rusthammer::{rusthammer::Literal}::value]:
-    Source: 'src/lib.rs', lines 1279:4-1281:5
+    Source: 'src/lib.rs', lines 1282:4-1284:5
     Visibility: public -/
 def Literal.impl.value (self : Literal) : Result Std.U64 := do
   ok self.value
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::End}::clone]:
-    Source: 'src/lib.rs', lines 1323:9-1323:14
+    Source: 'src/lib.rs', lines 1326:9-1326:14
     Visibility: public -/
 def End.Insts.CoreCloneClone.clone (self : End) : Result End := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::End}]
-    Source: 'src/lib.rs', lines 1323:9-1323:14 -/
+    Source: 'src/lib.rs', lines 1326:9-1326:14 -/
 @[reducible]
 def End.Insts.CoreCloneClone : core.clone.Clone End := {
   clone := End.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::Epsilon]
-    Source: 'src/lib.rs', lines 1359:0-1359:19
+    Source: 'src/lib.rs', lines 1362:0-1362:19
     Visibility: public -/
 @[reducible]
 def Epsilon := Unit
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Epsilon}::clone]:
-    Source: 'src/lib.rs', lines 1358:9-1358:14
+    Source: 'src/lib.rs', lines 1361:9-1361:14
     Visibility: public -/
 def Epsilon.Insts.CoreCloneClone.clone (self : Epsilon) : Result Epsilon := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Epsilon}]
-    Source: 'src/lib.rs', lines 1358:9-1358:14 -/
+    Source: 'src/lib.rs', lines 1361:9-1361:14 -/
 @[reducible]
 def Epsilon.Insts.CoreCloneClone : core.clone.Clone Epsilon := {
   clone := Epsilon.Insts.CoreCloneClone.clone
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, ()> for rusthammer::Epsilon}]
-    Source: 'src/lib.rs', lines 1361:0-1363:1 -/
+    Source: 'src/lib.rs', lines 1364:0-1366:1 -/
 @[reducible]
 def Epsilon.Insts.RusthammerGrammarInputTuple : Grammar Epsilon Unit := {
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, ()> for rusthammer::Epsilon}::eval]:
-    Source: 'src/lib.rs', lines 1366:4-1374:5
+    Source: 'src/lib.rs', lines 1369:4-1377:5
     Visibility: public -/
 def Epsilon.Insts.RusthammerEvalInputBackendTuple.eval
   {Backend : Type} (self : Epsilon) (t : Backend) (s : Slice Std.U8)
@@ -3677,7 +3677,7 @@ def Epsilon.Insts.RusthammerEvalInputBackendTuple.eval
   ok (ParseOutcome.Success cursor (), t)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, ()> for rusthammer::Epsilon}]
-    Source: 'src/lib.rs', lines 1365:0-1375:1 -/
+    Source: 'src/lib.rs', lines 1368:0-1378:1 -/
 @[reducible]
 def Epsilon.Insts.RusthammerEvalInputBackendTuple (Backend : Type) : Eval
   Epsilon Backend Unit := {
@@ -3686,25 +3686,25 @@ def Epsilon.Insts.RusthammerEvalInputBackendTuple (Backend : Type) : Eval
 }
 
 /-- [rusthammer::Fail]
-    Source: 'src/lib.rs', lines 1380:0-1382:1
+    Source: 'src/lib.rs', lines 1383:0-1385:1
     Visibility: public -/
 structure Fail (T : Type) where
   output : core.marker.PhantomData T
 
 /-- [rusthammer::{rusthammer::Fail<T>}::new]:
-    Source: 'src/lib.rs', lines 1386:4-1390:5
+    Source: 'src/lib.rs', lines 1389:4-1393:5
     Visibility: public -/
 def Fail.new (T : Type) : Result (Fail T) := do
   ok { output := () }
 
 /-- [rusthammer::{impl core::default::Default for rusthammer::Fail<T>}::default]:
-    Source: 'src/lib.rs', lines 1394:4-1396:5
+    Source: 'src/lib.rs', lines 1397:4-1399:5
     Visibility: public -/
 def Fail.Insts.CoreDefaultDefault.default (T : Type) : Result (Fail T) := do
   Fail.new T
 
 /-- Trait implementation: [rusthammer::{impl core::default::Default for rusthammer::Fail<T>}]
-    Source: 'src/lib.rs', lines 1393:0-1397:1 -/
+    Source: 'src/lib.rs', lines 1396:0-1400:1 -/
 @[reducible]
 def Fail.Insts.CoreDefaultDefault (T : Type) : core.default.Default (Fail T)
   := {
@@ -3712,27 +3712,27 @@ def Fail.Insts.CoreDefaultDefault (T : Type) : core.default.Default (Fail T)
 }
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Fail<T>}::clone]:
-    Source: 'src/lib.rs', lines 1402:4-1404:5
+    Source: 'src/lib.rs', lines 1405:4-1407:5
     Visibility: public -/
 def Fail.Insts.CoreCloneClone.clone
   {T : Type} (self : Fail T) : Result (Fail T) := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Fail<T>}]
-    Source: 'src/lib.rs', lines 1401:0-1405:1 -/
+    Source: 'src/lib.rs', lines 1404:0-1408:1 -/
 @[reducible]
 def Fail.Insts.CoreCloneClone (T : Type) : core.clone.Clone (Fail T) := {
   clone := Fail.Insts.CoreCloneClone.clone
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, T> for rusthammer::Fail<T>}]
-    Source: 'src/lib.rs', lines 1407:0-1409:1 -/
+    Source: 'src/lib.rs', lines 1410:0-1412:1 -/
 @[reducible]
 def Fail.Insts.RusthammerGrammar (T : Type) : Grammar (Fail T) T := {
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, T> for rusthammer::Fail<T>}::eval]:
-    Source: 'src/lib.rs', lines 1412:4-1420:5
+    Source: 'src/lib.rs', lines 1415:4-1423:5
     Visibility: public -/
 def Fail.Insts.RusthammerEval.eval
   {Backend : Type} {T : Type} (self : Fail T) (t : Backend) (s : Slice Std.U8)
@@ -3742,7 +3742,7 @@ def Fail.Insts.RusthammerEval.eval
   ok (ParseOutcome.Error ParseError.Mismatch, t)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, T> for rusthammer::Fail<T>}]
-    Source: 'src/lib.rs', lines 1411:0-1421:1 -/
+    Source: 'src/lib.rs', lines 1414:0-1424:1 -/
 @[reducible]
 def Fail.Insts.RusthammerEval (Backend : Type) (T : Type) : Eval (Fail T)
   Backend T := {
@@ -3751,7 +3751,7 @@ def Fail.Insts.RusthammerEval (Backend : Type) (T : Type) : Eval (Fail T)
 }
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Seq<P, Q>}::clone]:
-    Source: 'src/lib.rs', lines 1425:9-1425:14
+    Source: 'src/lib.rs', lines 1428:9-1428:14
     Visibility: public -/
 def Seq.Insts.CoreCloneClone.clone
   {P : Type} {Q : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -3763,7 +3763,7 @@ def Seq.Insts.CoreCloneClone.clone
   ok { first := t, second := t1 }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Seq<P, Q>}]
-    Source: 'src/lib.rs', lines 1425:9-1425:14 -/
+    Source: 'src/lib.rs', lines 1428:9-1428:14 -/
 @[reducible]
 def Seq.Insts.CoreCloneClone {P : Type} {Q : Type} (corecloneCloneInst :
   core.clone.Clone P) (corecloneCloneInst1 : core.clone.Clone Q) :
@@ -3773,13 +3773,13 @@ def Seq.Insts.CoreCloneClone {P : Type} {Q : Type} (corecloneCloneInst :
 }
 
 /-- [rusthammer::seq]:
-    Source: 'src/lib.rs', lines 1441:0-1443:1
+    Source: 'src/lib.rs', lines 1444:0-1446:1
     Visibility: public -/
 def seq {P : Type} {Q : Type} (first : P) (second : Q) : Result (Seq P Q) := do
   ok { first, second }
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Bind<P, F>}::clone]:
-    Source: 'src/lib.rs', lines 1505:9-1505:14
+    Source: 'src/lib.rs', lines 1508:9-1508:14
     Visibility: public -/
 def Bind.Insts.CoreCloneClone.clone
   {P : Type} {F : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -3791,7 +3791,7 @@ def Bind.Insts.CoreCloneClone.clone
   ok { parser := t, «then» := t1 }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Bind<P, F>}]
-    Source: 'src/lib.rs', lines 1505:9-1505:14 -/
+    Source: 'src/lib.rs', lines 1508:9-1508:14 -/
 @[reducible]
 def Bind.Insts.CoreCloneClone {P : Type} {F : Type} (corecloneCloneInst :
   core.clone.Clone P) (corecloneCloneInst1 : core.clone.Clone F) :
@@ -3801,7 +3801,7 @@ def Bind.Insts.CoreCloneClone {P : Type} {F : Type} (corecloneCloneInst :
 }
 
 /-- [rusthammer::bind]:
-    Source: 'src/lib.rs', lines 1521:0-1528:1
+    Source: 'src/lib.rs', lines 1524:0-1531:1
     Visibility: public -/
 def bind
   {P : Type} {F : Type} {Q : Type} {Clause0_Output : Type} {Clause2_Output :
@@ -3814,14 +3814,14 @@ def bind
   ok { parser, «then» }
 
 /-- [rusthammer::Left]
-    Source: 'src/lib.rs', lines 1566:0-1569:1
+    Source: 'src/lib.rs', lines 1569:0-1572:1
     Visibility: public -/
 structure Left (P : Type) (Q : Type) where
   first : P
   second : Q
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Left<P, Q>}::clone]:
-    Source: 'src/lib.rs', lines 1565:9-1565:14
+    Source: 'src/lib.rs', lines 1568:9-1568:14
     Visibility: public -/
 def Left.Insts.CoreCloneClone.clone
   {P : Type} {Q : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -3833,7 +3833,7 @@ def Left.Insts.CoreCloneClone.clone
   ok { first := t, second := t1 }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Left<P, Q>}]
-    Source: 'src/lib.rs', lines 1565:9-1565:14 -/
+    Source: 'src/lib.rs', lines 1568:9-1568:14 -/
 @[reducible]
 def Left.Insts.CoreCloneClone {P : Type} {Q : Type} (corecloneCloneInst :
   core.clone.Clone P) (corecloneCloneInst1 : core.clone.Clone Q) :
@@ -3843,7 +3843,7 @@ def Left.Insts.CoreCloneClone {P : Type} {Q : Type} (corecloneCloneInst :
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, Clause0_Output> for rusthammer::Left<P, Q>}]
-    Source: 'src/lib.rs', lines 1571:0-1573:1 -/
+    Source: 'src/lib.rs', lines 1574:0-1576:1 -/
 @[reducible]
 def Left.Insts.RusthammerGrammar {P : Type} {Q : Type} {Clause0_Output : Type}
   {Clause1_Output : Type} (GrammarInst : Grammar P Clause0_Output)
@@ -3852,7 +3852,7 @@ def Left.Insts.RusthammerGrammar {P : Type} {Q : Type} {Clause0_Output : Type}
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::Left<P, Q>}::eval]:
-    Source: 'src/lib.rs', lines 1578:4-1599:5
+    Source: 'src/lib.rs', lines 1581:4-1602:5
     Visibility: public -/
 def Left.Insts.RusthammerEval.eval
   {Backend : Type} {P : Type} {Q : Type} {Clause0_Clause0_Output : Type}
@@ -3875,7 +3875,7 @@ def Left.Insts.RusthammerEval.eval
   | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::Left<P, Q>}]
-    Source: 'src/lib.rs', lines 1575:0-1600:1 -/
+    Source: 'src/lib.rs', lines 1578:0-1603:1 -/
 @[reducible]
 def Left.Insts.RusthammerEval {Backend : Type} {P : Type} {Q : Type}
   {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type} (EvalInst :
@@ -3887,14 +3887,14 @@ def Left.Insts.RusthammerEval {Backend : Type} {P : Type} {Q : Type}
 }
 
 /-- [rusthammer::Right]
-    Source: 'src/lib.rs', lines 1606:0-1609:1
+    Source: 'src/lib.rs', lines 1609:0-1612:1
     Visibility: public -/
 structure Right (P : Type) (Q : Type) where
   first : P
   second : Q
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Right<P, Q>}::clone]:
-    Source: 'src/lib.rs', lines 1605:9-1605:14
+    Source: 'src/lib.rs', lines 1608:9-1608:14
     Visibility: public -/
 def Right.Insts.CoreCloneClone.clone
   {P : Type} {Q : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -3906,7 +3906,7 @@ def Right.Insts.CoreCloneClone.clone
   ok { first := t, second := t1 }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Right<P, Q>}]
-    Source: 'src/lib.rs', lines 1605:9-1605:14 -/
+    Source: 'src/lib.rs', lines 1608:9-1608:14 -/
 @[reducible]
 def Right.Insts.CoreCloneClone {P : Type} {Q : Type} (corecloneCloneInst :
   core.clone.Clone P) (corecloneCloneInst1 : core.clone.Clone Q) :
@@ -3916,7 +3916,7 @@ def Right.Insts.CoreCloneClone {P : Type} {Q : Type} (corecloneCloneInst :
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, Clause1_Output> for rusthammer::Right<P, Q>}]
-    Source: 'src/lib.rs', lines 1611:0-1613:1 -/
+    Source: 'src/lib.rs', lines 1614:0-1616:1 -/
 @[reducible]
 def Right.Insts.RusthammerGrammar {P : Type} {Q : Type} {Clause0_Output : Type}
   {Clause1_Output : Type} (GrammarInst : Grammar P Clause0_Output)
@@ -3925,7 +3925,7 @@ def Right.Insts.RusthammerGrammar {P : Type} {Q : Type} {Clause0_Output : Type}
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, Clause1_Clause0_Output> for rusthammer::Right<P, Q>}::eval]:
-    Source: 'src/lib.rs', lines 1618:4-1639:5
+    Source: 'src/lib.rs', lines 1621:4-1642:5
     Visibility: public -/
 def Right.Insts.RusthammerEval.eval
   {Backend : Type} {P : Type} {Q : Type} {Clause0_Clause0_Output : Type}
@@ -3948,7 +3948,7 @@ def Right.Insts.RusthammerEval.eval
   | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, Clause1_Clause0_Output> for rusthammer::Right<P, Q>}]
-    Source: 'src/lib.rs', lines 1615:0-1640:1 -/
+    Source: 'src/lib.rs', lines 1618:0-1643:1 -/
 @[reducible]
 def Right.Insts.RusthammerEval {Backend : Type} {P : Type} {Q : Type}
   {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type} (EvalInst :
@@ -3961,7 +3961,7 @@ def Right.Insts.RusthammerEval {Backend : Type} {P : Type} {Q : Type}
 }
 
 /-- [rusthammer::Middle]
-    Source: 'src/lib.rs', lines 1646:0-1650:1
+    Source: 'src/lib.rs', lines 1649:0-1653:1
     Visibility: public -/
 structure Middle (L : Type) (P : Type) (R : Type) where
   left : L
@@ -3969,7 +3969,7 @@ structure Middle (L : Type) (P : Type) (R : Type) where
   right : R
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Middle<L, P, R>}::clone]:
-    Source: 'src/lib.rs', lines 1645:9-1645:14
+    Source: 'src/lib.rs', lines 1648:9-1648:14
     Visibility: public -/
 def Middle.Insts.CoreCloneClone.clone
   {L : Type} {P : Type} {R : Type} (corecloneCloneInst : core.clone.Clone L)
@@ -3983,7 +3983,7 @@ def Middle.Insts.CoreCloneClone.clone
   ok { left := t, parser := t1, right := t2 }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Middle<L, P, R>}]
-    Source: 'src/lib.rs', lines 1645:9-1645:14 -/
+    Source: 'src/lib.rs', lines 1648:9-1648:14 -/
 @[reducible]
 def Middle.Insts.CoreCloneClone {L : Type} {P : Type} {R : Type}
   (corecloneCloneInst : core.clone.Clone L) (corecloneCloneInst1 :
@@ -3994,7 +3994,7 @@ def Middle.Insts.CoreCloneClone {L : Type} {P : Type} {R : Type}
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, Clause1_Output> for rusthammer::Middle<L, P, R>}]
-    Source: 'src/lib.rs', lines 1652:0-1656:1 -/
+    Source: 'src/lib.rs', lines 1655:0-1659:1 -/
 @[reducible]
 def Middle.Insts.RusthammerGrammar {L : Type} {P : Type} {R : Type}
   {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output : Type}
@@ -4004,7 +4004,7 @@ def Middle.Insts.RusthammerGrammar {L : Type} {P : Type} {R : Type}
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, Clause1_Clause0_Output> for rusthammer::Middle<L, P, R>}::eval]:
-    Source: 'src/lib.rs', lines 1666:4-1690:5
+    Source: 'src/lib.rs', lines 1669:4-1693:5
     Visibility: public -/
 def Middle.Insts.RusthammerEval.eval
   {Backend : Type} {L : Type} {P : Type} {R : Type} {Clause0_Clause0_Output :
@@ -4032,7 +4032,7 @@ def Middle.Insts.RusthammerEval.eval
   | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, Clause1_Clause0_Output> for rusthammer::Middle<L, P, R>}]
-    Source: 'src/lib.rs', lines 1658:0-1691:1 -/
+    Source: 'src/lib.rs', lines 1661:0-1694:1 -/
 @[reducible]
 def Middle.Insts.RusthammerEval {Backend : Type} {L : Type} {P : Type} {R :
   Type} {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
@@ -4046,7 +4046,7 @@ def Middle.Insts.RusthammerEval {Backend : Type} {L : Type} {P : Type} {R :
 }
 
 /-- [rusthammer::BitSpan]
-    Source: 'src/lib.rs', lines 1706:0-1711:1
+    Source: 'src/lib.rs', lines 1709:0-1714:1
     Visibility: public -/
 structure BitSpan where
   input : Slice Std.U8
@@ -4055,20 +4055,20 @@ structure BitSpan where
   bit_order : BitOrder
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::BitSpan<'input>}::clone]:
-    Source: 'src/lib.rs', lines 1705:9-1705:14
+    Source: 'src/lib.rs', lines 1708:9-1708:14
     Visibility: public -/
 def BitSpan.Insts.CoreCloneClone.clone (self : BitSpan) : Result BitSpan := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::BitSpan<'input>}]
-    Source: 'src/lib.rs', lines 1705:9-1705:14 -/
+    Source: 'src/lib.rs', lines 1708:9-1708:14 -/
 @[reducible]
 def BitSpan.Insts.CoreCloneClone : core.clone.Clone BitSpan := {
   clone := BitSpan.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::span_cursor_valid]:
-    Source: 'src/lib.rs', lines 1713:0-1715:1 -/
+    Source: 'src/lib.rs', lines 1716:0-1718:1 -/
 def span_cursor_valid
   (length : Std.Usize) (cursor : Cursor) : Result Bool := do
   if cursor.bit < 8#u8
@@ -4081,7 +4081,7 @@ def span_cursor_valid
   else ok false
 
 /-- [rusthammer::{rusthammer::BitSpan<'input>}::new]:
-    Source: 'src/lib.rs', lines 1720:4-1738:5
+    Source: 'src/lib.rs', lines 1723:4-1741:5
     Visibility: public -/
 def BitSpan.new
   (input : Slice Std.U8) (start : Cursor) («end» : Cursor)
@@ -4109,31 +4109,31 @@ def BitSpan.new
   else ok (core.result.Result.Err ParseError.InvalidCursor)
 
 /-- [rusthammer::{rusthammer::BitSpan<'input>}::input]:
-    Source: 'src/lib.rs', lines 1741:4-1743:5
+    Source: 'src/lib.rs', lines 1744:4-1746:5
     Visibility: public -/
 def BitSpan.impl.input (self : BitSpan) : Result (Slice Std.U8) := do
   ok self.input
 
 /-- [rusthammer::{rusthammer::BitSpan<'input>}::start]:
-    Source: 'src/lib.rs', lines 1745:4-1747:5
+    Source: 'src/lib.rs', lines 1748:4-1750:5
     Visibility: public -/
 def BitSpan.impl.start (self : BitSpan) : Result Cursor := do
   ok self.start
 
 /-- [rusthammer::{rusthammer::BitSpan<'input>}::end]:
-    Source: 'src/lib.rs', lines 1749:4-1751:5
+    Source: 'src/lib.rs', lines 1752:4-1754:5
     Visibility: public -/
 def BitSpan.impl.end (self : BitSpan) : Result Cursor := do
   ok self.end
 
 /-- [rusthammer::{rusthammer::BitSpan<'input>}::bit_order]:
-    Source: 'src/lib.rs', lines 1754:4-1756:5
+    Source: 'src/lib.rs', lines 1757:4-1759:5
     Visibility: public -/
 def BitSpan.impl.bit_order (self : BitSpan) : Result BitOrder := do
   ok self.bit_order
 
 /-- [rusthammer::{rusthammer::BitSpan<'input>}::is_empty]:
-    Source: 'src/lib.rs', lines 1758:4-1760:5
+    Source: 'src/lib.rs', lines 1761:4-1763:5
     Visibility: public -/
 def BitSpan.is_empty (self : BitSpan) : Result Bool := do
   if self.start.byte = self.end.byte
@@ -4141,7 +4141,7 @@ def BitSpan.is_empty (self : BitSpan) : Result Bool := do
   else ok false
 
 /-- [rusthammer::{rusthammer::BitSpan<'input>}::as_bytes]:
-    Source: 'src/lib.rs', lines 1765:4-1770:5
+    Source: 'src/lib.rs', lines 1768:4-1773:5
     Visibility: public -/
 def BitSpan.as_bytes (self : BitSpan) : Result (Option (Slice Std.U8)) := do
   if self.start.bit != 0#u8
@@ -4157,13 +4157,13 @@ def BitSpan.as_bytes (self : BitSpan) : Result (Option (Slice Std.U8)) := do
       ok (some s)
 
 /-- [rusthammer::WithSpan]
-    Source: 'src/lib.rs', lines 1795:0-1797:1
+    Source: 'src/lib.rs', lines 1798:0-1800:1
     Visibility: public -/
 structure WithSpan (P : Type) where
   parser : P
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::WithSpan<P>}::clone]:
-    Source: 'src/lib.rs', lines 1794:9-1794:14
+    Source: 'src/lib.rs', lines 1797:9-1797:14
     Visibility: public -/
 def WithSpan.Insts.CoreCloneClone.clone
   {P : Type} (corecloneCloneInst : core.clone.Clone P) (self : WithSpan P) :
@@ -4173,7 +4173,7 @@ def WithSpan.Insts.CoreCloneClone.clone
   ok { parser := t }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::WithSpan<P>}]
-    Source: 'src/lib.rs', lines 1794:9-1794:14 -/
+    Source: 'src/lib.rs', lines 1797:9-1797:14 -/
 @[reducible]
 def WithSpan.Insts.CoreCloneClone {P : Type} (corecloneCloneInst :
   core.clone.Clone P) : core.clone.Clone (WithSpan P) := {
@@ -4181,7 +4181,7 @@ def WithSpan.Insts.CoreCloneClone {P : Type} (corecloneCloneInst :
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, (Clause0_Output, rusthammer::BitSpan<'input>)> for rusthammer::WithSpan<P>}]
-    Source: 'src/lib.rs', lines 1799:0-1801:1 -/
+    Source: 'src/lib.rs', lines 1802:0-1804:1 -/
 @[reducible]
 def WithSpan.Insts.RusthammerGrammarInputPairClause0_OutputBitSpan {P : Type}
   {Clause0_Output : Type} (GrammarInst : Grammar P Clause0_Output) : Grammar
@@ -4189,7 +4189,7 @@ def WithSpan.Insts.RusthammerGrammarInputPairClause0_OutputBitSpan {P : Type}
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, (Clause0_Clause0_Output, rusthammer::BitSpan<'_>)> for rusthammer::WithSpan<P>}::eval]:
-    Source: 'src/lib.rs', lines 1804:4-1825:5
+    Source: 'src/lib.rs', lines 1807:4-1828:5
     Visibility: public -/
 def
   WithSpan.Insts.RusthammerEvalInputBackendPairClause0_Clause0_OutputBitSpan.eval
@@ -4216,7 +4216,7 @@ def
   else ok (ParseOutcome.Error ParseError.InvalidCursor, backend)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, (Clause0_Clause0_Output, rusthammer::BitSpan<'_>)> for rusthammer::WithSpan<P>}]
-    Source: 'src/lib.rs', lines 1803:0-1826:1 -/
+    Source: 'src/lib.rs', lines 1806:0-1829:1 -/
 @[reducible]
 def WithSpan.Insts.RusthammerEvalInputBackendPairClause0_Clause0_OutputBitSpan
   {Backend : Type} {P : Type} {Clause0_Clause0_Output : Type} (EvalInst : Eval
@@ -4230,13 +4230,13 @@ def WithSpan.Insts.RusthammerEvalInputBackendPairClause0_Clause0_OutputBitSpan
 }
 
 /-- [rusthammer::Recognize]
-    Source: 'src/lib.rs', lines 1842:0-1844:1
+    Source: 'src/lib.rs', lines 1845:0-1847:1
     Visibility: public -/
 structure Recognize (P : Type) where
   parser : P
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Recognize<P>}::clone]:
-    Source: 'src/lib.rs', lines 1841:9-1841:14
+    Source: 'src/lib.rs', lines 1844:9-1844:14
     Visibility: public -/
 def Recognize.Insts.CoreCloneClone.clone
   {P : Type} (corecloneCloneInst : core.clone.Clone P) (self : Recognize P) :
@@ -4246,7 +4246,7 @@ def Recognize.Insts.CoreCloneClone.clone
   ok { parser := t }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Recognize<P>}]
-    Source: 'src/lib.rs', lines 1841:9-1841:14 -/
+    Source: 'src/lib.rs', lines 1844:9-1844:14 -/
 @[reducible]
 def Recognize.Insts.CoreCloneClone {P : Type} (corecloneCloneInst :
   core.clone.Clone P) : core.clone.Clone (Recognize P) := {
@@ -4254,7 +4254,7 @@ def Recognize.Insts.CoreCloneClone {P : Type} (corecloneCloneInst :
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, rusthammer::BitSpan<'input>> for rusthammer::Recognize<P>}]
-    Source: 'src/lib.rs', lines 1846:0-1848:1 -/
+    Source: 'src/lib.rs', lines 1849:0-1851:1 -/
 @[reducible]
 def Recognize.Insts.RusthammerGrammarInputBitSpan {P : Type} {Clause0_Output :
   Type} (GrammarInst : Grammar P Clause0_Output) : Grammar (Recognize P)
@@ -4262,7 +4262,7 @@ def Recognize.Insts.RusthammerGrammarInputBitSpan {P : Type} {Clause0_Output :
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, rusthammer::BitSpan<'_>> for rusthammer::Recognize<P>}::eval]:
-    Source: 'src/lib.rs', lines 1851:4-1871:5
+    Source: 'src/lib.rs', lines 1854:4-1874:5
     Visibility: public -/
 def Recognize.Insts.RusthammerEvalInputBackendBitSpan.eval
   {Backend : Type} {P : Type} {Clause0_Clause0_Output : Type} (EvalInst : Eval
@@ -4282,7 +4282,7 @@ def Recognize.Insts.RusthammerEvalInputBackendBitSpan.eval
   | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, rusthammer::BitSpan<'_>> for rusthammer::Recognize<P>}]
-    Source: 'src/lib.rs', lines 1850:0-1872:1 -/
+    Source: 'src/lib.rs', lines 1853:0-1875:1 -/
 @[reducible]
 def Recognize.Insts.RusthammerEvalInputBackendBitSpan {Backend : Type} {P :
   Type} {Clause0_Clause0_Output : Type} (EvalInst : Eval P Backend
@@ -4293,13 +4293,13 @@ def Recognize.Insts.RusthammerEvalInputBackendBitSpan {Backend : Type} {P :
 }
 
 /-- [rusthammer::Ignore]
-    Source: 'src/lib.rs', lines 1878:0-1880:1
+    Source: 'src/lib.rs', lines 1881:0-1883:1
     Visibility: public -/
 structure Ignore (P : Type) where
   parser : P
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Ignore<P>}::clone]:
-    Source: 'src/lib.rs', lines 1877:9-1877:14
+    Source: 'src/lib.rs', lines 1880:9-1880:14
     Visibility: public -/
 def Ignore.Insts.CoreCloneClone.clone
   {P : Type} (corecloneCloneInst : core.clone.Clone P) (self : Ignore P) :
@@ -4309,7 +4309,7 @@ def Ignore.Insts.CoreCloneClone.clone
   ok { parser := t }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Ignore<P>}]
-    Source: 'src/lib.rs', lines 1877:9-1877:14 -/
+    Source: 'src/lib.rs', lines 1880:9-1880:14 -/
 @[reducible]
 def Ignore.Insts.CoreCloneClone {P : Type} (corecloneCloneInst :
   core.clone.Clone P) : core.clone.Clone (Ignore P) := {
@@ -4317,14 +4317,14 @@ def Ignore.Insts.CoreCloneClone {P : Type} (corecloneCloneInst :
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, ()> for rusthammer::Ignore<P>}]
-    Source: 'src/lib.rs', lines 1882:0-1884:1 -/
+    Source: 'src/lib.rs', lines 1885:0-1887:1 -/
 @[reducible]
 def Ignore.Insts.RusthammerGrammarInputTuple {P : Type} {Clause0_Output : Type}
   (GrammarInst : Grammar P Clause0_Output) : Grammar (Ignore P) Unit := {
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, ()> for rusthammer::Ignore<P>}::eval]:
-    Source: 'src/lib.rs', lines 1887:4-1899:5
+    Source: 'src/lib.rs', lines 1890:4-1902:5
     Visibility: public -/
 def Ignore.Insts.RusthammerEvalInputBackendTuple.eval
   {Backend : Type} {P : Type} {Clause0_Clause0_Output : Type} (EvalInst : Eval
@@ -4339,7 +4339,7 @@ def Ignore.Insts.RusthammerEvalInputBackendTuple.eval
   | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, ()> for rusthammer::Ignore<P>}]
-    Source: 'src/lib.rs', lines 1886:0-1900:1 -/
+    Source: 'src/lib.rs', lines 1889:0-1903:1 -/
 @[reducible]
 def Ignore.Insts.RusthammerEvalInputBackendTuple {Backend : Type} {P : Type}
   {Clause0_Clause0_Output : Type} (EvalInst : Eval P Backend
@@ -4349,14 +4349,14 @@ def Ignore.Insts.RusthammerEvalInputBackendTuple {Backend : Type} {P : Type}
 }
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::RepeatBounds}::clone]:
-    Source: 'src/lib.rs', lines 2239:9-2239:14
+    Source: 'src/lib.rs', lines 2242:9-2242:14
     Visibility: public -/
 def RepeatBounds.Insts.CoreCloneClone.clone
   (self : RepeatBounds) : Result RepeatBounds := do
   ok self
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Repeat<P>}::clone]:
-    Source: 'src/lib.rs', lines 1943:9-1943:14
+    Source: 'src/lib.rs', lines 1946:9-1946:14
     Visibility: public -/
 def Repeat.Insts.CoreCloneClone.clone
   {P : Type} (corecloneCloneInst : core.clone.Clone P) (self : Repeat P) :
@@ -4367,7 +4367,7 @@ def Repeat.Insts.CoreCloneClone.clone
   ok { parser := t, bounds := rb }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Repeat<P>}]
-    Source: 'src/lib.rs', lines 1943:9-1943:14 -/
+    Source: 'src/lib.rs', lines 1946:9-1946:14 -/
 @[reducible]
 def Repeat.Insts.CoreCloneClone {P : Type} (corecloneCloneInst :
   core.clone.Clone P) : core.clone.Clone (Repeat P) := {
@@ -4375,7 +4375,7 @@ def Repeat.Insts.CoreCloneClone {P : Type} (corecloneCloneInst :
 }
 
 /-- [rusthammer::{rusthammer::RepeatBounds}::new]:
-    Source: 'src/lib.rs', lines 2246:4-2255:5 -/
+    Source: 'src/lib.rs', lines 2249:4-2258:5 -/
 def RepeatBounds.new
   (min : Std.Usize) (max : Std.Usize) :
   Result (core.result.Result RepeatBounds ConfigError)
@@ -4385,7 +4385,7 @@ def RepeatBounds.new
   else ok (core.result.Result.Ok { min, max := (some max) })
 
 /-- [rusthammer::{rusthammer::Repeat<P>}::new]:
-    Source: 'src/lib.rs', lines 1952:4-1955:5
+    Source: 'src/lib.rs', lines 1955:4-1958:5
     Visibility: public -/
 def Repeat.new
   {P : Type} (parser : P) (min : Std.Usize) (max : Std.Usize) :
@@ -4401,12 +4401,12 @@ def Repeat.new
       (Repeat P) (core.convert.FromSame ConfigError) residual
 
 /-- [rusthammer::{rusthammer::RepeatBounds}::at_least]:
-    Source: 'src/lib.rs', lines 2264:4-2266:5 -/
+    Source: 'src/lib.rs', lines 2267:4-2269:5 -/
 def RepeatBounds.at_least (min : Std.Usize) : Result RepeatBounds := do
   ok { min, max := none }
 
 /-- [rusthammer::{rusthammer::Repeat<P>}::at_least]:
-    Source: 'src/lib.rs', lines 1968:4-1973:5
+    Source: 'src/lib.rs', lines 1971:4-1976:5
     Visibility: public -/
 def Repeat.at_least
   {P : Type} (parser : P) (min : Std.Usize) : Result (Repeat P) := do
@@ -4414,19 +4414,19 @@ def Repeat.at_least
   ok { parser, bounds := rb }
 
 /-- [rusthammer::{rusthammer::Repeat<P>}::min]:
-    Source: 'src/lib.rs', lines 1976:4-1978:5
+    Source: 'src/lib.rs', lines 1979:4-1981:5
     Visibility: public -/
 def Repeat.min {P : Type} (self : Repeat P) : Result Std.Usize := do
   ok self.bounds.min
 
 /-- [rusthammer::{rusthammer::Repeat<P>}::max]:
-    Source: 'src/lib.rs', lines 1981:4-1983:5
+    Source: 'src/lib.rs', lines 1984:4-1986:5
     Visibility: public -/
 def Repeat.max {P : Type} (self : Repeat P) : Result (Option Std.Usize) := do
   ok self.bounds.max
 
 /-- [rusthammer::FoldRepeat]
-    Source: 'src/lib.rs', lines 2021:0-2026:1
+    Source: 'src/lib.rs', lines 2024:0-2029:1
     Visibility: public -/
 structure FoldRepeat (P : Type) (I : Type) (F : Type) where
   parser : P
@@ -4435,7 +4435,7 @@ structure FoldRepeat (P : Type) (I : Type) (F : Type) where
   fold : F
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::FoldRepeat<P, I, F>}::clone]:
-    Source: 'src/lib.rs', lines 2020:9-2020:14
+    Source: 'src/lib.rs', lines 2023:9-2023:14
     Visibility: public -/
 def FoldRepeat.Insts.CoreCloneClone.clone
   {P : Type} {I : Type} {F : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -4450,7 +4450,7 @@ def FoldRepeat.Insts.CoreCloneClone.clone
   ok { parser := t, bounds := rb, init := t1, fold := t2 }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::FoldRepeat<P, I, F>}]
-    Source: 'src/lib.rs', lines 2020:9-2020:14 -/
+    Source: 'src/lib.rs', lines 2023:9-2023:14 -/
 @[reducible]
 def FoldRepeat.Insts.CoreCloneClone {P : Type} {I : Type} {F : Type}
   (corecloneCloneInst : core.clone.Clone P) (corecloneCloneInst1 :
@@ -4461,7 +4461,7 @@ def FoldRepeat.Insts.CoreCloneClone {P : Type} {I : Type} {F : Type}
 }
 
 /-- [rusthammer::{rusthammer::FoldRepeat<P, I, F>}::new]:
-    Source: 'src/lib.rs', lines 2030:4-2038:5
+    Source: 'src/lib.rs', lines 2033:4-2041:5
     Visibility: public -/
 def FoldRepeat.new
   {P : Type} {I : Type} {F : Type} (parser : P) (min : Std.Usize)
@@ -4478,7 +4478,7 @@ def FoldRepeat.new
       (FoldRepeat P I F) (core.convert.FromSame ConfigError) residual
 
 /-- [rusthammer::{rusthammer::FoldRepeat<P, I, F>}::exact]:
-    Source: 'src/lib.rs', lines 2041:4-2048:5
+    Source: 'src/lib.rs', lines 2044:4-2051:5
     Visibility: public -/
 def FoldRepeat.exact
   {P : Type} {I : Type} {F : Type} (parser : P) (count : Std.Usize) (init : I)
@@ -4489,7 +4489,7 @@ def FoldRepeat.exact
   ok { parser, bounds := rb, init, fold }
 
 /-- [rusthammer::{rusthammer::FoldRepeat<P, I, F>}::at_least]:
-    Source: 'src/lib.rs', lines 2051:4-2058:5
+    Source: 'src/lib.rs', lines 2054:4-2061:5
     Visibility: public -/
 def FoldRepeat.at_least
   {P : Type} {I : Type} {F : Type} (parser : P) (min : Std.Usize) (init : I)
@@ -4500,7 +4500,7 @@ def FoldRepeat.at_least
   ok { parser, bounds := rb, init, fold }
 
 /-- [rusthammer::{rusthammer::FoldRepeat<P, I, F>}::min]:
-    Source: 'src/lib.rs', lines 2061:4-2063:5
+    Source: 'src/lib.rs', lines 2064:4-2066:5
     Visibility: public -/
 def FoldRepeat.min
   {P : Type} {I : Type} {F : Type} (self : FoldRepeat P I F) :
@@ -4509,7 +4509,7 @@ def FoldRepeat.min
   ok self.bounds.min
 
 /-- [rusthammer::{rusthammer::FoldRepeat<P, I, F>}::max]:
-    Source: 'src/lib.rs', lines 2066:4-2068:5
+    Source: 'src/lib.rs', lines 2069:4-2071:5
     Visibility: public -/
 def FoldRepeat.max
   {P : Type} {I : Type} {F : Type} (self : FoldRepeat P I F) :
@@ -4518,7 +4518,7 @@ def FoldRepeat.max
   ok self.bounds.max
 
 /-- [rusthammer::SepBy]
-    Source: 'src/lib.rs', lines 2101:0-2105:1
+    Source: 'src/lib.rs', lines 2104:0-2108:1
     Visibility: public -/
 structure SepBy (P : Type) (S : Type) where
   parser : P
@@ -4526,7 +4526,7 @@ structure SepBy (P : Type) (S : Type) where
   bounds : RepeatBounds
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::SepBy<P, S>}::clone]:
-    Source: 'src/lib.rs', lines 2100:9-2100:14
+    Source: 'src/lib.rs', lines 2103:9-2103:14
     Visibility: public -/
 def SepBy.Insts.CoreCloneClone.clone
   {P : Type} {S : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -4539,7 +4539,7 @@ def SepBy.Insts.CoreCloneClone.clone
   ok { parser := t, separator := t1, bounds := rb }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::SepBy<P, S>}]
-    Source: 'src/lib.rs', lines 2100:9-2100:14 -/
+    Source: 'src/lib.rs', lines 2103:9-2103:14 -/
 @[reducible]
 def SepBy.Insts.CoreCloneClone {P : Type} {S : Type} (corecloneCloneInst :
   core.clone.Clone P) (corecloneCloneInst1 : core.clone.Clone S) :
@@ -4549,7 +4549,7 @@ def SepBy.Insts.CoreCloneClone {P : Type} {S : Type} (corecloneCloneInst :
 }
 
 /-- [rusthammer::{rusthammer::SepBy<P, S>}::new]:
-    Source: 'src/lib.rs', lines 2110:4-2117:5
+    Source: 'src/lib.rs', lines 2113:4-2120:5
     Visibility: public -/
 def SepBy.new
   {P : Type} {S : Type} (parser : P) (separator : S) (min : Std.Usize)
@@ -4566,7 +4566,7 @@ def SepBy.new
       (SepBy P S) (core.convert.FromSame ConfigError) residual
 
 /-- [rusthammer::{rusthammer::SepBy<P, S>}::exact]:
-    Source: 'src/lib.rs', lines 2120:4-2126:5
+    Source: 'src/lib.rs', lines 2123:4-2129:5
     Visibility: public -/
 def SepBy.exact
   {P : Type} {S : Type} (parser : P) (separator : S) (count : Std.Usize) :
@@ -4576,7 +4576,7 @@ def SepBy.exact
   ok { parser, separator, bounds := rb }
 
 /-- [rusthammer::{rusthammer::SepBy<P, S>}::at_least]:
-    Source: 'src/lib.rs', lines 2130:4-2136:5
+    Source: 'src/lib.rs', lines 2133:4-2139:5
     Visibility: public -/
 def SepBy.at_least
   {P : Type} {S : Type} (parser : P) (separator : S) (min : Std.Usize) :
@@ -4586,20 +4586,20 @@ def SepBy.at_least
   ok { parser, separator, bounds := rb }
 
 /-- [rusthammer::{rusthammer::SepBy<P, S>}::min]:
-    Source: 'src/lib.rs', lines 2139:4-2141:5
+    Source: 'src/lib.rs', lines 2142:4-2144:5
     Visibility: public -/
 def SepBy.min {P : Type} {S : Type} (self : SepBy P S) : Result Std.Usize := do
   ok self.bounds.min
 
 /-- [rusthammer::{rusthammer::SepBy<P, S>}::max]:
-    Source: 'src/lib.rs', lines 2144:4-2146:5
+    Source: 'src/lib.rs', lines 2147:4-2149:5
     Visibility: public -/
 def SepBy.max
   {P : Type} {S : Type} (self : SepBy P S) : Result (Option Std.Usize) := do
   ok self.bounds.max
 
 /-- [rusthammer::FoldSepBy]
-    Source: 'src/lib.rs', lines 2177:0-2183:1
+    Source: 'src/lib.rs', lines 2180:0-2186:1
     Visibility: public -/
 structure FoldSepBy (P : Type) (S : Type) (I : Type) (F : Type) where
   parser : P
@@ -4609,7 +4609,7 @@ structure FoldSepBy (P : Type) (S : Type) (I : Type) (F : Type) where
   fold : F
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::FoldSepBy<P, S, I, F>}::clone]:
-    Source: 'src/lib.rs', lines 2176:9-2176:14
+    Source: 'src/lib.rs', lines 2179:9-2179:14
     Visibility: public -/
 def FoldSepBy.Insts.CoreCloneClone.clone
   {P : Type} {S : Type} {I : Type} {F : Type} (corecloneCloneInst :
@@ -4626,7 +4626,7 @@ def FoldSepBy.Insts.CoreCloneClone.clone
   ok { parser := t, separator := t1, bounds := rb, init := t2, fold := t3 }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::FoldSepBy<P, S, I, F>}]
-    Source: 'src/lib.rs', lines 2176:9-2176:14 -/
+    Source: 'src/lib.rs', lines 2179:9-2179:14 -/
 @[reducible]
 def FoldSepBy.Insts.CoreCloneClone {P : Type} {S : Type} {I : Type} {F : Type}
   (corecloneCloneInst : core.clone.Clone P) (corecloneCloneInst1 :
@@ -4638,7 +4638,7 @@ def FoldSepBy.Insts.CoreCloneClone {P : Type} {S : Type} {I : Type} {F : Type}
 }
 
 /-- [rusthammer::{rusthammer::FoldSepBy<P, S, I, F>}::new]:
-    Source: 'src/lib.rs', lines 2187:4-2203:5
+    Source: 'src/lib.rs', lines 2190:4-2206:5
     Visibility: public -/
 def FoldSepBy.new
   {P : Type} {S : Type} {I : Type} {F : Type} (parser : P) (separator : S)
@@ -4655,7 +4655,7 @@ def FoldSepBy.new
       (FoldSepBy P S I F) (core.convert.FromSame ConfigError) residual
 
 /-- [rusthammer::{rusthammer::FoldSepBy<P, S, I, F>}::exact]:
-    Source: 'src/lib.rs', lines 2206:4-2214:5
+    Source: 'src/lib.rs', lines 2209:4-2217:5
     Visibility: public -/
 def FoldSepBy.exact
   {P : Type} {S : Type} {I : Type} {F : Type} (parser : P) (separator : S)
@@ -4666,7 +4666,7 @@ def FoldSepBy.exact
   ok { parser, separator, bounds := rb, init, fold }
 
 /-- [rusthammer::{rusthammer::FoldSepBy<P, S, I, F>}::at_least]:
-    Source: 'src/lib.rs', lines 2217:4-2225:5
+    Source: 'src/lib.rs', lines 2220:4-2228:5
     Visibility: public -/
 def FoldSepBy.at_least
   {P : Type} {S : Type} {I : Type} {F : Type} (parser : P) (separator : S)
@@ -4677,7 +4677,7 @@ def FoldSepBy.at_least
   ok { parser, separator, bounds := rb, init, fold }
 
 /-- [rusthammer::{rusthammer::FoldSepBy<P, S, I, F>}::min]:
-    Source: 'src/lib.rs', lines 2228:4-2230:5
+    Source: 'src/lib.rs', lines 2231:4-2233:5
     Visibility: public -/
 def FoldSepBy.min
   {P : Type} {S : Type} {I : Type} {F : Type} (self : FoldSepBy P S I F) :
@@ -4686,7 +4686,7 @@ def FoldSepBy.min
   ok self.bounds.min
 
 /-- [rusthammer::{rusthammer::FoldSepBy<P, S, I, F>}::max]:
-    Source: 'src/lib.rs', lines 2233:4-2235:5
+    Source: 'src/lib.rs', lines 2236:4-2238:5
     Visibility: public -/
 def FoldSepBy.max
   {P : Type} {S : Type} {I : Type} {F : Type} (self : FoldSepBy P S I F) :
@@ -4695,14 +4695,14 @@ def FoldSepBy.max
   ok self.bounds.max
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::RepeatBounds}]
-    Source: 'src/lib.rs', lines 2239:9-2239:14 -/
+    Source: 'src/lib.rs', lines 2242:9-2242:14 -/
 @[reducible]
 def RepeatBounds.Insts.CoreCloneClone : core.clone.Clone RepeatBounds := {
   clone := RepeatBounds.Insts.CoreCloneClone.clone
 }
 
 /-- [rusthammer::{impl rusthammer::RepeatAccumulator<A, R> for rusthammer::FoldRepeat<P, I, F>}::step]:
-    Source: 'src/lib.rs', lines 2300:4-2302:5 -/
+    Source: 'src/lib.rs', lines 2303:4-2305:5 -/
 def FoldRepeat.Insts.RusthammerRepeatAccumulator.step
   {P : Type} {I : Type} {F : Type} {A : Type} {R : Type}
   (coreopsfunctionFnITupleRInst : core.ops.function.Fn I Unit R)
@@ -4713,7 +4713,7 @@ def FoldRepeat.Insts.RusthammerRepeatAccumulator.step
   coreopsfunctionFnFPairRInst.call self.fold (accumulated, value)
 
 /-- [rusthammer::{impl rusthammer::RepeatAccumulator<A, R> for rusthammer::FoldRepeat<P, I, F>}::init]:
-    Source: 'src/lib.rs', lines 2297:4-2299:5 -/
+    Source: 'src/lib.rs', lines 2300:4-2302:5 -/
 def FoldRepeat.Insts.RusthammerRepeatAccumulator.init
   {P : Type} {I : Type} {F : Type} {A : Type} {R : Type}
   (coreopsfunctionFnITupleRInst : core.ops.function.Fn I Unit R)
@@ -4724,7 +4724,7 @@ def FoldRepeat.Insts.RusthammerRepeatAccumulator.init
   coreopsfunctionFnITupleRInst.call self.init ()
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::RepeatAccumulator<A, R> for rusthammer::FoldRepeat<P, I, F>}]
-    Source: 'src/lib.rs', lines 2291:0-2303:1 -/
+    Source: 'src/lib.rs', lines 2294:0-2306:1 -/
 @[reducible]
 def FoldRepeat.Insts.RusthammerRepeatAccumulator (P : Type) {I : Type} {F :
   Type} {A : Type} {R : Type} (coreopsfunctionFnITupleRInst :
@@ -4738,7 +4738,7 @@ def FoldRepeat.Insts.RusthammerRepeatAccumulator (P : Type) {I : Type} {F :
 }
 
 /-- [rusthammer::{impl rusthammer::RepeatAccumulator<A, R> for rusthammer::FoldSepBy<P, S, I, F>}::step]:
-    Source: 'src/lib.rs', lines 2314:4-2316:5 -/
+    Source: 'src/lib.rs', lines 2317:4-2319:5 -/
 def FoldSepBy.Insts.RusthammerRepeatAccumulator.step
   {P : Type} {S : Type} {I : Type} {F : Type} {A : Type} {R : Type}
   (coreopsfunctionFnITupleRInst : core.ops.function.Fn I Unit R)
@@ -4749,7 +4749,7 @@ def FoldSepBy.Insts.RusthammerRepeatAccumulator.step
   coreopsfunctionFnFPairRInst.call self.fold (accumulated, value)
 
 /-- [rusthammer::{impl rusthammer::RepeatAccumulator<A, R> for rusthammer::FoldSepBy<P, S, I, F>}::init]:
-    Source: 'src/lib.rs', lines 2311:4-2313:5 -/
+    Source: 'src/lib.rs', lines 2314:4-2316:5 -/
 def FoldSepBy.Insts.RusthammerRepeatAccumulator.init
   {P : Type} {S : Type} {I : Type} {F : Type} {A : Type} {R : Type}
   (coreopsfunctionFnITupleRInst : core.ops.function.Fn I Unit R)
@@ -4760,7 +4760,7 @@ def FoldSepBy.Insts.RusthammerRepeatAccumulator.init
   coreopsfunctionFnITupleRInst.call self.init ()
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::RepeatAccumulator<A, R> for rusthammer::FoldSepBy<P, S, I, F>}]
-    Source: 'src/lib.rs', lines 2305:0-2317:1 -/
+    Source: 'src/lib.rs', lines 2308:0-2320:1 -/
 @[reducible]
 def FoldSepBy.Insts.RusthammerRepeatAccumulator (P : Type) (S : Type) {I :
   Type} {F : Type} {A : Type} {R : Type} (coreopsfunctionFnITupleRInst :
@@ -4774,7 +4774,7 @@ def FoldSepBy.Insts.RusthammerRepeatAccumulator (P : Type) (S : Type) {I :
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, R> for rusthammer::FoldRepeat<P, I, F>}]
-    Source: 'src/lib.rs', lines 2383:0-2390:1 -/
+    Source: 'src/lib.rs', lines 2386:0-2393:1 -/
 @[reducible]
 def FoldRepeat.Insts.RusthammerGrammar {P : Type} {I : Type} {F : Type} {R :
   Type} {Clause0_Output : Type} (GrammarInst : Grammar P Clause0_Output)
@@ -4784,7 +4784,7 @@ def FoldRepeat.Insts.RusthammerGrammar {P : Type} {I : Type} {F : Type} {R :
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, R> for rusthammer::FoldRepeat<P, I, F>}::eval]:
-    Source: 'src/lib.rs', lines 2398:4-2414:5
+    Source: 'src/lib.rs', lines 2401:4-2417:5
     Visibility: public -/
 def FoldRepeat.Insts.RusthammerEval.eval
   {Backend : Type} {P : Type} {I : Type} {F : Type} {R : Type}
@@ -4800,7 +4800,7 @@ def FoldRepeat.Insts.RusthammerEval.eval
     self.parser self.bounds self input cursor context
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, R> for rusthammer::FoldRepeat<P, I, F>}]
-    Source: 'src/lib.rs', lines 2392:0-2415:1 -/
+    Source: 'src/lib.rs', lines 2395:0-2418:1 -/
 @[reducible]
 def FoldRepeat.Insts.RusthammerEval {Backend : Type} {P : Type} {I : Type} {F :
   Type} {R : Type} {Clause0_Clause0_Output : Type} (EvalInst : Eval P Backend
@@ -4814,7 +4814,7 @@ def FoldRepeat.Insts.RusthammerEval {Backend : Type} {P : Type} {I : Type} {F :
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, alloc::vec::Vec<Clause0_Output>> for rusthammer::SepBy<P, S>}]
-    Source: 'src/lib.rs', lines 2443:0-2445:1 -/
+    Source: 'src/lib.rs', lines 2446:0-2448:1 -/
 @[reducible]
 def SepBy.Insts.RusthammerGrammarInputVec {P : Type} {S : Type} {Clause0_Output
   : Type} {Clause1_Output : Type} (GrammarInst : Grammar P Clause0_Output)
@@ -4823,7 +4823,7 @@ def SepBy.Insts.RusthammerGrammarInputVec {P : Type} {S : Type} {Clause0_Output
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, alloc::vec::Vec<Clause0_Clause0_Output>> for rusthammer::SepBy<P, S>}::eval]:
-    Source: 'src/lib.rs', lines 2451:4-2472:5
+    Source: 'src/lib.rs', lines 2454:4-2475:5
     Visibility: public -/
 def SepBy.Insts.RusthammerEvalInputBackendVec.eval
   {Backend : Type} {P : Type} {S : Type} {Clause0_Clause0_Output : Type}
@@ -4841,7 +4841,7 @@ def SepBy.Insts.RusthammerEvalInputBackendVec.eval
     cursor context
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, alloc::vec::Vec<Clause0_Clause0_Output>> for rusthammer::SepBy<P, S>}]
-    Source: 'src/lib.rs', lines 2448:0-2473:1 -/
+    Source: 'src/lib.rs', lines 2451:0-2476:1 -/
 @[reducible]
 def SepBy.Insts.RusthammerEvalInputBackendVec {Backend : Type} {P : Type} {S :
   Type} {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
@@ -4854,7 +4854,7 @@ def SepBy.Insts.RusthammerEvalInputBackendVec {Backend : Type} {P : Type} {S :
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, R> for rusthammer::FoldSepBy<P, S, I, F>}]
-    Source: 'src/lib.rs', lines 2475:0-2483:1 -/
+    Source: 'src/lib.rs', lines 2478:0-2486:1 -/
 @[reducible]
 def FoldSepBy.Insts.RusthammerGrammar {P : Type} {S : Type} {I : Type} {F :
   Type} {R : Type} {Clause0_Output : Type} {Clause1_Output : Type} (GrammarInst
@@ -4865,7 +4865,7 @@ def FoldSepBy.Insts.RusthammerGrammar {P : Type} {S : Type} {I : Type} {F :
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, R> for rusthammer::FoldSepBy<P, S, I, F>}::eval]:
-    Source: 'src/lib.rs', lines 2492:4-2513:5
+    Source: 'src/lib.rs', lines 2495:4-2516:5
     Visibility: public -/
 def FoldSepBy.Insts.RusthammerEval.eval
   {Backend : Type} {P : Type} {S : Type} {I : Type} {F : Type} {R : Type}
@@ -4885,7 +4885,7 @@ def FoldSepBy.Insts.RusthammerEval.eval
     self input cursor context
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, R> for rusthammer::FoldSepBy<P, S, I, F>}]
-    Source: 'src/lib.rs', lines 2485:0-2514:1 -/
+    Source: 'src/lib.rs', lines 2488:0-2517:1 -/
 @[reducible]
 def FoldSepBy.Insts.RusthammerEval {Backend : Type} {P : Type} {S : Type} {I :
   Type} {F : Type} {R : Type} {Clause0_Clause0_Output : Type}
@@ -4902,7 +4902,7 @@ def FoldSepBy.Insts.RusthammerEval {Backend : Type} {P : Type} {S : Type} {I :
 }
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Map<P, F>}::clone]:
-    Source: 'src/lib.rs', lines 2599:9-2599:14
+    Source: 'src/lib.rs', lines 2602:9-2602:14
     Visibility: public -/
 def Map.Insts.CoreCloneClone.clone
   {P : Type} {F : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -4914,7 +4914,7 @@ def Map.Insts.CoreCloneClone.clone
   ok { parser := t, map := t1 }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Map<P, F>}]
-    Source: 'src/lib.rs', lines 2599:9-2599:14 -/
+    Source: 'src/lib.rs', lines 2602:9-2602:14 -/
 @[reducible]
 def Map.Insts.CoreCloneClone {P : Type} {F : Type} (corecloneCloneInst :
   core.clone.Clone P) (corecloneCloneInst1 : core.clone.Clone F) :
@@ -4924,7 +4924,7 @@ def Map.Insts.CoreCloneClone {P : Type} {F : Type} (corecloneCloneInst :
 }
 
 /-- [rusthammer::map]:
-    Source: 'src/lib.rs', lines 2616:0-2622:1
+    Source: 'src/lib.rs', lines 2619:0-2625:1
     Visibility: public -/
 def map
   {P : Type} {F : Type} {O : Type} {Clause0_Output : Type} (GrammarInst :
@@ -4935,7 +4935,7 @@ def map
   ok { parser, map := map1 }
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::TryMap<P, F>}::clone]:
-    Source: 'src/lib.rs', lines 2661:9-2661:14
+    Source: 'src/lib.rs', lines 2664:9-2664:14
     Visibility: public -/
 def TryMap.Insts.CoreCloneClone.clone
   {P : Type} {F : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -4947,7 +4947,7 @@ def TryMap.Insts.CoreCloneClone.clone
   ok { parser := t, map := t1 }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::TryMap<P, F>}]
-    Source: 'src/lib.rs', lines 2661:9-2661:14 -/
+    Source: 'src/lib.rs', lines 2664:9-2664:14 -/
 @[reducible]
 def TryMap.Insts.CoreCloneClone {P : Type} {F : Type} (corecloneCloneInst :
   core.clone.Clone P) (corecloneCloneInst1 : core.clone.Clone F) :
@@ -4957,7 +4957,7 @@ def TryMap.Insts.CoreCloneClone {P : Type} {F : Type} (corecloneCloneInst :
 }
 
 /-- [rusthammer::try_map]:
-    Source: 'src/lib.rs', lines 2676:0-2682:1
+    Source: 'src/lib.rs', lines 2679:0-2685:1
     Visibility: public -/
 def try_map
   {P : Type} {F : Type} {O : Type} {E : Type} {Clause0_Output : Type}
@@ -4969,7 +4969,7 @@ def try_map
   ok { parser, map := map1 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, O> for rusthammer::TryMap<P, F>}]
-    Source: 'src/lib.rs', lines 2684:0-2690:1 -/
+    Source: 'src/lib.rs', lines 2687:0-2693:1 -/
 @[reducible]
 def TryMap.Insts.RusthammerGrammar {P : Type} {F : Type} {O : Type} {E : Type}
   {Clause0_Output : Type} (GrammarInst : Grammar P Clause0_Output)
@@ -4978,7 +4978,7 @@ def TryMap.Insts.RusthammerGrammar {P : Type} {F : Type} {O : Type} {E : Type}
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, O> for rusthammer::TryMap<P, F>}]
-    Source: 'src/lib.rs', lines 2692:0-2716:1 -/
+    Source: 'src/lib.rs', lines 2695:0-2719:1 -/
 @[reducible]
 def TryMap.Insts.RusthammerEval {Backend : Type} {P : Type} {F : Type} {O :
   Type} {E : Type} {Clause0_Clause0_Output : Type} (EvalInst : Eval P Backend
@@ -4993,7 +4993,7 @@ def TryMap.Insts.RusthammerEval {Backend : Type} {P : Type} {F : Type} {O :
 }
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Verify<P, F>}::clone]:
-    Source: 'src/lib.rs', lines 2724:9-2724:14
+    Source: 'src/lib.rs', lines 2727:9-2727:14
     Visibility: public -/
 def Verify.Insts.CoreCloneClone.clone
   {P : Type} {F : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -5005,7 +5005,7 @@ def Verify.Insts.CoreCloneClone.clone
   ok { parser := t, predicate := t1 }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Verify<P, F>}]
-    Source: 'src/lib.rs', lines 2724:9-2724:14 -/
+    Source: 'src/lib.rs', lines 2727:9-2727:14 -/
 @[reducible]
 def Verify.Insts.CoreCloneClone {P : Type} {F : Type} (corecloneCloneInst :
   core.clone.Clone P) (corecloneCloneInst1 : core.clone.Clone F) :
@@ -5015,7 +5015,7 @@ def Verify.Insts.CoreCloneClone {P : Type} {F : Type} (corecloneCloneInst :
 }
 
 /-- [rusthammer::verify]:
-    Source: 'src/lib.rs', lines 2738:0-2744:1
+    Source: 'src/lib.rs', lines 2741:0-2747:1
     Visibility: public -/
 def verify
   {P : Type} {F : Type} {Clause0_Output : Type} (GrammarInst : Grammar P
@@ -5026,7 +5026,7 @@ def verify
   ok { parser, predicate }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, Clause0_Output> for rusthammer::Verify<P, F>}]
-    Source: 'src/lib.rs', lines 2746:0-2752:1 -/
+    Source: 'src/lib.rs', lines 2749:0-2755:1 -/
 @[reducible]
 def Verify.Insts.RusthammerGrammar {P : Type} {F : Type} {Clause0_Output :
   Type} (GrammarInst : Grammar P Clause0_Output)
@@ -5036,7 +5036,7 @@ def Verify.Insts.RusthammerGrammar {P : Type} {F : Type} {Clause0_Output :
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::Verify<P, F>}]
-    Source: 'src/lib.rs', lines 2754:0-2778:1 -/
+    Source: 'src/lib.rs', lines 2757:0-2781:1 -/
 @[reducible]
 def Verify.Insts.RusthammerEval {Backend : Type} {P : Type} {F : Type}
   {Clause0_Clause0_Output : Type} (EvalInst : Eval P Backend
@@ -5051,7 +5051,7 @@ def Verify.Insts.RusthammerEval {Backend : Type} {P : Type} {F : Type}
 }
 
 /-- [rusthammer::IntRange]
-    Source: 'src/lib.rs', lines 2812:0-2816:1
+    Source: 'src/lib.rs', lines 2815:0-2819:1
     Visibility: public -/
 structure IntRange (P : Type) (T : Type) where
   parser : P
@@ -5059,7 +5059,7 @@ structure IntRange (P : Type) (T : Type) where
   upper : T
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::IntRange<P, T>}::clone]:
-    Source: 'src/lib.rs', lines 2811:9-2811:14
+    Source: 'src/lib.rs', lines 2814:9-2814:14
     Visibility: public -/
 def IntRange.Insts.CoreCloneClone.clone
   {P : Type} {T : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -5072,7 +5072,7 @@ def IntRange.Insts.CoreCloneClone.clone
   ok { parser := t, lower := t1, upper := t2 }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::IntRange<P, T>}]
-    Source: 'src/lib.rs', lines 2811:9-2811:14 -/
+    Source: 'src/lib.rs', lines 2814:9-2814:14 -/
 @[reducible]
 def IntRange.Insts.CoreCloneClone {P : Type} {T : Type} (corecloneCloneInst :
   core.clone.Clone P) (corecloneCloneInst1 : core.clone.Clone T) :
@@ -5082,7 +5082,7 @@ def IntRange.Insts.CoreCloneClone {P : Type} {T : Type} (corecloneCloneInst :
 }
 
 /-- [rusthammer::{rusthammer::IntRange<P, T>}::new]:
-    Source: 'src/lib.rs', lines 2820:4-2834:5
+    Source: 'src/lib.rs', lines 2823:4-2837:5
     Visibility: public -/
 def IntRange.new
   {P : Type} {T : Type} (GrammarInst : Grammar P T) (corecmpOrdInst :
@@ -5095,21 +5095,21 @@ def IntRange.new
   else ok (core.result.Result.Ok { parser, lower, upper })
 
 /-- [rusthammer::{rusthammer::IntRange<P, T>}::lower]:
-    Source: 'src/lib.rs', lines 2837:4-2839:5
+    Source: 'src/lib.rs', lines 2840:4-2842:5
     Visibility: public -/
 def IntRange.impl.lower
   {P : Type} {T : Type} (self : IntRange P T) : Result T := do
   ok self.lower
 
 /-- [rusthammer::{rusthammer::IntRange<P, T>}::upper]:
-    Source: 'src/lib.rs', lines 2842:4-2844:5
+    Source: 'src/lib.rs', lines 2845:4-2847:5
     Visibility: public -/
 def IntRange.impl.upper
   {P : Type} {T : Type} (self : IntRange P T) : Result T := do
   ok self.upper
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, T> for rusthammer::IntRange<P, T>}]
-    Source: 'src/lib.rs', lines 2847:0-2853:1 -/
+    Source: 'src/lib.rs', lines 2850:0-2856:1 -/
 @[reducible]
 def IntRange.Insts.RusthammerGrammar {P : Type} {T : Type} (GrammarInst :
   Grammar P T) (corecmpOrdInst : core.cmp.Ord T) : Grammar (IntRange P T) T
@@ -5117,14 +5117,14 @@ def IntRange.Insts.RusthammerGrammar {P : Type} {T : Type} (GrammarInst :
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, T> for rusthammer::IntRange<P, T>}::eval::{closure}]
-    Source: 'src/lib.rs', lines 2869:23-2869:79 -/
+    Source: 'src/lib.rs', lines 2872:23-2872:79 -/
 @[reducible]
 def EvalInputIntRangeBackendT.eval.closure (Backend : Type) (P : Type) (T :
   Type) :=
   IntRange P T
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, T> for rusthammer::IntRange<P, T>}::eval::{impl core::ops::function::Fn<(&'_2 T,), bool> for rusthammer::{impl rusthammer::Eval<'input, Backend, T> for rusthammer::IntRange<P, T>}::eval::{closure}<'input, '_1, Backend, P, T>}::call]:
-    Source: 'src/lib.rs', lines 2869:23-2869:79 -/
+    Source: 'src/lib.rs', lines 2872:23-2872:79 -/
 def
   EvalInputIntRangeBackendT.eval.closure.Insts.CoreOpsFunctionFnTupleShared1TBool.call
   {Backend : Type} {P : Type} {T : Type} (EvalInst : Eval P Backend T)
@@ -5138,7 +5138,7 @@ def
   else ok false
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, T> for rusthammer::IntRange<P, T>}::eval::{impl core::ops::function::FnMut<(&'_2 T,), bool> for rusthammer::{impl rusthammer::Eval<'input, Backend, T> for rusthammer::IntRange<P, T>}::eval::{closure}<'input, '_1, Backend, P, T>}::call_mut]:
-    Source: 'src/lib.rs', lines 2869:23-2869:79 -/
+    Source: 'src/lib.rs', lines 2872:23-2872:79 -/
 def
   EvalInputIntRangeBackendT.eval.closure.Insts.CoreOpsFunctionFnMutTupleShared1TBool.call_mut
   {Backend : Type} {P : Type} {T : Type} (EvalInst : Eval P Backend T)
@@ -5152,7 +5152,7 @@ def
   ok (b, state)
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, T> for rusthammer::IntRange<P, T>}::eval::{impl core::ops::function::FnOnce<(&'_2 T,), bool> for rusthammer::{impl rusthammer::Eval<'input, Backend, T> for rusthammer::IntRange<P, T>}::eval::{closure}<'input, '_1, Backend, P, T>}::call_once]:
-    Source: 'src/lib.rs', lines 2869:23-2869:79 -/
+    Source: 'src/lib.rs', lines 2872:23-2872:79 -/
 def
   EvalInputIntRangeBackendT.eval.closure.Insts.CoreOpsFunctionFnOnceTupleShared1TBool.call_once
   {Backend : Type} {P : Type} {T : Type} (EvalInst : Eval P Backend T)
@@ -5166,7 +5166,7 @@ def
   ok b
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, T> for rusthammer::IntRange<P, T>}::eval::{impl core::ops::function::FnOnce<(&'_2 T,), bool> for rusthammer::{impl rusthammer::Eval<'input, Backend, T> for rusthammer::IntRange<P, T>}::eval::{closure}<'input, '_1, Backend, P, T>}]
-    Source: 'src/lib.rs', lines 2869:23-2869:79 -/
+    Source: 'src/lib.rs', lines 2872:23-2872:79 -/
 @[reducible]
 def
   EvalInputIntRangeBackendT.eval.closure.Insts.CoreOpsFunctionFnOnceTupleShared1TBool
@@ -5179,7 +5179,7 @@ def
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, T> for rusthammer::IntRange<P, T>}::eval::{impl core::ops::function::FnMut<(&'_2 T,), bool> for rusthammer::{impl rusthammer::Eval<'input, Backend, T> for rusthammer::IntRange<P, T>}::eval::{closure}<'input, '_1, Backend, P, T>}]
-    Source: 'src/lib.rs', lines 2869:23-2869:79 -/
+    Source: 'src/lib.rs', lines 2872:23-2872:79 -/
 @[reducible]
 def
   EvalInputIntRangeBackendT.eval.closure.Insts.CoreOpsFunctionFnMutTupleShared1TBool
@@ -5195,7 +5195,7 @@ def
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, T> for rusthammer::IntRange<P, T>}::eval::{impl core::ops::function::Fn<(&'_2 T,), bool> for rusthammer::{impl rusthammer::Eval<'input, Backend, T> for rusthammer::IntRange<P, T>}::eval::{closure}<'input, '_1, Backend, P, T>}]
-    Source: 'src/lib.rs', lines 2869:23-2869:79 -/
+    Source: 'src/lib.rs', lines 2872:23-2872:79 -/
 @[reducible]
 def
   EvalInputIntRangeBackendT.eval.closure.Insts.CoreOpsFunctionFnTupleShared1TBool
@@ -5211,7 +5211,7 @@ def
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, T> for rusthammer::IntRange<P, T>}::eval]:
-    Source: 'src/lib.rs', lines 2860:4-2872:5
+    Source: 'src/lib.rs', lines 2863:4-2875:5
     Visibility: public -/
 def IntRange.Insts.RusthammerEval.eval
   {Backend : Type} {P : Type} {T : Type} (EvalInst : Eval P Backend T)
@@ -5225,7 +5225,7 @@ def IntRange.Insts.RusthammerEval.eval
     backend input cursor context
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, T> for rusthammer::IntRange<P, T>}]
-    Source: 'src/lib.rs', lines 2855:0-2873:1 -/
+    Source: 'src/lib.rs', lines 2858:0-2876:1 -/
 @[reducible]
 def IntRange.Insts.RusthammerEval {Backend : Type} {P : Type} {T : Type}
   (EvalInst : Eval P Backend T) (corecmpOrdInst : core.cmp.Ord T) : Eval
@@ -5236,7 +5236,7 @@ def IntRange.Insts.RusthammerEval {Backend : Type} {P : Type} {T : Type}
 }
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Choice<P, Q>}::clone]:
-    Source: 'src/lib.rs', lines 2882:9-2882:14
+    Source: 'src/lib.rs', lines 2885:9-2885:14
     Visibility: public -/
 def Choice.Insts.CoreCloneClone.clone
   {P : Type} {Q : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -5248,7 +5248,7 @@ def Choice.Insts.CoreCloneClone.clone
   ok { first := t, second := t1 }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Choice<P, Q>}]
-    Source: 'src/lib.rs', lines 2882:9-2882:14 -/
+    Source: 'src/lib.rs', lines 2885:9-2885:14 -/
 @[reducible]
 def Choice.Insts.CoreCloneClone {P : Type} {Q : Type} (corecloneCloneInst :
   core.clone.Clone P) (corecloneCloneInst1 : core.clone.Clone Q) :
@@ -5258,7 +5258,7 @@ def Choice.Insts.CoreCloneClone {P : Type} {Q : Type} (corecloneCloneInst :
 }
 
 /-- [rusthammer::choice]:
-    Source: 'src/lib.rs', lines 2904:0-2910:1
+    Source: 'src/lib.rs', lines 2907:0-2913:1
     Visibility: public -/
 def choice
   {P : Type} {Q : Type} {Clause0_Output : Type} (GrammarInst : Grammar P
@@ -5269,7 +5269,7 @@ def choice
   ok { first, second }
 
 /-- [rusthammer::match_length_allows]:
-    Source: 'src/lib.rs', lines 2948:0-2952:1 -/
+    Source: 'src/lib.rs', lines 2951:0-2955:1 -/
 def match_length_allows
   (first : Cursor) (second : Cursor) (allow_equal : Bool) : Result Bool := do
   if first.byte > second.byte
@@ -5285,7 +5285,7 @@ def match_length_allows
     else ok false
 
 /-- [rusthammer::restrict_match]:
-    Source: 'src/lib.rs', lines 2954:0-2988:1 -/
+    Source: 'src/lib.rs', lines 2957:0-2991:1 -/
 def restrict_match
   {Backend : Type} {P : Type} {Q : Type} {Clause0_Clause0_Output : Type}
   {Clause1_Clause0_Output : Type} (EvalInst : Eval P Backend
@@ -5314,14 +5314,14 @@ def restrict_match
   | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
 
 /-- [rusthammer::ButNot]
-    Source: 'src/lib.rs', lines 3014:0-3017:1
+    Source: 'src/lib.rs', lines 3017:0-3020:1
     Visibility: public -/
 structure ButNot (P : Type) (Q : Type) where
   first : P
   second : Q
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::ButNot<P, Q>}::clone]:
-    Source: 'src/lib.rs', lines 3013:9-3013:14
+    Source: 'src/lib.rs', lines 3016:9-3016:14
     Visibility: public -/
 def ButNot.Insts.CoreCloneClone.clone
   {P : Type} {Q : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -5333,7 +5333,7 @@ def ButNot.Insts.CoreCloneClone.clone
   ok { first := t, second := t1 }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::ButNot<P, Q>}]
-    Source: 'src/lib.rs', lines 3013:9-3013:14 -/
+    Source: 'src/lib.rs', lines 3016:9-3016:14 -/
 @[reducible]
 def ButNot.Insts.CoreCloneClone {P : Type} {Q : Type} (corecloneCloneInst :
   core.clone.Clone P) (corecloneCloneInst1 : core.clone.Clone Q) :
@@ -5343,7 +5343,7 @@ def ButNot.Insts.CoreCloneClone {P : Type} {Q : Type} (corecloneCloneInst :
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, Clause0_Output> for rusthammer::ButNot<P, Q>}]
-    Source: 'src/lib.rs', lines 3019:0-3025:1 -/
+    Source: 'src/lib.rs', lines 3022:0-3028:1 -/
 @[reducible]
 def ButNot.Insts.RusthammerGrammar {P : Type} {Q : Type} {Clause0_Output :
   Type} {Clause1_Output : Type} (GrammarInst : Grammar P Clause0_Output)
@@ -5352,7 +5352,7 @@ def ButNot.Insts.RusthammerGrammar {P : Type} {Q : Type} {Clause0_Output :
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::ButNot<P, Q>}::eval]:
-    Source: 'src/lib.rs', lines 3032:4-3048:5
+    Source: 'src/lib.rs', lines 3035:4-3051:5
     Visibility: public -/
 def ButNot.Insts.RusthammerEval.eval
   {Backend : Type} {P : Type} {Q : Type} {Clause0_Clause0_Output : Type}
@@ -5366,7 +5366,7 @@ def ButNot.Insts.RusthammerEval.eval
     context false
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::ButNot<P, Q>}]
-    Source: 'src/lib.rs', lines 3027:0-3049:1 -/
+    Source: 'src/lib.rs', lines 3030:0-3052:1 -/
 @[reducible]
 def ButNot.Insts.RusthammerEval {Backend : Type} {P : Type} {Q : Type}
   {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type} (EvalInst :
@@ -5379,14 +5379,14 @@ def ButNot.Insts.RusthammerEval {Backend : Type} {P : Type} {Q : Type}
 }
 
 /-- [rusthammer::Difference]
-    Source: 'src/lib.rs', lines 3058:0-3061:1
+    Source: 'src/lib.rs', lines 3061:0-3064:1
     Visibility: public -/
 structure Difference (P : Type) (Q : Type) where
   first : P
   second : Q
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Difference<P, Q>}::clone]:
-    Source: 'src/lib.rs', lines 3057:9-3057:14
+    Source: 'src/lib.rs', lines 3060:9-3060:14
     Visibility: public -/
 def Difference.Insts.CoreCloneClone.clone
   {P : Type} {Q : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -5398,7 +5398,7 @@ def Difference.Insts.CoreCloneClone.clone
   ok { first := t, second := t1 }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Difference<P, Q>}]
-    Source: 'src/lib.rs', lines 3057:9-3057:14 -/
+    Source: 'src/lib.rs', lines 3060:9-3060:14 -/
 @[reducible]
 def Difference.Insts.CoreCloneClone {P : Type} {Q : Type} (corecloneCloneInst :
   core.clone.Clone P) (corecloneCloneInst1 : core.clone.Clone Q) :
@@ -5408,7 +5408,7 @@ def Difference.Insts.CoreCloneClone {P : Type} {Q : Type} (corecloneCloneInst :
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, Clause0_Output> for rusthammer::Difference<P, Q>}]
-    Source: 'src/lib.rs', lines 3063:0-3069:1 -/
+    Source: 'src/lib.rs', lines 3066:0-3072:1 -/
 @[reducible]
 def Difference.Insts.RusthammerGrammar {P : Type} {Q : Type} {Clause0_Output :
   Type} {Clause1_Output : Type} (GrammarInst : Grammar P Clause0_Output)
@@ -5417,7 +5417,7 @@ def Difference.Insts.RusthammerGrammar {P : Type} {Q : Type} {Clause0_Output :
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::Difference<P, Q>}::eval]:
-    Source: 'src/lib.rs', lines 3076:4-3092:5
+    Source: 'src/lib.rs', lines 3079:4-3095:5
     Visibility: public -/
 def Difference.Insts.RusthammerEval.eval
   {Backend : Type} {P : Type} {Q : Type} {Clause0_Clause0_Output : Type}
@@ -5431,7 +5431,7 @@ def Difference.Insts.RusthammerEval.eval
     context true
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::Difference<P, Q>}]
-    Source: 'src/lib.rs', lines 3071:0-3093:1 -/
+    Source: 'src/lib.rs', lines 3074:0-3096:1 -/
 @[reducible]
 def Difference.Insts.RusthammerEval {Backend : Type} {P : Type} {Q : Type}
   {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type} (EvalInst :
@@ -5444,14 +5444,14 @@ def Difference.Insts.RusthammerEval {Backend : Type} {P : Type} {Q : Type}
 }
 
 /-- [rusthammer::Xor]
-    Source: 'src/lib.rs', lines 3114:0-3117:1
+    Source: 'src/lib.rs', lines 3117:0-3120:1
     Visibility: public -/
 structure Xor (P : Type) (Q : Type) where
   first : P
   second : Q
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Xor<P, Q>}::clone]:
-    Source: 'src/lib.rs', lines 3113:9-3113:14
+    Source: 'src/lib.rs', lines 3116:9-3116:14
     Visibility: public -/
 def Xor.Insts.CoreCloneClone.clone
   {P : Type} {Q : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -5463,7 +5463,7 @@ def Xor.Insts.CoreCloneClone.clone
   ok { first := t, second := t1 }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Xor<P, Q>}]
-    Source: 'src/lib.rs', lines 3113:9-3113:14 -/
+    Source: 'src/lib.rs', lines 3116:9-3116:14 -/
 @[reducible]
 def Xor.Insts.CoreCloneClone {P : Type} {Q : Type} (corecloneCloneInst :
   core.clone.Clone P) (corecloneCloneInst1 : core.clone.Clone Q) :
@@ -5473,7 +5473,7 @@ def Xor.Insts.CoreCloneClone {P : Type} {Q : Type} (corecloneCloneInst :
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, Clause0_Output> for rusthammer::Xor<P, Q>}]
-    Source: 'src/lib.rs', lines 3119:0-3125:1 -/
+    Source: 'src/lib.rs', lines 3122:0-3128:1 -/
 @[reducible]
 def Xor.Insts.RusthammerGrammar {P : Type} {Q : Type} {Clause0_Output : Type}
   (GrammarInst : Grammar P Clause0_Output) (GrammarInst1 : Grammar Q
@@ -5481,7 +5481,7 @@ def Xor.Insts.RusthammerGrammar {P : Type} {Q : Type} {Clause0_Output : Type}
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::Xor<P, Q>}::eval]:
-    Source: 'src/lib.rs', lines 3132:4-3164:5
+    Source: 'src/lib.rs', lines 3135:4-3167:5
     Visibility: public -/
 def Xor.Insts.RusthammerEval.eval
   {Backend : Type} {P : Type} {Q : Type} {Clause0_Clause0_Output : Type}
@@ -5512,7 +5512,7 @@ def Xor.Insts.RusthammerEval.eval
   | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::Xor<P, Q>}]
-    Source: 'src/lib.rs', lines 3127:0-3165:1 -/
+    Source: 'src/lib.rs', lines 3130:0-3168:1 -/
 @[reducible]
 def Xor.Insts.RusthammerEval {Backend : Type} {P : Type} {Q : Type}
   {Clause0_Clause0_Output : Type} (EvalInst : Eval P Backend
@@ -5524,13 +5524,13 @@ def Xor.Insts.RusthammerEval {Backend : Type} {P : Type} {Q : Type}
 }
 
 /-- [rusthammer::Optional]
-    Source: 'src/lib.rs', lines 3174:0-3176:1
+    Source: 'src/lib.rs', lines 3177:0-3179:1
     Visibility: public -/
 structure Optional (P : Type) where
   parser : P
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Optional<P>}::clone]:
-    Source: 'src/lib.rs', lines 3173:9-3173:14
+    Source: 'src/lib.rs', lines 3176:9-3176:14
     Visibility: public -/
 def Optional.Insts.CoreCloneClone.clone
   {P : Type} (corecloneCloneInst : core.clone.Clone P) (self : Optional P) :
@@ -5540,7 +5540,7 @@ def Optional.Insts.CoreCloneClone.clone
   ok { parser := t }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Optional<P>}]
-    Source: 'src/lib.rs', lines 3173:9-3173:14 -/
+    Source: 'src/lib.rs', lines 3176:9-3176:14 -/
 @[reducible]
 def Optional.Insts.CoreCloneClone {P : Type} (corecloneCloneInst :
   core.clone.Clone P) : core.clone.Clone (Optional P) := {
@@ -5548,13 +5548,13 @@ def Optional.Insts.CoreCloneClone {P : Type} (corecloneCloneInst :
 }
 
 /-- [rusthammer::optional]:
-    Source: 'src/lib.rs', lines 3186:0-3188:1
+    Source: 'src/lib.rs', lines 3189:0-3191:1
     Visibility: public -/
 def optional {P : Type} (parser : P) : Result (Optional P) := do
   ok { parser }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, core::option::Option<Clause0_Output>> for rusthammer::Optional<P>}]
-    Source: 'src/lib.rs', lines 3190:0-3192:1 -/
+    Source: 'src/lib.rs', lines 3193:0-3195:1 -/
 @[reducible]
 def Optional.Insts.RusthammerGrammarInputOption {P : Type} {Clause0_Output :
   Type} (GrammarInst : Grammar P Clause0_Output) : Grammar (Optional P) (Option
@@ -5562,7 +5562,7 @@ def Optional.Insts.RusthammerGrammarInputOption {P : Type} {Clause0_Output :
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, core::option::Option<Clause0_Clause0_Output>> for rusthammer::Optional<P>}::eval]:
-    Source: 'src/lib.rs', lines 3195:4-3213:5
+    Source: 'src/lib.rs', lines 3198:4-3216:5
     Visibility: public -/
 def Optional.Insts.RusthammerEvalInputBackendOption.eval
   {Backend : Type} {P : Type} {Clause0_Clause0_Output : Type} (EvalInst : Eval
@@ -5582,7 +5582,7 @@ def Optional.Insts.RusthammerEvalInputBackendOption.eval
   | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, core::option::Option<Clause0_Clause0_Output>> for rusthammer::Optional<P>}]
-    Source: 'src/lib.rs', lines 3194:0-3214:1 -/
+    Source: 'src/lib.rs', lines 3197:0-3217:1 -/
 @[reducible]
 def Optional.Insts.RusthammerEvalInputBackendOption {Backend : Type} {P : Type}
   {Clause0_Clause0_Output : Type} (EvalInst : Eval P Backend
@@ -5594,13 +5594,13 @@ def Optional.Insts.RusthammerEvalInputBackendOption {Backend : Type} {P : Type}
 }
 
 /-- [rusthammer::And]
-    Source: 'src/lib.rs', lines 3222:0-3224:1
+    Source: 'src/lib.rs', lines 3225:0-3227:1
     Visibility: public -/
 structure And (P : Type) where
   parser : P
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::And<P>}::clone]:
-    Source: 'src/lib.rs', lines 3221:9-3221:14
+    Source: 'src/lib.rs', lines 3224:9-3224:14
     Visibility: public -/
 def And.Insts.CoreCloneClone.clone
   {P : Type} (corecloneCloneInst : core.clone.Clone P) (self : And P) :
@@ -5610,7 +5610,7 @@ def And.Insts.CoreCloneClone.clone
   ok { parser := t }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::And<P>}]
-    Source: 'src/lib.rs', lines 3221:9-3221:14 -/
+    Source: 'src/lib.rs', lines 3224:9-3224:14 -/
 @[reducible]
 def And.Insts.CoreCloneClone {P : Type} (corecloneCloneInst : core.clone.Clone
   P) : core.clone.Clone (And P) := {
@@ -5618,14 +5618,14 @@ def And.Insts.CoreCloneClone {P : Type} (corecloneCloneInst : core.clone.Clone
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, ()> for rusthammer::And<P>}]
-    Source: 'src/lib.rs', lines 3226:0-3228:1 -/
+    Source: 'src/lib.rs', lines 3229:0-3231:1 -/
 @[reducible]
 def And.Insts.RusthammerGrammarInputTuple {P : Type} {Clause0_Output : Type}
   (GrammarInst : Grammar P Clause0_Output) : Grammar (And P) Unit := {
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, ()> for rusthammer::And<P>}::eval]:
-    Source: 'src/lib.rs', lines 3231:4-3243:5
+    Source: 'src/lib.rs', lines 3234:4-3246:5
     Visibility: public -/
 def And.Insts.RusthammerEvalInputBackendTuple.eval
   {Backend : Type} {P : Type} {Clause0_Clause0_Output : Type} (EvalInst : Eval
@@ -5640,7 +5640,7 @@ def And.Insts.RusthammerEvalInputBackendTuple.eval
   | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, ()> for rusthammer::And<P>}]
-    Source: 'src/lib.rs', lines 3230:0-3244:1 -/
+    Source: 'src/lib.rs', lines 3233:0-3247:1 -/
 @[reducible]
 def And.Insts.RusthammerEvalInputBackendTuple {Backend : Type} {P : Type}
   {Clause0_Clause0_Output : Type} (EvalInst : Eval P Backend
@@ -5650,13 +5650,13 @@ def And.Insts.RusthammerEvalInputBackendTuple {Backend : Type} {P : Type}
 }
 
 /-- [rusthammer::Not]
-    Source: 'src/lib.rs', lines 3252:0-3254:1
+    Source: 'src/lib.rs', lines 3255:0-3257:1
     Visibility: public -/
 structure Not (P : Type) where
   parser : P
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::Not<P>}::clone]:
-    Source: 'src/lib.rs', lines 3251:9-3251:14
+    Source: 'src/lib.rs', lines 3254:9-3254:14
     Visibility: public -/
 def Not.Insts.CoreCloneClone.clone
   {P : Type} (corecloneCloneInst : core.clone.Clone P) (self : Not P) :
@@ -5666,7 +5666,7 @@ def Not.Insts.CoreCloneClone.clone
   ok { parser := t }
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::Not<P>}]
-    Source: 'src/lib.rs', lines 3251:9-3251:14 -/
+    Source: 'src/lib.rs', lines 3254:9-3254:14 -/
 @[reducible]
 def Not.Insts.CoreCloneClone {P : Type} (corecloneCloneInst : core.clone.Clone
   P) : core.clone.Clone (Not P) := {
@@ -5674,14 +5674,14 @@ def Not.Insts.CoreCloneClone {P : Type} (corecloneCloneInst : core.clone.Clone
 }
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Grammar<'input, ()> for rusthammer::Not<P>}]
-    Source: 'src/lib.rs', lines 3256:0-3258:1 -/
+    Source: 'src/lib.rs', lines 3259:0-3261:1 -/
 @[reducible]
 def Not.Insts.RusthammerGrammarInputTuple {P : Type} {Clause0_Output : Type}
   (GrammarInst : Grammar P Clause0_Output) : Grammar (Not P) Unit := {
 }
 
 /-- [rusthammer::{impl rusthammer::Eval<'input, Backend, ()> for rusthammer::Not<P>}::eval]:
-    Source: 'src/lib.rs', lines 3261:4-3279:5
+    Source: 'src/lib.rs', lines 3264:4-3282:5
     Visibility: public -/
 def Not.Insts.RusthammerEvalInputBackendTuple.eval
   {Backend : Type} {P : Type} {Clause0_Clause0_Output : Type} (EvalInst : Eval
@@ -5701,7 +5701,7 @@ def Not.Insts.RusthammerEvalInputBackendTuple.eval
   | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
 
 /-- Trait implementation: [rusthammer::{impl rusthammer::Eval<'input, Backend, ()> for rusthammer::Not<P>}]
-    Source: 'src/lib.rs', lines 3260:0-3280:1 -/
+    Source: 'src/lib.rs', lines 3263:0-3283:1 -/
 @[reducible]
 def Not.Insts.RusthammerEvalInputBackendTuple {Backend : Type} {P : Type}
   {Clause0_Clause0_Output : Type} (EvalInst : Eval P Backend
@@ -5711,17 +5711,4331 @@ def Not.Insts.RusthammerEvalInputBackendTuple {Backend : Type} {P : Type}
 }
 
 /-- [rusthammer::{impl core::clone::Clone for rusthammer::TakeAligned}::clone]:
-    Source: 'src/lib.rs', lines 3286:9-3286:14
+    Source: 'src/lib.rs', lines 3289:9-3289:14
     Visibility: public -/
 def TakeAligned.Insts.CoreCloneClone.clone
   (self : TakeAligned) : Result TakeAligned := do
   ok self
 
 /-- Trait implementation: [rusthammer::{impl core::clone::Clone for rusthammer::TakeAligned}]
-    Source: 'src/lib.rs', lines 3286:9-3286:14 -/
+    Source: 'src/lib.rs', lines 3289:9-3289:14 -/
 @[reducible]
 def TakeAligned.Insts.CoreCloneClone : core.clone.Clone TakeAligned := {
   clone := TakeAligned.Insts.CoreCloneClone.clone
+}
+
+/-- [rusthammer::permutation::Required]
+    Source: 'src/permutation.rs', lines 8:0-10:1
+    Visibility: public -/
+structure permutation.Required (P : Type) where
+  parser : P
+
+/-- [rusthammer::permutation::{impl core::clone::Clone for rusthammer::permutation::Required<P>}::clone]:
+    Source: 'src/permutation.rs', lines 7:9-7:14
+    Visibility: public -/
+def permutation.Required.Insts.CoreCloneClone.clone
+  {P : Type} (corecloneCloneInst : core.clone.Clone P)
+  (self : permutation.Required P) :
+  Result (permutation.Required P)
+  := do
+  let t ← corecloneCloneInst.clone self.parser
+  ok { parser := t }
+
+/-- Trait implementation: [rusthammer::permutation::{impl core::clone::Clone for rusthammer::permutation::Required<P>}]
+    Source: 'src/permutation.rs', lines 7:9-7:14 -/
+@[reducible]
+def permutation.Required.Insts.CoreCloneClone {P : Type} (corecloneCloneInst :
+  core.clone.Clone P) : core.clone.Clone (permutation.Required P) := {
+  clone := permutation.Required.Insts.CoreCloneClone.clone corecloneCloneInst
+}
+
+/-- [rusthammer::permutation::required]:
+    Source: 'src/permutation.rs', lines 13:0-15:1
+    Visibility: public -/
+def permutation.required
+  {P : Type} (parser : P) : Result (permutation.Required P) := do
+  ok { parser }
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::Grammar<'input, Clause0_Output> for rusthammer::permutation::Required<P>}]
+    Source: 'src/permutation.rs', lines 17:0-19:1 -/
+@[reducible]
+def permutation.Required.Insts.RusthammerGrammar {P : Type} {Clause0_Output :
+  Type} (GrammarInst : Grammar P Clause0_Output) : Grammar
+  (permutation.Required P) Clause0_Output := {
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::Eval<'input, B, Clause0_Clause0_Output> for rusthammer::permutation::Required<P>}::eval]:
+    Source: 'src/permutation.rs', lines 22:4-30:5
+    Visibility: public -/
+def permutation.Required.Insts.RusthammerEval.eval
+  {B : Type} {P : Type} {Clause0_Clause0_Output : Type} (EvalInst : Eval P B
+  Clause0_Clause0_Output) (self : permutation.Required P) (backend : B)
+  (input : Slice Std.U8) (cursor : Cursor) (context : ParseContext) :
+  Result ((ParseOutcome Clause0_Clause0_Output) × B)
+  := do
+  EvalInst.eval self.parser backend input cursor context
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::Eval<'input, B, Clause0_Clause0_Output> for rusthammer::permutation::Required<P>}]
+    Source: 'src/permutation.rs', lines 21:0-31:1 -/
+@[reducible]
+def permutation.Required.Insts.RusthammerEval {B : Type} {P : Type}
+  {Clause0_Clause0_Output : Type} (EvalInst : Eval P B Clause0_Clause0_Output)
+  : Eval (permutation.Required P) B Clause0_Clause0_Output := {
+  GrammarInst := permutation.Required.Insts.RusthammerGrammar
+    EvalInst.GrammarInst
+  eval := permutation.Required.Insts.RusthammerEval.eval EvalInst
+}
+
+/-- [rusthammer::permutation::Permutation]
+    Source: 'src/permutation.rs', lines 72:0-74:1
+    Visibility: public -/
+structure permutation.Permutation (T : Type) where
+  items : T
+
+/-- [rusthammer::permutation::{impl core::clone::Clone for rusthammer::permutation::Permutation<T>}::clone]:
+    Source: 'src/permutation.rs', lines 71:9-71:14
+    Visibility: public -/
+def permutation.Permutation.Insts.CoreCloneClone.clone
+  {T : Type} (corecloneCloneInst : core.clone.Clone T)
+  (self : permutation.Permutation T) :
+  Result (permutation.Permutation T)
+  := do
+  let t ← corecloneCloneInst.clone self.items
+  ok { items := t }
+
+/-- Trait implementation: [rusthammer::permutation::{impl core::clone::Clone for rusthammer::permutation::Permutation<T>}]
+    Source: 'src/permutation.rs', lines 71:9-71:14 -/
+@[reducible]
+def permutation.Permutation.Insts.CoreCloneClone {T : Type} (corecloneCloneInst
+  : core.clone.Clone T) : core.clone.Clone (permutation.Permutation T) := {
+  clone := permutation.Permutation.Insts.CoreCloneClone.clone
+    corecloneCloneInst
+}
+
+/-- [rusthammer::permutation::permutation]:
+    Source: 'src/permutation.rs', lines 78:0-80:1
+    Visibility: public -/
+def permutation.permutation
+  {T : Type} (items : T) : Result (permutation.Permutation T) := do
+  ok { items }
+
+/-- [rusthammer::permutation::Slot]
+    Source: 'src/permutation.rs', lines 82:0-85:1
+    Visibility: public -/
+structure permutation.Slot (T : Type) where
+  matched : Bool
+  value : Option T
+
+/-- [rusthammer::permutation::empty_slot]:
+    Source: 'src/permutation.rs', lines 87:0-92:1 -/
+def permutation.empty_slot (T : Type) : Result (permutation.Slot T) := do
+  ok { matched := false, value := none }
+
+/-- [rusthammer::permutation::slot_value]:
+    Source: 'src/permutation.rs', lines 94:0-99:1 -/
+def permutation.slot_value
+  {T : Type} (slot : permutation.Slot T) :
+  Result (core.result.Result T ParseError)
+  := do
+  match slot.value with
+  | none => ok (core.result.Result.Err ParseError.Mismatch)
+  | some value => ok (core.result.Result.Ok value)
+
+/-- [rusthammer::permutation::Attempt]
+    Source: 'src/permutation.rs', lines 101:0-106:1
+    Visibility: public -/
+@[discriminant isize]
+inductive permutation.Attempt where
+| Matched : Cursor → permutation.Attempt
+| Absent : permutation.Attempt
+| Error : ParseError → permutation.Attempt
+| NeedMore : permutation.Attempt
+
+/-- [rusthammer::permutation::required_slot]:
+    Source: 'src/permutation.rs', lines 108:0-120:1 -/
+def permutation.required_slot
+  {T : Type} (result : ParseOutcome T) :
+  Result (permutation.Attempt × (permutation.Slot T))
+  := do
+  match result with
+  | ParseOutcome.Success next value =>
+    ok (permutation.Attempt.Matched next,
+      { matched := true, value := (some value) })
+  | ParseOutcome.Error error =>
+    let s ← permutation.empty_slot T
+    ok (permutation.Attempt.Error error, s)
+  | ParseOutcome.NeedMore =>
+    let s ← permutation.empty_slot T
+    ok (permutation.Attempt.NeedMore, s)
+
+/-- [rusthammer::permutation::optional_slot]:
+    Source: 'src/permutation.rs', lines 122:0-146:1 -/
+def permutation.optional_slot
+  {T : Type} (result : ParseOutcome T) :
+  Result (permutation.Attempt × (permutation.Slot (Option T)))
+  := do
+  match result with
+  | ParseOutcome.Success next value =>
+    ok (permutation.Attempt.Matched next,
+      { matched := true, value := (some (some value)) })
+  | ParseOutcome.Error error =>
+    let b ← ParseError.is_recoverable error
+    if b
+    then
+      ok (permutation.Attempt.Absent,
+        { matched := false, value := (some none) })
+    else
+      let s ← permutation.empty_slot (Option T)
+      ok (permutation.Attempt.Error error, s)
+  | ParseOutcome.NeedMore =>
+    let s ← permutation.empty_slot (Option T)
+    ok (permutation.Attempt.NeedMore, s)
+
+/-- Trait declaration: [rusthammer::permutation::ItemEval]
+    Source: 'src/permutation.rs', lines 148:0-156:1
+    Visibility: public -/
+structure permutation.ItemEval (Self : Type) (B : Type) (Self_Clause0_Output :
+  Type) where
+  GrammarInst : Grammar Self Self_Clause0_Output
+  eval_slot : Self → B → Slice Std.U8 → Cursor → ParseContext →
+    Result ((permutation.Attempt × (permutation.Slot Self_Clause0_Output)) ×
+    B)
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::ItemEval<'input, B, Clause0_Clause0_Output> for rusthammer::permutation::Required<P>}::eval_slot]:
+    Source: 'src/permutation.rs', lines 159:4-167:5
+    Visibility: public -/
+def permutation.Required.Insts.RusthammerPermutationItemEval.eval_slot
+  {B : Type} {P : Type} {Clause0_Clause0_Output : Type} (EvalInst : Eval P B
+  Clause0_Clause0_Output) (self : permutation.Required P) (backend : B)
+  (input : Slice Std.U8) (cursor : Cursor) (context : ParseContext) :
+  Result ((permutation.Attempt × (permutation.Slot Clause0_Clause0_Output)) ×
+    B)
+  := do
+  let (po, backend1) ← EvalInst.eval self.parser backend input cursor context
+  let p ← permutation.required_slot po
+  ok (p, backend1)
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::ItemEval<'input, B, Clause0_Clause0_Output> for rusthammer::permutation::Required<P>}]
+    Source: 'src/permutation.rs', lines 158:0-168:1 -/
+@[reducible]
+def permutation.Required.Insts.RusthammerPermutationItemEval {B : Type} {P :
+  Type} {Clause0_Clause0_Output : Type} (EvalInst : Eval P B
+  Clause0_Clause0_Output) : permutation.ItemEval (permutation.Required P) B
+  Clause0_Clause0_Output := {
+  GrammarInst := permutation.Required.Insts.RusthammerGrammar
+    EvalInst.GrammarInst
+  eval_slot :=
+    permutation.Required.Insts.RusthammerPermutationItemEval.eval_slot EvalInst
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::ItemEval<'input, B, core::option::Option<Clause0_Clause0_Output>> for rusthammer::Optional<P>}::eval_slot]:
+    Source: 'src/permutation.rs', lines 171:4-179:5
+    Visibility: public -/
+def Optional.Insts.RusthammerPermutationItemEvalInputBOption.eval_slot
+  {B : Type} {P : Type} {Clause0_Clause0_Output : Type} (EvalInst : Eval P B
+  Clause0_Clause0_Output) (self : Optional P) (backend : B)
+  (input : Slice Std.U8) (cursor : Cursor) (context : ParseContext) :
+  Result ((permutation.Attempt × (permutation.Slot (Option
+    Clause0_Clause0_Output))) × B)
+  := do
+  let (po, backend1) ← EvalInst.eval self.parser backend input cursor context
+  let p ← permutation.optional_slot po
+  ok (p, backend1)
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::ItemEval<'input, B, core::option::Option<Clause0_Clause0_Output>> for rusthammer::Optional<P>}]
+    Source: 'src/permutation.rs', lines 170:0-180:1 -/
+@[reducible]
+def Optional.Insts.RusthammerPermutationItemEvalInputBOption {B : Type} {P :
+  Type} {Clause0_Clause0_Output : Type} (EvalInst : Eval P B
+  Clause0_Clause0_Output) : permutation.ItemEval (Optional P) B (Option
+  Clause0_Clause0_Output) := {
+  GrammarInst := Optional.Insts.RusthammerGrammarInputOption
+    EvalInst.GrammarInst
+  eval_slot :=
+    Optional.Insts.RusthammerPermutationItemEvalInputBOption.eval_slot EvalInst
+}
+
+/-- Trait declaration: [rusthammer::permutation::Layout]
+    Source: 'src/permutation.rs', lines 182:0-190:1
+    Visibility: public -/
+structure permutation.Layout (Self : Type) (Self_State : Type) (Self_Output :
+  Type) where
+  count : Self → Result Std.Usize
+  empty : Self → Result Self_State
+  matched : Self → Self_State → Std.Usize → Result Bool
+  clear : Self → Self_State → Std.Usize → Result Self_State
+  finish : Self → Self_State → Result (core.result.Result Self_Output
+    ParseError)
+
+/-- Trait declaration: [rusthammer::permutation::Items]
+    Source: 'src/permutation.rs', lines 192:0-202:1
+    Visibility: public -/
+structure permutation.Items (Self : Type) (B : Type) (Self_Clause0_State :
+  Type) (Self_Clause0_Output : Type) where
+  LayoutInst : permutation.Layout Self Self_Clause0_State Self_Clause0_Output
+  attempt : Self → Self_Clause0_State → Std.Usize → B → Slice Std.U8
+    → Cursor → ParseContext → Result ((permutation.Attempt ×
+    Self_Clause0_State) × B)
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'_0, (), ()> for ()}::finish]:
+    Source: 'src/permutation.rs', lines 215:4-217:5
+    Visibility: public -/
+def Tuple.Insts.RusthammerPermutationLayout0TupleTuple.finish
+  (_ : Unit) (_ : Unit) : Result (core.result.Result Unit ParseError) := do
+  ok (core.result.Result.Ok ())
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'_0, (), ()> for ()}::clear]:
+    Source: 'src/permutation.rs', lines 214:4-214:39
+    Visibility: public -/
+def Tuple.Insts.RusthammerPermutationLayout0TupleTuple.clear
+  (_ : Unit) (_ : Unit) (i : Std.Usize) : Result Unit := do
+  ok ()
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'_0, (), ()> for ()}::matched]:
+    Source: 'src/permutation.rs', lines 211:4-213:5
+    Visibility: public -/
+def Tuple.Insts.RusthammerPermutationLayout0TupleTuple.matched
+  (_ : Unit) (_ : Unit) (i : Std.Usize) : Result Bool := do
+  ok false
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'_0, (), ()> for ()}::empty]:
+    Source: 'src/permutation.rs', lines 210:4-210:22
+    Visibility: public -/
+def Tuple.Insts.RusthammerPermutationLayout0TupleTuple.empty
+  (_ : Unit) : Result Unit := do
+  ok ()
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'_0, (), ()> for ()}::count]:
+    Source: 'src/permutation.rs', lines 207:4-209:5
+    Visibility: public -/
+def Tuple.Insts.RusthammerPermutationLayout0TupleTuple.count
+  (_ : Unit) : Result Std.Usize := do
+  ok 0#usize
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Layout<'_0, (), ()> for ()}]
+    Source: 'src/permutation.rs', lines 204:0-218:1 -/
+@[reducible]
+def Tuple.Insts.RusthammerPermutationLayout0TupleTuple : permutation.Layout
+  Unit Unit Unit := {
+  count := Tuple.Insts.RusthammerPermutationLayout0TupleTuple.count
+  empty := Tuple.Insts.RusthammerPermutationLayout0TupleTuple.empty
+  matched := Tuple.Insts.RusthammerPermutationLayout0TupleTuple.matched
+  clear := Tuple.Insts.RusthammerPermutationLayout0TupleTuple.clear
+  finish := Tuple.Insts.RusthammerPermutationLayout0TupleTuple.finish
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Items<'_0, B, (), ()> for ()}::attempt]:
+    Source: 'src/permutation.rs', lines 221:4-231:5
+    Visibility: public -/
+def Tuple.Insts.RusthammerPermutationItems0BTupleTuple.attempt
+  {B : Type} (_ : Unit) (_ : Unit) (i : Std.Usize) (t : B) (s : Slice Std.U8)
+  (c : Cursor) (pc : ParseContext) :
+  Result ((permutation.Attempt × Unit) × B)
+  := do
+  ok ((permutation.Attempt.Error ParseError.Mismatch, ()), t)
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Items<'_0, B, (), ()> for ()}]
+    Source: 'src/permutation.rs', lines 220:0-232:1 -/
+@[reducible]
+def Tuple.Insts.RusthammerPermutationItems0BTupleTuple (B : Type) :
+  permutation.Items Unit B Unit Unit := {
+  LayoutInst := Tuple.Insts.RusthammerPermutationLayout0TupleTuple
+  attempt := Tuple.Insts.RusthammerPermutationItems0BTupleTuple.attempt
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>,), (Clause0_Output,)> for (P,)}::finish]:
+    Source: 'src/permutation.rs', lines 248:12-255:13
+    Visibility: public -/
+def
+  TupleP.Insts.RusthammerPermutationLayoutInputTupleSlotTupleClause0_Output.finish
+  {P : Type} {Clause0_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (self : P) (state : permutation.Slot Clause0_Output) :
+  Result (core.result.Result Clause0_Output ParseError)
+  := do
+  let r ← permutation.slot_value state
+  match r with
+  | core.result.Result.Ok _ => ok r
+  | core.result.Result.Err _ => ok r
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>,), (Clause0_Output,)> for (P,)}::clear]:
+    Source: 'src/permutation.rs', lines 244:12-247:13
+    Visibility: public -/
+def
+  TupleP.Insts.RusthammerPermutationLayoutInputTupleSlotTupleClause0_Output.clear
+  {P : Type} {Clause0_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (self : P) (state : permutation.Slot Clause0_Output) (index : Std.Usize) :
+  Result (permutation.Slot Clause0_Output)
+  := do
+  match index.val with
+  | 0 => permutation.empty_slot Clause0_Output
+  | _ => ok state
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>,), (Clause0_Output,)> for (P,)}::matched]:
+    Source: 'src/permutation.rs', lines 241:12-243:13
+    Visibility: public -/
+def
+  TupleP.Insts.RusthammerPermutationLayoutInputTupleSlotTupleClause0_Output.matched
+  {P : Type} {Clause0_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (self : P) (state : permutation.Slot Clause0_Output) (index : Std.Usize) :
+  Result Bool
+  := do
+  match index.val with
+  | 0 => ok state.matched
+  | _ => ok false
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>,), (Clause0_Output,)> for (P,)}::empty]:
+    Source: 'src/permutation.rs', lines 240:12-240:80
+    Visibility: public -/
+def
+  TupleP.Insts.RusthammerPermutationLayoutInputTupleSlotTupleClause0_Output.empty
+  {P : Type} {Clause0_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (self : P) :
+  Result (permutation.Slot Clause0_Output)
+  := do
+  permutation.empty_slot Clause0_Output
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>,), (Clause0_Output,)> for (P,)}::count]:
+    Source: 'src/permutation.rs', lines 239:12-239:47
+    Visibility: public -/
+def
+  TupleP.Insts.RusthammerPermutationLayoutInputTupleSlotTupleClause0_Output.count
+  {P : Type} {Clause0_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (self : P) :
+  Result Std.Usize
+  := do
+  ok 1#usize
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>,), (Clause0_Output,)> for (P,)}]
+    Source: 'src/permutation.rs', lines 236:8-256:9 -/
+@[reducible]
+def TupleP.Insts.RusthammerPermutationLayoutInputTupleSlotTupleClause0_Output
+  {P : Type} {Clause0_Output : Type} (GrammarInst : Grammar P Clause0_Output) :
+  permutation.Layout P (permutation.Slot Clause0_Output) Clause0_Output := {
+  count :=
+    TupleP.Insts.RusthammerPermutationLayoutInputTupleSlotTupleClause0_Output.count
+    GrammarInst
+  empty :=
+    TupleP.Insts.RusthammerPermutationLayoutInputTupleSlotTupleClause0_Output.empty
+    GrammarInst
+  matched :=
+    TupleP.Insts.RusthammerPermutationLayoutInputTupleSlotTupleClause0_Output.matched
+    GrammarInst
+  clear :=
+    TupleP.Insts.RusthammerPermutationLayoutInputTupleSlotTupleClause0_Output.clear
+    GrammarInst
+  finish :=
+    TupleP.Insts.RusthammerPermutationLayoutInputTupleSlotTupleClause0_Output.finish
+    GrammarInst
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>), (Clause0_Output, Clause1_Output)> for (P, Q)}::finish]:
+    Source: 'src/permutation.rs', lines 248:12-255:13
+    Visibility: public -/
+def Pair.Insts.RusthammerPermutationLayoutInputPairSlotSlotPair.finish
+  {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+  (GrammarInst : Grammar P Clause0_Output) (GrammarInst1 : Grammar Q
+  Clause1_Output) (self : (P × Q))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output))) :
+  Result (core.result.Result (Clause0_Output × Clause1_Output) ParseError)
+  := do
+  let (p, q) := state
+  let r ← permutation.slot_value p
+  match r with
+  | core.result.Result.Ok value =>
+    let r1 ← permutation.slot_value q
+    match r1 with
+    | core.result.Result.Ok value1 =>
+      ok (core.result.Result.Ok (value, value1))
+    | core.result.Result.Err error => ok (core.result.Result.Err error)
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>), (Clause0_Output, Clause1_Output)> for (P, Q)}::clear]:
+    Source: 'src/permutation.rs', lines 244:12-247:13
+    Visibility: public -/
+def Pair.Insts.RusthammerPermutationLayoutInputPairSlotSlotPair.clear
+  {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+  (GrammarInst : Grammar P Clause0_Output) (GrammarInst1 : Grammar Q
+  Clause1_Output) (self : (P × Q))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output))) (index : Std.Usize) :
+  Result ((permutation.Slot Clause0_Output) × (permutation.Slot
+    Clause1_Output))
+  := do
+  match index.val with
+  | 0 =>
+    let s ← permutation.empty_slot Clause0_Output
+    let (_, s1) := state
+    ok (s, s1)
+  | 1 =>
+    let s ← permutation.empty_slot Clause1_Output
+    let (s1, _) := state
+    ok (s1, s)
+  | _ => ok state
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>), (Clause0_Output, Clause1_Output)> for (P, Q)}::matched]:
+    Source: 'src/permutation.rs', lines 241:12-243:13
+    Visibility: public -/
+def Pair.Insts.RusthammerPermutationLayoutInputPairSlotSlotPair.matched
+  {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+  (GrammarInst : Grammar P Clause0_Output) (GrammarInst1 : Grammar Q
+  Clause1_Output) (self : (P × Q))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output))) (index : Std.Usize) :
+  Result Bool
+  := do
+  match index.val with
+  | 0 => let (s, _) := state
+         ok s.matched
+  | 1 => let (_, s) := state
+         ok s.matched
+  | _ => ok false
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>), (Clause0_Output, Clause1_Output)> for (P, Q)}::empty]:
+    Source: 'src/permutation.rs', lines 240:12-240:80
+    Visibility: public -/
+def Pair.Insts.RusthammerPermutationLayoutInputPairSlotSlotPair.empty
+  {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+  (GrammarInst : Grammar P Clause0_Output) (GrammarInst1 : Grammar Q
+  Clause1_Output) (self : (P × Q)) :
+  Result ((permutation.Slot Clause0_Output) × (permutation.Slot
+    Clause1_Output))
+  := do
+  let s ← permutation.empty_slot Clause0_Output
+  let s1 ← permutation.empty_slot Clause1_Output
+  ok (s, s1)
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>), (Clause0_Output, Clause1_Output)> for (P, Q)}::count]:
+    Source: 'src/permutation.rs', lines 239:12-239:47
+    Visibility: public -/
+def Pair.Insts.RusthammerPermutationLayoutInputPairSlotSlotPair.count
+  {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+  (GrammarInst : Grammar P Clause0_Output) (GrammarInst1 : Grammar Q
+  Clause1_Output) (self : (P × Q)) :
+  Result Std.Usize
+  := do
+  ok 2#usize
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>), (Clause0_Output, Clause1_Output)> for (P, Q)}]
+    Source: 'src/permutation.rs', lines 236:8-256:9 -/
+@[reducible]
+def Pair.Insts.RusthammerPermutationLayoutInputPairSlotSlotPair {P : Type} {Q :
+  Type} {Clause0_Output : Type} {Clause1_Output : Type} (GrammarInst : Grammar
+  P Clause0_Output) (GrammarInst1 : Grammar Q Clause1_Output) :
+  permutation.Layout (P × Q) ((permutation.Slot Clause0_Output) ×
+  (permutation.Slot Clause1_Output)) (Clause0_Output × Clause1_Output) := {
+  count := Pair.Insts.RusthammerPermutationLayoutInputPairSlotSlotPair.count
+    GrammarInst GrammarInst1
+  empty := Pair.Insts.RusthammerPermutationLayoutInputPairSlotSlotPair.empty
+    GrammarInst GrammarInst1
+  matched :=
+    Pair.Insts.RusthammerPermutationLayoutInputPairSlotSlotPair.matched
+    GrammarInst GrammarInst1
+  clear := Pair.Insts.RusthammerPermutationLayoutInputPairSlotSlotPair.clear
+    GrammarInst GrammarInst1
+  finish := Pair.Insts.RusthammerPermutationLayoutInputPairSlotSlotPair.finish
+    GrammarInst GrammarInst1
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>), (Clause0_Output, Clause1_Output, Clause2_Output)> for (P, Q, R)}::finish]:
+    Source: 'src/permutation.rs', lines 248:12-255:13
+    Visibility: public -/
+def
+  TuplePQR.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.finish
+  {P : Type} {Q : Type} {R : Type} {Clause0_Output : Type} {Clause1_Output :
+  Type} {Clause2_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (self : (P × Q × R))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output))) :
+  Result (core.result.Result (Clause0_Output × Clause1_Output ×
+    Clause2_Output) ParseError)
+  := do
+  let (p, q, r) := state
+  let r1 ← permutation.slot_value p
+  match r1 with
+  | core.result.Result.Ok value =>
+    let r2 ← permutation.slot_value q
+    match r2 with
+    | core.result.Result.Ok value1 =>
+      let r3 ← permutation.slot_value r
+      match r3 with
+      | core.result.Result.Ok value2 =>
+        ok (core.result.Result.Ok (value, value1, value2))
+      | core.result.Result.Err error => ok (core.result.Result.Err error)
+    | core.result.Result.Err error => ok (core.result.Result.Err error)
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>), (Clause0_Output, Clause1_Output, Clause2_Output)> for (P, Q, R)}::clear]:
+    Source: 'src/permutation.rs', lines 244:12-247:13
+    Visibility: public -/
+def
+  TuplePQR.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.clear
+  {P : Type} {Q : Type} {R : Type} {Clause0_Output : Type} {Clause1_Output :
+  Type} {Clause2_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (self : (P × Q × R))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output))) (index : Std.Usize) :
+  Result ((permutation.Slot Clause0_Output) × (permutation.Slot
+    Clause1_Output) × (permutation.Slot Clause2_Output))
+  := do
+  match index.val with
+  | 0 =>
+    let s ← permutation.empty_slot Clause0_Output
+    let (_, s1, s2) := state
+    ok (s, s1, s2)
+  | 1 =>
+    let s ← permutation.empty_slot Clause1_Output
+    let (s1, _, s2) := state
+    ok (s1, s, s2)
+  | 2 =>
+    let s ← permutation.empty_slot Clause2_Output
+    let (s1, s2, _) := state
+    ok (s1, s2, s)
+  | _ => ok state
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>), (Clause0_Output, Clause1_Output, Clause2_Output)> for (P, Q, R)}::matched]:
+    Source: 'src/permutation.rs', lines 241:12-243:13
+    Visibility: public -/
+def
+  TuplePQR.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.matched
+  {P : Type} {Q : Type} {R : Type} {Clause0_Output : Type} {Clause1_Output :
+  Type} {Clause2_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (self : (P × Q × R))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output))) (index : Std.Usize) :
+  Result Bool
+  := do
+  match index.val with
+  | 0 => let (s, _, _) := state
+         ok s.matched
+  | 1 => let (_, s, _) := state
+         ok s.matched
+  | 2 => let (_, _, s) := state
+         ok s.matched
+  | _ => ok false
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>), (Clause0_Output, Clause1_Output, Clause2_Output)> for (P, Q, R)}::empty]:
+    Source: 'src/permutation.rs', lines 240:12-240:80
+    Visibility: public -/
+def
+  TuplePQR.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.empty
+  {P : Type} {Q : Type} {R : Type} {Clause0_Output : Type} {Clause1_Output :
+  Type} {Clause2_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (self : (P × Q × R)) :
+  Result ((permutation.Slot Clause0_Output) × (permutation.Slot
+    Clause1_Output) × (permutation.Slot Clause2_Output))
+  := do
+  let s ← permutation.empty_slot Clause0_Output
+  let s1 ← permutation.empty_slot Clause1_Output
+  let s2 ← permutation.empty_slot Clause2_Output
+  ok (s, s1, s2)
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>), (Clause0_Output, Clause1_Output, Clause2_Output)> for (P, Q, R)}::count]:
+    Source: 'src/permutation.rs', lines 239:12-239:47
+    Visibility: public -/
+def
+  TuplePQR.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.count
+  {P : Type} {Q : Type} {R : Type} {Clause0_Output : Type} {Clause1_Output :
+  Type} {Clause2_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (self : (P × Q × R)) :
+  Result Std.Usize
+  := do
+  ok 3#usize
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>), (Clause0_Output, Clause1_Output, Clause2_Output)> for (P, Q, R)}]
+    Source: 'src/permutation.rs', lines 236:8-256:9 -/
+@[reducible]
+def
+  TuplePQR.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output
+  {P : Type} {Q : Type} {R : Type} {Clause0_Output : Type} {Clause1_Output :
+  Type} {Clause2_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) : permutation.Layout (P × Q × R) ((permutation.Slot
+  Clause0_Output) × (permutation.Slot Clause1_Output) × (permutation.Slot
+  Clause2_Output)) (Clause0_Output × Clause1_Output × Clause2_Output) := {
+  count :=
+    TuplePQR.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.count
+    GrammarInst GrammarInst1 GrammarInst2
+  empty :=
+    TuplePQR.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.empty
+    GrammarInst GrammarInst1 GrammarInst2
+  matched :=
+    TuplePQR.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.matched
+    GrammarInst GrammarInst1 GrammarInst2
+  clear :=
+    TuplePQR.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.clear
+    GrammarInst GrammarInst1 GrammarInst2
+  finish :=
+    TuplePQR.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.finish
+    GrammarInst GrammarInst1 GrammarInst2
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output)> for (P, Q, R, S)}::finish]:
+    Source: 'src/permutation.rs', lines 248:12-255:13
+    Visibility: public -/
+def
+  TuplePQRS.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.finish
+  {P : Type} {Q : Type} {R : Type} {S : Type} {Clause0_Output : Type}
+  {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
+  (GrammarInst : Grammar P Clause0_Output) (GrammarInst1 : Grammar Q
+  Clause1_Output) (GrammarInst2 : Grammar R Clause2_Output) (GrammarInst3 :
+  Grammar S Clause3_Output) (self : (P × Q × R × S))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output))) :
+  Result (core.result.Result (Clause0_Output × Clause1_Output ×
+    Clause2_Output × Clause3_Output) ParseError)
+  := do
+  let (p, q, r, s) := state
+  let r1 ← permutation.slot_value p
+  match r1 with
+  | core.result.Result.Ok value =>
+    let r2 ← permutation.slot_value q
+    match r2 with
+    | core.result.Result.Ok value1 =>
+      let r3 ← permutation.slot_value r
+      match r3 with
+      | core.result.Result.Ok value2 =>
+        let r4 ← permutation.slot_value s
+        match r4 with
+        | core.result.Result.Ok value3 =>
+          ok (core.result.Result.Ok (value, value1, value2, value3))
+        | core.result.Result.Err error => ok (core.result.Result.Err error)
+      | core.result.Result.Err error => ok (core.result.Result.Err error)
+    | core.result.Result.Err error => ok (core.result.Result.Err error)
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output)> for (P, Q, R, S)}::clear]:
+    Source: 'src/permutation.rs', lines 244:12-247:13
+    Visibility: public -/
+def
+  TuplePQRS.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.clear
+  {P : Type} {Q : Type} {R : Type} {S : Type} {Clause0_Output : Type}
+  {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
+  (GrammarInst : Grammar P Clause0_Output) (GrammarInst1 : Grammar Q
+  Clause1_Output) (GrammarInst2 : Grammar R Clause2_Output) (GrammarInst3 :
+  Grammar S Clause3_Output) (self : (P × Q × R × S))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output))) (index : Std.Usize) :
+  Result ((permutation.Slot Clause0_Output) × (permutation.Slot
+    Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+    Clause3_Output))
+  := do
+  match index.val with
+  | 0 =>
+    let s ← permutation.empty_slot Clause0_Output
+    let (_, s1, s2, s3) := state
+    ok (s, s1, s2, s3)
+  | 1 =>
+    let s ← permutation.empty_slot Clause1_Output
+    let (s1, _, s2, s3) := state
+    ok (s1, s, s2, s3)
+  | 2 =>
+    let s ← permutation.empty_slot Clause2_Output
+    let (s1, s2, _, s3) := state
+    ok (s1, s2, s, s3)
+  | 3 =>
+    let s ← permutation.empty_slot Clause3_Output
+    let (s1, s2, s3, _) := state
+    ok (s1, s2, s3, s)
+  | _ => ok state
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output)> for (P, Q, R, S)}::matched]:
+    Source: 'src/permutation.rs', lines 241:12-243:13
+    Visibility: public -/
+def
+  TuplePQRS.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.matched
+  {P : Type} {Q : Type} {R : Type} {S : Type} {Clause0_Output : Type}
+  {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
+  (GrammarInst : Grammar P Clause0_Output) (GrammarInst1 : Grammar Q
+  Clause1_Output) (GrammarInst2 : Grammar R Clause2_Output) (GrammarInst3 :
+  Grammar S Clause3_Output) (self : (P × Q × R × S))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output))) (index : Std.Usize) :
+  Result Bool
+  := do
+  match index.val with
+  | 0 => let (s, _, _, _) := state
+         ok s.matched
+  | 1 => let (_, s, _, _) := state
+         ok s.matched
+  | 2 => let (_, _, s, _) := state
+         ok s.matched
+  | 3 => let (_, _, _, s) := state
+         ok s.matched
+  | _ => ok false
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output)> for (P, Q, R, S)}::empty]:
+    Source: 'src/permutation.rs', lines 240:12-240:80
+    Visibility: public -/
+def
+  TuplePQRS.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.empty
+  {P : Type} {Q : Type} {R : Type} {S : Type} {Clause0_Output : Type}
+  {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
+  (GrammarInst : Grammar P Clause0_Output) (GrammarInst1 : Grammar Q
+  Clause1_Output) (GrammarInst2 : Grammar R Clause2_Output) (GrammarInst3 :
+  Grammar S Clause3_Output) (self : (P × Q × R × S)) :
+  Result ((permutation.Slot Clause0_Output) × (permutation.Slot
+    Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+    Clause3_Output))
+  := do
+  let s ← permutation.empty_slot Clause0_Output
+  let s1 ← permutation.empty_slot Clause1_Output
+  let s2 ← permutation.empty_slot Clause2_Output
+  let s3 ← permutation.empty_slot Clause3_Output
+  ok (s, s1, s2, s3)
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output)> for (P, Q, R, S)}::count]:
+    Source: 'src/permutation.rs', lines 239:12-239:47
+    Visibility: public -/
+def
+  TuplePQRS.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.count
+  {P : Type} {Q : Type} {R : Type} {S : Type} {Clause0_Output : Type}
+  {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
+  (GrammarInst : Grammar P Clause0_Output) (GrammarInst1 : Grammar Q
+  Clause1_Output) (GrammarInst2 : Grammar R Clause2_Output) (GrammarInst3 :
+  Grammar S Clause3_Output) (self : (P × Q × R × S)) :
+  Result Std.Usize
+  := do
+  ok 4#usize
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output)> for (P, Q, R, S)}]
+    Source: 'src/permutation.rs', lines 236:8-256:9 -/
+@[reducible]
+def
+  TuplePQRS.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output
+  {P : Type} {Q : Type} {R : Type} {S : Type} {Clause0_Output : Type}
+  {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
+  (GrammarInst : Grammar P Clause0_Output) (GrammarInst1 : Grammar Q
+  Clause1_Output) (GrammarInst2 : Grammar R Clause2_Output) (GrammarInst3 :
+  Grammar S Clause3_Output) : permutation.Layout (P × Q × R × S)
+  ((permutation.Slot Clause0_Output) × (permutation.Slot Clause1_Output) ×
+  (permutation.Slot Clause2_Output) × (permutation.Slot Clause3_Output))
+  (Clause0_Output × Clause1_Output × Clause2_Output × Clause3_Output) := {
+  count :=
+    TuplePQRS.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.count
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3
+  empty :=
+    TuplePQRS.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.empty
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3
+  matched :=
+    TuplePQRS.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.matched
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3
+  clear :=
+    TuplePQRS.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.clear
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3
+  finish :=
+    TuplePQRS.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.finish
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output)> for (P, Q, R, S, T)}::finish]:
+    Source: 'src/permutation.rs', lines 248:12-255:13
+    Visibility: public -/
+def
+  TuplePQRST.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.finish
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {Clause0_Output :
+  Type} {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
+  {Clause4_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output) (GrammarInst4 :
+  Grammar T Clause4_Output) (self : (P × Q × R × S × T))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output))) :
+  Result (core.result.Result (Clause0_Output × Clause1_Output ×
+    Clause2_Output × Clause3_Output × Clause4_Output) ParseError)
+  := do
+  let (p, q, r, s, t) := state
+  let r1 ← permutation.slot_value p
+  match r1 with
+  | core.result.Result.Ok value =>
+    let r2 ← permutation.slot_value q
+    match r2 with
+    | core.result.Result.Ok value1 =>
+      let r3 ← permutation.slot_value r
+      match r3 with
+      | core.result.Result.Ok value2 =>
+        let r4 ← permutation.slot_value s
+        match r4 with
+        | core.result.Result.Ok value3 =>
+          let r5 ← permutation.slot_value t
+          match r5 with
+          | core.result.Result.Ok value4 =>
+            ok (core.result.Result.Ok (value, value1, value2, value3, value4))
+          | core.result.Result.Err error => ok (core.result.Result.Err error)
+        | core.result.Result.Err error => ok (core.result.Result.Err error)
+      | core.result.Result.Err error => ok (core.result.Result.Err error)
+    | core.result.Result.Err error => ok (core.result.Result.Err error)
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output)> for (P, Q, R, S, T)}::clear]:
+    Source: 'src/permutation.rs', lines 244:12-247:13
+    Visibility: public -/
+def
+  TuplePQRST.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.clear
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {Clause0_Output :
+  Type} {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
+  {Clause4_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output) (GrammarInst4 :
+  Grammar T Clause4_Output) (self : (P × Q × R × S × T))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output))) (index : Std.Usize) :
+  Result ((permutation.Slot Clause0_Output) × (permutation.Slot
+    Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+    Clause3_Output) × (permutation.Slot Clause4_Output))
+  := do
+  match index.val with
+  | 0 =>
+    let s ← permutation.empty_slot Clause0_Output
+    let (_, s1, s2, s3, s4) := state
+    ok (s, s1, s2, s3, s4)
+  | 1 =>
+    let s ← permutation.empty_slot Clause1_Output
+    let (s1, _, s2, s3, s4) := state
+    ok (s1, s, s2, s3, s4)
+  | 2 =>
+    let s ← permutation.empty_slot Clause2_Output
+    let (s1, s2, _, s3, s4) := state
+    ok (s1, s2, s, s3, s4)
+  | 3 =>
+    let s ← permutation.empty_slot Clause3_Output
+    let (s1, s2, s3, _, s4) := state
+    ok (s1, s2, s3, s, s4)
+  | 4 =>
+    let s ← permutation.empty_slot Clause4_Output
+    let (s1, s2, s3, s4, _) := state
+    ok (s1, s2, s3, s4, s)
+  | _ => ok state
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output)> for (P, Q, R, S, T)}::matched]:
+    Source: 'src/permutation.rs', lines 241:12-243:13
+    Visibility: public -/
+def
+  TuplePQRST.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.matched
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {Clause0_Output :
+  Type} {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
+  {Clause4_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output) (GrammarInst4 :
+  Grammar T Clause4_Output) (self : (P × Q × R × S × T))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output))) (index : Std.Usize) :
+  Result Bool
+  := do
+  match index.val with
+  | 0 => let (s, _, _, _, _) := state
+         ok s.matched
+  | 1 => let (_, s, _, _, _) := state
+         ok s.matched
+  | 2 => let (_, _, s, _, _) := state
+         ok s.matched
+  | 3 => let (_, _, _, s, _) := state
+         ok s.matched
+  | 4 => let (_, _, _, _, s) := state
+         ok s.matched
+  | _ => ok false
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output)> for (P, Q, R, S, T)}::empty]:
+    Source: 'src/permutation.rs', lines 240:12-240:80
+    Visibility: public -/
+def
+  TuplePQRST.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.empty
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {Clause0_Output :
+  Type} {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
+  {Clause4_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output) (GrammarInst4 :
+  Grammar T Clause4_Output) (self : (P × Q × R × S × T)) :
+  Result ((permutation.Slot Clause0_Output) × (permutation.Slot
+    Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+    Clause3_Output) × (permutation.Slot Clause4_Output))
+  := do
+  let s ← permutation.empty_slot Clause0_Output
+  let s1 ← permutation.empty_slot Clause1_Output
+  let s2 ← permutation.empty_slot Clause2_Output
+  let s3 ← permutation.empty_slot Clause3_Output
+  let s4 ← permutation.empty_slot Clause4_Output
+  ok (s, s1, s2, s3, s4)
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output)> for (P, Q, R, S, T)}::count]:
+    Source: 'src/permutation.rs', lines 239:12-239:47
+    Visibility: public -/
+def
+  TuplePQRST.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.count
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {Clause0_Output :
+  Type} {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
+  {Clause4_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output) (GrammarInst4 :
+  Grammar T Clause4_Output) (self : (P × Q × R × S × T)) :
+  Result Std.Usize
+  := do
+  ok 5#usize
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output)> for (P, Q, R, S, T)}]
+    Source: 'src/permutation.rs', lines 236:8-256:9 -/
+@[reducible]
+def
+  TuplePQRST.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {Clause0_Output :
+  Type} {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
+  {Clause4_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output) (GrammarInst4 :
+  Grammar T Clause4_Output) : permutation.Layout (P × Q × R × S × T)
+  ((permutation.Slot Clause0_Output) × (permutation.Slot Clause1_Output) ×
+  (permutation.Slot Clause2_Output) × (permutation.Slot Clause3_Output) ×
+  (permutation.Slot Clause4_Output)) (Clause0_Output × Clause1_Output ×
+  Clause2_Output × Clause3_Output × Clause4_Output) := {
+  count :=
+    TuplePQRST.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.count
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+  empty :=
+    TuplePQRST.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.empty
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+  matched :=
+    TuplePQRST.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.matched
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+  clear :=
+    TuplePQRST.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.clear
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+  finish :=
+    TuplePQRST.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.finish
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output)> for (P, Q, R, S, T, U)}::finish]:
+    Source: 'src/permutation.rs', lines 248:12-255:13
+    Visibility: public -/
+def
+  TuplePQRSTU.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.finish
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
+  {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output : Type}
+  {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
+  (GrammarInst : Grammar P Clause0_Output) (GrammarInst1 : Grammar Q
+  Clause1_Output) (GrammarInst2 : Grammar R Clause2_Output) (GrammarInst3 :
+  Grammar S Clause3_Output) (GrammarInst4 : Grammar T Clause4_Output)
+  (GrammarInst5 : Grammar U Clause5_Output)
+  (self : (P × Q × R × S × T × U))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+  Clause5_Output))) :
+  Result (core.result.Result (Clause0_Output × Clause1_Output ×
+    Clause2_Output × Clause3_Output × Clause4_Output × Clause5_Output)
+    ParseError)
+  := do
+  let (p, q, r, s, t, u) := state
+  let r1 ← permutation.slot_value p
+  match r1 with
+  | core.result.Result.Ok value =>
+    let r2 ← permutation.slot_value q
+    match r2 with
+    | core.result.Result.Ok value1 =>
+      let r3 ← permutation.slot_value r
+      match r3 with
+      | core.result.Result.Ok value2 =>
+        let r4 ← permutation.slot_value s
+        match r4 with
+        | core.result.Result.Ok value3 =>
+          let r5 ← permutation.slot_value t
+          match r5 with
+          | core.result.Result.Ok value4 =>
+            let r6 ← permutation.slot_value u
+            match r6 with
+            | core.result.Result.Ok value5 =>
+              ok (core.result.Result.Ok (value, value1, value2, value3, value4,
+                value5))
+            | core.result.Result.Err error => ok (core.result.Result.Err error)
+          | core.result.Result.Err error => ok (core.result.Result.Err error)
+        | core.result.Result.Err error => ok (core.result.Result.Err error)
+      | core.result.Result.Err error => ok (core.result.Result.Err error)
+    | core.result.Result.Err error => ok (core.result.Result.Err error)
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output)> for (P, Q, R, S, T, U)}::clear]:
+    Source: 'src/permutation.rs', lines 244:12-247:13
+    Visibility: public -/
+def
+  TuplePQRSTU.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.clear
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
+  {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output : Type}
+  {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
+  (GrammarInst : Grammar P Clause0_Output) (GrammarInst1 : Grammar Q
+  Clause1_Output) (GrammarInst2 : Grammar R Clause2_Output) (GrammarInst3 :
+  Grammar S Clause3_Output) (GrammarInst4 : Grammar T Clause4_Output)
+  (GrammarInst5 : Grammar U Clause5_Output)
+  (self : (P × Q × R × S × T × U))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+  Clause5_Output))) (index : Std.Usize) :
+  Result ((permutation.Slot Clause0_Output) × (permutation.Slot
+    Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+    Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+    Clause5_Output))
+  := do
+  match index.val with
+  | 0 =>
+    let s ← permutation.empty_slot Clause0_Output
+    let (_, s1, s2, s3, s4, s5) := state
+    ok (s, s1, s2, s3, s4, s5)
+  | 1 =>
+    let s ← permutation.empty_slot Clause1_Output
+    let (s1, _, s2, s3, s4, s5) := state
+    ok (s1, s, s2, s3, s4, s5)
+  | 2 =>
+    let s ← permutation.empty_slot Clause2_Output
+    let (s1, s2, _, s3, s4, s5) := state
+    ok (s1, s2, s, s3, s4, s5)
+  | 3 =>
+    let s ← permutation.empty_slot Clause3_Output
+    let (s1, s2, s3, _, s4, s5) := state
+    ok (s1, s2, s3, s, s4, s5)
+  | 4 =>
+    let s ← permutation.empty_slot Clause4_Output
+    let (s1, s2, s3, s4, _, s5) := state
+    ok (s1, s2, s3, s4, s, s5)
+  | 5 =>
+    let s ← permutation.empty_slot Clause5_Output
+    let (s1, s2, s3, s4, s5, _) := state
+    ok (s1, s2, s3, s4, s5, s)
+  | _ => ok state
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output)> for (P, Q, R, S, T, U)}::matched]:
+    Source: 'src/permutation.rs', lines 241:12-243:13
+    Visibility: public -/
+def
+  TuplePQRSTU.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.matched
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
+  {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output : Type}
+  {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
+  (GrammarInst : Grammar P Clause0_Output) (GrammarInst1 : Grammar Q
+  Clause1_Output) (GrammarInst2 : Grammar R Clause2_Output) (GrammarInst3 :
+  Grammar S Clause3_Output) (GrammarInst4 : Grammar T Clause4_Output)
+  (GrammarInst5 : Grammar U Clause5_Output)
+  (self : (P × Q × R × S × T × U))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+  Clause5_Output))) (index : Std.Usize) :
+  Result Bool
+  := do
+  match index.val with
+  | 0 => let (s, _, _, _, _, _) := state
+         ok s.matched
+  | 1 => let (_, s, _, _, _, _) := state
+         ok s.matched
+  | 2 => let (_, _, s, _, _, _) := state
+         ok s.matched
+  | 3 => let (_, _, _, s, _, _) := state
+         ok s.matched
+  | 4 => let (_, _, _, _, s, _) := state
+         ok s.matched
+  | 5 => let (_, _, _, _, _, s) := state
+         ok s.matched
+  | _ => ok false
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output)> for (P, Q, R, S, T, U)}::empty]:
+    Source: 'src/permutation.rs', lines 240:12-240:80
+    Visibility: public -/
+def
+  TuplePQRSTU.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.empty
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
+  {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output : Type}
+  {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
+  (GrammarInst : Grammar P Clause0_Output) (GrammarInst1 : Grammar Q
+  Clause1_Output) (GrammarInst2 : Grammar R Clause2_Output) (GrammarInst3 :
+  Grammar S Clause3_Output) (GrammarInst4 : Grammar T Clause4_Output)
+  (GrammarInst5 : Grammar U Clause5_Output)
+  (self : (P × Q × R × S × T × U)) :
+  Result ((permutation.Slot Clause0_Output) × (permutation.Slot
+    Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+    Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+    Clause5_Output))
+  := do
+  let s ← permutation.empty_slot Clause0_Output
+  let s1 ← permutation.empty_slot Clause1_Output
+  let s2 ← permutation.empty_slot Clause2_Output
+  let s3 ← permutation.empty_slot Clause3_Output
+  let s4 ← permutation.empty_slot Clause4_Output
+  let s5 ← permutation.empty_slot Clause5_Output
+  ok (s, s1, s2, s3, s4, s5)
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output)> for (P, Q, R, S, T, U)}::count]:
+    Source: 'src/permutation.rs', lines 239:12-239:47
+    Visibility: public -/
+def
+  TuplePQRSTU.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.count
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
+  {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output : Type}
+  {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
+  (GrammarInst : Grammar P Clause0_Output) (GrammarInst1 : Grammar Q
+  Clause1_Output) (GrammarInst2 : Grammar R Clause2_Output) (GrammarInst3 :
+  Grammar S Clause3_Output) (GrammarInst4 : Grammar T Clause4_Output)
+  (GrammarInst5 : Grammar U Clause5_Output)
+  (self : (P × Q × R × S × T × U)) :
+  Result Std.Usize
+  := do
+  ok 6#usize
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output)> for (P, Q, R, S, T, U)}]
+    Source: 'src/permutation.rs', lines 236:8-256:9 -/
+@[reducible]
+def
+  TuplePQRSTU.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
+  {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output : Type}
+  {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
+  (GrammarInst : Grammar P Clause0_Output) (GrammarInst1 : Grammar Q
+  Clause1_Output) (GrammarInst2 : Grammar R Clause2_Output) (GrammarInst3 :
+  Grammar S Clause3_Output) (GrammarInst4 : Grammar T Clause4_Output)
+  (GrammarInst5 : Grammar U Clause5_Output) : permutation.Layout (P × Q × R
+  × S × T × U) ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+  Clause5_Output)) (Clause0_Output × Clause1_Output × Clause2_Output ×
+  Clause3_Output × Clause4_Output × Clause5_Output) := {
+  count :=
+    TuplePQRSTU.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.count
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5
+  empty :=
+    TuplePQRSTU.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.empty
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5
+  matched :=
+    TuplePQRSTU.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.matched
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5
+  clear :=
+    TuplePQRSTU.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.clear
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5
+  finish :=
+    TuplePQRSTU.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.finish
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output)> for (P, Q, R, S, T, U, V)}::finish]:
+    Source: 'src/permutation.rs', lines 248:12-255:13
+    Visibility: public -/
+def
+  TuplePQRSTUV.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.finish
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output : Type}
+  {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
+  {Clause6_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output) (GrammarInst4 :
+  Grammar T Clause4_Output) (GrammarInst5 : Grammar U Clause5_Output)
+  (GrammarInst6 : Grammar V Clause6_Output)
+  (self : (P × Q × R × S × T × U × V))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+  Clause5_Output) × (permutation.Slot Clause6_Output))) :
+  Result (core.result.Result (Clause0_Output × Clause1_Output ×
+    Clause2_Output × Clause3_Output × Clause4_Output × Clause5_Output ×
+    Clause6_Output) ParseError)
+  := do
+  let (p, q, r, s, t, u, v) := state
+  let r1 ← permutation.slot_value p
+  match r1 with
+  | core.result.Result.Ok value =>
+    let r2 ← permutation.slot_value q
+    match r2 with
+    | core.result.Result.Ok value1 =>
+      let r3 ← permutation.slot_value r
+      match r3 with
+      | core.result.Result.Ok value2 =>
+        let r4 ← permutation.slot_value s
+        match r4 with
+        | core.result.Result.Ok value3 =>
+          let r5 ← permutation.slot_value t
+          match r5 with
+          | core.result.Result.Ok value4 =>
+            let r6 ← permutation.slot_value u
+            match r6 with
+            | core.result.Result.Ok value5 =>
+              let r7 ← permutation.slot_value v
+              match r7 with
+              | core.result.Result.Ok value6 =>
+                ok (core.result.Result.Ok (value, value1, value2, value3,
+                  value4, value5, value6))
+              | core.result.Result.Err error =>
+                ok (core.result.Result.Err error)
+            | core.result.Result.Err error => ok (core.result.Result.Err error)
+          | core.result.Result.Err error => ok (core.result.Result.Err error)
+        | core.result.Result.Err error => ok (core.result.Result.Err error)
+      | core.result.Result.Err error => ok (core.result.Result.Err error)
+    | core.result.Result.Err error => ok (core.result.Result.Err error)
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output)> for (P, Q, R, S, T, U, V)}::clear]:
+    Source: 'src/permutation.rs', lines 244:12-247:13
+    Visibility: public -/
+def
+  TuplePQRSTUV.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.clear
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output : Type}
+  {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
+  {Clause6_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output) (GrammarInst4 :
+  Grammar T Clause4_Output) (GrammarInst5 : Grammar U Clause5_Output)
+  (GrammarInst6 : Grammar V Clause6_Output)
+  (self : (P × Q × R × S × T × U × V))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+  Clause5_Output) × (permutation.Slot Clause6_Output))) (index : Std.Usize) :
+  Result ((permutation.Slot Clause0_Output) × (permutation.Slot
+    Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+    Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+    Clause5_Output) × (permutation.Slot Clause6_Output))
+  := do
+  match index.val with
+  | 0 =>
+    let s ← permutation.empty_slot Clause0_Output
+    let (_, s1, s2, s3, s4, s5, s6) := state
+    ok (s, s1, s2, s3, s4, s5, s6)
+  | 1 =>
+    let s ← permutation.empty_slot Clause1_Output
+    let (s1, _, s2, s3, s4, s5, s6) := state
+    ok (s1, s, s2, s3, s4, s5, s6)
+  | 2 =>
+    let s ← permutation.empty_slot Clause2_Output
+    let (s1, s2, _, s3, s4, s5, s6) := state
+    ok (s1, s2, s, s3, s4, s5, s6)
+  | 3 =>
+    let s ← permutation.empty_slot Clause3_Output
+    let (s1, s2, s3, _, s4, s5, s6) := state
+    ok (s1, s2, s3, s, s4, s5, s6)
+  | 4 =>
+    let s ← permutation.empty_slot Clause4_Output
+    let (s1, s2, s3, s4, _, s5, s6) := state
+    ok (s1, s2, s3, s4, s, s5, s6)
+  | 5 =>
+    let s ← permutation.empty_slot Clause5_Output
+    let (s1, s2, s3, s4, s5, _, s6) := state
+    ok (s1, s2, s3, s4, s5, s, s6)
+  | 6 =>
+    let s ← permutation.empty_slot Clause6_Output
+    let (s1, s2, s3, s4, s5, s6, _) := state
+    ok (s1, s2, s3, s4, s5, s6, s)
+  | _ => ok state
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output)> for (P, Q, R, S, T, U, V)}::matched]:
+    Source: 'src/permutation.rs', lines 241:12-243:13
+    Visibility: public -/
+def
+  TuplePQRSTUV.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.matched
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output : Type}
+  {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
+  {Clause6_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output) (GrammarInst4 :
+  Grammar T Clause4_Output) (GrammarInst5 : Grammar U Clause5_Output)
+  (GrammarInst6 : Grammar V Clause6_Output)
+  (self : (P × Q × R × S × T × U × V))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+  Clause5_Output) × (permutation.Slot Clause6_Output))) (index : Std.Usize) :
+  Result Bool
+  := do
+  match index.val with
+  | 0 => let (s, _, _, _, _, _, _) := state
+         ok s.matched
+  | 1 => let (_, s, _, _, _, _, _) := state
+         ok s.matched
+  | 2 => let (_, _, s, _, _, _, _) := state
+         ok s.matched
+  | 3 => let (_, _, _, s, _, _, _) := state
+         ok s.matched
+  | 4 => let (_, _, _, _, s, _, _) := state
+         ok s.matched
+  | 5 => let (_, _, _, _, _, s, _) := state
+         ok s.matched
+  | 6 => let (_, _, _, _, _, _, s) := state
+         ok s.matched
+  | _ => ok false
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output)> for (P, Q, R, S, T, U, V)}::empty]:
+    Source: 'src/permutation.rs', lines 240:12-240:80
+    Visibility: public -/
+def
+  TuplePQRSTUV.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.empty
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output : Type}
+  {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
+  {Clause6_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output) (GrammarInst4 :
+  Grammar T Clause4_Output) (GrammarInst5 : Grammar U Clause5_Output)
+  (GrammarInst6 : Grammar V Clause6_Output)
+  (self : (P × Q × R × S × T × U × V)) :
+  Result ((permutation.Slot Clause0_Output) × (permutation.Slot
+    Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+    Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+    Clause5_Output) × (permutation.Slot Clause6_Output))
+  := do
+  let s ← permutation.empty_slot Clause0_Output
+  let s1 ← permutation.empty_slot Clause1_Output
+  let s2 ← permutation.empty_slot Clause2_Output
+  let s3 ← permutation.empty_slot Clause3_Output
+  let s4 ← permutation.empty_slot Clause4_Output
+  let s5 ← permutation.empty_slot Clause5_Output
+  let s6 ← permutation.empty_slot Clause6_Output
+  ok (s, s1, s2, s3, s4, s5, s6)
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output)> for (P, Q, R, S, T, U, V)}::count]:
+    Source: 'src/permutation.rs', lines 239:12-239:47
+    Visibility: public -/
+def
+  TuplePQRSTUV.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.count
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output : Type}
+  {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
+  {Clause6_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output) (GrammarInst4 :
+  Grammar T Clause4_Output) (GrammarInst5 : Grammar U Clause5_Output)
+  (GrammarInst6 : Grammar V Clause6_Output)
+  (self : (P × Q × R × S × T × U × V)) :
+  Result Std.Usize
+  := do
+  ok 7#usize
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output)> for (P, Q, R, S, T, U, V)}]
+    Source: 'src/permutation.rs', lines 236:8-256:9 -/
+@[reducible]
+def
+  TuplePQRSTUV.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output : Type}
+  {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
+  {Clause6_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output) (GrammarInst4 :
+  Grammar T Clause4_Output) (GrammarInst5 : Grammar U Clause5_Output)
+  (GrammarInst6 : Grammar V Clause6_Output) : permutation.Layout (P × Q × R
+  × S × T × U × V) ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+  Clause5_Output) × (permutation.Slot Clause6_Output)) (Clause0_Output ×
+  Clause1_Output × Clause2_Output × Clause3_Output × Clause4_Output ×
+  Clause5_Output × Clause6_Output) := {
+  count :=
+    TuplePQRSTUV.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.count
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6
+  empty :=
+    TuplePQRSTUV.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.empty
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6
+  matched :=
+    TuplePQRSTUV.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.matched
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6
+  clear :=
+    TuplePQRSTUV.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.clear
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6
+  finish :=
+    TuplePQRSTUV.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.finish
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output)> for (P, Q, R, S, T, U, V, W)}::finish]:
+    Source: 'src/permutation.rs', lines 248:12-255:13
+    Visibility: public -/
+def
+  TuplePQRSTUVW.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.finish
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output :
+  Type} {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
+  {Clause6_Output : Type} {Clause7_Output : Type} (GrammarInst : Grammar P
+  Clause0_Output) (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 :
+  Grammar R Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output)
+  (GrammarInst4 : Grammar T Clause4_Output) (GrammarInst5 : Grammar U
+  Clause5_Output) (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 :
+  Grammar W Clause7_Output) (self : (P × Q × R × S × T × U × V × W))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+  Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+  Clause7_Output))) :
+  Result (core.result.Result (Clause0_Output × Clause1_Output ×
+    Clause2_Output × Clause3_Output × Clause4_Output × Clause5_Output ×
+    Clause6_Output × Clause7_Output) ParseError)
+  := do
+  let (p, q, r, s, t, u, v, w) := state
+  let r1 ← permutation.slot_value p
+  match r1 with
+  | core.result.Result.Ok value =>
+    let r2 ← permutation.slot_value q
+    match r2 with
+    | core.result.Result.Ok value1 =>
+      let r3 ← permutation.slot_value r
+      match r3 with
+      | core.result.Result.Ok value2 =>
+        let r4 ← permutation.slot_value s
+        match r4 with
+        | core.result.Result.Ok value3 =>
+          let r5 ← permutation.slot_value t
+          match r5 with
+          | core.result.Result.Ok value4 =>
+            let r6 ← permutation.slot_value u
+            match r6 with
+            | core.result.Result.Ok value5 =>
+              let r7 ← permutation.slot_value v
+              match r7 with
+              | core.result.Result.Ok value6 =>
+                let r8 ← permutation.slot_value w
+                match r8 with
+                | core.result.Result.Ok value7 =>
+                  ok (core.result.Result.Ok (value, value1, value2, value3,
+                    value4, value5, value6, value7))
+                | core.result.Result.Err error =>
+                  ok (core.result.Result.Err error)
+              | core.result.Result.Err error =>
+                ok (core.result.Result.Err error)
+            | core.result.Result.Err error => ok (core.result.Result.Err error)
+          | core.result.Result.Err error => ok (core.result.Result.Err error)
+        | core.result.Result.Err error => ok (core.result.Result.Err error)
+      | core.result.Result.Err error => ok (core.result.Result.Err error)
+    | core.result.Result.Err error => ok (core.result.Result.Err error)
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output)> for (P, Q, R, S, T, U, V, W)}::clear]:
+    Source: 'src/permutation.rs', lines 244:12-247:13
+    Visibility: public -/
+def
+  TuplePQRSTUVW.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.clear
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output :
+  Type} {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
+  {Clause6_Output : Type} {Clause7_Output : Type} (GrammarInst : Grammar P
+  Clause0_Output) (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 :
+  Grammar R Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output)
+  (GrammarInst4 : Grammar T Clause4_Output) (GrammarInst5 : Grammar U
+  Clause5_Output) (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 :
+  Grammar W Clause7_Output) (self : (P × Q × R × S × T × U × V × W))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+  Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+  Clause7_Output))) (index : Std.Usize) :
+  Result ((permutation.Slot Clause0_Output) × (permutation.Slot
+    Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+    Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+    Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+    Clause7_Output))
+  := do
+  match index.val with
+  | 0 =>
+    let s ← permutation.empty_slot Clause0_Output
+    let (_, s1, s2, s3, s4, s5, s6, s7) := state
+    ok (s, s1, s2, s3, s4, s5, s6, s7)
+  | 1 =>
+    let s ← permutation.empty_slot Clause1_Output
+    let (s1, _, s2, s3, s4, s5, s6, s7) := state
+    ok (s1, s, s2, s3, s4, s5, s6, s7)
+  | 2 =>
+    let s ← permutation.empty_slot Clause2_Output
+    let (s1, s2, _, s3, s4, s5, s6, s7) := state
+    ok (s1, s2, s, s3, s4, s5, s6, s7)
+  | 3 =>
+    let s ← permutation.empty_slot Clause3_Output
+    let (s1, s2, s3, _, s4, s5, s6, s7) := state
+    ok (s1, s2, s3, s, s4, s5, s6, s7)
+  | 4 =>
+    let s ← permutation.empty_slot Clause4_Output
+    let (s1, s2, s3, s4, _, s5, s6, s7) := state
+    ok (s1, s2, s3, s4, s, s5, s6, s7)
+  | 5 =>
+    let s ← permutation.empty_slot Clause5_Output
+    let (s1, s2, s3, s4, s5, _, s6, s7) := state
+    ok (s1, s2, s3, s4, s5, s, s6, s7)
+  | 6 =>
+    let s ← permutation.empty_slot Clause6_Output
+    let (s1, s2, s3, s4, s5, s6, _, s7) := state
+    ok (s1, s2, s3, s4, s5, s6, s, s7)
+  | 7 =>
+    let s ← permutation.empty_slot Clause7_Output
+    let (s1, s2, s3, s4, s5, s6, s7, _) := state
+    ok (s1, s2, s3, s4, s5, s6, s7, s)
+  | _ => ok state
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output)> for (P, Q, R, S, T, U, V, W)}::matched]:
+    Source: 'src/permutation.rs', lines 241:12-243:13
+    Visibility: public -/
+def
+  TuplePQRSTUVW.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.matched
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output :
+  Type} {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
+  {Clause6_Output : Type} {Clause7_Output : Type} (GrammarInst : Grammar P
+  Clause0_Output) (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 :
+  Grammar R Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output)
+  (GrammarInst4 : Grammar T Clause4_Output) (GrammarInst5 : Grammar U
+  Clause5_Output) (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 :
+  Grammar W Clause7_Output) (self : (P × Q × R × S × T × U × V × W))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+  Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+  Clause7_Output))) (index : Std.Usize) :
+  Result Bool
+  := do
+  match index.val with
+  | 0 => let (s, _, _, _, _, _, _, _) := state
+         ok s.matched
+  | 1 => let (_, s, _, _, _, _, _, _) := state
+         ok s.matched
+  | 2 => let (_, _, s, _, _, _, _, _) := state
+         ok s.matched
+  | 3 => let (_, _, _, s, _, _, _, _) := state
+         ok s.matched
+  | 4 => let (_, _, _, _, s, _, _, _) := state
+         ok s.matched
+  | 5 => let (_, _, _, _, _, s, _, _) := state
+         ok s.matched
+  | 6 => let (_, _, _, _, _, _, s, _) := state
+         ok s.matched
+  | 7 => let (_, _, _, _, _, _, _, s) := state
+         ok s.matched
+  | _ => ok false
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output)> for (P, Q, R, S, T, U, V, W)}::empty]:
+    Source: 'src/permutation.rs', lines 240:12-240:80
+    Visibility: public -/
+def
+  TuplePQRSTUVW.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.empty
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output :
+  Type} {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
+  {Clause6_Output : Type} {Clause7_Output : Type} (GrammarInst : Grammar P
+  Clause0_Output) (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 :
+  Grammar R Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output)
+  (GrammarInst4 : Grammar T Clause4_Output) (GrammarInst5 : Grammar U
+  Clause5_Output) (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 :
+  Grammar W Clause7_Output) (self : (P × Q × R × S × T × U × V × W)) :
+  Result ((permutation.Slot Clause0_Output) × (permutation.Slot
+    Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+    Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+    Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+    Clause7_Output))
+  := do
+  let s ← permutation.empty_slot Clause0_Output
+  let s1 ← permutation.empty_slot Clause1_Output
+  let s2 ← permutation.empty_slot Clause2_Output
+  let s3 ← permutation.empty_slot Clause3_Output
+  let s4 ← permutation.empty_slot Clause4_Output
+  let s5 ← permutation.empty_slot Clause5_Output
+  let s6 ← permutation.empty_slot Clause6_Output
+  let s7 ← permutation.empty_slot Clause7_Output
+  ok (s, s1, s2, s3, s4, s5, s6, s7)
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output)> for (P, Q, R, S, T, U, V, W)}::count]:
+    Source: 'src/permutation.rs', lines 239:12-239:47
+    Visibility: public -/
+def
+  TuplePQRSTUVW.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.count
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output :
+  Type} {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
+  {Clause6_Output : Type} {Clause7_Output : Type} (GrammarInst : Grammar P
+  Clause0_Output) (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 :
+  Grammar R Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output)
+  (GrammarInst4 : Grammar T Clause4_Output) (GrammarInst5 : Grammar U
+  Clause5_Output) (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 :
+  Grammar W Clause7_Output) (self : (P × Q × R × S × T × U × V × W)) :
+  Result Std.Usize
+  := do
+  ok 8#usize
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output)> for (P, Q, R, S, T, U, V, W)}]
+    Source: 'src/permutation.rs', lines 236:8-256:9 -/
+@[reducible]
+def
+  TuplePQRSTUVW.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output :
+  Type} {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
+  {Clause6_Output : Type} {Clause7_Output : Type} (GrammarInst : Grammar P
+  Clause0_Output) (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 :
+  Grammar R Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output)
+  (GrammarInst4 : Grammar T Clause4_Output) (GrammarInst5 : Grammar U
+  Clause5_Output) (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 :
+  Grammar W Clause7_Output) : permutation.Layout (P × Q × R × S × T × U ×
+  V × W) ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+  Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+  Clause7_Output)) (Clause0_Output × Clause1_Output × Clause2_Output ×
+  Clause3_Output × Clause4_Output × Clause5_Output × Clause6_Output ×
+  Clause7_Output) := {
+  count :=
+    TuplePQRSTUVW.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.count
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6 GrammarInst7
+  empty :=
+    TuplePQRSTUVW.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.empty
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6 GrammarInst7
+  matched :=
+    TuplePQRSTUVW.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.matched
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6 GrammarInst7
+  clear :=
+    TuplePQRSTUVW.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.clear
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6 GrammarInst7
+  finish :=
+    TuplePQRSTUVW.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.finish
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6 GrammarInst7
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>, rusthammer::permutation::Slot<Clause8_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output)> for (P, Q, R, S, T, U, V, W, X)}::finish]:
+    Source: 'src/permutation.rs', lines 248:12-255:13
+    Visibility: public -/
+def
+  TuplePQRSTUVWX.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.finish
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {X : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+  {Clause2_Output : Type} {Clause3_Output : Type} {Clause4_Output : Type}
+  {Clause5_Output : Type} {Clause6_Output : Type} {Clause7_Output : Type}
+  {Clause8_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output) (GrammarInst4 :
+  Grammar T Clause4_Output) (GrammarInst5 : Grammar U Clause5_Output)
+  (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 : Grammar W
+  Clause7_Output) (GrammarInst8 : Grammar X Clause8_Output)
+  (self : (P × Q × R × S × T × U × V × W × X))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+  Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+  Clause7_Output) × (permutation.Slot Clause8_Output))) :
+  Result (core.result.Result (Clause0_Output × Clause1_Output ×
+    Clause2_Output × Clause3_Output × Clause4_Output × Clause5_Output ×
+    Clause6_Output × Clause7_Output × Clause8_Output) ParseError)
+  := do
+  let (p, q, r, s, t, u, v, w, x) := state
+  let r1 ← permutation.slot_value p
+  match r1 with
+  | core.result.Result.Ok value =>
+    let r2 ← permutation.slot_value q
+    match r2 with
+    | core.result.Result.Ok value1 =>
+      let r3 ← permutation.slot_value r
+      match r3 with
+      | core.result.Result.Ok value2 =>
+        let r4 ← permutation.slot_value s
+        match r4 with
+        | core.result.Result.Ok value3 =>
+          let r5 ← permutation.slot_value t
+          match r5 with
+          | core.result.Result.Ok value4 =>
+            let r6 ← permutation.slot_value u
+            match r6 with
+            | core.result.Result.Ok value5 =>
+              let r7 ← permutation.slot_value v
+              match r7 with
+              | core.result.Result.Ok value6 =>
+                let r8 ← permutation.slot_value w
+                match r8 with
+                | core.result.Result.Ok value7 =>
+                  let r9 ← permutation.slot_value x
+                  match r9 with
+                  | core.result.Result.Ok value8 =>
+                    ok (core.result.Result.Ok (value, value1, value2, value3,
+                      value4, value5, value6, value7, value8))
+                  | core.result.Result.Err error =>
+                    ok (core.result.Result.Err error)
+                | core.result.Result.Err error =>
+                  ok (core.result.Result.Err error)
+              | core.result.Result.Err error =>
+                ok (core.result.Result.Err error)
+            | core.result.Result.Err error => ok (core.result.Result.Err error)
+          | core.result.Result.Err error => ok (core.result.Result.Err error)
+        | core.result.Result.Err error => ok (core.result.Result.Err error)
+      | core.result.Result.Err error => ok (core.result.Result.Err error)
+    | core.result.Result.Err error => ok (core.result.Result.Err error)
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>, rusthammer::permutation::Slot<Clause8_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output)> for (P, Q, R, S, T, U, V, W, X)}::clear]:
+    Source: 'src/permutation.rs', lines 244:12-247:13
+    Visibility: public -/
+def
+  TuplePQRSTUVWX.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.clear
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {X : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+  {Clause2_Output : Type} {Clause3_Output : Type} {Clause4_Output : Type}
+  {Clause5_Output : Type} {Clause6_Output : Type} {Clause7_Output : Type}
+  {Clause8_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output) (GrammarInst4 :
+  Grammar T Clause4_Output) (GrammarInst5 : Grammar U Clause5_Output)
+  (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 : Grammar W
+  Clause7_Output) (GrammarInst8 : Grammar X Clause8_Output)
+  (self : (P × Q × R × S × T × U × V × W × X))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+  Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+  Clause7_Output) × (permutation.Slot Clause8_Output))) (index : Std.Usize) :
+  Result ((permutation.Slot Clause0_Output) × (permutation.Slot
+    Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+    Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+    Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+    Clause7_Output) × (permutation.Slot Clause8_Output))
+  := do
+  match index.val with
+  | 0 =>
+    let s ← permutation.empty_slot Clause0_Output
+    let (_, s1, s2, s3, s4, s5, s6, s7, s8) := state
+    ok (s, s1, s2, s3, s4, s5, s6, s7, s8)
+  | 1 =>
+    let s ← permutation.empty_slot Clause1_Output
+    let (s1, _, s2, s3, s4, s5, s6, s7, s8) := state
+    ok (s1, s, s2, s3, s4, s5, s6, s7, s8)
+  | 2 =>
+    let s ← permutation.empty_slot Clause2_Output
+    let (s1, s2, _, s3, s4, s5, s6, s7, s8) := state
+    ok (s1, s2, s, s3, s4, s5, s6, s7, s8)
+  | 3 =>
+    let s ← permutation.empty_slot Clause3_Output
+    let (s1, s2, s3, _, s4, s5, s6, s7, s8) := state
+    ok (s1, s2, s3, s, s4, s5, s6, s7, s8)
+  | 4 =>
+    let s ← permutation.empty_slot Clause4_Output
+    let (s1, s2, s3, s4, _, s5, s6, s7, s8) := state
+    ok (s1, s2, s3, s4, s, s5, s6, s7, s8)
+  | 5 =>
+    let s ← permutation.empty_slot Clause5_Output
+    let (s1, s2, s3, s4, s5, _, s6, s7, s8) := state
+    ok (s1, s2, s3, s4, s5, s, s6, s7, s8)
+  | 6 =>
+    let s ← permutation.empty_slot Clause6_Output
+    let (s1, s2, s3, s4, s5, s6, _, s7, s8) := state
+    ok (s1, s2, s3, s4, s5, s6, s, s7, s8)
+  | 7 =>
+    let s ← permutation.empty_slot Clause7_Output
+    let (s1, s2, s3, s4, s5, s6, s7, _, s8) := state
+    ok (s1, s2, s3, s4, s5, s6, s7, s, s8)
+  | 8 =>
+    let s ← permutation.empty_slot Clause8_Output
+    let (s1, s2, s3, s4, s5, s6, s7, s8, _) := state
+    ok (s1, s2, s3, s4, s5, s6, s7, s8, s)
+  | _ => ok state
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>, rusthammer::permutation::Slot<Clause8_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output)> for (P, Q, R, S, T, U, V, W, X)}::matched]:
+    Source: 'src/permutation.rs', lines 241:12-243:13
+    Visibility: public -/
+def
+  TuplePQRSTUVWX.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.matched
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {X : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+  {Clause2_Output : Type} {Clause3_Output : Type} {Clause4_Output : Type}
+  {Clause5_Output : Type} {Clause6_Output : Type} {Clause7_Output : Type}
+  {Clause8_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output) (GrammarInst4 :
+  Grammar T Clause4_Output) (GrammarInst5 : Grammar U Clause5_Output)
+  (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 : Grammar W
+  Clause7_Output) (GrammarInst8 : Grammar X Clause8_Output)
+  (self : (P × Q × R × S × T × U × V × W × X))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+  Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+  Clause7_Output) × (permutation.Slot Clause8_Output))) (index : Std.Usize) :
+  Result Bool
+  := do
+  match index.val with
+  | 0 => let (s, _, _, _, _, _, _, _, _) := state
+         ok s.matched
+  | 1 => let (_, s, _, _, _, _, _, _, _) := state
+         ok s.matched
+  | 2 => let (_, _, s, _, _, _, _, _, _) := state
+         ok s.matched
+  | 3 => let (_, _, _, s, _, _, _, _, _) := state
+         ok s.matched
+  | 4 => let (_, _, _, _, s, _, _, _, _) := state
+         ok s.matched
+  | 5 => let (_, _, _, _, _, s, _, _, _) := state
+         ok s.matched
+  | 6 => let (_, _, _, _, _, _, s, _, _) := state
+         ok s.matched
+  | 7 => let (_, _, _, _, _, _, _, s, _) := state
+         ok s.matched
+  | 8 => let (_, _, _, _, _, _, _, _, s) := state
+         ok s.matched
+  | _ => ok false
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>, rusthammer::permutation::Slot<Clause8_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output)> for (P, Q, R, S, T, U, V, W, X)}::empty]:
+    Source: 'src/permutation.rs', lines 240:12-240:80
+    Visibility: public -/
+def
+  TuplePQRSTUVWX.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.empty
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {X : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+  {Clause2_Output : Type} {Clause3_Output : Type} {Clause4_Output : Type}
+  {Clause5_Output : Type} {Clause6_Output : Type} {Clause7_Output : Type}
+  {Clause8_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output) (GrammarInst4 :
+  Grammar T Clause4_Output) (GrammarInst5 : Grammar U Clause5_Output)
+  (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 : Grammar W
+  Clause7_Output) (GrammarInst8 : Grammar X Clause8_Output)
+  (self : (P × Q × R × S × T × U × V × W × X)) :
+  Result ((permutation.Slot Clause0_Output) × (permutation.Slot
+    Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+    Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+    Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+    Clause7_Output) × (permutation.Slot Clause8_Output))
+  := do
+  let s ← permutation.empty_slot Clause0_Output
+  let s1 ← permutation.empty_slot Clause1_Output
+  let s2 ← permutation.empty_slot Clause2_Output
+  let s3 ← permutation.empty_slot Clause3_Output
+  let s4 ← permutation.empty_slot Clause4_Output
+  let s5 ← permutation.empty_slot Clause5_Output
+  let s6 ← permutation.empty_slot Clause6_Output
+  let s7 ← permutation.empty_slot Clause7_Output
+  let s8 ← permutation.empty_slot Clause8_Output
+  ok (s, s1, s2, s3, s4, s5, s6, s7, s8)
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>, rusthammer::permutation::Slot<Clause8_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output)> for (P, Q, R, S, T, U, V, W, X)}::count]:
+    Source: 'src/permutation.rs', lines 239:12-239:47
+    Visibility: public -/
+def
+  TuplePQRSTUVWX.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.count
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {X : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+  {Clause2_Output : Type} {Clause3_Output : Type} {Clause4_Output : Type}
+  {Clause5_Output : Type} {Clause6_Output : Type} {Clause7_Output : Type}
+  {Clause8_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output) (GrammarInst4 :
+  Grammar T Clause4_Output) (GrammarInst5 : Grammar U Clause5_Output)
+  (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 : Grammar W
+  Clause7_Output) (GrammarInst8 : Grammar X Clause8_Output)
+  (self : (P × Q × R × S × T × U × V × W × X)) :
+  Result Std.Usize
+  := do
+  ok 9#usize
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>, rusthammer::permutation::Slot<Clause8_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output)> for (P, Q, R, S, T, U, V, W, X)}]
+    Source: 'src/permutation.rs', lines 236:8-256:9 -/
+@[reducible]
+def
+  TuplePQRSTUVWX.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {X : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+  {Clause2_Output : Type} {Clause3_Output : Type} {Clause4_Output : Type}
+  {Clause5_Output : Type} {Clause6_Output : Type} {Clause7_Output : Type}
+  {Clause8_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output) (GrammarInst4 :
+  Grammar T Clause4_Output) (GrammarInst5 : Grammar U Clause5_Output)
+  (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 : Grammar W
+  Clause7_Output) (GrammarInst8 : Grammar X Clause8_Output) :
+  permutation.Layout (P × Q × R × S × T × U × V × W × X)
+  ((permutation.Slot Clause0_Output) × (permutation.Slot Clause1_Output) ×
+  (permutation.Slot Clause2_Output) × (permutation.Slot Clause3_Output) ×
+  (permutation.Slot Clause4_Output) × (permutation.Slot Clause5_Output) ×
+  (permutation.Slot Clause6_Output) × (permutation.Slot Clause7_Output) ×
+  (permutation.Slot Clause8_Output)) (Clause0_Output × Clause1_Output ×
+  Clause2_Output × Clause3_Output × Clause4_Output × Clause5_Output ×
+  Clause6_Output × Clause7_Output × Clause8_Output) := {
+  count :=
+    TuplePQRSTUVWX.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.count
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6 GrammarInst7 GrammarInst8
+  empty :=
+    TuplePQRSTUVWX.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.empty
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6 GrammarInst7 GrammarInst8
+  matched :=
+    TuplePQRSTUVWX.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.matched
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6 GrammarInst7 GrammarInst8
+  clear :=
+    TuplePQRSTUVWX.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.clear
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6 GrammarInst7 GrammarInst8
+  finish :=
+    TuplePQRSTUVWX.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.finish
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6 GrammarInst7 GrammarInst8
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>, rusthammer::permutation::Slot<Clause8_Output>, rusthammer::permutation::Slot<Clause9_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output)> for (P, Q, R, S, T, U, V, W, X, Y)}::finish]:
+    Source: 'src/permutation.rs', lines 248:12-255:13
+    Visibility: public -/
+def
+  TuplePQRSTUVWXY.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.finish
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {X : Type} {Y : Type} {Clause0_Output : Type} {Clause1_Output :
+  Type} {Clause2_Output : Type} {Clause3_Output : Type} {Clause4_Output : Type}
+  {Clause5_Output : Type} {Clause6_Output : Type} {Clause7_Output : Type}
+  {Clause8_Output : Type} {Clause9_Output : Type} (GrammarInst : Grammar P
+  Clause0_Output) (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 :
+  Grammar R Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output)
+  (GrammarInst4 : Grammar T Clause4_Output) (GrammarInst5 : Grammar U
+  Clause5_Output) (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 :
+  Grammar W Clause7_Output) (GrammarInst8 : Grammar X Clause8_Output)
+  (GrammarInst9 : Grammar Y Clause9_Output)
+  (self : (P × Q × R × S × T × U × V × W × X × Y))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+  Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+  Clause7_Output) × (permutation.Slot Clause8_Output) × (permutation.Slot
+  Clause9_Output))) :
+  Result (core.result.Result (Clause0_Output × Clause1_Output ×
+    Clause2_Output × Clause3_Output × Clause4_Output × Clause5_Output ×
+    Clause6_Output × Clause7_Output × Clause8_Output × Clause9_Output)
+    ParseError)
+  := do
+  let (p, q, r, s, t, u, v, w, x, y) := state
+  let r1 ← permutation.slot_value p
+  match r1 with
+  | core.result.Result.Ok value =>
+    let r2 ← permutation.slot_value q
+    match r2 with
+    | core.result.Result.Ok value1 =>
+      let r3 ← permutation.slot_value r
+      match r3 with
+      | core.result.Result.Ok value2 =>
+        let r4 ← permutation.slot_value s
+        match r4 with
+        | core.result.Result.Ok value3 =>
+          let r5 ← permutation.slot_value t
+          match r5 with
+          | core.result.Result.Ok value4 =>
+            let r6 ← permutation.slot_value u
+            match r6 with
+            | core.result.Result.Ok value5 =>
+              let r7 ← permutation.slot_value v
+              match r7 with
+              | core.result.Result.Ok value6 =>
+                let r8 ← permutation.slot_value w
+                match r8 with
+                | core.result.Result.Ok value7 =>
+                  let r9 ← permutation.slot_value x
+                  match r9 with
+                  | core.result.Result.Ok value8 =>
+                    let r10 ← permutation.slot_value y
+                    match r10 with
+                    | core.result.Result.Ok value9 =>
+                      ok (core.result.Result.Ok (value, value1, value2, value3,
+                        value4, value5, value6, value7, value8, value9))
+                    | core.result.Result.Err error =>
+                      ok (core.result.Result.Err error)
+                  | core.result.Result.Err error =>
+                    ok (core.result.Result.Err error)
+                | core.result.Result.Err error =>
+                  ok (core.result.Result.Err error)
+              | core.result.Result.Err error =>
+                ok (core.result.Result.Err error)
+            | core.result.Result.Err error => ok (core.result.Result.Err error)
+          | core.result.Result.Err error => ok (core.result.Result.Err error)
+        | core.result.Result.Err error => ok (core.result.Result.Err error)
+      | core.result.Result.Err error => ok (core.result.Result.Err error)
+    | core.result.Result.Err error => ok (core.result.Result.Err error)
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>, rusthammer::permutation::Slot<Clause8_Output>, rusthammer::permutation::Slot<Clause9_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output)> for (P, Q, R, S, T, U, V, W, X, Y)}::clear]:
+    Source: 'src/permutation.rs', lines 244:12-247:13
+    Visibility: public -/
+def
+  TuplePQRSTUVWXY.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.clear
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {X : Type} {Y : Type} {Clause0_Output : Type} {Clause1_Output :
+  Type} {Clause2_Output : Type} {Clause3_Output : Type} {Clause4_Output : Type}
+  {Clause5_Output : Type} {Clause6_Output : Type} {Clause7_Output : Type}
+  {Clause8_Output : Type} {Clause9_Output : Type} (GrammarInst : Grammar P
+  Clause0_Output) (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 :
+  Grammar R Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output)
+  (GrammarInst4 : Grammar T Clause4_Output) (GrammarInst5 : Grammar U
+  Clause5_Output) (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 :
+  Grammar W Clause7_Output) (GrammarInst8 : Grammar X Clause8_Output)
+  (GrammarInst9 : Grammar Y Clause9_Output)
+  (self : (P × Q × R × S × T × U × V × W × X × Y))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+  Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+  Clause7_Output) × (permutation.Slot Clause8_Output) × (permutation.Slot
+  Clause9_Output))) (index : Std.Usize) :
+  Result ((permutation.Slot Clause0_Output) × (permutation.Slot
+    Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+    Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+    Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+    Clause7_Output) × (permutation.Slot Clause8_Output) × (permutation.Slot
+    Clause9_Output))
+  := do
+  match index.val with
+  | 0 =>
+    let s ← permutation.empty_slot Clause0_Output
+    let (_, s1, s2, s3, s4, s5, s6, s7, s8, s9) := state
+    ok (s, s1, s2, s3, s4, s5, s6, s7, s8, s9)
+  | 1 =>
+    let s ← permutation.empty_slot Clause1_Output
+    let (s1, _, s2, s3, s4, s5, s6, s7, s8, s9) := state
+    ok (s1, s, s2, s3, s4, s5, s6, s7, s8, s9)
+  | 2 =>
+    let s ← permutation.empty_slot Clause2_Output
+    let (s1, s2, _, s3, s4, s5, s6, s7, s8, s9) := state
+    ok (s1, s2, s, s3, s4, s5, s6, s7, s8, s9)
+  | 3 =>
+    let s ← permutation.empty_slot Clause3_Output
+    let (s1, s2, s3, _, s4, s5, s6, s7, s8, s9) := state
+    ok (s1, s2, s3, s, s4, s5, s6, s7, s8, s9)
+  | 4 =>
+    let s ← permutation.empty_slot Clause4_Output
+    let (s1, s2, s3, s4, _, s5, s6, s7, s8, s9) := state
+    ok (s1, s2, s3, s4, s, s5, s6, s7, s8, s9)
+  | 5 =>
+    let s ← permutation.empty_slot Clause5_Output
+    let (s1, s2, s3, s4, s5, _, s6, s7, s8, s9) := state
+    ok (s1, s2, s3, s4, s5, s, s6, s7, s8, s9)
+  | 6 =>
+    let s ← permutation.empty_slot Clause6_Output
+    let (s1, s2, s3, s4, s5, s6, _, s7, s8, s9) := state
+    ok (s1, s2, s3, s4, s5, s6, s, s7, s8, s9)
+  | 7 =>
+    let s ← permutation.empty_slot Clause7_Output
+    let (s1, s2, s3, s4, s5, s6, s7, _, s8, s9) := state
+    ok (s1, s2, s3, s4, s5, s6, s7, s, s8, s9)
+  | 8 =>
+    let s ← permutation.empty_slot Clause8_Output
+    let (s1, s2, s3, s4, s5, s6, s7, s8, _, s9) := state
+    ok (s1, s2, s3, s4, s5, s6, s7, s8, s, s9)
+  | 9 =>
+    let s ← permutation.empty_slot Clause9_Output
+    let (s1, s2, s3, s4, s5, s6, s7, s8, s9, _) := state
+    ok (s1, s2, s3, s4, s5, s6, s7, s8, s9, s)
+  | _ => ok state
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>, rusthammer::permutation::Slot<Clause8_Output>, rusthammer::permutation::Slot<Clause9_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output)> for (P, Q, R, S, T, U, V, W, X, Y)}::matched]:
+    Source: 'src/permutation.rs', lines 241:12-243:13
+    Visibility: public -/
+def
+  TuplePQRSTUVWXY.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.matched
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {X : Type} {Y : Type} {Clause0_Output : Type} {Clause1_Output :
+  Type} {Clause2_Output : Type} {Clause3_Output : Type} {Clause4_Output : Type}
+  {Clause5_Output : Type} {Clause6_Output : Type} {Clause7_Output : Type}
+  {Clause8_Output : Type} {Clause9_Output : Type} (GrammarInst : Grammar P
+  Clause0_Output) (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 :
+  Grammar R Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output)
+  (GrammarInst4 : Grammar T Clause4_Output) (GrammarInst5 : Grammar U
+  Clause5_Output) (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 :
+  Grammar W Clause7_Output) (GrammarInst8 : Grammar X Clause8_Output)
+  (GrammarInst9 : Grammar Y Clause9_Output)
+  (self : (P × Q × R × S × T × U × V × W × X × Y))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+  Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+  Clause7_Output) × (permutation.Slot Clause8_Output) × (permutation.Slot
+  Clause9_Output))) (index : Std.Usize) :
+  Result Bool
+  := do
+  match index.val with
+  | 0 => let (s, _, _, _, _, _, _, _, _, _) := state
+         ok s.matched
+  | 1 => let (_, s, _, _, _, _, _, _, _, _) := state
+         ok s.matched
+  | 2 => let (_, _, s, _, _, _, _, _, _, _) := state
+         ok s.matched
+  | 3 => let (_, _, _, s, _, _, _, _, _, _) := state
+         ok s.matched
+  | 4 => let (_, _, _, _, s, _, _, _, _, _) := state
+         ok s.matched
+  | 5 => let (_, _, _, _, _, s, _, _, _, _) := state
+         ok s.matched
+  | 6 => let (_, _, _, _, _, _, s, _, _, _) := state
+         ok s.matched
+  | 7 => let (_, _, _, _, _, _, _, s, _, _) := state
+         ok s.matched
+  | 8 => let (_, _, _, _, _, _, _, _, s, _) := state
+         ok s.matched
+  | 9 => let (_, _, _, _, _, _, _, _, _, s) := state
+         ok s.matched
+  | _ => ok false
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>, rusthammer::permutation::Slot<Clause8_Output>, rusthammer::permutation::Slot<Clause9_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output)> for (P, Q, R, S, T, U, V, W, X, Y)}::empty]:
+    Source: 'src/permutation.rs', lines 240:12-240:80
+    Visibility: public -/
+def
+  TuplePQRSTUVWXY.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.empty
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {X : Type} {Y : Type} {Clause0_Output : Type} {Clause1_Output :
+  Type} {Clause2_Output : Type} {Clause3_Output : Type} {Clause4_Output : Type}
+  {Clause5_Output : Type} {Clause6_Output : Type} {Clause7_Output : Type}
+  {Clause8_Output : Type} {Clause9_Output : Type} (GrammarInst : Grammar P
+  Clause0_Output) (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 :
+  Grammar R Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output)
+  (GrammarInst4 : Grammar T Clause4_Output) (GrammarInst5 : Grammar U
+  Clause5_Output) (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 :
+  Grammar W Clause7_Output) (GrammarInst8 : Grammar X Clause8_Output)
+  (GrammarInst9 : Grammar Y Clause9_Output)
+  (self : (P × Q × R × S × T × U × V × W × X × Y)) :
+  Result ((permutation.Slot Clause0_Output) × (permutation.Slot
+    Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+    Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+    Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+    Clause7_Output) × (permutation.Slot Clause8_Output) × (permutation.Slot
+    Clause9_Output))
+  := do
+  let s ← permutation.empty_slot Clause0_Output
+  let s1 ← permutation.empty_slot Clause1_Output
+  let s2 ← permutation.empty_slot Clause2_Output
+  let s3 ← permutation.empty_slot Clause3_Output
+  let s4 ← permutation.empty_slot Clause4_Output
+  let s5 ← permutation.empty_slot Clause5_Output
+  let s6 ← permutation.empty_slot Clause6_Output
+  let s7 ← permutation.empty_slot Clause7_Output
+  let s8 ← permutation.empty_slot Clause8_Output
+  let s9 ← permutation.empty_slot Clause9_Output
+  ok (s, s1, s2, s3, s4, s5, s6, s7, s8, s9)
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>, rusthammer::permutation::Slot<Clause8_Output>, rusthammer::permutation::Slot<Clause9_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output)> for (P, Q, R, S, T, U, V, W, X, Y)}::count]:
+    Source: 'src/permutation.rs', lines 239:12-239:47
+    Visibility: public -/
+def
+  TuplePQRSTUVWXY.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.count
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {X : Type} {Y : Type} {Clause0_Output : Type} {Clause1_Output :
+  Type} {Clause2_Output : Type} {Clause3_Output : Type} {Clause4_Output : Type}
+  {Clause5_Output : Type} {Clause6_Output : Type} {Clause7_Output : Type}
+  {Clause8_Output : Type} {Clause9_Output : Type} (GrammarInst : Grammar P
+  Clause0_Output) (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 :
+  Grammar R Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output)
+  (GrammarInst4 : Grammar T Clause4_Output) (GrammarInst5 : Grammar U
+  Clause5_Output) (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 :
+  Grammar W Clause7_Output) (GrammarInst8 : Grammar X Clause8_Output)
+  (GrammarInst9 : Grammar Y Clause9_Output)
+  (self : (P × Q × R × S × T × U × V × W × X × Y)) :
+  Result Std.Usize
+  := do
+  ok 10#usize
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>, rusthammer::permutation::Slot<Clause8_Output>, rusthammer::permutation::Slot<Clause9_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output)> for (P, Q, R, S, T, U, V, W, X, Y)}]
+    Source: 'src/permutation.rs', lines 236:8-256:9 -/
+@[reducible]
+def
+  TuplePQRSTUVWXY.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {X : Type} {Y : Type} {Clause0_Output : Type} {Clause1_Output :
+  Type} {Clause2_Output : Type} {Clause3_Output : Type} {Clause4_Output : Type}
+  {Clause5_Output : Type} {Clause6_Output : Type} {Clause7_Output : Type}
+  {Clause8_Output : Type} {Clause9_Output : Type} (GrammarInst : Grammar P
+  Clause0_Output) (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 :
+  Grammar R Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output)
+  (GrammarInst4 : Grammar T Clause4_Output) (GrammarInst5 : Grammar U
+  Clause5_Output) (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 :
+  Grammar W Clause7_Output) (GrammarInst8 : Grammar X Clause8_Output)
+  (GrammarInst9 : Grammar Y Clause9_Output) : permutation.Layout (P × Q × R
+  × S × T × U × V × W × X × Y) ((permutation.Slot Clause0_Output) ×
+  (permutation.Slot Clause1_Output) × (permutation.Slot Clause2_Output) ×
+  (permutation.Slot Clause3_Output) × (permutation.Slot Clause4_Output) ×
+  (permutation.Slot Clause5_Output) × (permutation.Slot Clause6_Output) ×
+  (permutation.Slot Clause7_Output) × (permutation.Slot Clause8_Output) ×
+  (permutation.Slot Clause9_Output)) (Clause0_Output × Clause1_Output ×
+  Clause2_Output × Clause3_Output × Clause4_Output × Clause5_Output ×
+  Clause6_Output × Clause7_Output × Clause8_Output × Clause9_Output) := {
+  count :=
+    TuplePQRSTUVWXY.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.count
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6 GrammarInst7 GrammarInst8 GrammarInst9
+  empty :=
+    TuplePQRSTUVWXY.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.empty
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6 GrammarInst7 GrammarInst8 GrammarInst9
+  matched :=
+    TuplePQRSTUVWXY.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.matched
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6 GrammarInst7 GrammarInst8 GrammarInst9
+  clear :=
+    TuplePQRSTUVWXY.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.clear
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6 GrammarInst7 GrammarInst8 GrammarInst9
+  finish :=
+    TuplePQRSTUVWXY.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.finish
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6 GrammarInst7 GrammarInst8 GrammarInst9
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>, rusthammer::permutation::Slot<Clause8_Output>, rusthammer::permutation::Slot<Clause9_Output>, rusthammer::permutation::Slot<Clause10_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output, Clause10_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z)}::finish]:
+    Source: 'src/permutation.rs', lines 248:12-255:13
+    Visibility: public -/
+def
+  TuplePQRSTUVWXYZ.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.finish
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {X : Type} {Y : Type} {Z : Type} {Clause0_Output : Type}
+  {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
+  {Clause4_Output : Type} {Clause5_Output : Type} {Clause6_Output : Type}
+  {Clause7_Output : Type} {Clause8_Output : Type} {Clause9_Output : Type}
+  {Clause10_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output) (GrammarInst4 :
+  Grammar T Clause4_Output) (GrammarInst5 : Grammar U Clause5_Output)
+  (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 : Grammar W
+  Clause7_Output) (GrammarInst8 : Grammar X Clause8_Output) (GrammarInst9 :
+  Grammar Y Clause9_Output) (GrammarInst10 : Grammar Z Clause10_Output)
+  (self : (P × Q × R × S × T × U × V × W × X × Y × Z))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+  Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+  Clause7_Output) × (permutation.Slot Clause8_Output) × (permutation.Slot
+  Clause9_Output) × (permutation.Slot Clause10_Output))) :
+  Result (core.result.Result (Clause0_Output × Clause1_Output ×
+    Clause2_Output × Clause3_Output × Clause4_Output × Clause5_Output ×
+    Clause6_Output × Clause7_Output × Clause8_Output × Clause9_Output ×
+    Clause10_Output) ParseError)
+  := do
+  let (p, q, r, s, t, u, v, w, x, y, z) := state
+  let r1 ← permutation.slot_value p
+  match r1 with
+  | core.result.Result.Ok value =>
+    let r2 ← permutation.slot_value q
+    match r2 with
+    | core.result.Result.Ok value1 =>
+      let r3 ← permutation.slot_value r
+      match r3 with
+      | core.result.Result.Ok value2 =>
+        let r4 ← permutation.slot_value s
+        match r4 with
+        | core.result.Result.Ok value3 =>
+          let r5 ← permutation.slot_value t
+          match r5 with
+          | core.result.Result.Ok value4 =>
+            let r6 ← permutation.slot_value u
+            match r6 with
+            | core.result.Result.Ok value5 =>
+              let r7 ← permutation.slot_value v
+              match r7 with
+              | core.result.Result.Ok value6 =>
+                let r8 ← permutation.slot_value w
+                match r8 with
+                | core.result.Result.Ok value7 =>
+                  let r9 ← permutation.slot_value x
+                  match r9 with
+                  | core.result.Result.Ok value8 =>
+                    let r10 ← permutation.slot_value y
+                    match r10 with
+                    | core.result.Result.Ok value9 =>
+                      let r11 ← permutation.slot_value z
+                      match r11 with
+                      | core.result.Result.Ok value10 =>
+                        ok (core.result.Result.Ok (value, value1, value2,
+                          value3, value4, value5, value6, value7, value8,
+                          value9, value10))
+                      | core.result.Result.Err error =>
+                        ok (core.result.Result.Err error)
+                    | core.result.Result.Err error =>
+                      ok (core.result.Result.Err error)
+                  | core.result.Result.Err error =>
+                    ok (core.result.Result.Err error)
+                | core.result.Result.Err error =>
+                  ok (core.result.Result.Err error)
+              | core.result.Result.Err error =>
+                ok (core.result.Result.Err error)
+            | core.result.Result.Err error => ok (core.result.Result.Err error)
+          | core.result.Result.Err error => ok (core.result.Result.Err error)
+        | core.result.Result.Err error => ok (core.result.Result.Err error)
+      | core.result.Result.Err error => ok (core.result.Result.Err error)
+    | core.result.Result.Err error => ok (core.result.Result.Err error)
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>, rusthammer::permutation::Slot<Clause8_Output>, rusthammer::permutation::Slot<Clause9_Output>, rusthammer::permutation::Slot<Clause10_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output, Clause10_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z)}::clear]:
+    Source: 'src/permutation.rs', lines 244:12-247:13
+    Visibility: public -/
+def
+  TuplePQRSTUVWXYZ.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.clear
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {X : Type} {Y : Type} {Z : Type} {Clause0_Output : Type}
+  {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
+  {Clause4_Output : Type} {Clause5_Output : Type} {Clause6_Output : Type}
+  {Clause7_Output : Type} {Clause8_Output : Type} {Clause9_Output : Type}
+  {Clause10_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output) (GrammarInst4 :
+  Grammar T Clause4_Output) (GrammarInst5 : Grammar U Clause5_Output)
+  (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 : Grammar W
+  Clause7_Output) (GrammarInst8 : Grammar X Clause8_Output) (GrammarInst9 :
+  Grammar Y Clause9_Output) (GrammarInst10 : Grammar Z Clause10_Output)
+  (self : (P × Q × R × S × T × U × V × W × X × Y × Z))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+  Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+  Clause7_Output) × (permutation.Slot Clause8_Output) × (permutation.Slot
+  Clause9_Output) × (permutation.Slot Clause10_Output))) (index : Std.Usize) :
+  Result ((permutation.Slot Clause0_Output) × (permutation.Slot
+    Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+    Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+    Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+    Clause7_Output) × (permutation.Slot Clause8_Output) × (permutation.Slot
+    Clause9_Output) × (permutation.Slot Clause10_Output))
+  := do
+  match index.val with
+  | 0 =>
+    let s ← permutation.empty_slot Clause0_Output
+    let (_, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10) := state
+    ok (s, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10)
+  | 1 =>
+    let s ← permutation.empty_slot Clause1_Output
+    let (s1, _, s2, s3, s4, s5, s6, s7, s8, s9, s10) := state
+    ok (s1, s, s2, s3, s4, s5, s6, s7, s8, s9, s10)
+  | 2 =>
+    let s ← permutation.empty_slot Clause2_Output
+    let (s1, s2, _, s3, s4, s5, s6, s7, s8, s9, s10) := state
+    ok (s1, s2, s, s3, s4, s5, s6, s7, s8, s9, s10)
+  | 3 =>
+    let s ← permutation.empty_slot Clause3_Output
+    let (s1, s2, s3, _, s4, s5, s6, s7, s8, s9, s10) := state
+    ok (s1, s2, s3, s, s4, s5, s6, s7, s8, s9, s10)
+  | 4 =>
+    let s ← permutation.empty_slot Clause4_Output
+    let (s1, s2, s3, s4, _, s5, s6, s7, s8, s9, s10) := state
+    ok (s1, s2, s3, s4, s, s5, s6, s7, s8, s9, s10)
+  | 5 =>
+    let s ← permutation.empty_slot Clause5_Output
+    let (s1, s2, s3, s4, s5, _, s6, s7, s8, s9, s10) := state
+    ok (s1, s2, s3, s4, s5, s, s6, s7, s8, s9, s10)
+  | 6 =>
+    let s ← permutation.empty_slot Clause6_Output
+    let (s1, s2, s3, s4, s5, s6, _, s7, s8, s9, s10) := state
+    ok (s1, s2, s3, s4, s5, s6, s, s7, s8, s9, s10)
+  | 7 =>
+    let s ← permutation.empty_slot Clause7_Output
+    let (s1, s2, s3, s4, s5, s6, s7, _, s8, s9, s10) := state
+    ok (s1, s2, s3, s4, s5, s6, s7, s, s8, s9, s10)
+  | 8 =>
+    let s ← permutation.empty_slot Clause8_Output
+    let (s1, s2, s3, s4, s5, s6, s7, s8, _, s9, s10) := state
+    ok (s1, s2, s3, s4, s5, s6, s7, s8, s, s9, s10)
+  | 9 =>
+    let s ← permutation.empty_slot Clause9_Output
+    let (s1, s2, s3, s4, s5, s6, s7, s8, s9, _, s10) := state
+    ok (s1, s2, s3, s4, s5, s6, s7, s8, s9, s, s10)
+  | 10 =>
+    let s ← permutation.empty_slot Clause10_Output
+    let (s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, _) := state
+    ok (s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s)
+  | _ => ok state
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>, rusthammer::permutation::Slot<Clause8_Output>, rusthammer::permutation::Slot<Clause9_Output>, rusthammer::permutation::Slot<Clause10_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output, Clause10_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z)}::matched]:
+    Source: 'src/permutation.rs', lines 241:12-243:13
+    Visibility: public -/
+def
+  TuplePQRSTUVWXYZ.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.matched
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {X : Type} {Y : Type} {Z : Type} {Clause0_Output : Type}
+  {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
+  {Clause4_Output : Type} {Clause5_Output : Type} {Clause6_Output : Type}
+  {Clause7_Output : Type} {Clause8_Output : Type} {Clause9_Output : Type}
+  {Clause10_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output) (GrammarInst4 :
+  Grammar T Clause4_Output) (GrammarInst5 : Grammar U Clause5_Output)
+  (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 : Grammar W
+  Clause7_Output) (GrammarInst8 : Grammar X Clause8_Output) (GrammarInst9 :
+  Grammar Y Clause9_Output) (GrammarInst10 : Grammar Z Clause10_Output)
+  (self : (P × Q × R × S × T × U × V × W × X × Y × Z))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+  Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+  Clause7_Output) × (permutation.Slot Clause8_Output) × (permutation.Slot
+  Clause9_Output) × (permutation.Slot Clause10_Output))) (index : Std.Usize) :
+  Result Bool
+  := do
+  match index.val with
+  | 0 => let (s, _, _, _, _, _, _, _, _, _, _) := state
+         ok s.matched
+  | 1 => let (_, s, _, _, _, _, _, _, _, _, _) := state
+         ok s.matched
+  | 2 => let (_, _, s, _, _, _, _, _, _, _, _) := state
+         ok s.matched
+  | 3 => let (_, _, _, s, _, _, _, _, _, _, _) := state
+         ok s.matched
+  | 4 => let (_, _, _, _, s, _, _, _, _, _, _) := state
+         ok s.matched
+  | 5 => let (_, _, _, _, _, s, _, _, _, _, _) := state
+         ok s.matched
+  | 6 => let (_, _, _, _, _, _, s, _, _, _, _) := state
+         ok s.matched
+  | 7 => let (_, _, _, _, _, _, _, s, _, _, _) := state
+         ok s.matched
+  | 8 => let (_, _, _, _, _, _, _, _, s, _, _) := state
+         ok s.matched
+  | 9 => let (_, _, _, _, _, _, _, _, _, s, _) := state
+         ok s.matched
+  | 10 => let (_, _, _, _, _, _, _, _, _, _, s) := state
+          ok s.matched
+  | _ => ok false
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>, rusthammer::permutation::Slot<Clause8_Output>, rusthammer::permutation::Slot<Clause9_Output>, rusthammer::permutation::Slot<Clause10_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output, Clause10_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z)}::empty]:
+    Source: 'src/permutation.rs', lines 240:12-240:80
+    Visibility: public -/
+def
+  TuplePQRSTUVWXYZ.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.empty
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {X : Type} {Y : Type} {Z : Type} {Clause0_Output : Type}
+  {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
+  {Clause4_Output : Type} {Clause5_Output : Type} {Clause6_Output : Type}
+  {Clause7_Output : Type} {Clause8_Output : Type} {Clause9_Output : Type}
+  {Clause10_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output) (GrammarInst4 :
+  Grammar T Clause4_Output) (GrammarInst5 : Grammar U Clause5_Output)
+  (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 : Grammar W
+  Clause7_Output) (GrammarInst8 : Grammar X Clause8_Output) (GrammarInst9 :
+  Grammar Y Clause9_Output) (GrammarInst10 : Grammar Z Clause10_Output)
+  (self : (P × Q × R × S × T × U × V × W × X × Y × Z)) :
+  Result ((permutation.Slot Clause0_Output) × (permutation.Slot
+    Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+    Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+    Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+    Clause7_Output) × (permutation.Slot Clause8_Output) × (permutation.Slot
+    Clause9_Output) × (permutation.Slot Clause10_Output))
+  := do
+  let s ← permutation.empty_slot Clause0_Output
+  let s1 ← permutation.empty_slot Clause1_Output
+  let s2 ← permutation.empty_slot Clause2_Output
+  let s3 ← permutation.empty_slot Clause3_Output
+  let s4 ← permutation.empty_slot Clause4_Output
+  let s5 ← permutation.empty_slot Clause5_Output
+  let s6 ← permutation.empty_slot Clause6_Output
+  let s7 ← permutation.empty_slot Clause7_Output
+  let s8 ← permutation.empty_slot Clause8_Output
+  let s9 ← permutation.empty_slot Clause9_Output
+  let s10 ← permutation.empty_slot Clause10_Output
+  ok (s, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10)
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>, rusthammer::permutation::Slot<Clause8_Output>, rusthammer::permutation::Slot<Clause9_Output>, rusthammer::permutation::Slot<Clause10_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output, Clause10_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z)}::count]:
+    Source: 'src/permutation.rs', lines 239:12-239:47
+    Visibility: public -/
+def
+  TuplePQRSTUVWXYZ.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.count
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {X : Type} {Y : Type} {Z : Type} {Clause0_Output : Type}
+  {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
+  {Clause4_Output : Type} {Clause5_Output : Type} {Clause6_Output : Type}
+  {Clause7_Output : Type} {Clause8_Output : Type} {Clause9_Output : Type}
+  {Clause10_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output) (GrammarInst4 :
+  Grammar T Clause4_Output) (GrammarInst5 : Grammar U Clause5_Output)
+  (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 : Grammar W
+  Clause7_Output) (GrammarInst8 : Grammar X Clause8_Output) (GrammarInst9 :
+  Grammar Y Clause9_Output) (GrammarInst10 : Grammar Z Clause10_Output)
+  (self : (P × Q × R × S × T × U × V × W × X × Y × Z)) :
+  Result Std.Usize
+  := do
+  ok 11#usize
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>, rusthammer::permutation::Slot<Clause8_Output>, rusthammer::permutation::Slot<Clause9_Output>, rusthammer::permutation::Slot<Clause10_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output, Clause10_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z)}]
+    Source: 'src/permutation.rs', lines 236:8-256:9 -/
+@[reducible]
+def
+  TuplePQRSTUVWXYZ.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {X : Type} {Y : Type} {Z : Type} {Clause0_Output : Type}
+  {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
+  {Clause4_Output : Type} {Clause5_Output : Type} {Clause6_Output : Type}
+  {Clause7_Output : Type} {Clause8_Output : Type} {Clause9_Output : Type}
+  {Clause10_Output : Type} (GrammarInst : Grammar P Clause0_Output)
+  (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 : Grammar R
+  Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output) (GrammarInst4 :
+  Grammar T Clause4_Output) (GrammarInst5 : Grammar U Clause5_Output)
+  (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 : Grammar W
+  Clause7_Output) (GrammarInst8 : Grammar X Clause8_Output) (GrammarInst9 :
+  Grammar Y Clause9_Output) (GrammarInst10 : Grammar Z Clause10_Output) :
+  permutation.Layout (P × Q × R × S × T × U × V × W × X × Y × Z)
+  ((permutation.Slot Clause0_Output) × (permutation.Slot Clause1_Output) ×
+  (permutation.Slot Clause2_Output) × (permutation.Slot Clause3_Output) ×
+  (permutation.Slot Clause4_Output) × (permutation.Slot Clause5_Output) ×
+  (permutation.Slot Clause6_Output) × (permutation.Slot Clause7_Output) ×
+  (permutation.Slot Clause8_Output) × (permutation.Slot Clause9_Output) ×
+  (permutation.Slot Clause10_Output)) (Clause0_Output × Clause1_Output ×
+  Clause2_Output × Clause3_Output × Clause4_Output × Clause5_Output ×
+  Clause6_Output × Clause7_Output × Clause8_Output × Clause9_Output ×
+  Clause10_Output) := {
+  count :=
+    TuplePQRSTUVWXYZ.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.count
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6 GrammarInst7 GrammarInst8 GrammarInst9
+    GrammarInst10
+  empty :=
+    TuplePQRSTUVWXYZ.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.empty
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6 GrammarInst7 GrammarInst8 GrammarInst9
+    GrammarInst10
+  matched :=
+    TuplePQRSTUVWXYZ.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.matched
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6 GrammarInst7 GrammarInst8 GrammarInst9
+    GrammarInst10
+  clear :=
+    TuplePQRSTUVWXYZ.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.clear
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6 GrammarInst7 GrammarInst8 GrammarInst9
+    GrammarInst10
+  finish :=
+    TuplePQRSTUVWXYZ.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.finish
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6 GrammarInst7 GrammarInst8 GrammarInst9
+    GrammarInst10
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>, rusthammer::permutation::Slot<Clause8_Output>, rusthammer::permutation::Slot<Clause9_Output>, rusthammer::permutation::Slot<Clause10_Output>, rusthammer::permutation::Slot<Clause11_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output, Clause10_Output, Clause11_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z, A)}::finish]:
+    Source: 'src/permutation.rs', lines 248:12-255:13
+    Visibility: public -/
+def
+  TuplePQRSTUVWXYZA.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.finish
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {X : Type} {Y : Type} {Z : Type} {A : Type} {Clause0_Output :
+  Type} {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
+  {Clause4_Output : Type} {Clause5_Output : Type} {Clause6_Output : Type}
+  {Clause7_Output : Type} {Clause8_Output : Type} {Clause9_Output : Type}
+  {Clause10_Output : Type} {Clause11_Output : Type} (GrammarInst : Grammar P
+  Clause0_Output) (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 :
+  Grammar R Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output)
+  (GrammarInst4 : Grammar T Clause4_Output) (GrammarInst5 : Grammar U
+  Clause5_Output) (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 :
+  Grammar W Clause7_Output) (GrammarInst8 : Grammar X Clause8_Output)
+  (GrammarInst9 : Grammar Y Clause9_Output) (GrammarInst10 : Grammar Z
+  Clause10_Output) (GrammarInst11 : Grammar A Clause11_Output)
+  (self : (P × Q × R × S × T × U × V × W × X × Y × Z × A))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+  Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+  Clause7_Output) × (permutation.Slot Clause8_Output) × (permutation.Slot
+  Clause9_Output) × (permutation.Slot Clause10_Output) × (permutation.Slot
+  Clause11_Output))) :
+  Result (core.result.Result (Clause0_Output × Clause1_Output ×
+    Clause2_Output × Clause3_Output × Clause4_Output × Clause5_Output ×
+    Clause6_Output × Clause7_Output × Clause8_Output × Clause9_Output ×
+    Clause10_Output × Clause11_Output) ParseError)
+  := do
+  let (p, q, r, s, t, u, v, w, x, y, z, a) := state
+  let r1 ← permutation.slot_value p
+  match r1 with
+  | core.result.Result.Ok value =>
+    let r2 ← permutation.slot_value q
+    match r2 with
+    | core.result.Result.Ok value1 =>
+      let r3 ← permutation.slot_value r
+      match r3 with
+      | core.result.Result.Ok value2 =>
+        let r4 ← permutation.slot_value s
+        match r4 with
+        | core.result.Result.Ok value3 =>
+          let r5 ← permutation.slot_value t
+          match r5 with
+          | core.result.Result.Ok value4 =>
+            let r6 ← permutation.slot_value u
+            match r6 with
+            | core.result.Result.Ok value5 =>
+              let r7 ← permutation.slot_value v
+              match r7 with
+              | core.result.Result.Ok value6 =>
+                let r8 ← permutation.slot_value w
+                match r8 with
+                | core.result.Result.Ok value7 =>
+                  let r9 ← permutation.slot_value x
+                  match r9 with
+                  | core.result.Result.Ok value8 =>
+                    let r10 ← permutation.slot_value y
+                    match r10 with
+                    | core.result.Result.Ok value9 =>
+                      let r11 ← permutation.slot_value z
+                      match r11 with
+                      | core.result.Result.Ok value10 =>
+                        let r12 ← permutation.slot_value a
+                        match r12 with
+                        | core.result.Result.Ok value11 =>
+                          ok (core.result.Result.Ok (value, value1, value2,
+                            value3, value4, value5, value6, value7, value8,
+                            value9, value10, value11))
+                        | core.result.Result.Err error =>
+                          ok (core.result.Result.Err error)
+                      | core.result.Result.Err error =>
+                        ok (core.result.Result.Err error)
+                    | core.result.Result.Err error =>
+                      ok (core.result.Result.Err error)
+                  | core.result.Result.Err error =>
+                    ok (core.result.Result.Err error)
+                | core.result.Result.Err error =>
+                  ok (core.result.Result.Err error)
+              | core.result.Result.Err error =>
+                ok (core.result.Result.Err error)
+            | core.result.Result.Err error => ok (core.result.Result.Err error)
+          | core.result.Result.Err error => ok (core.result.Result.Err error)
+        | core.result.Result.Err error => ok (core.result.Result.Err error)
+      | core.result.Result.Err error => ok (core.result.Result.Err error)
+    | core.result.Result.Err error => ok (core.result.Result.Err error)
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>, rusthammer::permutation::Slot<Clause8_Output>, rusthammer::permutation::Slot<Clause9_Output>, rusthammer::permutation::Slot<Clause10_Output>, rusthammer::permutation::Slot<Clause11_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output, Clause10_Output, Clause11_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z, A)}::clear]:
+    Source: 'src/permutation.rs', lines 244:12-247:13
+    Visibility: public -/
+def
+  TuplePQRSTUVWXYZA.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.clear
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {X : Type} {Y : Type} {Z : Type} {A : Type} {Clause0_Output :
+  Type} {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
+  {Clause4_Output : Type} {Clause5_Output : Type} {Clause6_Output : Type}
+  {Clause7_Output : Type} {Clause8_Output : Type} {Clause9_Output : Type}
+  {Clause10_Output : Type} {Clause11_Output : Type} (GrammarInst : Grammar P
+  Clause0_Output) (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 :
+  Grammar R Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output)
+  (GrammarInst4 : Grammar T Clause4_Output) (GrammarInst5 : Grammar U
+  Clause5_Output) (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 :
+  Grammar W Clause7_Output) (GrammarInst8 : Grammar X Clause8_Output)
+  (GrammarInst9 : Grammar Y Clause9_Output) (GrammarInst10 : Grammar Z
+  Clause10_Output) (GrammarInst11 : Grammar A Clause11_Output)
+  (self : (P × Q × R × S × T × U × V × W × X × Y × Z × A))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+  Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+  Clause7_Output) × (permutation.Slot Clause8_Output) × (permutation.Slot
+  Clause9_Output) × (permutation.Slot Clause10_Output) × (permutation.Slot
+  Clause11_Output))) (index : Std.Usize) :
+  Result ((permutation.Slot Clause0_Output) × (permutation.Slot
+    Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+    Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+    Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+    Clause7_Output) × (permutation.Slot Clause8_Output) × (permutation.Slot
+    Clause9_Output) × (permutation.Slot Clause10_Output) × (permutation.Slot
+    Clause11_Output))
+  := do
+  match index.val with
+  | 0 =>
+    let s ← permutation.empty_slot Clause0_Output
+    let (_, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11) := state
+    ok (s, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11)
+  | 1 =>
+    let s ← permutation.empty_slot Clause1_Output
+    let (s1, _, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11) := state
+    ok (s1, s, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11)
+  | 2 =>
+    let s ← permutation.empty_slot Clause2_Output
+    let (s1, s2, _, s3, s4, s5, s6, s7, s8, s9, s10, s11) := state
+    ok (s1, s2, s, s3, s4, s5, s6, s7, s8, s9, s10, s11)
+  | 3 =>
+    let s ← permutation.empty_slot Clause3_Output
+    let (s1, s2, s3, _, s4, s5, s6, s7, s8, s9, s10, s11) := state
+    ok (s1, s2, s3, s, s4, s5, s6, s7, s8, s9, s10, s11)
+  | 4 =>
+    let s ← permutation.empty_slot Clause4_Output
+    let (s1, s2, s3, s4, _, s5, s6, s7, s8, s9, s10, s11) := state
+    ok (s1, s2, s3, s4, s, s5, s6, s7, s8, s9, s10, s11)
+  | 5 =>
+    let s ← permutation.empty_slot Clause5_Output
+    let (s1, s2, s3, s4, s5, _, s6, s7, s8, s9, s10, s11) := state
+    ok (s1, s2, s3, s4, s5, s, s6, s7, s8, s9, s10, s11)
+  | 6 =>
+    let s ← permutation.empty_slot Clause6_Output
+    let (s1, s2, s3, s4, s5, s6, _, s7, s8, s9, s10, s11) := state
+    ok (s1, s2, s3, s4, s5, s6, s, s7, s8, s9, s10, s11)
+  | 7 =>
+    let s ← permutation.empty_slot Clause7_Output
+    let (s1, s2, s3, s4, s5, s6, s7, _, s8, s9, s10, s11) := state
+    ok (s1, s2, s3, s4, s5, s6, s7, s, s8, s9, s10, s11)
+  | 8 =>
+    let s ← permutation.empty_slot Clause8_Output
+    let (s1, s2, s3, s4, s5, s6, s7, s8, _, s9, s10, s11) := state
+    ok (s1, s2, s3, s4, s5, s6, s7, s8, s, s9, s10, s11)
+  | 9 =>
+    let s ← permutation.empty_slot Clause9_Output
+    let (s1, s2, s3, s4, s5, s6, s7, s8, s9, _, s10, s11) := state
+    ok (s1, s2, s3, s4, s5, s6, s7, s8, s9, s, s10, s11)
+  | 10 =>
+    let s ← permutation.empty_slot Clause10_Output
+    let (s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, _, s11) := state
+    ok (s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s, s11)
+  | 11 =>
+    let s ← permutation.empty_slot Clause11_Output
+    let (s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, _) := state
+    ok (s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s)
+  | _ => ok state
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>, rusthammer::permutation::Slot<Clause8_Output>, rusthammer::permutation::Slot<Clause9_Output>, rusthammer::permutation::Slot<Clause10_Output>, rusthammer::permutation::Slot<Clause11_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output, Clause10_Output, Clause11_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z, A)}::matched]:
+    Source: 'src/permutation.rs', lines 241:12-243:13
+    Visibility: public -/
+def
+  TuplePQRSTUVWXYZA.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.matched
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {X : Type} {Y : Type} {Z : Type} {A : Type} {Clause0_Output :
+  Type} {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
+  {Clause4_Output : Type} {Clause5_Output : Type} {Clause6_Output : Type}
+  {Clause7_Output : Type} {Clause8_Output : Type} {Clause9_Output : Type}
+  {Clause10_Output : Type} {Clause11_Output : Type} (GrammarInst : Grammar P
+  Clause0_Output) (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 :
+  Grammar R Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output)
+  (GrammarInst4 : Grammar T Clause4_Output) (GrammarInst5 : Grammar U
+  Clause5_Output) (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 :
+  Grammar W Clause7_Output) (GrammarInst8 : Grammar X Clause8_Output)
+  (GrammarInst9 : Grammar Y Clause9_Output) (GrammarInst10 : Grammar Z
+  Clause10_Output) (GrammarInst11 : Grammar A Clause11_Output)
+  (self : (P × Q × R × S × T × U × V × W × X × Y × Z × A))
+  (state : ((permutation.Slot Clause0_Output) × (permutation.Slot
+  Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+  Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+  Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+  Clause7_Output) × (permutation.Slot Clause8_Output) × (permutation.Slot
+  Clause9_Output) × (permutation.Slot Clause10_Output) × (permutation.Slot
+  Clause11_Output))) (index : Std.Usize) :
+  Result Bool
+  := do
+  match index.val with
+  | 0 => let (s, _, _, _, _, _, _, _, _, _, _, _) := state
+         ok s.matched
+  | 1 => let (_, s, _, _, _, _, _, _, _, _, _, _) := state
+         ok s.matched
+  | 2 => let (_, _, s, _, _, _, _, _, _, _, _, _) := state
+         ok s.matched
+  | 3 => let (_, _, _, s, _, _, _, _, _, _, _, _) := state
+         ok s.matched
+  | 4 => let (_, _, _, _, s, _, _, _, _, _, _, _) := state
+         ok s.matched
+  | 5 => let (_, _, _, _, _, s, _, _, _, _, _, _) := state
+         ok s.matched
+  | 6 => let (_, _, _, _, _, _, s, _, _, _, _, _) := state
+         ok s.matched
+  | 7 => let (_, _, _, _, _, _, _, s, _, _, _, _) := state
+         ok s.matched
+  | 8 => let (_, _, _, _, _, _, _, _, s, _, _, _) := state
+         ok s.matched
+  | 9 => let (_, _, _, _, _, _, _, _, _, s, _, _) := state
+         ok s.matched
+  | 10 => let (_, _, _, _, _, _, _, _, _, _, s, _) := state
+          ok s.matched
+  | 11 => let (_, _, _, _, _, _, _, _, _, _, _, s) := state
+          ok s.matched
+  | _ => ok false
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>, rusthammer::permutation::Slot<Clause8_Output>, rusthammer::permutation::Slot<Clause9_Output>, rusthammer::permutation::Slot<Clause10_Output>, rusthammer::permutation::Slot<Clause11_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output, Clause10_Output, Clause11_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z, A)}::empty]:
+    Source: 'src/permutation.rs', lines 240:12-240:80
+    Visibility: public -/
+def
+  TuplePQRSTUVWXYZA.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.empty
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {X : Type} {Y : Type} {Z : Type} {A : Type} {Clause0_Output :
+  Type} {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
+  {Clause4_Output : Type} {Clause5_Output : Type} {Clause6_Output : Type}
+  {Clause7_Output : Type} {Clause8_Output : Type} {Clause9_Output : Type}
+  {Clause10_Output : Type} {Clause11_Output : Type} (GrammarInst : Grammar P
+  Clause0_Output) (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 :
+  Grammar R Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output)
+  (GrammarInst4 : Grammar T Clause4_Output) (GrammarInst5 : Grammar U
+  Clause5_Output) (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 :
+  Grammar W Clause7_Output) (GrammarInst8 : Grammar X Clause8_Output)
+  (GrammarInst9 : Grammar Y Clause9_Output) (GrammarInst10 : Grammar Z
+  Clause10_Output) (GrammarInst11 : Grammar A Clause11_Output)
+  (self : (P × Q × R × S × T × U × V × W × X × Y × Z × A)) :
+  Result ((permutation.Slot Clause0_Output) × (permutation.Slot
+    Clause1_Output) × (permutation.Slot Clause2_Output) × (permutation.Slot
+    Clause3_Output) × (permutation.Slot Clause4_Output) × (permutation.Slot
+    Clause5_Output) × (permutation.Slot Clause6_Output) × (permutation.Slot
+    Clause7_Output) × (permutation.Slot Clause8_Output) × (permutation.Slot
+    Clause9_Output) × (permutation.Slot Clause10_Output) × (permutation.Slot
+    Clause11_Output))
+  := do
+  let s ← permutation.empty_slot Clause0_Output
+  let s1 ← permutation.empty_slot Clause1_Output
+  let s2 ← permutation.empty_slot Clause2_Output
+  let s3 ← permutation.empty_slot Clause3_Output
+  let s4 ← permutation.empty_slot Clause4_Output
+  let s5 ← permutation.empty_slot Clause5_Output
+  let s6 ← permutation.empty_slot Clause6_Output
+  let s7 ← permutation.empty_slot Clause7_Output
+  let s8 ← permutation.empty_slot Clause8_Output
+  let s9 ← permutation.empty_slot Clause9_Output
+  let s10 ← permutation.empty_slot Clause10_Output
+  let s11 ← permutation.empty_slot Clause11_Output
+  ok (s, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11)
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>, rusthammer::permutation::Slot<Clause8_Output>, rusthammer::permutation::Slot<Clause9_Output>, rusthammer::permutation::Slot<Clause10_Output>, rusthammer::permutation::Slot<Clause11_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output, Clause10_Output, Clause11_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z, A)}::count]:
+    Source: 'src/permutation.rs', lines 239:12-239:47
+    Visibility: public -/
+def
+  TuplePQRSTUVWXYZA.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.count
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {X : Type} {Y : Type} {Z : Type} {A : Type} {Clause0_Output :
+  Type} {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
+  {Clause4_Output : Type} {Clause5_Output : Type} {Clause6_Output : Type}
+  {Clause7_Output : Type} {Clause8_Output : Type} {Clause9_Output : Type}
+  {Clause10_Output : Type} {Clause11_Output : Type} (GrammarInst : Grammar P
+  Clause0_Output) (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 :
+  Grammar R Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output)
+  (GrammarInst4 : Grammar T Clause4_Output) (GrammarInst5 : Grammar U
+  Clause5_Output) (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 :
+  Grammar W Clause7_Output) (GrammarInst8 : Grammar X Clause8_Output)
+  (GrammarInst9 : Grammar Y Clause9_Output) (GrammarInst10 : Grammar Z
+  Clause10_Output) (GrammarInst11 : Grammar A Clause11_Output)
+  (self : (P × Q × R × S × T × U × V × W × X × Y × Z × A)) :
+  Result Std.Usize
+  := do
+  ok 12#usize
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Layout<'input, (rusthammer::permutation::Slot<Clause0_Output>, rusthammer::permutation::Slot<Clause1_Output>, rusthammer::permutation::Slot<Clause2_Output>, rusthammer::permutation::Slot<Clause3_Output>, rusthammer::permutation::Slot<Clause4_Output>, rusthammer::permutation::Slot<Clause5_Output>, rusthammer::permutation::Slot<Clause6_Output>, rusthammer::permutation::Slot<Clause7_Output>, rusthammer::permutation::Slot<Clause8_Output>, rusthammer::permutation::Slot<Clause9_Output>, rusthammer::permutation::Slot<Clause10_Output>, rusthammer::permutation::Slot<Clause11_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output, Clause10_Output, Clause11_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z, A)}]
+    Source: 'src/permutation.rs', lines 236:8-256:9 -/
+@[reducible]
+def
+  TuplePQRSTUVWXYZA.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output
+  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
+  {W : Type} {X : Type} {Y : Type} {Z : Type} {A : Type} {Clause0_Output :
+  Type} {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
+  {Clause4_Output : Type} {Clause5_Output : Type} {Clause6_Output : Type}
+  {Clause7_Output : Type} {Clause8_Output : Type} {Clause9_Output : Type}
+  {Clause10_Output : Type} {Clause11_Output : Type} (GrammarInst : Grammar P
+  Clause0_Output) (GrammarInst1 : Grammar Q Clause1_Output) (GrammarInst2 :
+  Grammar R Clause2_Output) (GrammarInst3 : Grammar S Clause3_Output)
+  (GrammarInst4 : Grammar T Clause4_Output) (GrammarInst5 : Grammar U
+  Clause5_Output) (GrammarInst6 : Grammar V Clause6_Output) (GrammarInst7 :
+  Grammar W Clause7_Output) (GrammarInst8 : Grammar X Clause8_Output)
+  (GrammarInst9 : Grammar Y Clause9_Output) (GrammarInst10 : Grammar Z
+  Clause10_Output) (GrammarInst11 : Grammar A Clause11_Output) :
+  permutation.Layout (P × Q × R × S × T × U × V × W × X × Y × Z × A)
+  ((permutation.Slot Clause0_Output) × (permutation.Slot Clause1_Output) ×
+  (permutation.Slot Clause2_Output) × (permutation.Slot Clause3_Output) ×
+  (permutation.Slot Clause4_Output) × (permutation.Slot Clause5_Output) ×
+  (permutation.Slot Clause6_Output) × (permutation.Slot Clause7_Output) ×
+  (permutation.Slot Clause8_Output) × (permutation.Slot Clause9_Output) ×
+  (permutation.Slot Clause10_Output) × (permutation.Slot Clause11_Output))
+  (Clause0_Output × Clause1_Output × Clause2_Output × Clause3_Output ×
+  Clause4_Output × Clause5_Output × Clause6_Output × Clause7_Output ×
+  Clause8_Output × Clause9_Output × Clause10_Output × Clause11_Output) := {
+  count :=
+    TuplePQRSTUVWXYZA.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.count
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6 GrammarInst7 GrammarInst8 GrammarInst9
+    GrammarInst10 GrammarInst11
+  empty :=
+    TuplePQRSTUVWXYZA.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.empty
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6 GrammarInst7 GrammarInst8 GrammarInst9
+    GrammarInst10 GrammarInst11
+  matched :=
+    TuplePQRSTUVWXYZA.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.matched
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6 GrammarInst7 GrammarInst8 GrammarInst9
+    GrammarInst10 GrammarInst11
+  clear :=
+    TuplePQRSTUVWXYZA.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.clear
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6 GrammarInst7 GrammarInst8 GrammarInst9
+    GrammarInst10 GrammarInst11
+  finish :=
+    TuplePQRSTUVWXYZA.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.finish
+    GrammarInst GrammarInst1 GrammarInst2 GrammarInst3 GrammarInst4
+    GrammarInst5 GrammarInst6 GrammarInst7 GrammarInst8 GrammarInst9
+    GrammarInst10 GrammarInst11
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Items<'input, B, (rusthammer::permutation::Slot<Clause0_Clause0_Output>,), (Clause0_Clause0_Output,)> for (P,)}::attempt]:
+    Source: 'src/permutation.rs', lines 258:12-269:13
+    Visibility: public -/
+def
+  TupleP.Insts.RusthammerPermutationItemsInputBTupleSlotTupleClause0_Clause0_Output.attempt
+  {B : Type} {P : Type} {Clause0_Clause0_Output : Type} (ItemEvalInst :
+  permutation.ItemEval P B Clause0_Clause0_Output) (self : P)
+  (state : permutation.Slot Clause0_Clause0_Output) (index : Std.Usize)
+  (backend : B) (input : Slice Std.U8) (cursor : Cursor)
+  (context : ParseContext) :
+  Result ((permutation.Attempt × (permutation.Slot Clause0_Clause0_Output)) ×
+    B)
+  := do
+  match index.val with
+  | 0 => ItemEvalInst.eval_slot self backend input cursor context
+  | _ => ok ((permutation.Attempt.Error ParseError.Mismatch, state), backend)
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Items<'input, B, (rusthammer::permutation::Slot<Clause0_Clause0_Output>,), (Clause0_Clause0_Output,)> for (P,)}]
+    Source: 'src/permutation.rs', lines 257:8-270:9 -/
+@[reducible]
+def
+  TupleP.Insts.RusthammerPermutationItemsInputBTupleSlotTupleClause0_Clause0_Output
+  {B : Type} {P : Type} {Clause0_Clause0_Output : Type} (ItemEvalInst :
+  permutation.ItemEval P B Clause0_Clause0_Output) : permutation.Items P B
+  (permutation.Slot Clause0_Clause0_Output) Clause0_Clause0_Output := {
+  LayoutInst :=
+    TupleP.Insts.RusthammerPermutationLayoutInputTupleSlotTupleClause0_Output
+    ItemEvalInst.GrammarInst
+  attempt :=
+    TupleP.Insts.RusthammerPermutationItemsInputBTupleSlotTupleClause0_Clause0_Output.attempt
+    ItemEvalInst
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Items<'input, B, (rusthammer::permutation::Slot<Clause0_Clause0_Output>, rusthammer::permutation::Slot<Clause1_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output)> for (P, Q)}::attempt]:
+    Source: 'src/permutation.rs', lines 258:12-269:13
+    Visibility: public -/
+def Pair.Insts.RusthammerPermutationItemsInputBPairSlotSlotPair.attempt
+  {B : Type} {P : Type} {Q : Type} {Clause0_Clause0_Output : Type}
+  {Clause1_Clause0_Output : Type} (ItemEvalInst : permutation.ItemEval P B
+  Clause0_Clause0_Output) (ItemEvalInst1 : permutation.ItemEval Q B
+  Clause1_Clause0_Output) (self : (P × Q))
+  (state : ((permutation.Slot Clause0_Clause0_Output) × (permutation.Slot
+  Clause1_Clause0_Output))) (index : Std.Usize) (backend : B)
+  (input : Slice Std.U8) (cursor : Cursor) (context : ParseContext) :
+  Result ((permutation.Attempt × ((permutation.Slot Clause0_Clause0_Output) ×
+    (permutation.Slot Clause1_Clause0_Output))) × B)
+  := do
+  match index.val with
+  | 0 =>
+    let (t, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst.eval_slot t backend input cursor context
+    let (_, s) := state
+    ok ((result, (slot, s)), backend1)
+  | 1 =>
+    let (_, t) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst1.eval_slot t backend input cursor context
+    let (s, _) := state
+    ok ((result, (s, slot)), backend1)
+  | _ => ok ((permutation.Attempt.Error ParseError.Mismatch, state), backend)
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Items<'input, B, (rusthammer::permutation::Slot<Clause0_Clause0_Output>, rusthammer::permutation::Slot<Clause1_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output)> for (P, Q)}]
+    Source: 'src/permutation.rs', lines 257:8-270:9 -/
+@[reducible]
+def Pair.Insts.RusthammerPermutationItemsInputBPairSlotSlotPair {B : Type} {P :
+  Type} {Q : Type} {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output :
+  Type} (ItemEvalInst : permutation.ItemEval P B Clause0_Clause0_Output)
+  (ItemEvalInst1 : permutation.ItemEval Q B Clause1_Clause0_Output) :
+  permutation.Items (P × Q) B ((permutation.Slot Clause0_Clause0_Output) ×
+  (permutation.Slot Clause1_Clause0_Output)) (Clause0_Clause0_Output ×
+  Clause1_Clause0_Output) := {
+  LayoutInst := Pair.Insts.RusthammerPermutationLayoutInputPairSlotSlotPair
+    ItemEvalInst.GrammarInst ItemEvalInst1.GrammarInst
+  attempt :=
+    Pair.Insts.RusthammerPermutationItemsInputBPairSlotSlotPair.attempt
+    ItemEvalInst ItemEvalInst1
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Items<'input, B, (rusthammer::permutation::Slot<Clause0_Clause0_Output>, rusthammer::permutation::Slot<Clause1_Clause0_Output>, rusthammer::permutation::Slot<Clause2_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output)> for (P, Q, R)}::attempt]:
+    Source: 'src/permutation.rs', lines 258:12-269:13
+    Visibility: public -/
+def
+  TuplePQR.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_Output.attempt
+  {B : Type} {P : Type} {Q : Type} {R : Type} {Clause0_Clause0_Output : Type}
+  {Clause1_Clause0_Output : Type} {Clause2_Clause0_Output : Type} (ItemEvalInst
+  : permutation.ItemEval P B Clause0_Clause0_Output) (ItemEvalInst1 :
+  permutation.ItemEval Q B Clause1_Clause0_Output) (ItemEvalInst2 :
+  permutation.ItemEval R B Clause2_Clause0_Output) (self : (P × Q × R))
+  (state : ((permutation.Slot Clause0_Clause0_Output) × (permutation.Slot
+  Clause1_Clause0_Output) × (permutation.Slot Clause2_Clause0_Output)))
+  (index : Std.Usize) (backend : B) (input : Slice Std.U8) (cursor : Cursor)
+  (context : ParseContext) :
+  Result ((permutation.Attempt × ((permutation.Slot Clause0_Clause0_Output) ×
+    (permutation.Slot Clause1_Clause0_Output) × (permutation.Slot
+    Clause2_Clause0_Output))) × B)
+  := do
+  match index.val with
+  | 0 =>
+    let (t, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst.eval_slot t backend input cursor context
+    let (_, s, s1) := state
+    ok ((result, (slot, s, s1)), backend1)
+  | 1 =>
+    let (_, t, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst1.eval_slot t backend input cursor context
+    let (s, _, s1) := state
+    ok ((result, (s, slot, s1)), backend1)
+  | 2 =>
+    let (_, _, t) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst2.eval_slot t backend input cursor context
+    let (s, s1, _) := state
+    ok ((result, (s, s1, slot)), backend1)
+  | _ => ok ((permutation.Attempt.Error ParseError.Mismatch, state), backend)
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Items<'input, B, (rusthammer::permutation::Slot<Clause0_Clause0_Output>, rusthammer::permutation::Slot<Clause1_Clause0_Output>, rusthammer::permutation::Slot<Clause2_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output)> for (P, Q, R)}]
+    Source: 'src/permutation.rs', lines 257:8-270:9 -/
+@[reducible]
+def
+  TuplePQR.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_Output
+  {B : Type} {P : Type} {Q : Type} {R : Type} {Clause0_Clause0_Output : Type}
+  {Clause1_Clause0_Output : Type} {Clause2_Clause0_Output : Type} (ItemEvalInst
+  : permutation.ItemEval P B Clause0_Clause0_Output) (ItemEvalInst1 :
+  permutation.ItemEval Q B Clause1_Clause0_Output) (ItemEvalInst2 :
+  permutation.ItemEval R B Clause2_Clause0_Output) : permutation.Items (P × Q
+  × R) B ((permutation.Slot Clause0_Clause0_Output) × (permutation.Slot
+  Clause1_Clause0_Output) × (permutation.Slot Clause2_Clause0_Output))
+  (Clause0_Clause0_Output × Clause1_Clause0_Output × Clause2_Clause0_Output)
+  := {
+  LayoutInst :=
+    TuplePQR.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output
+    ItemEvalInst.GrammarInst ItemEvalInst1.GrammarInst
+    ItemEvalInst2.GrammarInst
+  attempt :=
+    TuplePQR.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_Output.attempt
+    ItemEvalInst ItemEvalInst1 ItemEvalInst2
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Items<'input, B, (rusthammer::permutation::Slot<Clause0_Clause0_Output>, rusthammer::permutation::Slot<Clause1_Clause0_Output>, rusthammer::permutation::Slot<Clause2_Clause0_Output>, rusthammer::permutation::Slot<Clause3_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output)> for (P, Q, R, S)}::attempt]:
+    Source: 'src/permutation.rs', lines 258:12-269:13
+    Visibility: public -/
+def
+  TuplePQRS.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_Output.attempt
+  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type}
+  {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
+  {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type} (ItemEvalInst
+  : permutation.ItemEval P B Clause0_Clause0_Output) (ItemEvalInst1 :
+  permutation.ItemEval Q B Clause1_Clause0_Output) (ItemEvalInst2 :
+  permutation.ItemEval R B Clause2_Clause0_Output) (ItemEvalInst3 :
+  permutation.ItemEval S B Clause3_Clause0_Output) (self : (P × Q × R × S))
+  (state : ((permutation.Slot Clause0_Clause0_Output) × (permutation.Slot
+  Clause1_Clause0_Output) × (permutation.Slot Clause2_Clause0_Output) ×
+  (permutation.Slot Clause3_Clause0_Output))) (index : Std.Usize) (backend : B)
+  (input : Slice Std.U8) (cursor : Cursor) (context : ParseContext) :
+  Result ((permutation.Attempt × ((permutation.Slot Clause0_Clause0_Output) ×
+    (permutation.Slot Clause1_Clause0_Output) × (permutation.Slot
+    Clause2_Clause0_Output) × (permutation.Slot Clause3_Clause0_Output))) ×
+    B)
+  := do
+  match index.val with
+  | 0 =>
+    let (t, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst.eval_slot t backend input cursor context
+    let (_, s, s1, s2) := state
+    ok ((result, (slot, s, s1, s2)), backend1)
+  | 1 =>
+    let (_, t, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst1.eval_slot t backend input cursor context
+    let (s, _, s1, s2) := state
+    ok ((result, (s, slot, s1, s2)), backend1)
+  | 2 =>
+    let (_, _, t, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst2.eval_slot t backend input cursor context
+    let (s, s1, _, s2) := state
+    ok ((result, (s, s1, slot, s2)), backend1)
+  | 3 =>
+    let (_, _, _, t) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst3.eval_slot t backend input cursor context
+    let (s, s1, s2, _) := state
+    ok ((result, (s, s1, s2, slot)), backend1)
+  | _ => ok ((permutation.Attempt.Error ParseError.Mismatch, state), backend)
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Items<'input, B, (rusthammer::permutation::Slot<Clause0_Clause0_Output>, rusthammer::permutation::Slot<Clause1_Clause0_Output>, rusthammer::permutation::Slot<Clause2_Clause0_Output>, rusthammer::permutation::Slot<Clause3_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output)> for (P, Q, R, S)}]
+    Source: 'src/permutation.rs', lines 257:8-270:9 -/
+@[reducible]
+def
+  TuplePQRS.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_Output
+  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type}
+  {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
+  {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type} (ItemEvalInst
+  : permutation.ItemEval P B Clause0_Clause0_Output) (ItemEvalInst1 :
+  permutation.ItemEval Q B Clause1_Clause0_Output) (ItemEvalInst2 :
+  permutation.ItemEval R B Clause2_Clause0_Output) (ItemEvalInst3 :
+  permutation.ItemEval S B Clause3_Clause0_Output) : permutation.Items (P × Q
+  × R × S) B ((permutation.Slot Clause0_Clause0_Output) × (permutation.Slot
+  Clause1_Clause0_Output) × (permutation.Slot Clause2_Clause0_Output) ×
+  (permutation.Slot Clause3_Clause0_Output)) (Clause0_Clause0_Output ×
+  Clause1_Clause0_Output × Clause2_Clause0_Output × Clause3_Clause0_Output)
+  := {
+  LayoutInst :=
+    TuplePQRS.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output
+    ItemEvalInst.GrammarInst ItemEvalInst1.GrammarInst
+    ItemEvalInst2.GrammarInst ItemEvalInst3.GrammarInst
+  attempt :=
+    TuplePQRS.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_Output.attempt
+    ItemEvalInst ItemEvalInst1 ItemEvalInst2 ItemEvalInst3
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Items<'input, B, (rusthammer::permutation::Slot<Clause0_Clause0_Output>, rusthammer::permutation::Slot<Clause1_Clause0_Output>, rusthammer::permutation::Slot<Clause2_Clause0_Output>, rusthammer::permutation::Slot<Clause3_Clause0_Output>, rusthammer::permutation::Slot<Clause4_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output)> for (P, Q, R, S, T)}::attempt]:
+    Source: 'src/permutation.rs', lines 258:12-269:13
+    Visibility: public -/
+def
+  TuplePQRST.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_Output.attempt
+  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type}
+  {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
+  {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type}
+  {Clause4_Clause0_Output : Type} (ItemEvalInst : permutation.ItemEval P B
+  Clause0_Clause0_Output) (ItemEvalInst1 : permutation.ItemEval Q B
+  Clause1_Clause0_Output) (ItemEvalInst2 : permutation.ItemEval R B
+  Clause2_Clause0_Output) (ItemEvalInst3 : permutation.ItemEval S B
+  Clause3_Clause0_Output) (ItemEvalInst4 : permutation.ItemEval T B
+  Clause4_Clause0_Output) (self : (P × Q × R × S × T))
+  (state : ((permutation.Slot Clause0_Clause0_Output) × (permutation.Slot
+  Clause1_Clause0_Output) × (permutation.Slot Clause2_Clause0_Output) ×
+  (permutation.Slot Clause3_Clause0_Output) × (permutation.Slot
+  Clause4_Clause0_Output))) (index : Std.Usize) (backend : B)
+  (input : Slice Std.U8) (cursor : Cursor) (context : ParseContext) :
+  Result ((permutation.Attempt × ((permutation.Slot Clause0_Clause0_Output) ×
+    (permutation.Slot Clause1_Clause0_Output) × (permutation.Slot
+    Clause2_Clause0_Output) × (permutation.Slot Clause3_Clause0_Output) ×
+    (permutation.Slot Clause4_Clause0_Output))) × B)
+  := do
+  match index.val with
+  | 0 =>
+    let (t, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst.eval_slot t backend input cursor context
+    let (_, s, s1, s2, s3) := state
+    ok ((result, (slot, s, s1, s2, s3)), backend1)
+  | 1 =>
+    let (_, t, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst1.eval_slot t backend input cursor context
+    let (s, _, s1, s2, s3) := state
+    ok ((result, (s, slot, s1, s2, s3)), backend1)
+  | 2 =>
+    let (_, _, t, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst2.eval_slot t backend input cursor context
+    let (s, s1, _, s2, s3) := state
+    ok ((result, (s, s1, slot, s2, s3)), backend1)
+  | 3 =>
+    let (_, _, _, t, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst3.eval_slot t backend input cursor context
+    let (s, s1, s2, _, s3) := state
+    ok ((result, (s, s1, s2, slot, s3)), backend1)
+  | 4 =>
+    let (_, _, _, _, t) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst4.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, _) := state
+    ok ((result, (s, s1, s2, s3, slot)), backend1)
+  | _ => ok ((permutation.Attempt.Error ParseError.Mismatch, state), backend)
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Items<'input, B, (rusthammer::permutation::Slot<Clause0_Clause0_Output>, rusthammer::permutation::Slot<Clause1_Clause0_Output>, rusthammer::permutation::Slot<Clause2_Clause0_Output>, rusthammer::permutation::Slot<Clause3_Clause0_Output>, rusthammer::permutation::Slot<Clause4_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output)> for (P, Q, R, S, T)}]
+    Source: 'src/permutation.rs', lines 257:8-270:9 -/
+@[reducible]
+def
+  TuplePQRST.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_Output
+  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type}
+  {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
+  {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type}
+  {Clause4_Clause0_Output : Type} (ItemEvalInst : permutation.ItemEval P B
+  Clause0_Clause0_Output) (ItemEvalInst1 : permutation.ItemEval Q B
+  Clause1_Clause0_Output) (ItemEvalInst2 : permutation.ItemEval R B
+  Clause2_Clause0_Output) (ItemEvalInst3 : permutation.ItemEval S B
+  Clause3_Clause0_Output) (ItemEvalInst4 : permutation.ItemEval T B
+  Clause4_Clause0_Output) : permutation.Items (P × Q × R × S × T) B
+  ((permutation.Slot Clause0_Clause0_Output) × (permutation.Slot
+  Clause1_Clause0_Output) × (permutation.Slot Clause2_Clause0_Output) ×
+  (permutation.Slot Clause3_Clause0_Output) × (permutation.Slot
+  Clause4_Clause0_Output)) (Clause0_Clause0_Output × Clause1_Clause0_Output ×
+  Clause2_Clause0_Output × Clause3_Clause0_Output × Clause4_Clause0_Output)
+  := {
+  LayoutInst :=
+    TuplePQRST.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output
+    ItemEvalInst.GrammarInst ItemEvalInst1.GrammarInst
+    ItemEvalInst2.GrammarInst ItemEvalInst3.GrammarInst
+    ItemEvalInst4.GrammarInst
+  attempt :=
+    TuplePQRST.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_Output.attempt
+    ItemEvalInst ItemEvalInst1 ItemEvalInst2 ItemEvalInst3 ItemEvalInst4
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Items<'input, B, (rusthammer::permutation::Slot<Clause0_Clause0_Output>, rusthammer::permutation::Slot<Clause1_Clause0_Output>, rusthammer::permutation::Slot<Clause2_Clause0_Output>, rusthammer::permutation::Slot<Clause3_Clause0_Output>, rusthammer::permutation::Slot<Clause4_Clause0_Output>, rusthammer::permutation::Slot<Clause5_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output)> for (P, Q, R, S, T, U)}::attempt]:
+    Source: 'src/permutation.rs', lines 258:12-269:13
+    Visibility: public -/
+def
+  TuplePQRSTU.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_Output.attempt
+  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
+  {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
+  {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type}
+  {Clause4_Clause0_Output : Type} {Clause5_Clause0_Output : Type} (ItemEvalInst
+  : permutation.ItemEval P B Clause0_Clause0_Output) (ItemEvalInst1 :
+  permutation.ItemEval Q B Clause1_Clause0_Output) (ItemEvalInst2 :
+  permutation.ItemEval R B Clause2_Clause0_Output) (ItemEvalInst3 :
+  permutation.ItemEval S B Clause3_Clause0_Output) (ItemEvalInst4 :
+  permutation.ItemEval T B Clause4_Clause0_Output) (ItemEvalInst5 :
+  permutation.ItemEval U B Clause5_Clause0_Output)
+  (self : (P × Q × R × S × T × U))
+  (state : ((permutation.Slot Clause0_Clause0_Output) × (permutation.Slot
+  Clause1_Clause0_Output) × (permutation.Slot Clause2_Clause0_Output) ×
+  (permutation.Slot Clause3_Clause0_Output) × (permutation.Slot
+  Clause4_Clause0_Output) × (permutation.Slot Clause5_Clause0_Output)))
+  (index : Std.Usize) (backend : B) (input : Slice Std.U8) (cursor : Cursor)
+  (context : ParseContext) :
+  Result ((permutation.Attempt × ((permutation.Slot Clause0_Clause0_Output) ×
+    (permutation.Slot Clause1_Clause0_Output) × (permutation.Slot
+    Clause2_Clause0_Output) × (permutation.Slot Clause3_Clause0_Output) ×
+    (permutation.Slot Clause4_Clause0_Output) × (permutation.Slot
+    Clause5_Clause0_Output))) × B)
+  := do
+  match index.val with
+  | 0 =>
+    let (t, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst.eval_slot t backend input cursor context
+    let (_, s, s1, s2, s3, s4) := state
+    ok ((result, (slot, s, s1, s2, s3, s4)), backend1)
+  | 1 =>
+    let (_, t, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst1.eval_slot t backend input cursor context
+    let (s, _, s1, s2, s3, s4) := state
+    ok ((result, (s, slot, s1, s2, s3, s4)), backend1)
+  | 2 =>
+    let (_, _, t, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst2.eval_slot t backend input cursor context
+    let (s, s1, _, s2, s3, s4) := state
+    ok ((result, (s, s1, slot, s2, s3, s4)), backend1)
+  | 3 =>
+    let (_, _, _, t, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst3.eval_slot t backend input cursor context
+    let (s, s1, s2, _, s3, s4) := state
+    ok ((result, (s, s1, s2, slot, s3, s4)), backend1)
+  | 4 =>
+    let (_, _, _, _, t, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst4.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, _, s4) := state
+    ok ((result, (s, s1, s2, s3, slot, s4)), backend1)
+  | 5 =>
+    let (_, _, _, _, _, t) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst5.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, _) := state
+    ok ((result, (s, s1, s2, s3, s4, slot)), backend1)
+  | _ => ok ((permutation.Attempt.Error ParseError.Mismatch, state), backend)
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Items<'input, B, (rusthammer::permutation::Slot<Clause0_Clause0_Output>, rusthammer::permutation::Slot<Clause1_Clause0_Output>, rusthammer::permutation::Slot<Clause2_Clause0_Output>, rusthammer::permutation::Slot<Clause3_Clause0_Output>, rusthammer::permutation::Slot<Clause4_Clause0_Output>, rusthammer::permutation::Slot<Clause5_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output)> for (P, Q, R, S, T, U)}]
+    Source: 'src/permutation.rs', lines 257:8-270:9 -/
+@[reducible]
+def
+  TuplePQRSTU.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_Output
+  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
+  {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
+  {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type}
+  {Clause4_Clause0_Output : Type} {Clause5_Clause0_Output : Type} (ItemEvalInst
+  : permutation.ItemEval P B Clause0_Clause0_Output) (ItemEvalInst1 :
+  permutation.ItemEval Q B Clause1_Clause0_Output) (ItemEvalInst2 :
+  permutation.ItemEval R B Clause2_Clause0_Output) (ItemEvalInst3 :
+  permutation.ItemEval S B Clause3_Clause0_Output) (ItemEvalInst4 :
+  permutation.ItemEval T B Clause4_Clause0_Output) (ItemEvalInst5 :
+  permutation.ItemEval U B Clause5_Clause0_Output) : permutation.Items (P × Q
+  × R × S × T × U) B ((permutation.Slot Clause0_Clause0_Output) ×
+  (permutation.Slot Clause1_Clause0_Output) × (permutation.Slot
+  Clause2_Clause0_Output) × (permutation.Slot Clause3_Clause0_Output) ×
+  (permutation.Slot Clause4_Clause0_Output) × (permutation.Slot
+  Clause5_Clause0_Output)) (Clause0_Clause0_Output × Clause1_Clause0_Output ×
+  Clause2_Clause0_Output × Clause3_Clause0_Output × Clause4_Clause0_Output ×
+  Clause5_Clause0_Output) := {
+  LayoutInst :=
+    TuplePQRSTU.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output
+    ItemEvalInst.GrammarInst ItemEvalInst1.GrammarInst
+    ItemEvalInst2.GrammarInst ItemEvalInst3.GrammarInst
+    ItemEvalInst4.GrammarInst ItemEvalInst5.GrammarInst
+  attempt :=
+    TuplePQRSTU.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_Output.attempt
+    ItemEvalInst ItemEvalInst1 ItemEvalInst2 ItemEvalInst3 ItemEvalInst4
+    ItemEvalInst5
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Items<'input, B, (rusthammer::permutation::Slot<Clause0_Clause0_Output>, rusthammer::permutation::Slot<Clause1_Clause0_Output>, rusthammer::permutation::Slot<Clause2_Clause0_Output>, rusthammer::permutation::Slot<Clause3_Clause0_Output>, rusthammer::permutation::Slot<Clause4_Clause0_Output>, rusthammer::permutation::Slot<Clause5_Clause0_Output>, rusthammer::permutation::Slot<Clause6_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output, Clause6_Clause0_Output)> for (P, Q, R, S, T, U, V)}::attempt]:
+    Source: 'src/permutation.rs', lines 258:12-269:13
+    Visibility: public -/
+def
+  TuplePQRSTUV.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_Output.attempt
+  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
+  {V : Type} {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
+  {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type}
+  {Clause4_Clause0_Output : Type} {Clause5_Clause0_Output : Type}
+  {Clause6_Clause0_Output : Type} (ItemEvalInst : permutation.ItemEval P B
+  Clause0_Clause0_Output) (ItemEvalInst1 : permutation.ItemEval Q B
+  Clause1_Clause0_Output) (ItemEvalInst2 : permutation.ItemEval R B
+  Clause2_Clause0_Output) (ItemEvalInst3 : permutation.ItemEval S B
+  Clause3_Clause0_Output) (ItemEvalInst4 : permutation.ItemEval T B
+  Clause4_Clause0_Output) (ItemEvalInst5 : permutation.ItemEval U B
+  Clause5_Clause0_Output) (ItemEvalInst6 : permutation.ItemEval V B
+  Clause6_Clause0_Output) (self : (P × Q × R × S × T × U × V))
+  (state : ((permutation.Slot Clause0_Clause0_Output) × (permutation.Slot
+  Clause1_Clause0_Output) × (permutation.Slot Clause2_Clause0_Output) ×
+  (permutation.Slot Clause3_Clause0_Output) × (permutation.Slot
+  Clause4_Clause0_Output) × (permutation.Slot Clause5_Clause0_Output) ×
+  (permutation.Slot Clause6_Clause0_Output))) (index : Std.Usize) (backend : B)
+  (input : Slice Std.U8) (cursor : Cursor) (context : ParseContext) :
+  Result ((permutation.Attempt × ((permutation.Slot Clause0_Clause0_Output) ×
+    (permutation.Slot Clause1_Clause0_Output) × (permutation.Slot
+    Clause2_Clause0_Output) × (permutation.Slot Clause3_Clause0_Output) ×
+    (permutation.Slot Clause4_Clause0_Output) × (permutation.Slot
+    Clause5_Clause0_Output) × (permutation.Slot Clause6_Clause0_Output))) ×
+    B)
+  := do
+  match index.val with
+  | 0 =>
+    let (t, _, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst.eval_slot t backend input cursor context
+    let (_, s, s1, s2, s3, s4, s5) := state
+    ok ((result, (slot, s, s1, s2, s3, s4, s5)), backend1)
+  | 1 =>
+    let (_, t, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst1.eval_slot t backend input cursor context
+    let (s, _, s1, s2, s3, s4, s5) := state
+    ok ((result, (s, slot, s1, s2, s3, s4, s5)), backend1)
+  | 2 =>
+    let (_, _, t, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst2.eval_slot t backend input cursor context
+    let (s, s1, _, s2, s3, s4, s5) := state
+    ok ((result, (s, s1, slot, s2, s3, s4, s5)), backend1)
+  | 3 =>
+    let (_, _, _, t, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst3.eval_slot t backend input cursor context
+    let (s, s1, s2, _, s3, s4, s5) := state
+    ok ((result, (s, s1, s2, slot, s3, s4, s5)), backend1)
+  | 4 =>
+    let (_, _, _, _, t, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst4.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, _, s4, s5) := state
+    ok ((result, (s, s1, s2, s3, slot, s4, s5)), backend1)
+  | 5 =>
+    let (_, _, _, _, _, t, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst5.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, _, s5) := state
+    ok ((result, (s, s1, s2, s3, s4, slot, s5)), backend1)
+  | 6 =>
+    let (_, _, _, _, _, _, t) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst6.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, s5, _) := state
+    ok ((result, (s, s1, s2, s3, s4, s5, slot)), backend1)
+  | _ => ok ((permutation.Attempt.Error ParseError.Mismatch, state), backend)
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Items<'input, B, (rusthammer::permutation::Slot<Clause0_Clause0_Output>, rusthammer::permutation::Slot<Clause1_Clause0_Output>, rusthammer::permutation::Slot<Clause2_Clause0_Output>, rusthammer::permutation::Slot<Clause3_Clause0_Output>, rusthammer::permutation::Slot<Clause4_Clause0_Output>, rusthammer::permutation::Slot<Clause5_Clause0_Output>, rusthammer::permutation::Slot<Clause6_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output, Clause6_Clause0_Output)> for (P, Q, R, S, T, U, V)}]
+    Source: 'src/permutation.rs', lines 257:8-270:9 -/
+@[reducible]
+def
+  TuplePQRSTUV.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_Output
+  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
+  {V : Type} {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
+  {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type}
+  {Clause4_Clause0_Output : Type} {Clause5_Clause0_Output : Type}
+  {Clause6_Clause0_Output : Type} (ItemEvalInst : permutation.ItemEval P B
+  Clause0_Clause0_Output) (ItemEvalInst1 : permutation.ItemEval Q B
+  Clause1_Clause0_Output) (ItemEvalInst2 : permutation.ItemEval R B
+  Clause2_Clause0_Output) (ItemEvalInst3 : permutation.ItemEval S B
+  Clause3_Clause0_Output) (ItemEvalInst4 : permutation.ItemEval T B
+  Clause4_Clause0_Output) (ItemEvalInst5 : permutation.ItemEval U B
+  Clause5_Clause0_Output) (ItemEvalInst6 : permutation.ItemEval V B
+  Clause6_Clause0_Output) : permutation.Items (P × Q × R × S × T × U × V)
+  B ((permutation.Slot Clause0_Clause0_Output) × (permutation.Slot
+  Clause1_Clause0_Output) × (permutation.Slot Clause2_Clause0_Output) ×
+  (permutation.Slot Clause3_Clause0_Output) × (permutation.Slot
+  Clause4_Clause0_Output) × (permutation.Slot Clause5_Clause0_Output) ×
+  (permutation.Slot Clause6_Clause0_Output)) (Clause0_Clause0_Output ×
+  Clause1_Clause0_Output × Clause2_Clause0_Output × Clause3_Clause0_Output ×
+  Clause4_Clause0_Output × Clause5_Clause0_Output × Clause6_Clause0_Output)
+  := {
+  LayoutInst :=
+    TuplePQRSTUV.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output
+    ItemEvalInst.GrammarInst ItemEvalInst1.GrammarInst
+    ItemEvalInst2.GrammarInst ItemEvalInst3.GrammarInst
+    ItemEvalInst4.GrammarInst ItemEvalInst5.GrammarInst
+    ItemEvalInst6.GrammarInst
+  attempt :=
+    TuplePQRSTUV.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_Output.attempt
+    ItemEvalInst ItemEvalInst1 ItemEvalInst2 ItemEvalInst3 ItemEvalInst4
+    ItemEvalInst5 ItemEvalInst6
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Items<'input, B, (rusthammer::permutation::Slot<Clause0_Clause0_Output>, rusthammer::permutation::Slot<Clause1_Clause0_Output>, rusthammer::permutation::Slot<Clause2_Clause0_Output>, rusthammer::permutation::Slot<Clause3_Clause0_Output>, rusthammer::permutation::Slot<Clause4_Clause0_Output>, rusthammer::permutation::Slot<Clause5_Clause0_Output>, rusthammer::permutation::Slot<Clause6_Clause0_Output>, rusthammer::permutation::Slot<Clause7_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output, Clause6_Clause0_Output, Clause7_Clause0_Output)> for (P, Q, R, S, T, U, V, W)}::attempt]:
+    Source: 'src/permutation.rs', lines 258:12-269:13
+    Visibility: public -/
+def
+  TuplePQRSTUVW.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_Output.attempt
+  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
+  {V : Type} {W : Type} {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output
+  : Type} {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type}
+  {Clause4_Clause0_Output : Type} {Clause5_Clause0_Output : Type}
+  {Clause6_Clause0_Output : Type} {Clause7_Clause0_Output : Type} (ItemEvalInst
+  : permutation.ItemEval P B Clause0_Clause0_Output) (ItemEvalInst1 :
+  permutation.ItemEval Q B Clause1_Clause0_Output) (ItemEvalInst2 :
+  permutation.ItemEval R B Clause2_Clause0_Output) (ItemEvalInst3 :
+  permutation.ItemEval S B Clause3_Clause0_Output) (ItemEvalInst4 :
+  permutation.ItemEval T B Clause4_Clause0_Output) (ItemEvalInst5 :
+  permutation.ItemEval U B Clause5_Clause0_Output) (ItemEvalInst6 :
+  permutation.ItemEval V B Clause6_Clause0_Output) (ItemEvalInst7 :
+  permutation.ItemEval W B Clause7_Clause0_Output)
+  (self : (P × Q × R × S × T × U × V × W))
+  (state : ((permutation.Slot Clause0_Clause0_Output) × (permutation.Slot
+  Clause1_Clause0_Output) × (permutation.Slot Clause2_Clause0_Output) ×
+  (permutation.Slot Clause3_Clause0_Output) × (permutation.Slot
+  Clause4_Clause0_Output) × (permutation.Slot Clause5_Clause0_Output) ×
+  (permutation.Slot Clause6_Clause0_Output) × (permutation.Slot
+  Clause7_Clause0_Output))) (index : Std.Usize) (backend : B)
+  (input : Slice Std.U8) (cursor : Cursor) (context : ParseContext) :
+  Result ((permutation.Attempt × ((permutation.Slot Clause0_Clause0_Output) ×
+    (permutation.Slot Clause1_Clause0_Output) × (permutation.Slot
+    Clause2_Clause0_Output) × (permutation.Slot Clause3_Clause0_Output) ×
+    (permutation.Slot Clause4_Clause0_Output) × (permutation.Slot
+    Clause5_Clause0_Output) × (permutation.Slot Clause6_Clause0_Output) ×
+    (permutation.Slot Clause7_Clause0_Output))) × B)
+  := do
+  match index.val with
+  | 0 =>
+    let (t, _, _, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst.eval_slot t backend input cursor context
+    let (_, s, s1, s2, s3, s4, s5, s6) := state
+    ok ((result, (slot, s, s1, s2, s3, s4, s5, s6)), backend1)
+  | 1 =>
+    let (_, t, _, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst1.eval_slot t backend input cursor context
+    let (s, _, s1, s2, s3, s4, s5, s6) := state
+    ok ((result, (s, slot, s1, s2, s3, s4, s5, s6)), backend1)
+  | 2 =>
+    let (_, _, t, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst2.eval_slot t backend input cursor context
+    let (s, s1, _, s2, s3, s4, s5, s6) := state
+    ok ((result, (s, s1, slot, s2, s3, s4, s5, s6)), backend1)
+  | 3 =>
+    let (_, _, _, t, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst3.eval_slot t backend input cursor context
+    let (s, s1, s2, _, s3, s4, s5, s6) := state
+    ok ((result, (s, s1, s2, slot, s3, s4, s5, s6)), backend1)
+  | 4 =>
+    let (_, _, _, _, t, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst4.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, _, s4, s5, s6) := state
+    ok ((result, (s, s1, s2, s3, slot, s4, s5, s6)), backend1)
+  | 5 =>
+    let (_, _, _, _, _, t, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst5.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, _, s5, s6) := state
+    ok ((result, (s, s1, s2, s3, s4, slot, s5, s6)), backend1)
+  | 6 =>
+    let (_, _, _, _, _, _, t, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst6.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, s5, _, s6) := state
+    ok ((result, (s, s1, s2, s3, s4, s5, slot, s6)), backend1)
+  | 7 =>
+    let (_, _, _, _, _, _, _, t) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst7.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, s5, s6, _) := state
+    ok ((result, (s, s1, s2, s3, s4, s5, s6, slot)), backend1)
+  | _ => ok ((permutation.Attempt.Error ParseError.Mismatch, state), backend)
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Items<'input, B, (rusthammer::permutation::Slot<Clause0_Clause0_Output>, rusthammer::permutation::Slot<Clause1_Clause0_Output>, rusthammer::permutation::Slot<Clause2_Clause0_Output>, rusthammer::permutation::Slot<Clause3_Clause0_Output>, rusthammer::permutation::Slot<Clause4_Clause0_Output>, rusthammer::permutation::Slot<Clause5_Clause0_Output>, rusthammer::permutation::Slot<Clause6_Clause0_Output>, rusthammer::permutation::Slot<Clause7_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output, Clause6_Clause0_Output, Clause7_Clause0_Output)> for (P, Q, R, S, T, U, V, W)}]
+    Source: 'src/permutation.rs', lines 257:8-270:9 -/
+@[reducible]
+def
+  TuplePQRSTUVW.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_Output
+  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
+  {V : Type} {W : Type} {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output
+  : Type} {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type}
+  {Clause4_Clause0_Output : Type} {Clause5_Clause0_Output : Type}
+  {Clause6_Clause0_Output : Type} {Clause7_Clause0_Output : Type} (ItemEvalInst
+  : permutation.ItemEval P B Clause0_Clause0_Output) (ItemEvalInst1 :
+  permutation.ItemEval Q B Clause1_Clause0_Output) (ItemEvalInst2 :
+  permutation.ItemEval R B Clause2_Clause0_Output) (ItemEvalInst3 :
+  permutation.ItemEval S B Clause3_Clause0_Output) (ItemEvalInst4 :
+  permutation.ItemEval T B Clause4_Clause0_Output) (ItemEvalInst5 :
+  permutation.ItemEval U B Clause5_Clause0_Output) (ItemEvalInst6 :
+  permutation.ItemEval V B Clause6_Clause0_Output) (ItemEvalInst7 :
+  permutation.ItemEval W B Clause7_Clause0_Output) : permutation.Items (P × Q
+  × R × S × T × U × V × W) B ((permutation.Slot Clause0_Clause0_Output)
+  × (permutation.Slot Clause1_Clause0_Output) × (permutation.Slot
+  Clause2_Clause0_Output) × (permutation.Slot Clause3_Clause0_Output) ×
+  (permutation.Slot Clause4_Clause0_Output) × (permutation.Slot
+  Clause5_Clause0_Output) × (permutation.Slot Clause6_Clause0_Output) ×
+  (permutation.Slot Clause7_Clause0_Output)) (Clause0_Clause0_Output ×
+  Clause1_Clause0_Output × Clause2_Clause0_Output × Clause3_Clause0_Output ×
+  Clause4_Clause0_Output × Clause5_Clause0_Output × Clause6_Clause0_Output ×
+  Clause7_Clause0_Output) := {
+  LayoutInst :=
+    TuplePQRSTUVW.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output
+    ItemEvalInst.GrammarInst ItemEvalInst1.GrammarInst
+    ItemEvalInst2.GrammarInst ItemEvalInst3.GrammarInst
+    ItemEvalInst4.GrammarInst ItemEvalInst5.GrammarInst
+    ItemEvalInst6.GrammarInst ItemEvalInst7.GrammarInst
+  attempt :=
+    TuplePQRSTUVW.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_Output.attempt
+    ItemEvalInst ItemEvalInst1 ItemEvalInst2 ItemEvalInst3 ItemEvalInst4
+    ItemEvalInst5 ItemEvalInst6 ItemEvalInst7
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Items<'input, B, (rusthammer::permutation::Slot<Clause0_Clause0_Output>, rusthammer::permutation::Slot<Clause1_Clause0_Output>, rusthammer::permutation::Slot<Clause2_Clause0_Output>, rusthammer::permutation::Slot<Clause3_Clause0_Output>, rusthammer::permutation::Slot<Clause4_Clause0_Output>, rusthammer::permutation::Slot<Clause5_Clause0_Output>, rusthammer::permutation::Slot<Clause6_Clause0_Output>, rusthammer::permutation::Slot<Clause7_Clause0_Output>, rusthammer::permutation::Slot<Clause8_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output, Clause6_Clause0_Output, Clause7_Clause0_Output, Clause8_Clause0_Output)> for (P, Q, R, S, T, U, V, W, X)}::attempt]:
+    Source: 'src/permutation.rs', lines 258:12-269:13
+    Visibility: public -/
+def
+  TuplePQRSTUVWX.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_Output.attempt
+  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
+  {V : Type} {W : Type} {X : Type} {Clause0_Clause0_Output : Type}
+  {Clause1_Clause0_Output : Type} {Clause2_Clause0_Output : Type}
+  {Clause3_Clause0_Output : Type} {Clause4_Clause0_Output : Type}
+  {Clause5_Clause0_Output : Type} {Clause6_Clause0_Output : Type}
+  {Clause7_Clause0_Output : Type} {Clause8_Clause0_Output : Type} (ItemEvalInst
+  : permutation.ItemEval P B Clause0_Clause0_Output) (ItemEvalInst1 :
+  permutation.ItemEval Q B Clause1_Clause0_Output) (ItemEvalInst2 :
+  permutation.ItemEval R B Clause2_Clause0_Output) (ItemEvalInst3 :
+  permutation.ItemEval S B Clause3_Clause0_Output) (ItemEvalInst4 :
+  permutation.ItemEval T B Clause4_Clause0_Output) (ItemEvalInst5 :
+  permutation.ItemEval U B Clause5_Clause0_Output) (ItemEvalInst6 :
+  permutation.ItemEval V B Clause6_Clause0_Output) (ItemEvalInst7 :
+  permutation.ItemEval W B Clause7_Clause0_Output) (ItemEvalInst8 :
+  permutation.ItemEval X B Clause8_Clause0_Output)
+  (self : (P × Q × R × S × T × U × V × W × X))
+  (state : ((permutation.Slot Clause0_Clause0_Output) × (permutation.Slot
+  Clause1_Clause0_Output) × (permutation.Slot Clause2_Clause0_Output) ×
+  (permutation.Slot Clause3_Clause0_Output) × (permutation.Slot
+  Clause4_Clause0_Output) × (permutation.Slot Clause5_Clause0_Output) ×
+  (permutation.Slot Clause6_Clause0_Output) × (permutation.Slot
+  Clause7_Clause0_Output) × (permutation.Slot Clause8_Clause0_Output)))
+  (index : Std.Usize) (backend : B) (input : Slice Std.U8) (cursor : Cursor)
+  (context : ParseContext) :
+  Result ((permutation.Attempt × ((permutation.Slot Clause0_Clause0_Output) ×
+    (permutation.Slot Clause1_Clause0_Output) × (permutation.Slot
+    Clause2_Clause0_Output) × (permutation.Slot Clause3_Clause0_Output) ×
+    (permutation.Slot Clause4_Clause0_Output) × (permutation.Slot
+    Clause5_Clause0_Output) × (permutation.Slot Clause6_Clause0_Output) ×
+    (permutation.Slot Clause7_Clause0_Output) × (permutation.Slot
+    Clause8_Clause0_Output))) × B)
+  := do
+  match index.val with
+  | 0 =>
+    let (t, _, _, _, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst.eval_slot t backend input cursor context
+    let (_, s, s1, s2, s3, s4, s5, s6, s7) := state
+    ok ((result, (slot, s, s1, s2, s3, s4, s5, s6, s7)), backend1)
+  | 1 =>
+    let (_, t, _, _, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst1.eval_slot t backend input cursor context
+    let (s, _, s1, s2, s3, s4, s5, s6, s7) := state
+    ok ((result, (s, slot, s1, s2, s3, s4, s5, s6, s7)), backend1)
+  | 2 =>
+    let (_, _, t, _, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst2.eval_slot t backend input cursor context
+    let (s, s1, _, s2, s3, s4, s5, s6, s7) := state
+    ok ((result, (s, s1, slot, s2, s3, s4, s5, s6, s7)), backend1)
+  | 3 =>
+    let (_, _, _, t, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst3.eval_slot t backend input cursor context
+    let (s, s1, s2, _, s3, s4, s5, s6, s7) := state
+    ok ((result, (s, s1, s2, slot, s3, s4, s5, s6, s7)), backend1)
+  | 4 =>
+    let (_, _, _, _, t, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst4.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, _, s4, s5, s6, s7) := state
+    ok ((result, (s, s1, s2, s3, slot, s4, s5, s6, s7)), backend1)
+  | 5 =>
+    let (_, _, _, _, _, t, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst5.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, _, s5, s6, s7) := state
+    ok ((result, (s, s1, s2, s3, s4, slot, s5, s6, s7)), backend1)
+  | 6 =>
+    let (_, _, _, _, _, _, t, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst6.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, s5, _, s6, s7) := state
+    ok ((result, (s, s1, s2, s3, s4, s5, slot, s6, s7)), backend1)
+  | 7 =>
+    let (_, _, _, _, _, _, _, t, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst7.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, s5, s6, _, s7) := state
+    ok ((result, (s, s1, s2, s3, s4, s5, s6, slot, s7)), backend1)
+  | 8 =>
+    let (_, _, _, _, _, _, _, _, t) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst8.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, s5, s6, s7, _) := state
+    ok ((result, (s, s1, s2, s3, s4, s5, s6, s7, slot)), backend1)
+  | _ => ok ((permutation.Attempt.Error ParseError.Mismatch, state), backend)
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Items<'input, B, (rusthammer::permutation::Slot<Clause0_Clause0_Output>, rusthammer::permutation::Slot<Clause1_Clause0_Output>, rusthammer::permutation::Slot<Clause2_Clause0_Output>, rusthammer::permutation::Slot<Clause3_Clause0_Output>, rusthammer::permutation::Slot<Clause4_Clause0_Output>, rusthammer::permutation::Slot<Clause5_Clause0_Output>, rusthammer::permutation::Slot<Clause6_Clause0_Output>, rusthammer::permutation::Slot<Clause7_Clause0_Output>, rusthammer::permutation::Slot<Clause8_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output, Clause6_Clause0_Output, Clause7_Clause0_Output, Clause8_Clause0_Output)> for (P, Q, R, S, T, U, V, W, X)}]
+    Source: 'src/permutation.rs', lines 257:8-270:9 -/
+@[reducible]
+def
+  TuplePQRSTUVWX.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_Output
+  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
+  {V : Type} {W : Type} {X : Type} {Clause0_Clause0_Output : Type}
+  {Clause1_Clause0_Output : Type} {Clause2_Clause0_Output : Type}
+  {Clause3_Clause0_Output : Type} {Clause4_Clause0_Output : Type}
+  {Clause5_Clause0_Output : Type} {Clause6_Clause0_Output : Type}
+  {Clause7_Clause0_Output : Type} {Clause8_Clause0_Output : Type} (ItemEvalInst
+  : permutation.ItemEval P B Clause0_Clause0_Output) (ItemEvalInst1 :
+  permutation.ItemEval Q B Clause1_Clause0_Output) (ItemEvalInst2 :
+  permutation.ItemEval R B Clause2_Clause0_Output) (ItemEvalInst3 :
+  permutation.ItemEval S B Clause3_Clause0_Output) (ItemEvalInst4 :
+  permutation.ItemEval T B Clause4_Clause0_Output) (ItemEvalInst5 :
+  permutation.ItemEval U B Clause5_Clause0_Output) (ItemEvalInst6 :
+  permutation.ItemEval V B Clause6_Clause0_Output) (ItemEvalInst7 :
+  permutation.ItemEval W B Clause7_Clause0_Output) (ItemEvalInst8 :
+  permutation.ItemEval X B Clause8_Clause0_Output) : permutation.Items (P × Q
+  × R × S × T × U × V × W × X) B ((permutation.Slot
+  Clause0_Clause0_Output) × (permutation.Slot Clause1_Clause0_Output) ×
+  (permutation.Slot Clause2_Clause0_Output) × (permutation.Slot
+  Clause3_Clause0_Output) × (permutation.Slot Clause4_Clause0_Output) ×
+  (permutation.Slot Clause5_Clause0_Output) × (permutation.Slot
+  Clause6_Clause0_Output) × (permutation.Slot Clause7_Clause0_Output) ×
+  (permutation.Slot Clause8_Clause0_Output)) (Clause0_Clause0_Output ×
+  Clause1_Clause0_Output × Clause2_Clause0_Output × Clause3_Clause0_Output ×
+  Clause4_Clause0_Output × Clause5_Clause0_Output × Clause6_Clause0_Output ×
+  Clause7_Clause0_Output × Clause8_Clause0_Output) := {
+  LayoutInst :=
+    TuplePQRSTUVWX.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output
+    ItemEvalInst.GrammarInst ItemEvalInst1.GrammarInst
+    ItemEvalInst2.GrammarInst ItemEvalInst3.GrammarInst
+    ItemEvalInst4.GrammarInst ItemEvalInst5.GrammarInst
+    ItemEvalInst6.GrammarInst ItemEvalInst7.GrammarInst
+    ItemEvalInst8.GrammarInst
+  attempt :=
+    TuplePQRSTUVWX.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_Output.attempt
+    ItemEvalInst ItemEvalInst1 ItemEvalInst2 ItemEvalInst3 ItemEvalInst4
+    ItemEvalInst5 ItemEvalInst6 ItemEvalInst7 ItemEvalInst8
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Items<'input, B, (rusthammer::permutation::Slot<Clause0_Clause0_Output>, rusthammer::permutation::Slot<Clause1_Clause0_Output>, rusthammer::permutation::Slot<Clause2_Clause0_Output>, rusthammer::permutation::Slot<Clause3_Clause0_Output>, rusthammer::permutation::Slot<Clause4_Clause0_Output>, rusthammer::permutation::Slot<Clause5_Clause0_Output>, rusthammer::permutation::Slot<Clause6_Clause0_Output>, rusthammer::permutation::Slot<Clause7_Clause0_Output>, rusthammer::permutation::Slot<Clause8_Clause0_Output>, rusthammer::permutation::Slot<Clause9_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output, Clause6_Clause0_Output, Clause7_Clause0_Output, Clause8_Clause0_Output, Clause9_Clause0_Output)> for (P, Q, R, S, T, U, V, W, X, Y)}::attempt]:
+    Source: 'src/permutation.rs', lines 258:12-269:13
+    Visibility: public -/
+def
+  TuplePQRSTUVWXY.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_Output.attempt
+  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
+  {V : Type} {W : Type} {X : Type} {Y : Type} {Clause0_Clause0_Output : Type}
+  {Clause1_Clause0_Output : Type} {Clause2_Clause0_Output : Type}
+  {Clause3_Clause0_Output : Type} {Clause4_Clause0_Output : Type}
+  {Clause5_Clause0_Output : Type} {Clause6_Clause0_Output : Type}
+  {Clause7_Clause0_Output : Type} {Clause8_Clause0_Output : Type}
+  {Clause9_Clause0_Output : Type} (ItemEvalInst : permutation.ItemEval P B
+  Clause0_Clause0_Output) (ItemEvalInst1 : permutation.ItemEval Q B
+  Clause1_Clause0_Output) (ItemEvalInst2 : permutation.ItemEval R B
+  Clause2_Clause0_Output) (ItemEvalInst3 : permutation.ItemEval S B
+  Clause3_Clause0_Output) (ItemEvalInst4 : permutation.ItemEval T B
+  Clause4_Clause0_Output) (ItemEvalInst5 : permutation.ItemEval U B
+  Clause5_Clause0_Output) (ItemEvalInst6 : permutation.ItemEval V B
+  Clause6_Clause0_Output) (ItemEvalInst7 : permutation.ItemEval W B
+  Clause7_Clause0_Output) (ItemEvalInst8 : permutation.ItemEval X B
+  Clause8_Clause0_Output) (ItemEvalInst9 : permutation.ItemEval Y B
+  Clause9_Clause0_Output)
+  (self : (P × Q × R × S × T × U × V × W × X × Y))
+  (state : ((permutation.Slot Clause0_Clause0_Output) × (permutation.Slot
+  Clause1_Clause0_Output) × (permutation.Slot Clause2_Clause0_Output) ×
+  (permutation.Slot Clause3_Clause0_Output) × (permutation.Slot
+  Clause4_Clause0_Output) × (permutation.Slot Clause5_Clause0_Output) ×
+  (permutation.Slot Clause6_Clause0_Output) × (permutation.Slot
+  Clause7_Clause0_Output) × (permutation.Slot Clause8_Clause0_Output) ×
+  (permutation.Slot Clause9_Clause0_Output))) (index : Std.Usize) (backend : B)
+  (input : Slice Std.U8) (cursor : Cursor) (context : ParseContext) :
+  Result ((permutation.Attempt × ((permutation.Slot Clause0_Clause0_Output) ×
+    (permutation.Slot Clause1_Clause0_Output) × (permutation.Slot
+    Clause2_Clause0_Output) × (permutation.Slot Clause3_Clause0_Output) ×
+    (permutation.Slot Clause4_Clause0_Output) × (permutation.Slot
+    Clause5_Clause0_Output) × (permutation.Slot Clause6_Clause0_Output) ×
+    (permutation.Slot Clause7_Clause0_Output) × (permutation.Slot
+    Clause8_Clause0_Output) × (permutation.Slot Clause9_Clause0_Output))) ×
+    B)
+  := do
+  match index.val with
+  | 0 =>
+    let (t, _, _, _, _, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst.eval_slot t backend input cursor context
+    let (_, s, s1, s2, s3, s4, s5, s6, s7, s8) := state
+    ok ((result, (slot, s, s1, s2, s3, s4, s5, s6, s7, s8)), backend1)
+  | 1 =>
+    let (_, t, _, _, _, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst1.eval_slot t backend input cursor context
+    let (s, _, s1, s2, s3, s4, s5, s6, s7, s8) := state
+    ok ((result, (s, slot, s1, s2, s3, s4, s5, s6, s7, s8)), backend1)
+  | 2 =>
+    let (_, _, t, _, _, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst2.eval_slot t backend input cursor context
+    let (s, s1, _, s2, s3, s4, s5, s6, s7, s8) := state
+    ok ((result, (s, s1, slot, s2, s3, s4, s5, s6, s7, s8)), backend1)
+  | 3 =>
+    let (_, _, _, t, _, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst3.eval_slot t backend input cursor context
+    let (s, s1, s2, _, s3, s4, s5, s6, s7, s8) := state
+    ok ((result, (s, s1, s2, slot, s3, s4, s5, s6, s7, s8)), backend1)
+  | 4 =>
+    let (_, _, _, _, t, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst4.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, _, s4, s5, s6, s7, s8) := state
+    ok ((result, (s, s1, s2, s3, slot, s4, s5, s6, s7, s8)), backend1)
+  | 5 =>
+    let (_, _, _, _, _, t, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst5.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, _, s5, s6, s7, s8) := state
+    ok ((result, (s, s1, s2, s3, s4, slot, s5, s6, s7, s8)), backend1)
+  | 6 =>
+    let (_, _, _, _, _, _, t, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst6.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, s5, _, s6, s7, s8) := state
+    ok ((result, (s, s1, s2, s3, s4, s5, slot, s6, s7, s8)), backend1)
+  | 7 =>
+    let (_, _, _, _, _, _, _, t, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst7.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, s5, s6, _, s7, s8) := state
+    ok ((result, (s, s1, s2, s3, s4, s5, s6, slot, s7, s8)), backend1)
+  | 8 =>
+    let (_, _, _, _, _, _, _, _, t, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst8.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, s5, s6, s7, _, s8) := state
+    ok ((result, (s, s1, s2, s3, s4, s5, s6, s7, slot, s8)), backend1)
+  | 9 =>
+    let (_, _, _, _, _, _, _, _, _, t) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst9.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, s5, s6, s7, s8, _) := state
+    ok ((result, (s, s1, s2, s3, s4, s5, s6, s7, s8, slot)), backend1)
+  | _ => ok ((permutation.Attempt.Error ParseError.Mismatch, state), backend)
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Items<'input, B, (rusthammer::permutation::Slot<Clause0_Clause0_Output>, rusthammer::permutation::Slot<Clause1_Clause0_Output>, rusthammer::permutation::Slot<Clause2_Clause0_Output>, rusthammer::permutation::Slot<Clause3_Clause0_Output>, rusthammer::permutation::Slot<Clause4_Clause0_Output>, rusthammer::permutation::Slot<Clause5_Clause0_Output>, rusthammer::permutation::Slot<Clause6_Clause0_Output>, rusthammer::permutation::Slot<Clause7_Clause0_Output>, rusthammer::permutation::Slot<Clause8_Clause0_Output>, rusthammer::permutation::Slot<Clause9_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output, Clause6_Clause0_Output, Clause7_Clause0_Output, Clause8_Clause0_Output, Clause9_Clause0_Output)> for (P, Q, R, S, T, U, V, W, X, Y)}]
+    Source: 'src/permutation.rs', lines 257:8-270:9 -/
+@[reducible]
+def
+  TuplePQRSTUVWXY.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_Output
+  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
+  {V : Type} {W : Type} {X : Type} {Y : Type} {Clause0_Clause0_Output : Type}
+  {Clause1_Clause0_Output : Type} {Clause2_Clause0_Output : Type}
+  {Clause3_Clause0_Output : Type} {Clause4_Clause0_Output : Type}
+  {Clause5_Clause0_Output : Type} {Clause6_Clause0_Output : Type}
+  {Clause7_Clause0_Output : Type} {Clause8_Clause0_Output : Type}
+  {Clause9_Clause0_Output : Type} (ItemEvalInst : permutation.ItemEval P B
+  Clause0_Clause0_Output) (ItemEvalInst1 : permutation.ItemEval Q B
+  Clause1_Clause0_Output) (ItemEvalInst2 : permutation.ItemEval R B
+  Clause2_Clause0_Output) (ItemEvalInst3 : permutation.ItemEval S B
+  Clause3_Clause0_Output) (ItemEvalInst4 : permutation.ItemEval T B
+  Clause4_Clause0_Output) (ItemEvalInst5 : permutation.ItemEval U B
+  Clause5_Clause0_Output) (ItemEvalInst6 : permutation.ItemEval V B
+  Clause6_Clause0_Output) (ItemEvalInst7 : permutation.ItemEval W B
+  Clause7_Clause0_Output) (ItemEvalInst8 : permutation.ItemEval X B
+  Clause8_Clause0_Output) (ItemEvalInst9 : permutation.ItemEval Y B
+  Clause9_Clause0_Output) : permutation.Items (P × Q × R × S × T × U × V
+  × W × X × Y) B ((permutation.Slot Clause0_Clause0_Output) ×
+  (permutation.Slot Clause1_Clause0_Output) × (permutation.Slot
+  Clause2_Clause0_Output) × (permutation.Slot Clause3_Clause0_Output) ×
+  (permutation.Slot Clause4_Clause0_Output) × (permutation.Slot
+  Clause5_Clause0_Output) × (permutation.Slot Clause6_Clause0_Output) ×
+  (permutation.Slot Clause7_Clause0_Output) × (permutation.Slot
+  Clause8_Clause0_Output) × (permutation.Slot Clause9_Clause0_Output))
+  (Clause0_Clause0_Output × Clause1_Clause0_Output × Clause2_Clause0_Output
+  × Clause3_Clause0_Output × Clause4_Clause0_Output × Clause5_Clause0_Output
+  × Clause6_Clause0_Output × Clause7_Clause0_Output × Clause8_Clause0_Output
+  × Clause9_Clause0_Output) := {
+  LayoutInst :=
+    TuplePQRSTUVWXY.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output
+    ItemEvalInst.GrammarInst ItemEvalInst1.GrammarInst
+    ItemEvalInst2.GrammarInst ItemEvalInst3.GrammarInst
+    ItemEvalInst4.GrammarInst ItemEvalInst5.GrammarInst
+    ItemEvalInst6.GrammarInst ItemEvalInst7.GrammarInst
+    ItemEvalInst8.GrammarInst ItemEvalInst9.GrammarInst
+  attempt :=
+    TuplePQRSTUVWXY.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_Output.attempt
+    ItemEvalInst ItemEvalInst1 ItemEvalInst2 ItemEvalInst3 ItemEvalInst4
+    ItemEvalInst5 ItemEvalInst6 ItemEvalInst7 ItemEvalInst8 ItemEvalInst9
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Items<'input, B, (rusthammer::permutation::Slot<Clause0_Clause0_Output>, rusthammer::permutation::Slot<Clause1_Clause0_Output>, rusthammer::permutation::Slot<Clause2_Clause0_Output>, rusthammer::permutation::Slot<Clause3_Clause0_Output>, rusthammer::permutation::Slot<Clause4_Clause0_Output>, rusthammer::permutation::Slot<Clause5_Clause0_Output>, rusthammer::permutation::Slot<Clause6_Clause0_Output>, rusthammer::permutation::Slot<Clause7_Clause0_Output>, rusthammer::permutation::Slot<Clause8_Clause0_Output>, rusthammer::permutation::Slot<Clause9_Clause0_Output>, rusthammer::permutation::Slot<Clause10_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output, Clause6_Clause0_Output, Clause7_Clause0_Output, Clause8_Clause0_Output, Clause9_Clause0_Output, Clause10_Clause0_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z)}::attempt]:
+    Source: 'src/permutation.rs', lines 258:12-269:13
+    Visibility: public -/
+def
+  TuplePQRSTUVWXYZ.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_OutputClause10_Clause0_Output.attempt
+  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
+  {V : Type} {W : Type} {X : Type} {Y : Type} {Z : Type}
+  {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
+  {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type}
+  {Clause4_Clause0_Output : Type} {Clause5_Clause0_Output : Type}
+  {Clause6_Clause0_Output : Type} {Clause7_Clause0_Output : Type}
+  {Clause8_Clause0_Output : Type} {Clause9_Clause0_Output : Type}
+  {Clause10_Clause0_Output : Type} (ItemEvalInst : permutation.ItemEval P B
+  Clause0_Clause0_Output) (ItemEvalInst1 : permutation.ItemEval Q B
+  Clause1_Clause0_Output) (ItemEvalInst2 : permutation.ItemEval R B
+  Clause2_Clause0_Output) (ItemEvalInst3 : permutation.ItemEval S B
+  Clause3_Clause0_Output) (ItemEvalInst4 : permutation.ItemEval T B
+  Clause4_Clause0_Output) (ItemEvalInst5 : permutation.ItemEval U B
+  Clause5_Clause0_Output) (ItemEvalInst6 : permutation.ItemEval V B
+  Clause6_Clause0_Output) (ItemEvalInst7 : permutation.ItemEval W B
+  Clause7_Clause0_Output) (ItemEvalInst8 : permutation.ItemEval X B
+  Clause8_Clause0_Output) (ItemEvalInst9 : permutation.ItemEval Y B
+  Clause9_Clause0_Output) (ItemEvalInst10 : permutation.ItemEval Z B
+  Clause10_Clause0_Output)
+  (self : (P × Q × R × S × T × U × V × W × X × Y × Z))
+  (state : ((permutation.Slot Clause0_Clause0_Output) × (permutation.Slot
+  Clause1_Clause0_Output) × (permutation.Slot Clause2_Clause0_Output) ×
+  (permutation.Slot Clause3_Clause0_Output) × (permutation.Slot
+  Clause4_Clause0_Output) × (permutation.Slot Clause5_Clause0_Output) ×
+  (permutation.Slot Clause6_Clause0_Output) × (permutation.Slot
+  Clause7_Clause0_Output) × (permutation.Slot Clause8_Clause0_Output) ×
+  (permutation.Slot Clause9_Clause0_Output) × (permutation.Slot
+  Clause10_Clause0_Output))) (index : Std.Usize) (backend : B)
+  (input : Slice Std.U8) (cursor : Cursor) (context : ParseContext) :
+  Result ((permutation.Attempt × ((permutation.Slot Clause0_Clause0_Output) ×
+    (permutation.Slot Clause1_Clause0_Output) × (permutation.Slot
+    Clause2_Clause0_Output) × (permutation.Slot Clause3_Clause0_Output) ×
+    (permutation.Slot Clause4_Clause0_Output) × (permutation.Slot
+    Clause5_Clause0_Output) × (permutation.Slot Clause6_Clause0_Output) ×
+    (permutation.Slot Clause7_Clause0_Output) × (permutation.Slot
+    Clause8_Clause0_Output) × (permutation.Slot Clause9_Clause0_Output) ×
+    (permutation.Slot Clause10_Clause0_Output))) × B)
+  := do
+  match index.val with
+  | 0 =>
+    let (t, _, _, _, _, _, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst.eval_slot t backend input cursor context
+    let (_, s, s1, s2, s3, s4, s5, s6, s7, s8, s9) := state
+    ok ((result, (slot, s, s1, s2, s3, s4, s5, s6, s7, s8, s9)), backend1)
+  | 1 =>
+    let (_, t, _, _, _, _, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst1.eval_slot t backend input cursor context
+    let (s, _, s1, s2, s3, s4, s5, s6, s7, s8, s9) := state
+    ok ((result, (s, slot, s1, s2, s3, s4, s5, s6, s7, s8, s9)), backend1)
+  | 2 =>
+    let (_, _, t, _, _, _, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst2.eval_slot t backend input cursor context
+    let (s, s1, _, s2, s3, s4, s5, s6, s7, s8, s9) := state
+    ok ((result, (s, s1, slot, s2, s3, s4, s5, s6, s7, s8, s9)), backend1)
+  | 3 =>
+    let (_, _, _, t, _, _, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst3.eval_slot t backend input cursor context
+    let (s, s1, s2, _, s3, s4, s5, s6, s7, s8, s9) := state
+    ok ((result, (s, s1, s2, slot, s3, s4, s5, s6, s7, s8, s9)), backend1)
+  | 4 =>
+    let (_, _, _, _, t, _, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst4.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, _, s4, s5, s6, s7, s8, s9) := state
+    ok ((result, (s, s1, s2, s3, slot, s4, s5, s6, s7, s8, s9)), backend1)
+  | 5 =>
+    let (_, _, _, _, _, t, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst5.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, _, s5, s6, s7, s8, s9) := state
+    ok ((result, (s, s1, s2, s3, s4, slot, s5, s6, s7, s8, s9)), backend1)
+  | 6 =>
+    let (_, _, _, _, _, _, t, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst6.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, s5, _, s6, s7, s8, s9) := state
+    ok ((result, (s, s1, s2, s3, s4, s5, slot, s6, s7, s8, s9)), backend1)
+  | 7 =>
+    let (_, _, _, _, _, _, _, t, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst7.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, s5, s6, _, s7, s8, s9) := state
+    ok ((result, (s, s1, s2, s3, s4, s5, s6, slot, s7, s8, s9)), backend1)
+  | 8 =>
+    let (_, _, _, _, _, _, _, _, t, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst8.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, s5, s6, s7, _, s8, s9) := state
+    ok ((result, (s, s1, s2, s3, s4, s5, s6, s7, slot, s8, s9)), backend1)
+  | 9 =>
+    let (_, _, _, _, _, _, _, _, _, t, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst9.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, s5, s6, s7, s8, _, s9) := state
+    ok ((result, (s, s1, s2, s3, s4, s5, s6, s7, s8, slot, s9)), backend1)
+  | 10 =>
+    let (_, _, _, _, _, _, _, _, _, _, t) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst10.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, s5, s6, s7, s8, s9, _) := state
+    ok ((result, (s, s1, s2, s3, s4, s5, s6, s7, s8, s9, slot)), backend1)
+  | _ => ok ((permutation.Attempt.Error ParseError.Mismatch, state), backend)
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Items<'input, B, (rusthammer::permutation::Slot<Clause0_Clause0_Output>, rusthammer::permutation::Slot<Clause1_Clause0_Output>, rusthammer::permutation::Slot<Clause2_Clause0_Output>, rusthammer::permutation::Slot<Clause3_Clause0_Output>, rusthammer::permutation::Slot<Clause4_Clause0_Output>, rusthammer::permutation::Slot<Clause5_Clause0_Output>, rusthammer::permutation::Slot<Clause6_Clause0_Output>, rusthammer::permutation::Slot<Clause7_Clause0_Output>, rusthammer::permutation::Slot<Clause8_Clause0_Output>, rusthammer::permutation::Slot<Clause9_Clause0_Output>, rusthammer::permutation::Slot<Clause10_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output, Clause6_Clause0_Output, Clause7_Clause0_Output, Clause8_Clause0_Output, Clause9_Clause0_Output, Clause10_Clause0_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z)}]
+    Source: 'src/permutation.rs', lines 257:8-270:9 -/
+@[reducible]
+def
+  TuplePQRSTUVWXYZ.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_OutputClause10_Clause0_Output
+  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
+  {V : Type} {W : Type} {X : Type} {Y : Type} {Z : Type}
+  {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
+  {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type}
+  {Clause4_Clause0_Output : Type} {Clause5_Clause0_Output : Type}
+  {Clause6_Clause0_Output : Type} {Clause7_Clause0_Output : Type}
+  {Clause8_Clause0_Output : Type} {Clause9_Clause0_Output : Type}
+  {Clause10_Clause0_Output : Type} (ItemEvalInst : permutation.ItemEval P B
+  Clause0_Clause0_Output) (ItemEvalInst1 : permutation.ItemEval Q B
+  Clause1_Clause0_Output) (ItemEvalInst2 : permutation.ItemEval R B
+  Clause2_Clause0_Output) (ItemEvalInst3 : permutation.ItemEval S B
+  Clause3_Clause0_Output) (ItemEvalInst4 : permutation.ItemEval T B
+  Clause4_Clause0_Output) (ItemEvalInst5 : permutation.ItemEval U B
+  Clause5_Clause0_Output) (ItemEvalInst6 : permutation.ItemEval V B
+  Clause6_Clause0_Output) (ItemEvalInst7 : permutation.ItemEval W B
+  Clause7_Clause0_Output) (ItemEvalInst8 : permutation.ItemEval X B
+  Clause8_Clause0_Output) (ItemEvalInst9 : permutation.ItemEval Y B
+  Clause9_Clause0_Output) (ItemEvalInst10 : permutation.ItemEval Z B
+  Clause10_Clause0_Output) : permutation.Items (P × Q × R × S × T × U × V
+  × W × X × Y × Z) B ((permutation.Slot Clause0_Clause0_Output) ×
+  (permutation.Slot Clause1_Clause0_Output) × (permutation.Slot
+  Clause2_Clause0_Output) × (permutation.Slot Clause3_Clause0_Output) ×
+  (permutation.Slot Clause4_Clause0_Output) × (permutation.Slot
+  Clause5_Clause0_Output) × (permutation.Slot Clause6_Clause0_Output) ×
+  (permutation.Slot Clause7_Clause0_Output) × (permutation.Slot
+  Clause8_Clause0_Output) × (permutation.Slot Clause9_Clause0_Output) ×
+  (permutation.Slot Clause10_Clause0_Output)) (Clause0_Clause0_Output ×
+  Clause1_Clause0_Output × Clause2_Clause0_Output × Clause3_Clause0_Output ×
+  Clause4_Clause0_Output × Clause5_Clause0_Output × Clause6_Clause0_Output ×
+  Clause7_Clause0_Output × Clause8_Clause0_Output × Clause9_Clause0_Output ×
+  Clause10_Clause0_Output) := {
+  LayoutInst :=
+    TuplePQRSTUVWXYZ.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output
+    ItemEvalInst.GrammarInst ItemEvalInst1.GrammarInst
+    ItemEvalInst2.GrammarInst ItemEvalInst3.GrammarInst
+    ItemEvalInst4.GrammarInst ItemEvalInst5.GrammarInst
+    ItemEvalInst6.GrammarInst ItemEvalInst7.GrammarInst
+    ItemEvalInst8.GrammarInst ItemEvalInst9.GrammarInst
+    ItemEvalInst10.GrammarInst
+  attempt :=
+    TuplePQRSTUVWXYZ.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_OutputClause10_Clause0_Output.attempt
+    ItemEvalInst ItemEvalInst1 ItemEvalInst2 ItemEvalInst3 ItemEvalInst4
+    ItemEvalInst5 ItemEvalInst6 ItemEvalInst7 ItemEvalInst8 ItemEvalInst9
+    ItemEvalInst10
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::permutation::Items<'input, B, (rusthammer::permutation::Slot<Clause0_Clause0_Output>, rusthammer::permutation::Slot<Clause1_Clause0_Output>, rusthammer::permutation::Slot<Clause2_Clause0_Output>, rusthammer::permutation::Slot<Clause3_Clause0_Output>, rusthammer::permutation::Slot<Clause4_Clause0_Output>, rusthammer::permutation::Slot<Clause5_Clause0_Output>, rusthammer::permutation::Slot<Clause6_Clause0_Output>, rusthammer::permutation::Slot<Clause7_Clause0_Output>, rusthammer::permutation::Slot<Clause8_Clause0_Output>, rusthammer::permutation::Slot<Clause9_Clause0_Output>, rusthammer::permutation::Slot<Clause10_Clause0_Output>, rusthammer::permutation::Slot<Clause11_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output, Clause6_Clause0_Output, Clause7_Clause0_Output, Clause8_Clause0_Output, Clause9_Clause0_Output, Clause10_Clause0_Output, Clause11_Clause0_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z, A)}::attempt]:
+    Source: 'src/permutation.rs', lines 258:12-269:13
+    Visibility: public -/
+def
+  TuplePQRSTUVWXYZA.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_OutputClause10_Clause0_OutputClause11_Clause0_Output.attempt
+  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
+  {V : Type} {W : Type} {X : Type} {Y : Type} {Z : Type} {A : Type}
+  {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
+  {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type}
+  {Clause4_Clause0_Output : Type} {Clause5_Clause0_Output : Type}
+  {Clause6_Clause0_Output : Type} {Clause7_Clause0_Output : Type}
+  {Clause8_Clause0_Output : Type} {Clause9_Clause0_Output : Type}
+  {Clause10_Clause0_Output : Type} {Clause11_Clause0_Output : Type}
+  (ItemEvalInst : permutation.ItemEval P B Clause0_Clause0_Output)
+  (ItemEvalInst1 : permutation.ItemEval Q B Clause1_Clause0_Output)
+  (ItemEvalInst2 : permutation.ItemEval R B Clause2_Clause0_Output)
+  (ItemEvalInst3 : permutation.ItemEval S B Clause3_Clause0_Output)
+  (ItemEvalInst4 : permutation.ItemEval T B Clause4_Clause0_Output)
+  (ItemEvalInst5 : permutation.ItemEval U B Clause5_Clause0_Output)
+  (ItemEvalInst6 : permutation.ItemEval V B Clause6_Clause0_Output)
+  (ItemEvalInst7 : permutation.ItemEval W B Clause7_Clause0_Output)
+  (ItemEvalInst8 : permutation.ItemEval X B Clause8_Clause0_Output)
+  (ItemEvalInst9 : permutation.ItemEval Y B Clause9_Clause0_Output)
+  (ItemEvalInst10 : permutation.ItemEval Z B Clause10_Clause0_Output)
+  (ItemEvalInst11 : permutation.ItemEval A B Clause11_Clause0_Output)
+  (self : (P × Q × R × S × T × U × V × W × X × Y × Z × A))
+  (state : ((permutation.Slot Clause0_Clause0_Output) × (permutation.Slot
+  Clause1_Clause0_Output) × (permutation.Slot Clause2_Clause0_Output) ×
+  (permutation.Slot Clause3_Clause0_Output) × (permutation.Slot
+  Clause4_Clause0_Output) × (permutation.Slot Clause5_Clause0_Output) ×
+  (permutation.Slot Clause6_Clause0_Output) × (permutation.Slot
+  Clause7_Clause0_Output) × (permutation.Slot Clause8_Clause0_Output) ×
+  (permutation.Slot Clause9_Clause0_Output) × (permutation.Slot
+  Clause10_Clause0_Output) × (permutation.Slot Clause11_Clause0_Output)))
+  (index : Std.Usize) (backend : B) (input : Slice Std.U8) (cursor : Cursor)
+  (context : ParseContext) :
+  Result ((permutation.Attempt × ((permutation.Slot Clause0_Clause0_Output) ×
+    (permutation.Slot Clause1_Clause0_Output) × (permutation.Slot
+    Clause2_Clause0_Output) × (permutation.Slot Clause3_Clause0_Output) ×
+    (permutation.Slot Clause4_Clause0_Output) × (permutation.Slot
+    Clause5_Clause0_Output) × (permutation.Slot Clause6_Clause0_Output) ×
+    (permutation.Slot Clause7_Clause0_Output) × (permutation.Slot
+    Clause8_Clause0_Output) × (permutation.Slot Clause9_Clause0_Output) ×
+    (permutation.Slot Clause10_Clause0_Output) × (permutation.Slot
+    Clause11_Clause0_Output))) × B)
+  := do
+  match index.val with
+  | 0 =>
+    let (t, _, _, _, _, _, _, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst.eval_slot t backend input cursor context
+    let (_, s, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10) := state
+    ok ((result, (slot, s, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10)), backend1)
+  | 1 =>
+    let (_, t, _, _, _, _, _, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst1.eval_slot t backend input cursor context
+    let (s, _, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10) := state
+    ok ((result, (s, slot, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10)), backend1)
+  | 2 =>
+    let (_, _, t, _, _, _, _, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst2.eval_slot t backend input cursor context
+    let (s, s1, _, s2, s3, s4, s5, s6, s7, s8, s9, s10) := state
+    ok ((result, (s, s1, slot, s2, s3, s4, s5, s6, s7, s8, s9, s10)), backend1)
+  | 3 =>
+    let (_, _, _, t, _, _, _, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst3.eval_slot t backend input cursor context
+    let (s, s1, s2, _, s3, s4, s5, s6, s7, s8, s9, s10) := state
+    ok ((result, (s, s1, s2, slot, s3, s4, s5, s6, s7, s8, s9, s10)), backend1)
+  | 4 =>
+    let (_, _, _, _, t, _, _, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst4.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, _, s4, s5, s6, s7, s8, s9, s10) := state
+    ok ((result, (s, s1, s2, s3, slot, s4, s5, s6, s7, s8, s9, s10)), backend1)
+  | 5 =>
+    let (_, _, _, _, _, t, _, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst5.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, _, s5, s6, s7, s8, s9, s10) := state
+    ok ((result, (s, s1, s2, s3, s4, slot, s5, s6, s7, s8, s9, s10)), backend1)
+  | 6 =>
+    let (_, _, _, _, _, _, t, _, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst6.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, s5, _, s6, s7, s8, s9, s10) := state
+    ok ((result, (s, s1, s2, s3, s4, s5, slot, s6, s7, s8, s9, s10)), backend1)
+  | 7 =>
+    let (_, _, _, _, _, _, _, t, _, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst7.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, s5, s6, _, s7, s8, s9, s10) := state
+    ok ((result, (s, s1, s2, s3, s4, s5, s6, slot, s7, s8, s9, s10)), backend1)
+  | 8 =>
+    let (_, _, _, _, _, _, _, _, t, _, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst8.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, s5, s6, s7, _, s8, s9, s10) := state
+    ok ((result, (s, s1, s2, s3, s4, s5, s6, s7, slot, s8, s9, s10)), backend1)
+  | 9 =>
+    let (_, _, _, _, _, _, _, _, _, t, _, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst9.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, s5, s6, s7, s8, _, s9, s10) := state
+    ok ((result, (s, s1, s2, s3, s4, s5, s6, s7, s8, slot, s9, s10)), backend1)
+  | 10 =>
+    let (_, _, _, _, _, _, _, _, _, _, t, _) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst10.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, s5, s6, s7, s8, s9, _, s10) := state
+    ok ((result, (s, s1, s2, s3, s4, s5, s6, s7, s8, s9, slot, s10)), backend1)
+  | 11 =>
+    let (_, _, _, _, _, _, _, _, _, _, _, t) := self
+    let ((result, slot), backend1) ←
+      ItemEvalInst11.eval_slot t backend input cursor context
+    let (s, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, _) := state
+    ok ((result, (s, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, slot)), backend1)
+  | _ => ok ((permutation.Attempt.Error ParseError.Mismatch, state), backend)
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::permutation::Items<'input, B, (rusthammer::permutation::Slot<Clause0_Clause0_Output>, rusthammer::permutation::Slot<Clause1_Clause0_Output>, rusthammer::permutation::Slot<Clause2_Clause0_Output>, rusthammer::permutation::Slot<Clause3_Clause0_Output>, rusthammer::permutation::Slot<Clause4_Clause0_Output>, rusthammer::permutation::Slot<Clause5_Clause0_Output>, rusthammer::permutation::Slot<Clause6_Clause0_Output>, rusthammer::permutation::Slot<Clause7_Clause0_Output>, rusthammer::permutation::Slot<Clause8_Clause0_Output>, rusthammer::permutation::Slot<Clause9_Clause0_Output>, rusthammer::permutation::Slot<Clause10_Clause0_Output>, rusthammer::permutation::Slot<Clause11_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output, Clause6_Clause0_Output, Clause7_Clause0_Output, Clause8_Clause0_Output, Clause9_Clause0_Output, Clause10_Clause0_Output, Clause11_Clause0_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z, A)}]
+    Source: 'src/permutation.rs', lines 257:8-270:9 -/
+@[reducible]
+def
+  TuplePQRSTUVWXYZA.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_OutputClause10_Clause0_OutputClause11_Clause0_Output
+  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
+  {V : Type} {W : Type} {X : Type} {Y : Type} {Z : Type} {A : Type}
+  {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
+  {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type}
+  {Clause4_Clause0_Output : Type} {Clause5_Clause0_Output : Type}
+  {Clause6_Clause0_Output : Type} {Clause7_Clause0_Output : Type}
+  {Clause8_Clause0_Output : Type} {Clause9_Clause0_Output : Type}
+  {Clause10_Clause0_Output : Type} {Clause11_Clause0_Output : Type}
+  (ItemEvalInst : permutation.ItemEval P B Clause0_Clause0_Output)
+  (ItemEvalInst1 : permutation.ItemEval Q B Clause1_Clause0_Output)
+  (ItemEvalInst2 : permutation.ItemEval R B Clause2_Clause0_Output)
+  (ItemEvalInst3 : permutation.ItemEval S B Clause3_Clause0_Output)
+  (ItemEvalInst4 : permutation.ItemEval T B Clause4_Clause0_Output)
+  (ItemEvalInst5 : permutation.ItemEval U B Clause5_Clause0_Output)
+  (ItemEvalInst6 : permutation.ItemEval V B Clause6_Clause0_Output)
+  (ItemEvalInst7 : permutation.ItemEval W B Clause7_Clause0_Output)
+  (ItemEvalInst8 : permutation.ItemEval X B Clause8_Clause0_Output)
+  (ItemEvalInst9 : permutation.ItemEval Y B Clause9_Clause0_Output)
+  (ItemEvalInst10 : permutation.ItemEval Z B Clause10_Clause0_Output)
+  (ItemEvalInst11 : permutation.ItemEval A B Clause11_Clause0_Output) :
+  permutation.Items (P × Q × R × S × T × U × V × W × X × Y × Z × A)
+  B ((permutation.Slot Clause0_Clause0_Output) × (permutation.Slot
+  Clause1_Clause0_Output) × (permutation.Slot Clause2_Clause0_Output) ×
+  (permutation.Slot Clause3_Clause0_Output) × (permutation.Slot
+  Clause4_Clause0_Output) × (permutation.Slot Clause5_Clause0_Output) ×
+  (permutation.Slot Clause6_Clause0_Output) × (permutation.Slot
+  Clause7_Clause0_Output) × (permutation.Slot Clause8_Clause0_Output) ×
+  (permutation.Slot Clause9_Clause0_Output) × (permutation.Slot
+  Clause10_Clause0_Output) × (permutation.Slot Clause11_Clause0_Output))
+  (Clause0_Clause0_Output × Clause1_Clause0_Output × Clause2_Clause0_Output
+  × Clause3_Clause0_Output × Clause4_Clause0_Output × Clause5_Clause0_Output
+  × Clause6_Clause0_Output × Clause7_Clause0_Output × Clause8_Clause0_Output
+  × Clause9_Clause0_Output × Clause10_Clause0_Output ×
+  Clause11_Clause0_Output) := {
+  LayoutInst :=
+    TuplePQRSTUVWXYZA.Insts.RusthammerPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output
+    ItemEvalInst.GrammarInst ItemEvalInst1.GrammarInst
+    ItemEvalInst2.GrammarInst ItemEvalInst3.GrammarInst
+    ItemEvalInst4.GrammarInst ItemEvalInst5.GrammarInst
+    ItemEvalInst6.GrammarInst ItemEvalInst7.GrammarInst
+    ItemEvalInst8.GrammarInst ItemEvalInst9.GrammarInst
+    ItemEvalInst10.GrammarInst ItemEvalInst11.GrammarInst
+  attempt :=
+    TuplePQRSTUVWXYZA.Insts.RusthammerPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_OutputClause10_Clause0_OutputClause11_Clause0_Output.attempt
+    ItemEvalInst ItemEvalInst1 ItemEvalInst2 ItemEvalInst3 ItemEvalInst4
+    ItemEvalInst5 ItemEvalInst6 ItemEvalInst7 ItemEvalInst8 ItemEvalInst9
+    ItemEvalInst10 ItemEvalInst11
+}
+
+/-- [rusthammer::permutation::search]:
+    Source: 'src/permutation.rs', lines 287:0-387:1 -/
+def permutation.search
+  {B : Type} {L : Type} {Clause0_Clause0_State : Type} {Clause0_Clause0_Output
+  : Type} (ItemsInst : permutation.Items L B Clause0_Clause0_State
+  Clause0_Clause0_Output) (items : L) (state : Clause0_Clause0_State)
+  (remaining : Std.Usize) (backend : B) (input : Slice Std.U8)
+  (cursor : Cursor) (context : ParseContext) (index : Std.Usize)
+  (all_absent : Bool) :
+  Result (((ParseOutcome Unit) × Clause0_Clause0_State) × B)
+  := do
+  if remaining = 0#usize
+  then ok ((ParseOutcome.Success cursor (), state), backend)
+  else
+    let i ← ItemsInst.LayoutInst.count items
+    if index >= i
+    then
+      if all_absent
+      then ok ((ParseOutcome.Success cursor (), state), backend)
+      else ok ((ParseOutcome.Error ParseError.Mismatch, state), backend)
+    else
+      let b ← ItemsInst.LayoutInst.matched items state index
+      if b
+      then
+        let i1 ← index + 1#usize
+        permutation.search ItemsInst items state remaining backend input cursor
+          context i1 all_absent
+      else
+        let ((attempt, state1), backend1) ←
+          ItemsInst.attempt items state index backend input cursor context
+        match attempt with
+        | permutation.Attempt.Matched next =>
+          let i1 ← remaining - 1#usize
+          let ((result, state2), backend2) ←
+            permutation.search ItemsInst items state1 i1 backend1 input next
+              context 0#usize true
+          match result with
+          | ParseOutcome.Success c _ =>
+            ok ((ParseOutcome.Success c (), state2), backend2)
+          | ParseOutcome.Error error =>
+            let b1 ← ParseError.is_recoverable error
+            if b1
+            then
+              let state3 ← ItemsInst.LayoutInst.clear items state2 index
+              let i2 ← index + 1#usize
+              permutation.search ItemsInst items state3 remaining backend2
+                input cursor context i2 false
+            else ok ((result, state2), backend2)
+          | ParseOutcome.NeedMore =>
+            ok ((ParseOutcome.NeedMore, state2), backend2)
+        | permutation.Attempt.Absent =>
+          let i1 ← index + 1#usize
+          permutation.search ItemsInst items state1 remaining backend1 input
+            cursor context i1 all_absent
+        | permutation.Attempt.Error error =>
+          let b1 ← ParseError.is_recoverable error
+          if b1
+          then
+            let i1 ← index + 1#usize
+            permutation.search ItemsInst items state1 remaining backend1 input
+              cursor context i1 false
+          else ok ((ParseOutcome.Error error, state1), backend1)
+        | permutation.Attempt.NeedMore =>
+          ok ((ParseOutcome.NeedMore, state1), backend1)
+partial_fixpoint
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::Grammar<'input, Clause0_Output> for rusthammer::permutation::Permutation<T>}]
+    Source: 'src/permutation.rs', lines 389:0-391:1 -/
+@[reducible]
+def permutation.Permutation.Insts.RusthammerGrammar {T : Type} {Clause0_State :
+  Type} {Clause0_Output : Type} (LayoutInst : permutation.Layout T
+  Clause0_State Clause0_Output) : Grammar (permutation.Permutation T)
+  Clause0_Output := {
+}
+
+/-- [rusthammer::permutation::{impl rusthammer::Eval<'input, B, Clause0_Clause0_Output> for rusthammer::permutation::Permutation<T>}::eval]:
+    Source: 'src/permutation.rs', lines 394:4-420:5
+    Visibility: public -/
+def permutation.Permutation.Insts.RusthammerEval.eval
+  {B : Type} {T : Type} {Clause0_Clause0_State : Type} {Clause0_Clause0_Output
+  : Type} (ItemsInst : permutation.Items T B Clause0_Clause0_State
+  Clause0_Clause0_Output) (self : permutation.Permutation T) (backend : B)
+  (input : Slice Std.U8) (cursor : Cursor) (context : ParseContext) :
+  Result ((ParseOutcome Clause0_Clause0_Output) × B)
+  := do
+  let t ← ItemsInst.LayoutInst.empty self.items
+  let i ← ItemsInst.LayoutInst.count self.items
+  let ((result, state), backend1) ←
+    permutation.search ItemsInst self.items t i backend input cursor context
+      0#usize true
+  match result with
+  | ParseOutcome.Success next _ =>
+    let r ← ItemsInst.LayoutInst.finish self.items state
+    match r with
+    | core.result.Result.Ok value =>
+      ok (ParseOutcome.Success next value, backend1)
+    | core.result.Result.Err error => ok (ParseOutcome.Error error, backend1)
+  | ParseOutcome.Error error => ok (ParseOutcome.Error error, backend1)
+  | ParseOutcome.NeedMore => ok (ParseOutcome.NeedMore, backend1)
+
+/-- Trait implementation: [rusthammer::permutation::{impl rusthammer::Eval<'input, B, Clause0_Clause0_Output> for rusthammer::permutation::Permutation<T>}]
+    Source: 'src/permutation.rs', lines 393:0-421:1 -/
+@[reducible]
+def permutation.Permutation.Insts.RusthammerEval {B : Type} {T : Type}
+  {Clause0_Clause0_State : Type} {Clause0_Clause0_Output : Type} (ItemsInst :
+  permutation.Items T B Clause0_Clause0_State Clause0_Clause0_Output) : Eval
+  (permutation.Permutation T) B Clause0_Clause0_Output := {
+  GrammarInst := permutation.Permutation.Insts.RusthammerGrammar
+    ItemsInst.LayoutInst
+  eval := permutation.Permutation.Insts.RusthammerEval.eval ItemsInst
 }
 
 end RustHammer.Code

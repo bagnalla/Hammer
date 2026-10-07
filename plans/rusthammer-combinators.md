@@ -1,7 +1,7 @@
 # RustHammer combinator API plan
 
-Status: target API and implementation order, with spans, scoped ordering, signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection verified,
-2026-10-06. Unimplemented features remain proposals. See the
+Status: target API and implementation order, with permutation, spans, scoped ordering, signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection verified,
+2026-10-07. Unimplemented features remain proposals. See the
 [main plan](rusthammer.md) and [prototype README](../rusthammer/README.md) for
 current implementation and proof coverage.
 
@@ -16,6 +16,27 @@ user's request. The [recursion writeup](rusthammer-recursive-rules.md) retains t
 construction proposal, private direct/packrat evidence, tool failures, and
 unproved translation-soundness obligations. These are future design gates,
 not requirements for finishing the first version.
+
+## Agreed API scope
+
+The parity review on 2026-10-07 selected the following scope. RustHammer does not
+require a counterpart for every C combinator.
+
+| Capability | Decision |
+| --- | --- |
+| Permutation | Implemented and proved as a retained nonrecursive capability; see the contract below. |
+| Floating-point fields/ranges, seeking, and diagnostic annotations | Retain as intended capabilities. Their contracts, implementation order, and inclusion in the first version remain to be selected. |
+| Deferred actions (`h_action_stash`, `h_action_apply`) | Omit from the intended API. Ordinary transformations through `Map`, `TryMap`, and predicates remain supported; application effects can follow successful parsing. |
+| Dedicated dispatch (`h_dispatch`) | Omit from the intended API. Express tagged formats through `Choice` or `Bind`, using explicit typed parser alternatives where needed. |
+| Named parse-local value storage (`h_put_value`, `h_get_value`, `h_free_value`) | Exclude from the first version; its longer-term role is undecided. Use explicit typed values and `Bind` for field dependencies. Revisit only when a concrete grammar motivates shared storage, considering an explicit typed environment before a string-keyed store. |
+
+The storage decision concerns values shared by application grammar components;
+it does not remove interpreter bookkeeping or the existing backend boundary.
+Diagnostic annotations identify a parser occurrence with a label and an optional
+grammar construction location. They enrich failure reporting while preserving
+the underlying parsing behavior. The detailed inventory below records the design
+obligations for the retained capabilities. Recursion and its extraction-tool work
+remain deferred under the separate writeup.
 
 ## API policy
 
@@ -81,7 +102,8 @@ All nine theorems are axiom-audited. Native tests check construction without any
 interpreter, deferred callbacks, input borrows, and retained backend/Copy
 capabilities. The [example](../rusthammer/examples/constructors.rs) shares its
 opaque-callback factory with the ordinary Cargo consumer. Both library MIR stages
-extract the generic helpers themselves; all 52 consumer entries pass. The older
+extract the generic helpers themselves; all 52 consumer entries passed at that
+checkpoint (57 after permutation). The older
 negative probes remain isolated. Apply this return-type and backend-bound policy
 to new APIs; no revision of the associated-output design is planned.
 
@@ -106,6 +128,7 @@ values. Only collecting operations require the optional `alloc` feature.
 | Separated repetition | `SepBy<P, S>` produces `Vec<A>` with `alloc`; `FoldSepBy<P, S, I, F>` produces an accumulator without library allocation. | Implemented and proved. One count policy covers `h_sepBy` and `h_sepBy1`, as well as finite limits. Parse the first item, then separator/item pairs; discard separator outputs. |
 | Value-dependent sequencing | `Bind<P, F>` produces the output of the parser selected or constructed from `A`. | Implemented and proved. Corresponds to `h_bind`. Run the first child, move its value into the factory, then run the resulting parser at the next cursor. |
 | Match restrictions | `ButNot<P, Q>` and `Difference<P, Q>` preserve `A`; `Xor<P, Q>` requires a common output type. | Implemented and proved; correspond to `h_butnot`, `h_difference`, and `h_xor`. Compare matches starting at the same cursor; see below. |
+| Permutation | `Permutation<T>` produces a tuple in declaration order. | Implemented and proved; corresponds to `h_permutation`. Tuples of zero through twelve `required(p)` / `optional(p)` entries share a backtracking search. |
 
 Output selection moves retained values and drops the others without requiring
 `Copy` or `Clone`. The implemented helpers use `Seq` over shared references and
@@ -269,10 +292,15 @@ Build these permanent conveniences from the core, rather than separate engines:
 | --- | --- |
 | Length-counted elements | Decode and check a count, then `Repeat::exact(element, count)`. This is Hammer's `h_length_value`; prefer the unambiguous name `LengthCount`. |
 | Length-prefixed aligned bytes | Decode and check a byte length, then construct `TakeAligned`. Preserve the length in the typed output if the application needs it. |
-| Discriminator-based parsing | Decode a tag and select a typed parser branch. This supplies the capability of `h_dispatch`, including an explicit default/rejection branch; retain tag and payload when needed. |
 | Numeric ranges | Implemented and proved: `IntRange::new(parser, lower, upper)` returns `Result<IntRange<P, T>, ConfigError>` and delegates to `Verify`. Inclusive bounds have the output type; private fields and a fallible constructor reject reversed bounds with `InvalidBounds`. Immutable accessors borrow both endpoints. Corresponds to `h_int_range`, and to `h_ch_range` when the child is `Byte`. |
 | Byte sets | Implemented and proved: `ByteIn::new(bytes)` (`h_in`) and `ByteNotIn::new(bytes)` (`h_not_in`) use `Verify` over `Byte` and return `u8`. Own private 32-byte bitmaps with O(1) membership, infallible `const` constructors, `const accepts(byte)` queries, and `Copy`/`Clone`. Empty sets and duplicates are valid; decoding always precedes membership testing. |
 | Leading whitespace | Skip repeated ASCII whitespace, then return the following parser's output, corresponding to `h_whitespace`. Specify the ASCII set explicitly instead of importing locale-dependent `isspace` behavior. |
+
+Tagged formats remain expressible through `Choice` or `Bind`; the
+[scope decision](#agreed-api-scope) excludes a dedicated `h_dispatch` counterpart.
+Applications can represent heterogeneous parser branches explicitly with a typed
+enum and retain the tag in their output when needed. This remains ordinary
+composition, with the existing extraction limits on callback forms.
 
 `TryMap` is useful when decoding counts: overflow during conversion to `usize`,
 an application length limit, or invalid input-derived parser configuration is
@@ -329,13 +357,51 @@ Arbitrary seeking still needs a separate treatment.
 In particular, `ButNot` and `Difference` cannot be replaced by sequencing with
 `Not(q)`: they may accept when both children succeed.
 
-Preserve `h_permutation` as a planned capability, after the smaller core. It tries
-parser orderings in argument priority order, backtracking when the remaining
-parsers cannot match, and returns outputs in declaration order. A Rust version
-needs a typed tuple of outputs and an explicit set of remaining parsers. C's
-special treatment of absent optional tokens must become an explicit optional-item
-policy; generic Rust values cannot be inspected for a dynamic `TT_NONE` tag.
-Specify that policy and termination before exporting a permutation combinator.
+Permutation is implemented as `permutation((required(a), optional(b), ...))`,
+returning the concrete `Permutation<T>` node. `required` constructs `Required<P>`;
+optional entries use the existing `Optional<P>`. Entry wrappers are explicit,
+because arbitrary typed values do not carry C's dynamic `TT_NONE` tag. Outside
+permutation, `Required<P>` delegates to its child unchanged. Both new constructors
+are unconstrained `const fn`s and execute no parser or callback.
+
+The supported tuple arities are zero through twelve, with heterogeneous outputs
+in declaration order. The search tries unmatched entries in that same priority
+order and retries another ordering when a successful prefix leaves a recoverably
+rejected suffix. It does not revisit alternatives inside an already successful
+child. Optional absence is accepted only when every remaining entry is optional
+and rejects at the current cursor. An actual empty success fills its slot;
+`required(optional(p))` remains a required slot, even when its value is `None`.
+`NeedMore` and fatal errors stop immediately. Exhausted orderings return
+`Mismatch`. The empty tuple succeeds without cursor validation.
+
+One search handles all arities without allocation or output cloning. Separate
+slot presence and match flags allow speculative values to be dropped and accepted
+values to be moved, including independent input/configuration borrows. Backtracking
+restores the cursor and retains backend state and callback effects, consistently
+with `Choice`. Termination uses the pair of remaining entries and remaining
+candidates, so empty matches are permitted. Ambiguity can require factorial work;
+the current implementation uses the call stack. Candidate scanning is recursive
+too, giving an inspected conservative bound of `n² + 1` active search calls
+(145 at twelve entries), excluding child calls. The termination proof does not
+bound stack consumption in bytes or establish freedom from stack overflow.
+Large inline outputs, nested permutations, and small stacks remain concerns.
+Evaluate stack usage and extraction-compatible iterative search with bounded
+explicit backtracking storage before settling the resource guarantees; the
+public permutation API can be preserved.
+
+The [search proofs](../rusthammer/lean/RustHammer/PermutationProofs.lean) establish
+agreement with a total natural-number model under child and storage contracts,
+including backend transitions, partial/fatal propagation, and safe counters.
+[Tuple equations](../rusthammer/lean/RustHammer/PermutationTupleProofs.lean) cover
+initialization, selected-slot access/clearing, typed output assembly, and child
+dispatch for every supported nonempty arity; the empty case has a separate theorem.
+All 82 new theorems are axiom-audited. Native tests cover ownership, ordering,
+nullable/optional entries, ambiguous prefixes, and a 13,608-case independent
+required-pattern oracle. Both MIR stages and the expanded 57-entry Cargo consumer
+pass extraction and Lean checking. The optional
+[C comparison](../rusthammer/probes/permutation/README.md) adds 217,728 agreements
+on acceptance, consumption, presence, and declaration-order values. No extraction
+tool changes were needed; the probe notes record the supported source shapes.
 
 ## Primitive support and later capabilities
 
@@ -349,13 +415,15 @@ The combinators above also need a deliberate primitive and extension inventory:
 | Byte sequences | Keep `TakeAligned` for borrowed slices. `Repeat::exact(Byte, count)` now supplies `h_bytes`-style decoded `Vec<u8>` with `alloc`; a named convenience can be added if useful. Never silently align unaligned input. |
 | Skipping and position | Implemented and proved: `SkipBits::new(bits)` discards any `usize` bit count and returns `()`; `Tell` reports the validated `Cursor` without consuming. Both validate even at zero consumption and preserve `h_skip` and `h_tell` capabilities. Skips advance in constant time, classify exhaustion by input finality, and have an infallible `const` constructor and `bits()` accessor. Position reporting avoids an absolute machine bit count; see the [known C overflow issue](rusthammer.md#known-c-issue-absolute-bit-position-overflow). |
 | Recognizing matched input | Implemented and proved: `BitSpan`, `Recognize`, and `WithSpan`, retaining validated `(byte, bit)` endpoints and the enclosing bit direction. `WithSpan` returns the decoded value with its span; `Recognize` runs the child and discards its value. Partial-bit matches need not be byte slices; `as_bytes()` requires both endpoints aligned. No direct C combinator counterparts; these provide optional source retention. See the [input plan](rusthammer-input.md#matched-input-spans). |
-| Floating-point fields/ranges | Preserve as a later capability; specify bit decoding, NaNs, infinities, rounding where applicable, and available Aeneas models before exporting readers or range helpers. |
+| Floating-point fields/ranges | Retain counterparts of `h_float16`, `h_float32`, `h_float64`, and `h_float_range` as intended capabilities. Specify bit decoding, NaNs, infinities, signed zero, rounding where applicable, and available Aeneas models before exporting readers or range helpers. First-version inclusion remains open. |
 | Bit and byte order | Implemented and proved with the [input plan's restriction](rusthammer-input.md#ordering-scopes): a changed bit direction requires aligned entry and successful exit, otherwise fatal `Unaligned`. Unaligned fields and unrestricted byte-order changes remain supported. Retain `(byte, bit)` with immutable `ParseContext`. Numeric-reader, contextual primitive, and generic scope/combinator proofs pass; `Be*` pins big byte order while inheriting bit direction. |
 | Recursion | Deferred beyond the first nonrecursive version, including the related extraction-tool work. Retain `recursive(|self_ref| body)` as a proposal using ordinary combinator bodies; see the [writeup](rusthammer-recursive-rules.md) for representation, translation soundness, ownership, and termination gates. Keep construction usable by a later packrat compiler, whose intended production algorithm includes left recursion. C uses `h_indirect`/`h_bind_indirect` for two-step fixed-point construction; a declaration DSL is not required. |
-| Parse-local state and actions | Express ordinary dependencies with typed values and `Bind`. Preserve `h_put_value`/`h_get_value`/`h_free_value` and deferred `h_action_stash`/`h_action_apply` capabilities in a separately specified environment/effect design, including rollback and commit. |
-| Diagnostics | Plan context labels corresponding to `h_with_context` and parser labels as a separate diagnostic layer; keep their effect on errors explicit. |
+| Named parse-local value storage | Outside the first version; longer-term support is undecided. Express ordinary dependencies with typed values and `Bind`. A concrete shared-environment use case must motivate reconsideration, with explicit value types, ownership, scope, backtracking, and eventual memoization semantics. |
+| Deferred actions | Intentionally omitted under the [scope decision](#agreed-api-scope); ordinary mapping and predicates retain their current contracts. |
+| Diagnostics | Retain annotations corresponding to `h_with_context` and parser labels as an intended capability. Attach a label and optional grammar construction location to a parser occurrence. Specify propagation and selection through nesting, alternatives, lookahead, and partial input; prove the underlying parsing behavior is preserved. |
 | Packrat and other execution engines | The [backend plan](rusthammer-backends.md) separates grammar outputs and evaluation. Memoization, rule identities, and the cached-output policy remain future work guided by protocol benchmarks. Left recursion needs its own algorithm and proofs. Other compiled engines remain separately specified. |
-| Seeking and streaming | Retain as separately specified capabilities. They need ownership, termination, state, and semantic-equivalence work, not placeholder combinators. |
+| Seeking | Retain a counterpart of `h_seek` as an intended capability. Specify bounds, position units, backward movement, and interaction with spans, repetition, backtracking, and memoization. First-version inclusion remains open. |
+| Streaming | Retain buffering/resumption as a separate later capability, with explicit ownership, state, termination, and semantic-equivalence contracts. |
 
 C allocator variants, variadic/array calling variants, dynamic AST extraction,
 and vtable plumbing do not need one-for-one public replacements. Permanent Rust
@@ -442,7 +510,7 @@ helpers should represent grammar operations or output needs.
    and proved, with safe raw byte views, physical-bit geometry, backend-generic
    validation and propagation, native tests, and 49 consumer entries passing.
    The isolated probes remain design evidence.
-   Plan permutation, recursion, and the other larger capabilities separately.
+   Plan larger capabilities separately; permutation is completed in step 7.
 6. **Construction conveniences (complete).** The seven
    [construction helpers](#construction-functions-and-return-types) return concrete
    nodes with bounds independent of the evaluator. Generic extraction roots,
@@ -452,11 +520,19 @@ helpers should represent grammar operations or output needs.
    the total to 74; all 52 consumer entries pass. Existing grammars need no
    migration. Negative callback probes remain in the separate diagnostic runner,
    whose default run intentionally reports failures.
-7. **Finish selected nonrecursive conveniences and first-version coverage.** Review
-   the remaining [dependent helpers](#dependent-parsing-and-reusable-helpers),
-   including length/count wrappers, tag-based parsing, and ASCII whitespace.
-   Select the operations needed for the first version, specify their contracts,
-   and reuse the existing primitives, `Bind`, and repetition where appropriate.
+7. **Typed permutation (complete).** Explicit required/optional tuple entries,
+   full backtracking over orderings, and one allocation-free evaluator support
+   borrowed and non-`Clone` outputs. Native tests, generic search and tuple proofs,
+   both MIR stages, 57 consumer entries, and 217,728 C comparisons pass. The new
+   proofs bring the axiom-audit total to 156. See the contract above.
+8. **Select and finish the first-version nonrecursive API.** Review the retained
+   capabilities in the [scope decision](#agreed-api-scope):
+   floating-point fields/ranges, seeking, and diagnostics. Consider the remaining
+   [dependent helpers](#dependent-parsing-and-reusable-helpers), including
+   length/count wrappers and ASCII whitespace, alongside those substantive gaps.
+   Select the operations needed for the first version and their implementation
+   order, specify their contracts, and reuse the existing primitives, `Bind`,
+   and repetition where appropriate.
    Keep ordinary downstream examples, extraction checks, and compositional proofs
    with each chosen increment. The full future feature inventory is not an
    implicit first-release requirement.

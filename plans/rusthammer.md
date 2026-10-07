@@ -1,6 +1,6 @@
 # RustHammer design and verification plan
 
-Status: verified prototype with an explicit backend execution boundary, scoped ordering, spans, constructor helpers, match restrictions, skipping/position, byte sets, typed ranges, native integer readers, signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection, 2026-10-06. The first version targets nonrecursive grammars; recursion and its extraction-tool investigation are deferred at the user's request.
+Status: verified prototype with an explicit backend execution boundary, scoped ordering, spans, constructor helpers, typed permutation, match restrictions, skipping/position, byte sets, typed ranges, native integer readers, signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection; API scope reviewed 2026-10-07. The first version targets nonrecursive grammars; recursion and its extraction-tool investigation are deferred at the user's request.
 
 RustHammer will be a Rust rewrite of Hammer whose parsers can be translated
 through Charon and Aeneas and proved correct in Lean. It should preserve Hammer's
@@ -19,8 +19,9 @@ milestones. Do not introduce a known disposable algorithm behind a durable API.
 
 ## Resume here
 
-Current implementation checkpoint: `cdac3cd` (`Add verified RustHammer constructor
-helpers`), on `rusthammer-dev`. `origin` is
+Current implementation includes the agreed API scope update and verified typed
+permutation, following `52a7487` (`Record RustHammer recursion investigation and
+defer support`), on `rusthammer-dev`. `origin` is
 `git@github.com:bagnalla/Hammer.git`; `upstream` is the original Hammer repository.
 Check `git status` and recent history before continuing; this checkpoint records
 verified implementation, not a promise that the working tree has no later edits.
@@ -84,7 +85,27 @@ inference and output relationships. Seven construction equations and a general
 contract-transport proof reuse the existing parsing semantics, demonstrated with
 stateful sequencing. Native tests and downstream extraction include a shared
 factory that hides only its callback, preserving generic backend support.
-Retain this policy for new APIs. All 52 consumer entries and 74 theorem audits pass.
+Retain this policy for new APIs. That increment passed 52 consumer entries and
+74 theorem audits.
+
+The [permutation increment](rusthammer-combinators.md#match-restrictions-and-permutation)
+is complete: `permutation((required(a), optional(b), ...))` matches typed entries
+in any input order and returns values in declaration order. Tuples of zero through
+twelve entries share one backend-generic backtracking search, without heap
+allocation or output cloning. Empty successes fill slots; optional absence,
+partial/fatal propagation, and backend effects have explicit contracts. Generic
+search/entry proofs and equations for every tuple arity add 82 audited theorems.
+Both MIR stages and the expanded Cargo consumer pass; 217,728 C cases agree on
+acceptance, consumption, optional presence, and declaration-order values. The
+[compatibility notes](../rusthammer/probes/permutation/README.md) record ordinary
+source-shape adjustments; no extraction-tool patch was needed.
+
+Permutation stack usage remains an implementation question. Its termination
+proof does not establish freedom from stack overflow; candidate scanning also
+uses recursion, and frame sizes depend on the typed outputs. The
+[permutation contract](rusthammer-combinators.md#match-restrictions-and-permutation)
+records the inspected call-depth bound and the option of bounded iterative
+backtracking. No stack-usage bound in bytes has been measured or proved.
 
 The first version will support nonrecursive grammars with the existing `Direct`
 interpreter. Repetition, separated lists, folds, and data-dependent parsing with
@@ -93,14 +114,24 @@ Recursive construction and its direct/packrat support are deferred, together
 with further Aeneas/Charon work for that feature. They are not first-version
 completion gates.
 
+The [2026-10-07 API scope decision](rusthammer-combinators.md#agreed-api-scope)
+retains permutation, floating-point fields/ranges, seeking, and diagnostic
+annotations as intended capabilities. Deferred actions and a dedicated
+`h_dispatch` counterpart are omitted from the intended API. Named parse-local
+value storage is outside the first version; its longer-term role is undecided
+pending a concrete use case. Ordinary field dependencies and tagged formats
+remain expressible through typed values, `Bind`, and `Choice`. This scope does
+not make all retained capabilities mandatory for the first release.
+
 Continue from the existing nonrecursive API:
 
 1. Review the remaining nonrecursive gaps in the
    [combinator inventory](rusthammer-combinators.md) and select the next retained
-   increment. Planned conveniences include length-counted elements,
-   length-prefixed bytes, tag-based selection, and ASCII whitespace; decide which
-   are needed for the first version rather than treating the entire future
-   inventory as a release requirement.
+   increment. Consider floating-point parsing, seeking, and
+   diagnostics alongside conveniences such as length-counted elements,
+   length-prefixed bytes, and ASCII whitespace. Decide the first-version scope
+   and implementation order rather than treating the entire future inventory
+   as a release requirement.
 2. Specify and implement selected operations using the current core, with
    compositional proofs and ordinary downstream examples. Preserve typed
    outputs, borrowing, partial-input behavior, and the backend boundary.
@@ -122,9 +153,9 @@ whose intended implementation includes left recursion from the outset. The
 first nonrecursive release uses `Direct`; it does not call for a disposable
 non-left-recursive packrat engine.
 
-Permutation, seeking, live streaming, deferred effects, and other engines retain
-their separate scope. CI and investigation of the older borrowed-callback
-limitation remain deferred at the user's request. Revisit
+Live streaming and other engines retain their separate scope. CI and
+investigation of the older borrowed-callback limitation remain deferred at the
+user's request. Revisit
 [eager literal rejection](#deferred-eager-literal-rejection) before implementing
 streaming buffering/resumption. Packrat remains an intended capability;
 representative grammar measurements should guide its priority and cache design.
@@ -135,9 +166,11 @@ From `rusthammer/`, run `python3 tools/verify.py` after a production increment.
 It checks formatting and both allocation configurations, regenerates the
 promoted-MIR Lean module, extracts the library at optimized MIR and an ordinary
 Cargo consumer, builds all proofs, and checks for admitted/opaque project
-declarations. The checkpoint above passes all these checks: 52 consumer entry
-points, 22/25 consumer tests without/with `alloc`, and 74 ordering/backend/span/construction theorem
-axiom audits. `python3 tools/check_backend_memo.py` also passes; it separately
+declarations. The current increment passes all these checks: 57 consumer entry
+points, 23/26 consumer tests without/with `alloc`, and 156 ordering/backend/span/
+construction/permutation theorem axiom audits. The optional
+`python3 tools/check_permutation_c.py` checks 217,728 C compatibility cases.
+`python3 tools/check_backend_memo.py` also passes; it separately
 checks the private cache probe when relevant backend or tool changes are made.
 
 The following recursion probes are retained for later reproduction, not required
@@ -656,12 +689,14 @@ every historical behavior are not established requirements.
 | Data-dependent parsing | Preserve length-dependent parsing, predicates, mapping, and sequencing based on earlier values. Prefer explicit values over hidden mutable environments. |
 | Recursive grammars | Preserve as a capability. Distinguish ordinary recursion, runtime grammar graphs, and left-recursive parsing. |
 | Multiple parsing backends | Preserve the architectural possibility, with explicit supported grammar classes and semantic conditions. |
-| Parse-local state and reentrancy | Preserve through ownership, immutable parser descriptions, and explicit per-parse state. |
+| Execution state and reentrancy | Preserve through ownership, immutable parser descriptions, and explicit per-parse interpreter state. Named application-value storage is excluded from the first version and remains undecided for later versions. |
+| Deferred actions and dedicated dispatch | Omit `h_action_stash`/`h_action_apply` and a dedicated `h_dispatch` counterpart from the intended API. Ordinary mapping, predicates, and typed tagged-format composition remain supported. |
 | Vtables, function-pointer environments, and variadic APIs | Replace with generic structs, traits, typed fields, tuples, and enums where appropriate. |
 | Uniform dynamically tagged AST | Make optional. Use tuples, enums, structs, options, collections, and borrowed views for ordinary outputs. |
 | Arenas, memoization, and runtime graphs | Evaluate individually. These solve real allocation, performance, and grammar-representation problems and are not inherently C-specific. |
 | Manual graph ownership and cleanup | Replace with Rust ownership where possible; choose an explicit ownership scheme for shared or recursive graphs. |
-| Streaming, seeking, diagnostics, and floating-point fields | Record as capabilities with explicit scope and milestones; do not discard them as C implementation details. |
+| Permutation, seeking, diagnostics, and floating-point fields | Retain as intended capabilities under the [scope decision](rusthammer-combinators.md#agreed-api-scope), with first-version inclusion and implementation order still to be selected. |
+| Streaming | Preserve as a separately specified later capability beyond the existing snapshot API with `NeedMore`. |
 
 Hammer's [parser vtable](../src/internal.h) includes grammar classification,
 desugaring, and compilation as well as parsing. Replacing only the parsing
@@ -964,10 +999,19 @@ inventory, not an exhaustive comparison across C backends.
 
 ### State, actions, and effects
 
-Prefer explicit values and typed environments for dependencies between fields.
-Avoid hidden mutable callback state in the verified core. Backtracking and
-lookahead must have defined rollback behavior for every semantic state component,
-not only the cursor.
+Use explicit typed values and `Bind` for dependencies between fields. Named
+parse-local storage corresponding to `h_put_value`, `h_get_value`, and
+`h_free_value` is outside the first version. Its longer-term role remains
+undecided: require a concrete grammar that benefits from shared storage before
+revisiting it, and consider an explicit typed environment before a string-keyed
+store. Any such design needs value types, ownership, scope, backtracking, and
+eventual memoization semantics. This decision leaves interpreter bookkeeping
+and the established backend boundary in place.
+
+Avoid hidden mutable callback state in the verified core. Existing cursor
+restoration supplies no rollback guarantee for callback effects. Any future
+semantic state must have explicitly defined behavior under backtracking and
+lookahead.
 
 Mapping and predicates require contracts for their computations. `Fn` is a useful
 interface but does not itself guarantee purity, termination, or freedom from
@@ -982,9 +1026,24 @@ ordered-choice semantics. Final borrowed-record assembly currently uses direct
 Rust construction because of the recorded closure extraction limitation.
 
 Observable application effects should normally happen after successful parsing.
-If deferred actions are supported, specify their ordering, commit point, and
-behavior on failed or speculative branches. C Hammer's immediate and deferred
-action APIs should be inventoried separately rather than mechanically translated.
+Deferred actions corresponding to `h_action_stash` and `h_action_apply` are
+intentionally omitted from the API. Ordinary output transformations and predicates
+retain their current implementation and proof contracts.
+
+### Diagnostic annotations
+
+Retain diagnostic annotations as an intended capability. C Hammer's
+[`h_with_context`](../src/hammer.h) attaches a label and the location where a
+particular grammar occurrence was constructed, allowing failure reports to
+identify both that occurrence and the failing input position. Reusing a child
+in several places can give each occurrence its own label. This is distinct from
+storing application values or retaining matched input spans.
+
+Specify the error-reporting model before adding a wrapper: how nested labels,
+alternative failures, lookahead, fatal errors, and `NeedMore` contribute to a
+diagnostic, and how grammar source locations are represented. Prove annotations
+preserve the underlying acceptance, decoded values, consumption, and error
+control flow. The API and first-version scope remain to be selected.
 
 ### Recursion, progress, and resources
 
@@ -1069,9 +1128,9 @@ Retries currently reparse prefixes and can rerun callbacks; speculative effects
 are not rolled back. Input-borrowing outputs refer to the input of their invocation;
 `BytePattern` outputs instead borrow its configured pattern.
 
-Seeking needs explicit bounds, position units, and interaction with backtracking,
-memoization, spans, and termination. It should not silently inherit the invariants
-of a forward-only core.
+Seeking is an intended capability. It needs explicit bounds, position units,
+and interaction with backtracking, memoization, spans, and termination. It should
+not silently inherit the invariants of a forward-only core.
 
 ### Deferred: eager literal rejection
 
@@ -1315,8 +1374,8 @@ before its full correctness argument is complete.
 | 3. Compositional core | Implement sequence, ordered choice, optionality, lookahead, bounded repetition, mapping, predicates, and the data dependencies needed by the first format. Add unbounded repetition only with progress semantics. | Reusable combinator theorems, checked callback assumptions, and tests for backtracking, empty success, truncation, and error propagation. |
 | 4. First verified application parser | Parse a small binary record with bit fields, a constrained header, a bounded length-prefixed payload, and explicit end-of-input behavior. | An independent format specification and a Lean-checked application theorem covering values, consumption, valid-input acceptance, safe rejection, and termination under documented bounds. |
 | 5. Backend execution boundary | Separate grammar outputs and evaluator capabilities, thread the backend through all child calls, and migrate direct parsing and proofs. See the [backend plan](rusthammer-backends.md). | Existing direct contracts, native backend propagation tests, both MIR stages, and the separate Cargo consumer. |
-| 6. First nonrecursive version | Spans and construction helpers are implemented and proved. Finish selected nonrecursive API gaps, downstream examples, supported-source documentation, and proof coverage using `Direct`. | The agreed first-version API passes native tests, both MIR stages, downstream extraction, and Lean proofs; remaining omissions are explicit. |
-| 7. Deferred capabilities and optimization | Reprioritize recursion and its tool/soundness work separately. Memoization, runtime grammars, seeking, streaming, deferred effects, richer diagnostics, and other compiled backends retain their own contracts. Optimize measured bottlenecks. | Correctness proofs on explicit supported subsets, documented complexity assumptions, differential tests, and benchmarks; no implicit claim of full Hammer coverage. |
+| 6. First nonrecursive version | Spans, construction helpers, and typed permutation are implemented and proved. Finish selected nonrecursive API gaps, downstream examples, supported-source documentation, and proof coverage using `Direct`. | The agreed first-version API passes native tests, both MIR stages, downstream extraction, and Lean proofs; remaining omissions are explicit. |
+| 7. Deferred capabilities and optimization | Reprioritize recursion and its tool/soundness work separately. Memoization, runtime grammars, streaming, other compiled backends, and retained nonrecursive capabilities outside the chosen first release keep their own contracts. Optimize measured bottlenecks. | Correctness proofs on explicit supported subsets, documented complexity assumptions, differential tests, and benchmarks; no implicit claim of full Hammer coverage. |
 
 Use native Rust tests, focused property tests, and differential tests with C Hammer
 to catch integration and specification mistakes. Compare acceptance, decoded
@@ -1329,13 +1388,19 @@ A complete NTP or DNS parser is not a prerequisite for the next core increment.
 
 ## Open decisions
 
-- Which remaining C semantics are compatibility requirements, particularly
-  unusual combinators, immediate/deferred actions, and seeking? The
+- What are the exact contracts for the retained floating-point,
+  seeking, and diagnostic capabilities? The
   [input plan](rusthammer-input.md) intentionally restricts bit-direction
   changes to byte boundaries, while retaining byte-order control.
-- Which remaining nonrecursive conveniences are required for the first RustHammer
-  release? Recursive grammar support and its extraction-tool work are explicitly
-  deferred; their eventual priority and supported class remain future decisions.
+- Which retained nonrecursive capabilities and conveniences are required for the
+  first RustHammer release, and in what implementation order? Deferred actions
+  and dedicated dispatch are intentionally omitted. Recursive grammar support
+  and its extraction-tool work are explicitly deferred; their eventual priority
+  and supported class remain future decisions.
+- Does a concrete application justify shared parse-local value storage beyond
+  the first version? If so, what explicit typed environment and state semantics
+  would it need? Existing field dependencies continue to use `Bind` and typed
+  values.
 - Should context-free alternatives have a distinct API, or should lowering accept
   only grammars for which ordered-choice equivalence can be established?
 - Does a later input API need a logical bit limit or whole-input padding rules
@@ -1357,7 +1422,7 @@ reusable primitive, sequencing, choice, mapping, predicate, optionality, lookahe
 finite/unbounded repetition, parser-reference, output-selection, empty/failing
 grammar, checked-mapping, folding, separated-list, and `Bind` contracts, plus
 verified dependent-format examples. The backend boundary and span/recognition
-family and construction helpers are complete; the next larger capability needs
+family, construction helpers, and typed permutation are complete; the next capability needs
 its own ownership and execution contract.
 Continue focused semantic and differential checks. CI and the Aeneas callback
 investigation remain deferred.

@@ -1,0 +1,12 @@
+[package]
+name = "rusthammer-permutation-cases"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "permutation-cases"
+path = "cases.rs"
+
+[dependencies]
+rusthammer = { path = "../.." }
