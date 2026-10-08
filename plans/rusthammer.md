@@ -19,9 +19,9 @@ milestones. Do not introduce a known disposable algorithm behind a durable API.
 
 ## Resume here
 
-Current implementation includes verified typed permutation and seeking,
-following `887a64b` (`Record RustHammer float investigation and defer support`),
-on `rusthammer-dev`. `origin` is
+Handoff reviewed 2026-10-08. The current implementation checkpoint is `5524c96`
+(`Add verified RustHammer seeking`) on `rusthammer-dev`, following the native-float
+deferral in `887a64b`. `origin` is
 `git@github.com:bagnalla/Hammer.git`; `upstream` is the original Hammer repository.
 Check `git status` and recent history before continuing; this checkpoint records
 verified implementation, not a promise that the working tree has no later edits.
@@ -34,10 +34,12 @@ according to the work being resumed:
 
 | Document | Context to carry forward |
 | --- | --- |
+| [Design and verification overview](../rusthammer/OVERVIEW.md) | Start here for the basic ideas, code organization, Rust-to-Lean workflow, and proved properties. |
 | [Backend plan](rusthammer-backends.md) | The implemented execution boundary, its verification evidence, and the separate future memoization/recursion design. |
 | [Deferred recursion writeup](rusthammer-recursive-rules.md) | Proposed fixed-point construction, extraction diagnosis, unproved translation-soundness obligations, and retained packrat evidence. Not a prerequisite for the first version. |
 | [Input plan](rusthammer-input.md#matched-input-spans) | Implemented `BitSpan`, `Recognize`, and `WithSpan`, their physical-bit meaning, and the permanent ordering restriction. |
 | [Seeking design](rusthammer-seeking.md) | Implemented API, C differences, composition audit, arithmetic/evaluation/application proofs, and extraction evidence. |
+| [C implementation issue log](../docs/c-implementation-issues.md) | Absolute bit-position limits, seeking beyond EOF, and wrapped backward lengths, with reproducers. These quirks do not define Rust semantics. |
 | [Combinator plan](rusthammer-combinators.md) | Implemented and proposed families, Hammer counterparts, constructor/return-type policy, and the rule against temporary production APIs or implementations. |
 | [Prototype README](../rusthammer/README.md) | Current usage, source/proof map, verification commands, and proof-model limits. |
 | [Compatibility probes](../rusthammer/probes/README.md) | Supported source forms and minimized failures for the pinned extraction tools. Some diagnostic probes intentionally fail. |
@@ -148,9 +150,13 @@ Seeking is included in the first version.
 
 Continue from the existing nonrecursive API:
 
-1. Consider diagnostics alongside conveniences such as length-counted elements,
-   length-prefixed bytes, and ASCII whitespace. Decide first-version scope
-   explicitly; the entire future inventory is not a release requirement.
+1. The latest recommendation is a small [diagnostics design and extraction
+   investigation](#diagnostic-annotations). It has not started; the public API,
+   collection mechanism, and first-version inclusion remain open. Specify the
+   diagnostic information and selection rules, investigate instrumentation at
+   the backend boundary, and check preservation of parsing behavior before
+   implementing a public API. Length-counted elements, length-prefixed bytes,
+   and ASCII whitespace remain smaller follow-up conveniences built from the core.
 2. Specify and implement selected operations using the current core, with
    compositional proofs and ordinary downstream examples. Preserve typed
    outputs, borrowing, partial-input behavior, and the backend boundary.
@@ -181,7 +187,12 @@ representative grammar measurements should guide its priority and cache design.
 
 ### Verification and proof maintenance
 
-From `rusthammer/`, run `python3 tools/verify.py` after a production increment.
+From `rusthammer/`, run this after a production increment:
+
+```sh
+python3 tools/verify.py --aeneas-dir target/extraction-tools/aeneas
+```
+
 It checks formatting and both allocation configurations, regenerates the
 promoted-MIR Lean module, extracts the library at optimized MIR and an ordinary
 Cargo consumer, builds all proofs, and checks for admitted/opaque project
@@ -1036,6 +1047,32 @@ diagnostic, and how grammar source locations are represented. Prove annotations
 preserve the underlying acceptance, decoded values, consumption, and error
 control flow. The API and first-version scope remain to be selected.
 
+The next recommended investigation, recorded at the 2026-10-08 handoff, is:
+
+1. Define what a report retains: the failing input `Cursor`, parser-occurrence
+   labels, optional grammar-construction locations, and any expected-input
+   information. Set selection rules for nesting, alternatives, successful
+   repetition stopping, lookahead, fatal errors, and partial input. Seeking can
+   move backward, so the last returned cursor and the furthest visited position
+   need not identify the failure that should be reported.
+2. Determine how collection fits `Eval<Backend>` and which primitive/combinator
+   hooks it needs. `ParseOutcome::Error` currently carries only an error kind;
+   an annotation wrapper's entry cursor is not necessarily its child's failure
+   cursor. The existing backend parameter alone does not collect diagnostics.
+   Keep ordinary direct execution, custom backend effects, borrowing, and
+   `no_std`/allocation requirements explicit in the design.
+3. Test a small labelled grammar at both MIR stages and through an ordinary
+   Cargo consumer. State and check a proof that enabling diagnostics preserves
+   the underlying parse outcomes, values, and returned cursors. Treat successful
+   extraction as compatibility evidence, separate from that semantic proof.
+
+Read the C annotations and diagnostic API in [`hammer.h`](../src/hammer.h),
+the implementation in [`trace.c`](../src/trace.c), and the
+[trace tests](../tests/backends/test_trace.c) for reference. Record the findings
+before selecting the permanent API; do not add a temporary wrapper that merely
+stores labels without a specified reporting mechanism. This investigation has
+not begun and has no chosen implementation or identified extraction blocker.
+
 ### Recursion, progress, and resources
 
 Recursive grammar support is deferred beyond the first version. The
@@ -1367,7 +1404,7 @@ before its full correctness argument is complete.
 | 3. Compositional core | Implement sequence, ordered choice, optionality, lookahead, bounded repetition, mapping, predicates, and the data dependencies needed by the first format. Add unbounded repetition only with progress semantics. | Reusable combinator theorems, checked callback assumptions, and tests for backtracking, empty success, truncation, and error propagation. |
 | 4. First verified application parser | Parse a small binary record with bit fields, a constrained header, a bounded length-prefixed payload, and explicit end-of-input behavior. | An independent format specification and a Lean-checked application theorem covering values, consumption, valid-input acceptance, safe rejection, and termination under documented bounds. |
 | 5. Backend execution boundary | Separate grammar outputs and evaluator capabilities, thread the backend through all child calls, and migrate direct parsing and proofs. See the [backend plan](rusthammer-backends.md). | Existing direct contracts, native backend propagation tests, both MIR stages, and the separate Cargo consumer. |
-| 6. First nonrecursive version | Spans, construction helpers, and typed permutation are implemented and proved. Finish selected nonrecursive API gaps, downstream examples, supported-source documentation, and proof coverage using `Direct`. | The agreed first-version API passes native tests, both MIR stages, downstream extraction, and Lean proofs; remaining omissions are explicit. |
+| 6. First nonrecursive version | Spans, construction helpers, typed permutation, and seeking are implemented and proved. Finish selected nonrecursive API gaps, downstream examples, supported-source documentation, and proof coverage using `Direct`. | The agreed first-version API passes native tests, both MIR stages, downstream extraction, and Lean proofs; remaining omissions are explicit. |
 | 7. Deferred capabilities and optimization | Reprioritize recursion and its tool/soundness work separately. Native floats require the recorded Aeneas model/translation work. Memoization, runtime grammars, streaming, other compiled backends, and retained nonrecursive capabilities outside the chosen first release keep their own contracts. Optimize measured bottlenecks. | Correctness proofs on explicit supported subsets, documented complexity assumptions, differential tests, and benchmarks; no implicit claim of full Hammer coverage. |
 
 Use native Rust tests, focused property tests, and differential tests with C Hammer
@@ -1417,7 +1454,7 @@ reusable primitive, sequencing, choice, mapping, predicate, optionality, lookahe
 finite/unbounded repetition, parser-reference, output-selection, empty/failing
 grammar, checked-mapping, folding, separated-list, and `Bind` contracts, plus
 verified dependent-format examples. The backend boundary and span/recognition
-family, construction helpers, and typed permutation are complete; the next capability needs
+family, construction helpers, typed permutation, and seeking are complete; the next capability needs
 its own ownership and execution contract.
 Continue focused semantic and differential checks. CI and the Aeneas callback
 investigation remain deferred.

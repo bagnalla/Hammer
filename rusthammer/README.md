@@ -1874,6 +1874,9 @@ The [seeking design](../plans/rusthammer-seeking.md) records its production API,
 proofs, span endpoint intervals, repetition's net-progress checks, and ordering scopes.
 Diagnostic annotations will label parser occurrences and optionally record where
 they were constructed, while preserving parsing behavior.
+The next recommended step is the [diagnostics design and extraction
+investigation](../plans/rusthammer.md#diagnostic-annotations). It has not started;
+the API, collection mechanism, and first-version inclusion remain open.
 Deferred actions and a dedicated `h_dispatch` counterpart are omitted from the
 intended API. Named parse-local value storage is outside the first version, with
 its longer-term role undecided pending a concrete use case. Explicit typed values,

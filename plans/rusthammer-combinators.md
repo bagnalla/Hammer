@@ -1,7 +1,7 @@
 # RustHammer combinator API plan
 
-Status: target API and implementation order, with permutation, spans, scoped ordering, signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection verified,
-2026-10-07. Unimplemented features remain proposals. See the
+Status: target API and implementation order, with seeking, permutation, spans, scoped ordering, signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection verified;
+handoff reviewed 2026-10-08. Unimplemented features remain proposals. See the
 [main plan](rusthammer.md) and [prototype README](../rusthammer/README.md) for
 current implementation and proof coverage.
 
@@ -553,6 +553,10 @@ are deferred at the user's request; the probe remains evidence for later work.
    diagnostic annotations and the remaining
    [dependent helpers](#dependent-parsing-and-reusable-helpers), including
    length/count wrappers and ASCII whitespace.
+   The latest recommendation is the [diagnostics design and extraction
+   investigation](rusthammer.md#diagnostic-annotations), which has not started.
+   It must settle failure information, selection rules, instrumentation, and
+   preservation of parsing behavior before choosing a public API.
    Select the operations needed for the first version and their implementation
    order, specify their contracts, and reuse the existing primitives, `Bind`,
    and repetition where appropriate.
