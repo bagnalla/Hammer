@@ -19,6 +19,8 @@ impl Cursor {
 /// Invalid parameters supplied while constructing a parser, before parsing input.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ConfigError {
+    /// An absolute seek destination has a bit offset greater than seven.
+    InvalidBitOffset,
     /// The requested integer field width exceeds 64 bits.
     InvalidWidth,
     /// The expected literal value cannot be represented in its field width.

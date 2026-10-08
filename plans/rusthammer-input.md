@@ -269,6 +269,12 @@ precedes the child call; exit validation applies only to a successful child.
 Invalid bounds take precedence over backward movement. Empty spans are allowed,
 including at EOF, and wrapping lookahead measures its zero consumption.
 
+The implemented [seeking primitive](rusthammer-seeking.md#composition-audit)
+retains this endpoint contract. The interval can include
+skipped input and omit input inspected during a seek-and-return excursion; it
+does not describe the history of reads. A net backward exit remains
+`NonProgress`. Seeking preserves ordering-scope guards.
+
 The public constructor is
 `BitSpan::new(input, start, end, bit_order) -> Result<BitSpan, ParseError>`.
 Private fields maintain the invariant. Read-only `input()`, `start()`, `end()`,
@@ -439,8 +445,9 @@ verification as though all of those cases should still be accepted.
 This removes the two-ended cursor invariant, its non-injective position mapping,
 and the need for a separate physical-progress relation. Context plumbing,
 fragment decoding, and scope integration are now implemented and proved in the
-production library. Span operations will build on this restricted model.
+production library. The implemented span and seeking operations use this restricted model.
 
-Permutation, recursion, live streaming, seeking, memoization, and additional
-backends remain separate designs. CI and the older callback investigation remain
+Permutation and seeking are implemented and proved in their separate increments.
+Recursion, live streaming, memoization, and additional backends remain later work.
+CI and the older callback investigation remain
 deferred. Revisit eager literal rejection before streaming buffering/resumption.

@@ -14,6 +14,9 @@ use super::super::span_types::span_cursor_valid;
 /// Custom children must obey the ordering scope rules: endpoint checks cannot
 /// establish which bits an arbitrary parser inspected. Lookahead contributes
 /// no consumed input, and therefore has an empty span when wrapped.
+/// Seeking measures the interval between this wrapper's entry and final exit:
+/// it can include skipped bytes and omit bytes read during a seek-and-return
+/// excursion. Wrap the field parser after a seek to capture that field's span.
 ///
 /// ```
 /// use rusthammer::{BeU16, Cursor, Parser, WithSpan};

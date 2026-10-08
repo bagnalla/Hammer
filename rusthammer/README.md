@@ -46,6 +46,7 @@ The prototype supports:
   both supporting unaligned starts without allocation.
 - `ByteIn` and `ByteNotIn` accepting or excluding literal byte sets and returning `u8`.
 - `SkipBits` discarding arbitrary bit counts and `Tell` reporting a validated cursor.
+- `Seek` supporting absolute, relative, and end-relative movement in bit coordinates.
 - Private numeric and literal configuration, validated by fallible constructors.
 - `Parser<'input>` with an associated `Output` type and explicit ordering/finality context.
 - Separate `Success`, `Error`, and `NeedMore` outcomes, with a complete-buffer convenience API.
@@ -509,6 +510,51 @@ the separate Cargo consumer translate and Lean type-check. The C comparison
 adds 118,188 cases for `h_skip` and `h_tell` at
 representable positions, including canonical end-of-input and large skip counts.
 
+## Seeking
+
+`Seek` corresponds to `h_seek`, using typed origins instead of integer tags:
+
+| Constructor | Destination |
+| --- | --- |
+| `Seek::to(cursor)` | Absolute byte-and-bit position in the supplied slice; returns `InvalidBitOffset` if `bit >= 8`. |
+| `Seek::relative(bits)` | Signed `isize` displacement from the entry cursor. |
+| `Seek::from_end(bits)` | Signed `isize` displacement from final EOF. |
+
+Success returns the destination as both the next cursor and the output. Seeking
+reads no bytes, allocates nothing, and preserves backend state. Exact EOF is
+valid. Targets before the start yield recoverable `Mismatch`; targets beyond
+available input yield `NeedMore` on partial input or `UnexpectedEnd` on final
+input. End-relative movement always waits for finality. Every invocation first
+validates its entry cursor, including absolute seeks and zero offsets.
+
+```rust
+use rusthammer::{Byte, Cursor, Parser, Right, Seek};
+
+let last = Right { first: Seek::from_end(-8), second: Byte };
+assert_eq!(last.parse(b"abc", Cursor::start()),
+    Ok((Cursor { byte: 3, bit: 0 }, b'c')));
+```
+
+Coordinates use the supplied slice's origin and active bit direction. Restoring
+a saved `Tell` cursor does not restore an earlier ordering context or select
+another buffer. Absolute positions never require a machine-sized bit count;
+signed arithmetic is safe even for `isize::MIN`.
+
+Bounded repetition can move backward; unbounded repetition still requires net
+forward progress per complete iteration. Spans describe the interval between
+their endpoints: they can include skipped bytes or omit bytes inspected during
+an excursion. A net backward span is `NonProgress`. `ButNot` and `Difference`
+compare final positions, equivalently signed net displacements from their shared
+start. Ordering scopes retain their alignment checks.
+
+The runnable [offset example](examples/offset.rs) uses `Bind` to decode a byte
+displacement, seek from the end of that field, and borrow a two-byte payload.
+The same source is used for native tests, extraction, downstream checks, and
+Lean application proofs. Tests cover all 256 displacements and every truncation
+boundary. The [design and proof map](../plans/rusthammer-seeking.md) records the
+full contract and the intentional differences from C's EOF and backward-length
+quirks.
+
 ## Bytes and byte patterns
 
 `Byte` corresponds to `h_uint8()`: it consumes an eight-bit field in the active order and returns
@@ -636,7 +682,7 @@ fragments above later ones; little byte order puts them below. This also applies
 to unaligned fields and widths that are not multiples of eight. `Bits`,
 `SignedBits`, `Literal`, `Byte`, `I8`, byte patterns, and byte sets use the active
 order. The named `Be*` readers pin big byte order while retaining bit direction.
-`SkipBits`, `Tell`, `TakeAligned`, and `End` keep their position-based behavior.
+`SkipBits`, `Tell`, `Seek`, `TakeAligned`, and `End` keep their position-based behavior.
 
 `WithOrder { parser, order }` overrides order for its child and preserves
 finality. A **change of bit direction requires aligned entry and successful
@@ -1396,8 +1442,9 @@ Extraction includes derived `Clone` methods and the standard library's
 
 The library extraction also sets the private `rusthammer_verify` configuration
 to include the shared [flags](examples/support/flags.rs),
-[marker](examples/support/marker.rs), [record](examples/support/record.rs), and
-[dependent-format](examples/support/dependent.rs) sources as private modules.
+[marker](examples/support/marker.rs), [record](examples/support/record.rs),
+[dependent-format](examples/support/dependent.rs), and
+[offset](examples/support/offset.rs) sources as private modules.
 Examples and native tests compile those same sources against the ordinary
 library. The formats are absent from normal library builds and add no public
 API or Cargo feature. Their extraction roots include the constructors, parsing
@@ -1412,10 +1459,11 @@ available for dependency bodies and checks a
 tests in both allocation configurations; its extraction includes RustHammer's
 implementation with `alloc` enabled. Both extra translations are checked for
 admitted/opaque declarations and Lean type-checked. They stay under `target/`.
-All 57 consumer entry points pass, including evaluators that use a local
+All 66 consumer entry points pass, including evaluators that use a local
 mutable backend while returning borrowed input, spans, or permutation outputs.
-The normal verification command audits 156 ordering/backend/span/construction/
-permutation theorems, including all 82 new permutation theorems.
+The normal verification command audits 178 selected ordering/backend/span/
+construction/permutation/seeking/application theorems, including the 22 roots
+added with seeking.
 
 The cross-crate investigation found that cleanup code can recheck an enum's tag
 after a payload move, which the pinned Aeneas rejects. Internal pattern
@@ -1539,6 +1587,19 @@ zero-count behavior. `Tell` never returns `NeedMore`, even on partial input.
 An audit of all 14 public position theorems finds only `propext`,
 `Classical.choice`, and `Quot.sound`.
 
+[`SeekSpec`](lean/RustHammer/SeekSpec.lean) specifies seeking with mathematical
+signed destinations. [`SeekArithmetic`](lean/RustHammer/SeekArithmetic.lean)
+proves total backward/signed arithmetic for all machine lengths, cursors, and
+offsets. [`SeekProofs`](lean/RustHammer/SeekProofs.lean) proves construction,
+cloning, outcome classification, and state-preserving evaluation for arbitrary
+backends and ordering contexts. [`SeekProperties`](lean/RustHammer/SeekProperties.lean)
+gives exact success geometry, extension stability for absolute/current-relative
+successes, exclusion of final `NeedMore`, and the complete API. The shared
+offset-field application's [specification](lean/RustHammer/OffsetSpec.lean) and
+[proofs](lean/RustHammer/OffsetProofs.lean) establish lossless offset conversion,
+total composition, and exact borrowed contents, alignment, and final cursor in
+default ordering, for either input status.
+
 [ControlSpec.lean](lean/RustHammer/ControlSpec.lean) defines literal matching,
 ordered choice, optionality, lookahead, end-of-input, and the marker grammar. Its
 [proofs](lean/RustHammer/ControlProofs.lean) reuse the numeric and sequencing
@@ -1555,7 +1616,8 @@ contracts, and the default complete API. Success properties identify the retaine
 child value and cursor. Short-circuit laws require no contract or termination
 assumption for an uncalled second child. Endpoint ordering agrees with unbounded
 consumed-bit lengths for normalized forward matches, without a machine-position
-bound. All 22 public theorems were axiom-audited; they depend only on `propext`,
+bound. The signed-displacement corollary also covers backward seeking. All 23
+public theorems were axiom-audited; they depend only on `propext`,
 `Classical.choice`, and `Quot.sound`. Native tests cover physical borrow identity
 and destructors, which are outside these value-based contracts.
 
@@ -1803,11 +1865,13 @@ grammar construction and its extraction-tool investigation are deferred at the
 user's request. Existing repetition, lists, folds, and data-dependent `Bind`
 remain in scope.
 
-Typed permutation is implemented and proved. The
+Typed permutation and seeking are implemented and proved. The
 [agreed API scope](../plans/rusthammer-combinators.md#agreed-api-scope) retains
-seeking and diagnostic annotations as candidates for the first version; their
-inclusion and implementation order remain to be selected. Floating-point
+diagnostic annotations as a candidate for the first version; their
+final inclusion remains to be selected. Floating-point
 fields/ranges are deferred beyond the first version due to Aeneas limitations.
+The [seeking design](../plans/rusthammer-seeking.md) records its production API,
+proofs, span endpoint intervals, repetition's net-progress checks, and ordering scopes.
 Diagnostic annotations will label parser occurrences and optionally record where
 they were constructed, while preserving parsing behavior.
 Deferred actions and a dedicated `h_dispatch` counterpart are omitted from the
@@ -1837,7 +1901,7 @@ Named length/count convenience wrappers remain proposals; their core composition
 is now available.
 
 Fixed-width typed integer readers, inclusive ranges, byte sets, `SkipBits`,
-`Tell`, `ButNot`, `Difference`, and `Xor` are implemented and proved, with
+`Tell`, `Seek`, `ButNot`, `Difference`, and `Xor` are implemented and proved, with
 semantic and differential checks. Scoped ordering and its context interface are
 also implemented and proved; see the [input plan](../plans/rusthammer-input.md).
 The [backend execution boundary](../plans/rusthammer-backends.md) separates

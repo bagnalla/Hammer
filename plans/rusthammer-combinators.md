@@ -27,7 +27,7 @@ every C combinator.
 | --- | --- |
 | Permutation | Implemented and proved as a retained nonrecursive capability; see the contract below. |
 | Floating-point fields/ranges | Exclude from the first version due to the pinned Aeneas limitations. Retain as a later capability; the [probe report](../rusthammer/probes/floating_point/README.md) preserves the evidence and required tool/model work. |
-| Seeking and diagnostic annotations | Retain as intended capabilities. Their contracts, implementation order, and inclusion in the first version remain to be selected. |
+| Seeking and diagnostic annotations | Retain as intended capabilities. [Seeking](rusthammer-seeking.md) is implemented and proved for the first version. Diagnostic contracts and final first-version scope remain to be selected. |
 | Deferred actions (`h_action_stash`, `h_action_apply`) | Omit from the intended API. Ordinary transformations through `Map`, `TryMap`, and predicates remain supported; application effects can follow successful parsing. |
 | Dedicated dispatch (`h_dispatch`) | Omit from the intended API. Express tagged formats through `Choice` or `Bind`, using explicit typed parser alternatives where needed. |
 | Named parse-local value storage (`h_put_value`, `h_get_value`, `h_free_value`) | Exclude from the first version; its longer-term role is undecided. Use explicit typed values and `Bind` for field dependencies. Revisit only when a concrete grammar motivates shared storage, considering an explicit typed environment before a string-keyed store. |
@@ -355,7 +355,11 @@ proofs separately cover partial input and fatal errors. Both MIR stages and all
 The revised [input plan](rusthammer-input.md) retains this `(byte, bit)`
 comparison by restricting bit-direction changes to aligned scope boundaries.
 Its generic parser contracts now carry the full ordering/finality context.
-Arbitrary seeking still needs a separate treatment.
+The [seeking design](rusthammer-seeking.md#composition-audit) retains endpoint
+comparison for seeking children, interpreted as signed net displacement from
+their common start. Public documentation and the proved
+`match_endpoint_order_displacement` corollary cover backward results; the
+existing forward-consumption theorem remains valid.
 In particular, `ButNot` and `Difference` cannot be replaced by sequencing with
 `Not(q)`: they may accept when both children succeed.
 
@@ -424,7 +428,7 @@ The combinators above also need a deliberate primitive and extension inventory:
 | Deferred actions | Intentionally omitted under the [scope decision](#agreed-api-scope); ordinary mapping and predicates retain their current contracts. |
 | Diagnostics | Retain annotations corresponding to `h_with_context` and parser labels as an intended capability. Attach a label and optional grammar construction location to a parser occurrence. Specify propagation and selection through nesting, alternatives, lookahead, and partial input; prove the underlying parsing behavior is preserved. |
 | Packrat and other execution engines | The [backend plan](rusthammer-backends.md) separates grammar outputs and evaluation. Memoization, rule identities, and the cached-output policy remain future work guided by protocol benchmarks. Left recursion needs its own algorithm and proofs. Other compiled engines remain separately specified. |
-| Seeking | Retain a counterpart of `h_seek` as an intended capability. Specify bounds, position units, backward movement, and interaction with spans, repetition, backtracking, and memoization. First-version inclusion remains open. |
+| Seeking | Implemented and proved: `Seek::to(Cursor)`, `Seek::relative(isize)`, and `Seek::from_end(isize)` return the destination cursor. Total arithmetic includes the signed minimum; generic evaluation preserves state. Bounds, partial input, backward movement, composition, and a borrowed offset-field application are covered by production tests/proofs. See the [design](rusthammer-seeking.md). |
 | Streaming | Retain buffering/resumption as a separate later capability, with explicit ownership, state, termination, and semantic-equivalence contracts. |
 
 C allocator variants, variadic/array calling variants, dynamic AST extraction,
@@ -536,11 +540,19 @@ are deferred at the user's request; the probe remains evidence for later work.
    borrowed and non-`Clone` outputs. Native tests, generic search and tuple proofs,
    both MIR stages, 57 consumer entries, and 217,728 C comparisons pass. The new
    proofs bring the axiom-audit total to 156. See the contract above.
-8. **Select and finish the first-version nonrecursive API.** Review the retained
+8. **Seeking (complete).** Absolute cursors and signed current/end-relative
+   offsets use the existing backend interface. Independent destination contracts
+   and arithmetic proofs cover all machine lengths and offsets; generic
+   evaluation, complete parsing, finality, and extension properties are proved.
+   A shared offset-field application is verified through `Bind` and `Right`.
+   Native composition tests, both library MIR stages, 66 consumer entries, and
+   178 selected theorem audits pass. The [design](rusthammer-seeking.md) records
+   C discrepancies, endpoint spans, and signed match comparisons.
+9. **Select and finish the first-version nonrecursive API.** Review the retained
    capabilities in the [scope decision](#agreed-api-scope):
-   seeking and diagnostics. Consider the remaining
+   diagnostic annotations and the remaining
    [dependent helpers](#dependent-parsing-and-reusable-helpers), including
-   length/count wrappers and ASCII whitespace, alongside those substantive gaps.
+   length/count wrappers and ASCII whitespace.
    Select the operations needed for the first version and their implementation
    order, specify their contracts, and reuse the existing primitives, `Bind`,
    and repetition where appropriate.

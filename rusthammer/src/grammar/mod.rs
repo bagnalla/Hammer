@@ -34,7 +34,7 @@ pub use numeric::{
 };
 pub use order::WithOrder;
 pub use permutation::{permutation, required, Permutation, Required};
-pub use position::{End, SkipBits, Tell};
+pub use position::{End, Seek, SkipBits, Tell};
 pub use repeat::{FoldRepeat, FoldSepBy};
 #[cfg(feature = "alloc")]
 pub use repeat::{Repeat, SepBy};

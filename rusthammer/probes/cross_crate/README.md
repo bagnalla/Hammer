@@ -54,7 +54,10 @@ factory is shared with the runnable constructor example and evaluated through
 an arbitrary backend; its output implements neither `Clone` nor `Copy`.
 Permutation entries exercise independent input/configuration borrows, non-`Clone`
 header outputs, stateful backtracking, and the empty and twelve-entry tuples.
-The consumer now has 57 extraction roots.
+Seeking entries check all three constructors, the shared borrowed-payload
+example, spans, finite backward folding, signed endpoint comparison, a custom
+backend, and saving/restoring `Tell` through `TryMap` and `Bind`.
+The consumer now has 66 extraction roots.
 All entries now pass `ParseContext` through the ordinary dependency interface.
 The `backend_payload` entry uses a consumer-defined mutable backend and a child
 that implements only `Eval<Counter>`. Lookahead, sequencing, and a dependent
@@ -68,7 +71,7 @@ proofs, that command:
    the compiler stage available for dependencies, and Lean type-checks it.
 2. Tests this consumer with allocation disabled and enabled.
 3. Extracts the consumer with RustHammer's dependency bodies included and `alloc`
-   enabled, checks that all 57 entry points were translated, and Lean
+   enabled, checks that all 66 entry points were translated, and Lean
    type-checks the result.
 4. Rejects admitted or opaque project declarations in both extra translations.
 

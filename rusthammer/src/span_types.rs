@@ -12,6 +12,8 @@ use super::{BitOrder, Cursor, ParseError};
 /// Use [`Self::as_bytes`] for a borrowed byte view when both endpoints are aligned.
 /// Partial-byte spans expose their input, positions, and direction instead.
 /// No absolute machine-sized bit count is needed.
+/// When a parser seeks, its span still describes only this endpoint interval;
+/// it does not record the positions visited or the number of reads performed.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct BitSpan<'input> {
     input: &'input [u8],

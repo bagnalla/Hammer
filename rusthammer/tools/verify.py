@@ -58,6 +58,19 @@ PERMUTATION_THEOREMS = tuple(f"RustHammer.Permutation.{name}" for name in (
       for operation in ("initial", "matched", "clear", "finish", "output_order", "dispatch")),
 ))
 
+SEEK_THEOREMS = (
+    *(f"RustHammer.Seeking.{name}" for name in (
+        "to_spec", "relative_spec", "from_end_spec", "to_valid", "clone_spec",
+        "retreat_cursor_spec", "offset_cursor_spec", "position_spec", "eval_spec",
+        "with_spec", "entry_with_spec", "target_success", "success_iff",
+        "success_under_extension", "relative_outcome", "final_not_more", "complete_spec",
+    )),
+    *(f"RustHammer.Offset.{name}" for name in (
+        "factory_spec", "payload_spec", "jump_success", "payload_success",
+    )),
+    "RustHammer.Proofs.match_endpoint_order_displacement",
+)
+
 
 def output(*args, cwd=None):
     return subprocess.check_output(args, cwd=cwd, text=True).strip()
@@ -78,7 +91,7 @@ def translate(aeneas, llbc, destination, namespace):
 
 def audit_proofs():
     theorems = (ORDER_THEOREMS + BACKEND_THEOREMS + SPAN_THEOREMS
-                + CONSTRUCTOR_THEOREMS + PERMUTATION_THEOREMS)
+                + CONSTRUCTOR_THEOREMS + PERMUTATION_THEOREMS + SEEK_THEOREMS)
     audit = ROOT / "target" / "proof-axioms.lean"
     audit.write_text("import RustHammer\n" + "".join(
         f"#print axioms {name}\n" for name in theorems
@@ -129,6 +142,7 @@ def main():
         "--rustc-arg=--cfg=rusthammer_verify",
         "--start-from", "rusthammer::dependent_examples::payload",
         "--start-from", "rusthammer::dependent_examples::fields",
+        "--start-from", "rusthammer::offset_example::payload",
         "--start-from", "rusthammer::flags_example::parse_flags",
         "--start-from", "rusthammer::grammar::bytes::take_aligned",
         "--start-from", "rusthammer::grammar::numeric::read_bits",
@@ -158,6 +172,9 @@ def main():
         "--start-from", "rusthammer::span_types::BitSpan::bit_order",
         "--start-from", "rusthammer::span_types::BitSpan::is_empty",
         "--start-from", "rusthammer::span_types::BitSpan::as_bytes",
+        "--start-from", "rusthammer::grammar::position::Seek::to",
+        "--start-from", "rusthammer::grammar::position::Seek::relative",
+        "--start-from", "rusthammer::grammar::position::Seek::from_end",
         "--start-from", "rusthammer::grammar::position::SkipBits::new",
         "--start-from", "rusthammer::grammar::position::SkipBits::bits",
         "--start-from", "rusthammer::grammar::numeric::SignedBits::new",
@@ -257,6 +274,8 @@ def main():
         "ordered_fields", "scoped_payload", "scoped_pattern",
         "spanned_pattern", "recognized_payload", "scoped_span", "span_views", "backend_span",
         "constructor_header", "constructor_choice", "constructor_payload",
+        "seek_absolute", "seek_relative", "seek_end_relative", "seek_packet", "seek_spanned",
+        "seek_repeated", "seek_compared", "seek_backend", "seek_saved_position",
         "permuted_borrows", "permuted_headers", "permuted_backend", "permuted_empty", "permuted_twelve",
     )
     entry_args = [

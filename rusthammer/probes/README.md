@@ -708,3 +708,24 @@ ordering. All 22 public match theorems were axiom-audited, using only `propext`,
 `Classical.choice`, and `Quot.sound`. Native tests separately cover drop behavior
 and pointer identity. The C direct-backend comparison agrees on 1,879,635
 complete-input cases; this is not a streaming or backend-equivalence proof.
+
+## Seeking
+
+The private [`seeking` package](seeking/README.md) tests the
+[API and contracts](../../plans/rusthammer-seeking.md) using the real
+grammar traits and combinators. It supports normalized absolute cursors, signed
+relative bit offsets, and signed end-relative offsets, returning a cursor.
+Native tests use independent mathematical arithmetic, including virtual machine
+limits, and exercise composition with spans, repetition, ordering, lookahead,
+backtracking, match restrictions, and permutation. A separate Cargo consumer
+includes borrowed payloads, saved cursors, and a stateful backend.
+
+Run `python3 tools/check_seeking.py` from `rusthammer/`; add `--c` for the C
+characterization. Supported roots pass both MIR stages and strict Lean
+type-checking without generated axioms or opaque declarations. A separate
+negative callback root records the unsupported direct function-item spelling;
+the equivalent closure passes. The C check records out-of-bounds EOF successes
+and unsigned backward child lengths without adopting them as Rust semantics.
+This package retains the original investigation candidate. Production `Seek`
+now has its own native tests, generic Lean correctness proofs, and downstream
+roots in `tools/verify.py`; see the [production proof map](../../plans/rusthammer-seeking.md#lean-proofs-and-integration).

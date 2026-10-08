@@ -4,6 +4,9 @@ This document provides guidelines and instructions for developers working on the
 
 Tested on Ubuntu 22.04 and 24.04 (VM and WSL).
 
+Known C implementation issues, reproducers, and follow-up work are recorded in
+[C Hammer implementation issues](docs/c-implementation-issues.md).
+
 ## Contributor Setup
 
 ### Formatting

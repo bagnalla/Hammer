@@ -58,8 +58,8 @@ pub use grammar::{
     try_map, verify, And, BeI16, BeI32, BeI64, BeU16, BeU32, BeU64, Bind, Bit, Bits, ButNot, Byte,
     ByteIn, ByteNotIn, BytePattern, Choice, Difference, End, Epsilon, Fail, FoldRepeat, FoldSepBy,
     Ignore, IntRange, Left, Literal, Map, Middle, Not, Optional, Permutation, Recognize, Required,
-    Right, Seq, SignedBits, SkipBits, TakeAligned, Tell, TryMap, Verify, WithOrder, WithSpan, Xor,
-    I8,
+    Right, Seek, Seq, SignedBits, SkipBits, TakeAligned, Tell, TryMap, Verify, WithOrder, WithSpan,
+    Xor, I8,
 };
 #[cfg(feature = "alloc")]
 pub use grammar::{Repeat, SepBy};
@@ -70,6 +70,11 @@ pub use grammar::{Repeat, SepBy};
 #[allow(dead_code)] // Entry points are reached by Charon, not by Rust library calls.
 #[path = "../examples/support/dependent.rs"]
 mod dependent_examples;
+
+#[cfg(rusthammer_verify)]
+#[allow(dead_code)]
+#[path = "../examples/support/offset.rs"]
+mod offset_example;
 
 #[cfg(rusthammer_verify)]
 #[allow(dead_code)]

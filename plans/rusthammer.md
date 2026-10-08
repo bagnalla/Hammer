@@ -1,6 +1,6 @@
 # RustHammer design and verification plan
 
-Status: verified prototype with an explicit backend execution boundary, scoped ordering, spans, constructor helpers, typed permutation, match restrictions, skipping/position, byte sets, typed ranges, native integer readers, signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection; API scope reviewed 2026-10-07. The first version targets nonrecursive grammars; recursion, native floating-point support, and their extraction-tool work are deferred at the user's request.
+Status: verified prototype with an explicit backend execution boundary, scoped ordering, spans, constructor helpers, typed permutation, seeking, match restrictions, skipping/position, byte sets, typed ranges, native integer readers, signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection; API scope reviewed 2026-10-07. The first version targets nonrecursive grammars; recursion, native floating-point support, and their extraction-tool work are deferred at the user's request.
 
 RustHammer will be a Rust rewrite of Hammer whose parsers can be translated
 through Charon and Aeneas and proved correct in Lean. It should preserve Hammer's
@@ -19,9 +19,9 @@ milestones. Do not introduce a known disposable algorithm behind a durable API.
 
 ## Resume here
 
-Current implementation includes the agreed API scope update and verified typed
-permutation, following `52a7487` (`Record RustHammer recursion investigation and
-defer support`), on `rusthammer-dev`. `origin` is
+Current implementation includes verified typed permutation and seeking,
+following `887a64b` (`Record RustHammer float investigation and defer support`),
+on `rusthammer-dev`. `origin` is
 `git@github.com:bagnalla/Hammer.git`; `upstream` is the original Hammer repository.
 Check `git status` and recent history before continuing; this checkpoint records
 verified implementation, not a promise that the working tree has no later edits.
@@ -37,6 +37,7 @@ according to the work being resumed:
 | [Backend plan](rusthammer-backends.md) | The implemented execution boundary, its verification evidence, and the separate future memoization/recursion design. |
 | [Deferred recursion writeup](rusthammer-recursive-rules.md) | Proposed fixed-point construction, extraction diagnosis, unproved translation-soundness obligations, and retained packrat evidence. Not a prerequisite for the first version. |
 | [Input plan](rusthammer-input.md#matched-input-spans) | Implemented `BitSpan`, `Recognize`, and `WithSpan`, their physical-bit meaning, and the permanent ordering restriction. |
+| [Seeking design](rusthammer-seeking.md) | Implemented API, C differences, composition audit, arithmetic/evaluation/application proofs, and extraction evidence. |
 | [Combinator plan](rusthammer-combinators.md) | Implemented and proposed families, Hammer counterparts, constructor/return-type policy, and the rule against temporary production APIs or implementations. |
 | [Prototype README](../rusthammer/README.md) | Current usage, source/proof map, verification commands, and proof-model limits. |
 | [Compatibility probes](../rusthammer/probes/README.md) | Supported source forms and minimized failures for the pinned extraction tools. Some diagnostic probes intentionally fail. |
@@ -134,14 +135,22 @@ at the user's request. Retain the probes and report for later work; revisit
 production support when the required Aeneas models and translation support are
 available or that tooling work is explicitly reprioritized.
 
+The [seeking increment](rusthammer-seeking.md) is complete. Public `Seek::to`,
+`Seek::relative`, and `Seek::from_end` return the destination cursor through the
+existing backend interface. Lean proves total machine arithmetic, constructor
+validity, state-preserving evaluation, partial/final classification, and exact
+destinations; a shared offset-field example has a compositional application
+proof. Repetition retains net-progress checks, spans retain endpoint intervals,
+and match comparisons have a signed-displacement corollary. Native tests and
+both library MIR stages pass, including nine new downstream roots. The original
+private probe retains C characterization and the negative callback regression.
+Seeking is included in the first version.
+
 Continue from the existing nonrecursive API:
 
-1. Review the remaining nonrecursive gaps in the
-   [combinator inventory](rusthammer-combinators.md) and select the next retained
-   increment. Consider seeking and diagnostics alongside conveniences such as
-   length-counted elements, length-prefixed bytes, and ASCII whitespace. Decide the first-version scope
-   and implementation order rather than treating the entire future inventory
-   as a release requirement.
+1. Consider diagnostics alongside conveniences such as length-counted elements,
+   length-prefixed bytes, and ASCII whitespace. Decide first-version scope
+   explicitly; the entire future inventory is not a release requirement.
 2. Specify and implement selected operations using the current core, with
    compositional proofs and ordinary downstream examples. Preserve typed
    outputs, borrowing, partial-input behavior, and the backend boundary.
@@ -176,9 +185,9 @@ From `rusthammer/`, run `python3 tools/verify.py` after a production increment.
 It checks formatting and both allocation configurations, regenerates the
 promoted-MIR Lean module, extracts the library at optimized MIR and an ordinary
 Cargo consumer, builds all proofs, and checks for admitted/opaque project
-declarations. The current increment passes all these checks: 57 consumer entry
-points, 23/26 consumer tests without/with `alloc`, and 156 ordering/backend/span/
-construction/permutation theorem axiom audits. The optional
+declarations. The current increment passes all these checks: 66 consumer entry
+points, 24/27 consumer tests without/with `alloc`, and 178 selected ordering/backend/span/
+construction/permutation/seeking/application theorem axiom audits. The optional
 `python3 tools/check_permutation_c.py` checks 217,728 C compatibility cases.
 `python3 tools/check_backend_memo.py` also passes; it separately
 checks the private cache probe when relevant backend or tool changes are made.
@@ -705,7 +714,7 @@ every historical behavior are not established requirements.
 | Uniform dynamically tagged AST | Make optional. Use tuples, enums, structs, options, collections, and borrowed views for ordinary outputs. |
 | Arenas, memoization, and runtime graphs | Evaluate individually. These solve real allocation, performance, and grammar-representation problems and are not inherently C-specific. |
 | Manual graph ownership and cleanup | Replace with Rust ownership where possible; choose an explicit ownership scheme for shared or recursive graphs. |
-| Permutation, seeking, and diagnostics | Retain as intended capabilities under the [scope decision](rusthammer-combinators.md#agreed-api-scope). Permutation is complete; first-version inclusion and implementation order for seeking and diagnostics remain to be selected. |
+| Permutation, seeking, and diagnostics | Retain as intended capabilities under the [scope decision](rusthammer-combinators.md#agreed-api-scope). Permutation and seeking are complete; diagnostic contracts and first-version inclusion remain to be selected. |
 | Floating-point fields and ranges | Exclude from the first release due to the pinned Aeneas limitations. Retain as a later capability, with the investigation and required tool/model work recorded in the [probe report](../rusthammer/probes/floating_point/README.md). |
 | Streaming | Preserve as a separately specified later capability beyond the existing snapshot API with `NeedMore`. |
 
@@ -852,55 +861,11 @@ or decoded values.
 
 ### Known C issue: absolute bit position overflow
 
-Open C Hammer issue, observed on 2026-10-04 in checkout `a8dc507`. The
-[`h_input_stream_pos` helper](../src/internal.h) converts a byte position to an
-absolute bit count using `size_t` arithmetic:
-
-```c
-(state->pos + state->index) * 8 + state->bit_offset + state->margin
-```
-
-Its addition and multiplication bounds are enforced only by ordinary `assert`
-checks. With assertions enabled, an oversized position aborts the process; with
-`NDEBUG`, the checks disappear and unsigned arithmetic can wrap. The
-[`h_tell` implementation](../src/parsers/seek.c) stores this result in a `uint64_t`
-token, but that widening happens after the `size_t` calculation and cannot repair
-overflow on a 32-bit target.
-
-Multiplication first overflows at byte position `SIZE_MAX / 8 + 1`: 512 MiB with
-32-bit `size_t`, or 2 EiB with 64-bit `size_t`. The current position assertion is
-slightly stricter: it requires `pos + index < SIZE_MAX / 8`, rejecting the byte
-immediately before that overflow boundary as well.
-
-A minimal helper-level reproducer is:
-
-```c
-#include <sys/types.h>
-#include "internal.h"
-#include <stdio.h>
-
-int main(void) {
-    HInputStream stream = {.pos = SIZE_MAX / 8 + 1};
-    printf("%zu\n", h_input_stream_pos(&stream));
-    return 0;
-}
-```
-
-Compile from the repository root with `cc -std=gnu99 -O2 -Isrc`, once with
-`-DNDEBUG` and once without. On the tested 64-bit host, the former prints `0` and
-the latter fails the assertion in `h_input_stream_pos`. This uses a synthetic
-stream state and does not allocate or parse a 2 EiB input. Assertion behavior
-depends on `NDEBUG`, not optimization alone; the current SCons `opt` variant
-adds `-O3` without defining `NDEBUG`.
-
-The C follow-up is checked position/length arithmetic with a defined failure
-path and boundary tests with and without assertions. Audit
-`h_input_stream_length` in the same header, the base-position conversions used
-by `h_seek` (its offset checks happen after those conversions), result-length
-calculation in [packrat parsing](../src/backends/packrat.c), and the separate
-`s->pos * 8 + s->bit_offset` calculation in
-[`h_parse_finish`](../src/hammer.c). The helper reproducer does not constitute a
-full audit of those paths. No C fix has been made as part of RustHammer.
+Recorded as [C-001 in the C implementation issue log](../docs/c-implementation-issues.md#c-001-absolute-bit-position-limits),
+which contains the helper-level reproducer, assertion behavior, representation
+limits, and C follow-up work. `h_input_stream_pos` forms an absolute bit count
+using `size_t`: oversized positions abort with assertions enabled and can wrap
+with `NDEBUG`. Widening that result in `h_tell` does not recover lost bits.
 
 RustHammer should retain byte-and-bit cursors for position reporting and prove
 cursor advancement safe without requiring an absolute bit count to fit in
@@ -1154,9 +1119,11 @@ Retries currently reparse prefixes and can rerun callbacks; speculative effects
 are not rolled back. Input-borrowing outputs refer to the input of their invocation;
 `BytePattern` outputs instead borrow its configured pattern.
 
-Seeking is an intended capability. It needs explicit bounds, position units,
-and interaction with backtracking, memoization, spans, and termination. It should
-not silently inherit the invariants of a forward-only core.
+Seeking is implemented and proved. The [design](rusthammer-seeking.md) records
+its bounds, position units, interaction with backtracking, and obligations for
+future memoization/streaming. Spans retain endpoint-interval semantics,
+unbounded repetition checks net progress, and match restrictions compare final
+positions. No new execution interface or backend was needed.
 
 ### Deferred: eager literal rejection
 
@@ -1414,9 +1381,9 @@ A complete NTP or DNS parser is not a prerequisite for the next core increment.
 
 ## Open decisions
 
-- What are the exact contracts for seeking and diagnostics? The
-  [input plan](rusthammer-input.md) intentionally restricts bit-direction
-  changes to byte boundaries, while retaining byte-order control.
+- Specify diagnostic annotations. The [input plan](rusthammer-input.md)
+  intentionally restricts bit-direction changes to byte boundaries, while
+  retaining byte-order control; the implemented seeking primitive preserves those rules.
 - Which retained nonrecursive capabilities and conveniences are required for the
   first RustHammer release, and in what implementation order? Deferred actions
   and dedicated dispatch are intentionally omitted. Recursive grammars, native

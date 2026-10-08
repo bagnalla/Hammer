@@ -1,7 +1,7 @@
 # RustHammer design and verification overview
 
 This overview describes the state of RustHammer on 2026-10-07, including typed
-permutation and the organization of grammar-building operations under `grammar`.
+permutation, seeking, and grammar-building operations under `grammar`.
 
 RustHammer currently has three connected parts: **a typed Rust parser-combinator
 library, a translation of that implementation into Lean, and mathematical
@@ -80,6 +80,12 @@ This makes consumption explicit: successful parsing returns a new cursor.
 Recoverable failure allows a combinator such as `Choice` to try another child at
 the original cursor. Backend bookkeeping and callback effects survive that retry.
 
+The returned cursor can precede the entry cursor. `Seek::to`, `Seek::relative`,
+and `Seek::from_end` reposition without reading bytes and return the destination
+as their value. Finite repetition can move backward; unbounded repetition still
+requires net forward progress. Spans measure only their endpoint interval, so
+they may include skipped bytes or omit reads made during an excursion.
+
 `NeedMore` means that the supplied buffer does not establish an answer yet. It
 propagates before alternatives are tried or optional absence is inferred. There
 is currently no saved continuation or buffering layer: callers retry with
@@ -121,6 +127,7 @@ otherwise.
 | [src/span_types.rs](src/span_types.rs) | The validated `BitSpan` result type and its borrowed byte view. |
 | [src/grammar/](src/grammar/) | The public grammar-building namespace, with private files for numeric and byte primitives, sequencing, control flow, transformations, repetition, positions, ordering scopes, spans, and permutation. |
 | [src/grammar/permutation.rs](src/grammar/permutation.rs) | Required/optional entries, tuple storage adapters, and permutation search. |
+| [src/grammar/position.rs](src/grammar/position.rs) | Skipping, position reporting, seeking, end-of-input, and checked cursor arithmetic. |
 | [examples/](examples/) and [examples/support/](examples/support/) | Runnable demonstrations and reusable application grammars. The [record format](examples/support/record.rs) is shared by examples, tests, and extraction. |
 | [tests/](tests/) | Native behavioral, boundary, ownership, borrowing, and cleanup tests, organized by feature. Some C comparison adapters live under `tests/compat/`. |
 | [lean/RustHammer/](lean/RustHammer/) | The generated Lean implementation, specifications, supporting mathematics, and proofs. |
@@ -244,6 +251,7 @@ The main proved properties are:
 | Repetition and separated lists | Output counts and order, cursor chaining, stopping and rollback rules, fold results, progress checks, count-overflow handling, and termination. |
 | Dependent parsing | Correct use of a successful first value to construct the next parser, correct cursor transfer, and short-circuiting before unused factories or children. |
 | Ordering and spans | Correct physical-bit interpretation, scope-boundary rules, span validity, exact selected-bit geometry, and aligned byte views. |
+| Seeking | Safe signed arithmetic, exact destinations, input-finality classification, unchanged backend state, and stability of absolute/current-relative successes under extension. |
 | Permutation | Agreement with the ordered-search model, termination under child contracts, safe counters, backend transitions, and tuple storage/output-order equations. |
 | Application grammars | Acceptance and rejection according to independently stated format contracts, including decoded contents and consumption. |
 
@@ -291,8 +299,8 @@ type-checking compatibility; the existing semantic proofs use the primary
 promoted-MIR translation. We have not separately proved equivalence between
 compiler stages.
 
-At the snapshot described here, the pipeline checks 57 consumer entry points and
-audits the axiom dependencies of 156 selected theorem roots. That is an audit
+At the snapshot described here, the pipeline checks 66 consumer entry points and
+audits the axiom dependencies of 178 selected theorem roots. That is an audit
 count, not the total number of theorems. Project files contain no admitted
 obligations or project-defined axioms. Native tests and C comparisons provide
 additional evidence, including pointer identity and destructor behavior.
@@ -311,7 +319,7 @@ The limits are explicit:
 - Recursive grammars, production packrat, and buffering/resumption are not
   implemented. Native floating-point fields/ranges are excluded from the first
   release due to the [pinned Aeneas limitations](probes/floating_point/README.md).
-  Seeking and diagnostics remain candidates for the first version.
+  Seeking is implemented and proved; diagnostics remain a candidate for the first version.
 
 ## Suggested reading path
 

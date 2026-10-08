@@ -56,7 +56,7 @@ extern crate alloc;
 use rusthammer::grammar::{
     BeI16, BeI32, BeI64, BeU16, BeU32, BeU64, Bind, Bit, Bits, ButNot, Byte, ByteIn, ByteNotIn,
     BytePattern, Difference, End, FoldRepeat, Ignore, IntRange, Left, Literal, Map, Middle, Right,
-    Seq, SignedBits, SkipBits, TakeAligned, Tell, TryMap, WithOrder, Xor, I8,
+    Seek, Seq, SignedBits, SkipBits, TakeAligned, Tell, TryMap, WithOrder, Xor, I8,
 };
 use rusthammer::{ConfigError, Cursor, Order, ParseContext, ParseError, ParseOutcome, Parser};
 
@@ -820,8 +820,143 @@ pub fn leading_ones(input: &[u8], context: ParseContext) -> ParseOutcome<alloc::
     )
 }
 
+pub fn seek_absolute(
+    target: Cursor,
+    input: &[u8],
+    cursor: Cursor,
+    context: ParseContext,
+) -> Result<ParseOutcome<Cursor>, ConfigError> {
+    let seek = Seek::to(target)?;
+    Ok(seek.parse_with(input, cursor, context))
+}
+
+pub fn seek_relative(
+    offset: isize,
+    input: &[u8],
+    cursor: Cursor,
+    context: ParseContext,
+) -> ParseOutcome<Cursor> {
+    Seek::relative(offset).parse_with(input, cursor, context)
+}
+
+pub fn seek_end_relative(
+    offset: isize,
+    input: &[u8],
+    cursor: Cursor,
+    context: ParseContext,
+) -> ParseOutcome<Cursor> {
+    Seek::from_end(offset).parse_with(input, cursor, context)
+}
+
+#[path = "../../examples/support/offset.rs"]
+mod offset_example;
+
+pub fn seek_packet(input: &[u8], cursor: Cursor, context: ParseContext) -> ParseOutcome<&[u8]> {
+    offset_example::payload(input, cursor, context)
+}
+
+pub fn seek_spanned(
+    input: &[u8],
+    cursor: Cursor,
+    context: ParseContext,
+) -> ParseOutcome<(u8, rusthammer::BitSpan<'_>)> {
+    rusthammer::WithSpan {
+        parser: Right {
+            first: Seek::relative(8),
+            second: Byte,
+        },
+    }
+    .parse_with(input, cursor, context)
+}
+
+pub fn seek_repeated(input: &[u8], cursor: Cursor, context: ParseContext) -> ParseOutcome<u8> {
+    FoldRepeat::exact(Seek::relative(-1), 2, || 0u8, |n, _| n + 1)
+        .parse_with(input, cursor, context)
+}
+
+pub fn seek_compared(input: &[u8], cursor: Cursor, context: ParseContext) -> ParseOutcome<Cursor> {
+    ButNot {
+        first: Seek::relative(-1),
+        second: Seek::relative(-2),
+    }
+    .parse_with(input, cursor, context)
+}
+
+// This parser demonstrates that a seek does not erase the selected backend.
+pub struct CountedByte;
+
+impl<'input> rusthammer::Grammar<'input> for CountedByte {
+    type Output = u8;
+}
+
+impl<'input> rusthammer::Eval<'input, u8> for CountedByte {
+    fn eval(
+        &self,
+        backend: &mut u8,
+        input: &'input [u8],
+        cursor: Cursor,
+        context: ParseContext,
+    ) -> ParseOutcome<u8> {
+        *backend = 1;
+        Byte.eval(backend, input, cursor, context)
+    }
+}
+
+pub fn seek_backend(
+    input: &[u8],
+    cursor: Cursor,
+    context: ParseContext,
+) -> (u8, ParseOutcome<(Cursor, u8)>) {
+    let mut state = 0u8;
+    let parser = rusthammer::seq(Seek::relative(-8), CountedByte);
+    use rusthammer::Eval;
+    let result = parser.eval(&mut state, input, cursor, context);
+    (state, result)
+}
+
+pub fn seek_saved_position(
+    input: &[u8],
+    cursor: Cursor,
+    context: ParseContext,
+) -> ParseOutcome<Cursor> {
+    // Construct the parser in TryMap so invalid configuration is input rejection.
+    // Tell always returns a normalized cursor, but no unwrap is needed.
+    let target = rusthammer::try_map(Tell, |position| Seek::to(position));
+    rusthammer::bind(target, |seek| Right {
+        first: Byte,
+        second: seek,
+    })
+    .parse_with(input, cursor, context)
+}
+
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn seeking_keeps_borrows_saved_cursors_and_backend_state() {
+        let input = [1, 99, 12, 34];
+        assert_eq!(
+            super::seek_packet(&input, super::Cursor::start(), super::ParseContext::FINAL),
+            super::ParseOutcome::Success(super::Cursor { byte: 4, bit: 0 }, &input[2..])
+        );
+        assert_eq!(
+            super::seek_saved_position(&input, super::Cursor::start(), super::ParseContext::FINAL),
+            super::ParseOutcome::Success(super::Cursor::start(), super::Cursor::start())
+        );
+        assert_eq!(
+            super::seek_backend(
+                &[42],
+                super::Cursor { byte: 1, bit: 0 },
+                super::ParseContext::FINAL
+            ),
+            (
+                1,
+                super::ParseOutcome::Success(
+                    super::Cursor { byte: 1, bit: 0 },
+                    (super::Cursor::start(), 42)
+                )
+            )
+        );
+    }
     #[test]
     fn permutation_outputs_and_backend_survive_local_grammar() {
         use super::*;

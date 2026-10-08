@@ -141,8 +141,9 @@ where
     }
 }
 
-// Both matches start at the same cursor. Ordering their normalized endpoints
-// compares consumed bits without an absolute bit count or subtraction.
+// Both matches start at the same cursor. Ordering normalized endpoints compares
+// signed net displacement, or consumed lengths for forward matches, without a
+// machine-sized absolute bit count or subtraction.
 fn match_length_allows(first: Cursor, second: Cursor, allow_equal: bool) -> bool {
     first.byte > second.byte
         || (first.byte == second.byte
@@ -197,6 +198,9 @@ where
 /// ordered by byte index, then bit offset; normalized forward matches therefore
 /// compare exact consumed bit lengths, without overflowing a bit count. Custom
 /// parsers must respect that cursor convention. Speculative effects are not undone.
+/// For seeking children this compares signed net displacement from the common
+/// start: a later endpoint wins, even if both endpoints precede the start.
+/// Internal excursions, repeated reads, and skipped bytes are not counted separately.
 ///
 /// ```
 /// use rusthammer::{ButNot, ByteIn, BytePattern, Cursor, Parser};

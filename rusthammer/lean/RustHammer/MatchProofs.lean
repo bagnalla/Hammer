@@ -58,6 +58,20 @@ theorem match_endpoint_order_consumption (allowEqual : Bool) (cursor first secon
   rw [match_endpoint_order_bits allowEqual first second hf hs]
   cases allowEqual <;> simp only [Bool.false_eq_true, ↓reduceIte] <;> omega
 
+/-- Seeking may return before the common start. Endpoint order still compares
+signed net displacements, without a forward-motion premise or unsigned wrap. -/
+theorem match_endpoint_order_displacement (allowEqual : Bool) (cursor first second : Cursor)
+    (hf : first.bit.val < 8) (hs : second.bit.val < 8) :
+    Spec.matchEndpointOrder allowEqual first second ↔
+      if allowEqual then
+        (Spec.position second : Int) - Spec.position cursor ≤
+          (Spec.position first : Int) - Spec.position cursor
+      else
+        (Spec.position second : Int) - Spec.position cursor <
+          (Spec.position first : Int) - Spec.position cursor := by
+  rw [match_endpoint_order_bits allowEqual first second hf hs]
+  cases allowEqual <;> simp only [Bool.false_eq_true, ↓reduceIte] <;> omega
+
 theorem restrict_match_with_spec {P Q α β : Type} (pi : DirectParser P α) (qi : DirectParser Q β)
     (p : P) (q : Q) (input : Slice U8) (cursor : Cursor) (context : ParseContext) (allowEqual : Bool)
     (first : Cursor → ParseOutcome α → Prop) (second : Cursor → ParseOutcome β → Prop)

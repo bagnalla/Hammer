@@ -13,6 +13,7 @@ import RustHammer.IntegerProofs
 import RustHammer.IntRangeProofs
 import RustHammer.ByteSetProofs
 import RustHammer.PositionProofs
+import RustHammer.OffsetProofs
 import RustHammer.MatchProofs
 import RustHammer.OrderParserProofs
 import RustHammer.BackendProofs
