@@ -1,5 +1,9 @@
 # Recursive evaluator dictionary extraction
 
+Historical investigation: the retired runner and matching library APIs are
+preserved at `c5c2643`. Run the commands below in that checkout; see the
+[reproduction instructions](../README.md#historical-probes-and-reproduction).
+
 Investigation retained; further work deferred at the user's request, 2026-10-06.
 The first version of RustHammer targets nonrecursive grammars. This records a
 tool limitation; it does not implement a recursion API or change the production
@@ -53,7 +57,7 @@ underlying limitation; **it is not a fix for recursive extraction**.
 
 ## Controls and results
 
-The [runner](../../tools/check_recursive_extraction.py) checks each case separately
+The runner (`tools/check_recursive_extraction.py` at `c5c2643`) checks each case separately
 at promoted and optimized MIR. It inspects the LLBC dependency groups as well as
 the tool exit statuses and generated Lean. The results are identical at both
 stages:

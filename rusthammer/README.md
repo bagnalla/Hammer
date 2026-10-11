@@ -181,6 +181,12 @@ outside the public library API.
 
 ## Verification
 
+Lean specifications define RustHammer's intended functional behavior. Proofs
+establish that the extracted implementation satisfies those contracts under
+their stated assumptions. Any promised C Hammer compatibility belongs in these
+contracts. Review specifications against application requirements as well as
+proving the implementation against them.
+
 Use the pinned toolchain from this directory:
 
 ```sh
@@ -212,17 +218,7 @@ lake exe proof-audit
 The full verifier also runs isolated audit regression tests, including deliberate
 axioms and admissions confined to temporary fixtures outside the development.
 
-With a locally built C Hammer library, the compatibility subsets can also be checked:
-
-```sh
-python3 tools/compare_primitives.py --hammer-lib ../build/opt/src/libhammer.so
-python3 tools/compare_matches.py --hammer-lib ../build/opt/src/libhammer.so
-python3 tools/compare_ordering.py --hammer-lib ../build/opt/src/libhammer.so
-```
-
-These compare acceptance, consumption, and values on complete inputs. Ordering
-comparison covers high-first bits and both byte orders, including unaligned fields
-and nested scopes. They do not claim full C Hammer API equivalence.
+`tools/` contains the production verifier and its auditor regression tests.
 
 Aeneas still constrains source forms. Match an entire successful `Result` payload
 before destructuring it to avoid optimized-MIR cleanup partial moves. Borrowed
@@ -230,6 +226,15 @@ callbacks and loop-local borrows may need named adapters or helper functions.
 The MAVLink checksum lookup uses closure forwarding in the consumer because a
 generic function-item form fails translation. Keep the [direct-v1 probe](probes/direct_v1/README.md)
 as evidence for supported shapes and remaining failures.
+
+Its optional runner lives beside the probe:
+
+```sh
+python3 probes/direct_v1/check.py --aeneas-dir /path/to/aeneas
+```
+
+This reproduces specific expected extraction failures as well as passing cases.
+The production verifier checks the implemented library independently.
 
 Proofs establish the stated contracts in the pinned Aeneas models, under child,
 factory, callback, and custom comparison contracts. They use only standard Lean
@@ -250,5 +255,13 @@ payload support would require a separately specified and verified increment.
 The [plan](../plans/rusthammer.md#first-version-scope-and-next-steps) records the
 remaining MAVLink scope and release review. The [archived plan](../plans/rusthammer-pre-v1.md)
 and commit `c5c2643` preserve pre-v1 API, test, and proof evidence. Historical
-probes that import retired APIs must be reproduced at that baseline; their
-results do not describe the current production API.
+probe runners and the permutation proof generator have been removed from the
+current tree. Reproduce their recorded commands in a checkout of `c5c2643`, as
+described in the [probe history](probes/README.md#historical-probes-and-reproduction);
+their results do not describe the current production API.
+
+The C comparison suite is also retired. Its v1 scripts, Rust drivers, and C
+adapters are preserved at `663ad97`, and the plan retains the observed results.
+These comparisons helped establish the intended semantics during development.
+Future compatibility questions can justify targeted investigations; maintained
+v1 correctness obligations are the Lean contracts and proofs.

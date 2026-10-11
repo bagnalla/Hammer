@@ -344,7 +344,7 @@ Rust orders byte-and-bit endpoints directly, without absolute machine bit counts
 or subtraction. Lean proves equivalence to mathematical consumed lengths for
 normalized forward matches. As with `Choice`, children retain responsibility for
 cursor validation; speculative effects in custom parsers are not rolled back.
-The optional C comparison agrees on 1,879,635 complete-input cases, including
+The historical C comparison agreed on 1,879,635 complete-input cases, including
 lookahead, discarded prefixes/suffixes, zero/equal/unequal lengths, all bit
 offsets, nonzero byte starts, and truncation. Native tests and compositional
 proofs at that checkpoint also covered partial input and fatal errors. Retain

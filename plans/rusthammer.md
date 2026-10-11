@@ -321,9 +321,9 @@ without changing the parser cursor or requiring `Seek`.
 5. **Verification and documentation — complete.** The production verifier covers both
    allocation configurations and MIR stages, ordinary downstream extraction,
    strict Lean compilation, and automatic axiom checks for all production Lean
-   declarations. C comparisons
-   cover retained primitive/match semantics and high-first ordering. Current
-   results are recorded below; no retired feature is counted as verified v1 code.
+   declarations. Lean contracts define functional correctness; C comparison
+   infrastructure is retired, with its results preserved below as historical
+   evidence. Native checks for properties outside the Lean models remain.
 6. **Application/release scope review — next.** Select supported MAVLink metadata
    and review whether more application coverage is needed, then public API,
    callback support, resource assumptions, packaging, and supported environments.
@@ -336,6 +336,14 @@ v1), or an explicit instruction to reproduce against `c5c2643`. Do not keep the
 old interface in production just to keep deferred research runners working.
 
 ## Verification and proof maintenance
+
+Lean specifications are authoritative for RustHammer's functional correctness.
+Express any promised C Hammer compatibility in those contracts, and review the
+contracts against application requirements. Proofs establish implementation
+agreement with the specifications under explicit model and callback assumptions.
+The C comparison suite is retired from v1; future compatibility questions can
+motivate targeted investigations. Keep native Rust tests, including pointer
+identity and ownership/drop checks for properties outside the Lean models.
 
 The baseline includes verified flags, marker, record, dependent-count, offset,
 and MAVLink examples. Recorded baseline checks cover 246 tests without `alloc`,
@@ -354,7 +362,7 @@ the pinned tools below:
 - Full Lean proof build and additional generated-code checks with warnings as
   errors and `autoImplicit=false`; 131 selected theorem axiom audits passed using
   only standard Lean axioms, with no project admissions or opaque stand-ins.
-- C comparisons: 577,065 primitive cases, 1,879,635 match cases, 50,530 high-first
+- Historical C comparisons: 577,065 primitive cases, 1,879,635 match cases, 50,530 high-first
   ordered-field cases, and 1,144 nested byte-order scope cases, all passing.
 
 These results cover the retained v1 implementation. The independent MAVLink CRC
@@ -447,6 +455,19 @@ helpers, use only the permitted axioms. All eight auditor regression tests pass;
 native tests, both MIR stages, downstream extraction, and strict Lean compilation
 retain the coverage recorded above. These counts are reported observations, not
 hardcoded audit targets.
+
+The v1 tooling cleanup leaves `tools/verify.py` and `tools/test_proof_audit.py`
+as the production verification tools. The focused extraction runner is
+`probes/direct_v1/check.py`. C comparison scripts, standalone Rust drivers, and C
+adapters have been removed; the last committed v1 suite is preserved at `663ad97`.
+Other investigation runners and the permutation proof generator are preserved
+in Git at `c5c2643`, with checkout instructions in the
+[probe history](../rusthammer/probes/README.md#historical-probes-and-reproduction).
+Full production verification and all eight auditor tests passed during cleanup.
+The relocated direct-v1 runner checked 16 passing translations and 16 specific
+expected failures. Before retirement, the C comparisons again passed the
+2,508,374 cases recorded above. These results are development history, with no
+ongoing requirement to maintain a C comparison corpus.
 
 The exclusions intentionally remove tests and theorem roots for permutation,
 seeking/offset applications, low-first order, and input/backend modes. Document

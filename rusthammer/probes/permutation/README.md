@@ -1,8 +1,12 @@
 # Permutation compatibility cases
 
-The production implementation lives in [`src/grammar/permutation.rs`](../../src/grammar/permutation.rs).
-This package runs it as an ordinary dependency to generate the complete-input
-corpus for [`check_permutation_c.py`](../../tools/check_permutation_c.py):
+Historical investigation: permutation, its comparison runner, and its proof
+generator are preserved at `c5c2643`. Run the commands below in that checkout;
+see the [reproduction instructions](../README.md#historical-probes-and-reproduction).
+
+At that baseline, the production implementation lived in
+`src/grammar/permutation.rs`. This package ran it as an ordinary dependency to
+generate the complete-input corpus for `tools/check_permutation_c.py`:
 
 ```sh
 # From rusthammer/
@@ -18,7 +22,7 @@ also check each returned value against its declared pattern and tuple position.
 All cases agree. The C adapter frees its parse results and parser graphs.
 
 Partial input, fatal errors, backend effects, ownership, and all tuple arities
-are covered by the [native tests](../../tests/permutation.rs). This corpus is
+were covered by `tests/permutation.rs` at `c5c2643`. This corpus is
 compatibility evidence, not a proof of general equivalence with C Hammer.
 
 ## Extraction evidence
@@ -27,16 +31,15 @@ The initial private candidate passed promoted and optimized MIR extraction and
 generated Lean checking with the pinned tools, including independent input and
 configuration borrows and owned outputs without `Clone` or `Copy`. The candidate
 has been replaced by the production implementation; there is no duplicate search
-algorithm in this directory. Ongoing extraction checks belong to the normal
-[`verify.py`](../../tools/verify.py) runner and the
-[cross-crate fixture](../cross_crate/README.md).
+algorithm in this directory. At `c5c2643`, extraction checks belonged to the
+normal `tools/verify.py` runner and cross-crate fixture. The v1 verifier has no
+permutation roots.
 
-The repetitive tuple storage proof source is maintained by
-[`generate_permutation_tuple_proofs.py`](../../tools/generate_permutation_tuple_proofs.py).
+The repetitive tuple storage proof source was maintained by
+`tools/generate_permutation_tuple_proofs.py` at `c5c2643`.
 It reads only the generated declaration names and emits explicit storage/output
-specifications with proofs checked by Lean. The normal verifier rejects stale
-proof source. After changing supported tuple arities or extraction names, run
-the generator and recheck the complete proof suite.
+specifications with proofs checked by Lean. The baseline verifier rejected stale
+proof source. The generator and permutation proofs have been removed from v1.
 
 Two source-shape changes were needed. A loop containing early returns failed
 translation; a loop calling the recursive search then failed the generated Lean

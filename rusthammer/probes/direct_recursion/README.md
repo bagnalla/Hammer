@@ -1,5 +1,9 @@
 # Direct recursive parser compatibility investigation
 
+Historical investigation: the retired runner and matching library APIs are
+preserved at `c5c2643`. Run the commands below in that checkout; see the
+[reproduction instructions](../README.md#historical-probes-and-reproduction).
+
 Status: initial investigation complete; further work deferred at the user's
 request, 2026-10-06. The first version targets nonrecursive grammars. This private
 package is retained as evidence for the

@@ -1,12 +1,17 @@
 # Seeking compatibility probe
 
+Historical investigation: the retired runner and matching library APIs are
+preserved at `c5c2643`. Run the commands below in that checkout; see the
+[reproduction instructions](../README.md#historical-probes-and-reproduction).
+
 This private Cargo package retains the investigation of a permanent seeking primitive using
 RustHammer's real `Grammar` and `Eval` traits. It is not exported by RustHammer.
 See the [design, composition audit, and proof contract](../../../plans/rusthammer-seeking.md).
 
-Production `rusthammer::Seek` is now implemented and proved separately. Its
-arithmetic/composition tests and downstream examples run in `tools/verify.py`;
-the shared offset application has a Lean correctness proof. This package keeps
+At `c5c2643`, production `rusthammer::Seek` was implemented and proved separately.
+Its arithmetic/composition tests and downstream examples ran in `tools/verify.py`;
+the shared offset application had a Lean correctness proof. Seeking and those
+verification roots are excluded from v1. This package keeps
 the earlier candidate, C characterization, and negative callback regression for
 reproducing the investigation. Its extraction checks are not production proofs.
 

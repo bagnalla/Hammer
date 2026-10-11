@@ -89,8 +89,8 @@ offset bypasses the later bounds check. This does not occur for every seek past
 EOF: targets in a different byte reach the bounds check normally.
 
 The [seeking reproducer below](#seeking-reproducer) exercises the public API.
-The retained [C characterization](../rusthammer/tools/check_seeking.py) also
-checks lengths zero through eight bytes, every valid starting bit position,
+The historical C characterization (`rusthammer/tools/check_seeking.py` at
+`c5c2643`) also checks lengths zero through eight bytes, every valid starting bit position,
 all three origins, offsets from -80 through 80, and both signed extremes.
 Of 145,233 cases, 145,044 agree with the mathematical target/bounds contract;
 the other 189 are precisely these EOF successes. These cases use complete input
@@ -199,7 +199,10 @@ Backward seek: success=1 child_bits=18446744073709551608 outer_bits=0
 The broader characterization is retained in the
 [seeking probe](../rusthammer/probes/seeking/README.md), with its C adapter in
 [`reference.c`](../rusthammer/probes/seeking/reference.c). To run that corpus
-alongside its native Rust checks, without Aeneas or Lean:
+alongside its native Rust checks, without Aeneas or Lean, use a checkout of
+`c5c2643` as described in the
+[reproduction instructions](../rusthammer/probes/README.md#historical-probes-and-reproduction).
+The following commands are relative to that checkout's repository root:
 
 ```sh
 cd rusthammer

@@ -1,5 +1,9 @@
 # Floating-point extraction investigation
 
+Historical investigation: the retired runner and matching library APIs are
+preserved at `c5c2643`. Run the commands below in that checkout; see the
+[reproduction instructions](../README.md#historical-probes-and-reproduction).
+
 Status: investigated with the pinned tools on 2026-10-07. Native Rust decoding
 works, but native floating-point outputs and range checks do not yet meet
 RustHammer's extraction and proof requirements. This is a private compatibility

@@ -361,8 +361,9 @@ requirements rather than hiding that cost.
 
 ## Compatibility evidence and a C discrepancy
 
-The pinned-tool runner is
-[`check_recursive_rules.py`](../rusthammer/tools/check_recursive_rules.py).
+The historical pinned-tool runner is `tools/check_recursive_rules.py` at
+`c5c2643`; it has been retired from v1. Reproduce these results using the
+[historical checkout](../rusthammer/probes/README.md#historical-probes-and-reproduction).
 It checks twelve native tests, six roots at promoted and optimized MIR, and those
 six roots through a normal Cargo dependency,
 then type-checks the generated Lean with warnings as errors and no admitted or
@@ -385,7 +386,7 @@ separate from the old recursive-trait dictionary cycle and the deferred mapping
 callback problem. The runner checks this expected negative case separately; it
 must never count its failed translation as verified code.
 
-[`check_recursive_rules_c.py`](../rusthammer/tools/check_recursive_rules_c.py)
+`tools/check_recursive_rules_c.py` in that same historical checkout
 compares 1,016 cases over eight fixtures against the checked-out C packrat engine.
 It records 985 acceptance/consumption agreements and 31 discrepancies in one
 context-changing mutual-recursion fixture:

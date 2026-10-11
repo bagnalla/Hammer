@@ -1,5 +1,9 @@
 # Diagnostic annotation investigation
 
+Historical investigation: the retired runner and matching library APIs are
+preserved at `c5c2643`. Run the commands below in that checkout; see the
+[reproduction instructions](../README.md#historical-probes-and-reproduction).
+
 Investigated on 2026-10-08 with the repository's pinned Rust, Charon, Aeneas, and
 Lean versions. This is private feasibility evidence, not a production API.
 The [design report](../../../plans/rusthammer-diagnostics.md) specifies selection

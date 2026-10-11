@@ -5,6 +5,7 @@ Archived from `plans/rusthammer.md` at `c5c2643` (`Before simplification`) on
 Its backend, partial-input, streaming, and future-compatibility requirements are
 superseded by the [v1 plan](rusthammer.md). Dates and verification counts below
 belong to their original checkpoints; some predate the MAVLink proofs.
+Commands and removed source paths below refer to that historical checkout.
 
 Status: verified prototype with an explicit backend execution boundary, scoped ordering, spans, constructor helpers, typed permutation, seeking, match restrictions, skipping/position, byte sets, typed ranges, native integer readers, signed fields, byte patterns, `Bind`, ordinary/separated collection and folding, parser references, and output selection; API scope reviewed 2026-10-07. The first version targets nonrecursive grammars; recursion, native floating-point support, and their extraction-tool work are deferred at the user's request.
 
@@ -411,7 +412,7 @@ Native tests cover the full outcome cross-product, exact call/drop counts,
 borrow identity, partial retries, bit lengths, and machine-limit endpoints.
 Both MIR stages and all 40 separate-crate entries pass without a new workaround,
 including unlike child outputs and enum-mapped alternatives. The optional
-[C comparison](../rusthammer/tools/compare_matches.py) agrees on 1,879,635
+C comparison (`tools/compare_matches.py` at `c5c2643`) agrees on 1,879,635
 complete-input cases, including lookahead and discarded prefixes/suffixes.
 This does not assert streaming or other-backend equivalence.
 
@@ -434,7 +435,7 @@ private matching helper returning unit keeps the returned borrow outside the
 loop. The [probe notes](../rusthammer/probes/README.md#pattern-borrows-and-loops)
 record the failing shape and supported implementation.
 
-An optional [C/Rust differential check](../rusthammer/tools/compare_primitives.py)
+An optional C/Rust differential check (`tools/compare_primitives.py` at `c5c2643`)
 passes 10,561 complete-input cases against direct-backend `h_uint8` and `h_token`,
 normalizing ownership and typed output differences. It covers every bit offset,
 truncation, mismatches, empty patterns, embedded zeros, and 256-byte patterns.

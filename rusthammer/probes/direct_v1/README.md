@@ -110,8 +110,8 @@ callback forwarding.
 From `rusthammer/`, with the extraction tools pinned by `tools/verify.py`:
 
 ```sh
-python3 tools/check_direct_v1.py --native-only
-python3 tools/check_direct_v1.py --aeneas-dir /path/to/pinned/aeneas
+python3 probes/direct_v1/check.py --native-only
+python3 probes/direct_v1/check.py --aeneas-dir /path/to/pinned/aeneas
 ```
 
 The existing `lean/` project's Aeneas dependencies must be available. An optional

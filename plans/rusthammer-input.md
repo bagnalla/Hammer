@@ -6,6 +6,8 @@ uses complete inputs, high-first bit traversal, and little-endian numeric fields
 High-first-only traversal and forward successful consumption are adopted v1
 constraints. This plan supersedes the baseline's configurable bit direction and
 changed-direction scope guards. Historical proof/probe evidence remains below.
+Retired probe runners and their recorded commands are preserved at `c5c2643`;
+see the [checkout instructions](../rusthammer/probes/README.md#historical-probes-and-reproduction).
 
 ## Compatibility and motivation
 
@@ -21,8 +23,9 @@ header specifies the payload length. Message-specific reconstruction is separate
 
 C Hammer's [bit reader](../src/bitreader.c) and
 [endianness wrapper](../src/parsers/endianness.c) support more general bit order.
-V1 deliberately supports the high-first subset. Compare only that subset during
-compatibility checks; low-first behavior is excluded, not a failed v1 feature.
+V1's Lean contracts specify the high-first subset. Historical C comparisons
+helped establish these semantics; their infrastructure is now retired. Any
+promised compatibility belongs in the contracts. Low-first behavior is excluded.
 The earlier two-ended cursor proposal and baseline direction-change guards
 remain historical designs, not implementation prerequisites.
 
@@ -233,7 +236,7 @@ all 43 separate Cargo-consumer entries translate and Lean type-check. Three new
 consumer entries exercise ordered typed fields, a borrowed payload crossing a
 scope boundary, and a configured pattern borrow.
 
-Run the full verification and optional C comparison from `rusthammer/`:
+Reproduce these baseline results from `rusthammer/` in a checkout of `c5c2643`:
 
 ```sh
 python3 tools/verify.py
@@ -251,7 +254,7 @@ span type is introduced by this work.
 ## Restricted probe and evidence
 
 Historical probe results follow; reproduce old API-dependent fixtures against
-`c5c2643` if they have not been ported after the v1 migration.
+`c5c2643`. Their runners have been removed from the current tree.
 
 [`restricted_order.rs`](../rusthammer/probes/restricted_order.rs) exercises
 the retained `(byte, bit)` cursor, immutable `ParseContext`, guarded `WithOrder`,
@@ -312,8 +315,8 @@ physical-geometry and parser contracts as described above.
 
 ## Earlier unrestricted probe
 
-The isolated [`input_order.rs`](../rusthammer/probes/input_order.rs) and
-[runner](../rusthammer/tools/check_input_order.py) preserve the superseded
+The isolated [`input_order.rs`](../rusthammer/probes/input_order.rs) and its
+runner (`tools/check_input_order.py` at `c5c2643`) preserve the superseded
 experiment with a `(byte, high, low)` cursor. They support arbitrary within-byte
 direction changes and do not check the new scope alignment rule. They are not
 part of the library, a Cargo feature, or the intended public API.

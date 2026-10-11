@@ -1,5 +1,9 @@
 # Recursive rule and left-recursion design checks
 
+Historical investigation: the retired runners and matching library APIs are
+preserved at `c5c2643`. Run the commands below in that checkout; see the
+[reproduction instructions](../README.md#historical-probes-and-reproduction).
+
 This is a private experiment retained for the
 [deferred recursion writeup](../../../plans/rusthammer-recursive-rules.md). The
 first version targets nonrecursive grammars; this model and the related recursion

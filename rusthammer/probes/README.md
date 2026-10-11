@@ -17,19 +17,35 @@ tests pass; the runner records 16 passing translations and 16 specific expected
 failures, distinguishing remaining callback/cleanup/source-shape limitations
 from the supported interface.
 
-Run `python3 tools/check_direct_v1.py --aeneas-dir /path/to/pinned/aeneas` from
-`rusthammer/`. This probe records compatibility evidence. The production migration is checked
-separately by `tools/verify.py` and its retained correctness proofs. The other probes below
-retain their historical API assumptions and do not override the v1 scope.
+Run `python3 probes/direct_v1/check.py --aeneas-dir /path/to/pinned/aeneas` from
+`rusthammer/`. This probe records compatibility evidence. The production
+migration is checked separately by `tools/verify.py` and its retained correctness
+proofs. The other probes below retain their historical API assumptions and do
+not override the v1 scope.
 
 ## Historical probes and reproduction
 
-Probes below that import `Grammar`, `Eval`, `Direct`, `ParseContext`, `BitOrder`,
-`Seek`, or permutation APIs target the pre-v1 baseline. Run their recorded
-commands in a separate checkout at `c5c2643`; do not restore those APIs in the
-current library. The production Cargo consumer has been ported and remains an
-active verification gate. The direct-v1 probe keeps its own isolated models and
-controls, including the intentionally failing old backend closure.
+The remaining sections record historical investigations. Their Python runners
+and the permutation proof generator have been retired from the current tree;
+the source fixtures and reports remain as evidence. All recorded commands below
+refer to the pre-v1 checkout at `c5c2643`, where the runners and matching APIs are
+preserved. From the repository root, create a separate checkout:
+
+```sh
+git worktree add --detach ../Hammer-pre-v1 c5c2643
+cd ../Hammer-pre-v1/rusthammer
+```
+
+Use the pinned tools and build the Lean dependencies in that checkout before
+running its extraction commands. Probes using `Grammar`, `Eval`, `Direct`,
+`ParseContext`, `BitOrder`, `Seek`, or permutation require those old APIs.
+
+The current production Cargo consumer remains an active verification gate.
+The direct-v1 probe above keeps its own isolated models and controls, including
+the intentionally failing old backend closure. The C comparison suite has also
+been retired. Its last v1 scripts, drivers, and adapters are available at
+`663ad97`, under their original `tools/`, `tests/compat/`, and `probes/` paths.
+The historical commands in the sections below use the pre-v1 `c5c2643` checkout.
 
 ## Diagnostic annotations
 
@@ -760,6 +776,8 @@ type-checking without generated axioms or opaque declarations. A separate
 negative callback root records the unsupported direct function-item spelling;
 the equivalent closure passes. The C check records out-of-bounds EOF successes
 and unsigned backward child lengths without adopting them as Rust semantics.
-This package retains the original investigation candidate. Production `Seek`
-now has its own native tests, generic Lean correctness proofs, and downstream
-roots in `tools/verify.py`; see the [production proof map](../../plans/rusthammer-seeking.md#lean-proofs-and-integration).
+This package retains the original investigation candidate. At `c5c2643`,
+production `Seek` also had native tests, generic Lean correctness proofs, and
+downstream roots in `tools/verify.py`; see the
+[historical proof map](../../plans/rusthammer-seeking.md#lean-proofs-and-integration).
+Seeking and its verification roots are excluded from v1.

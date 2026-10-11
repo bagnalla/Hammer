@@ -1,5 +1,10 @@
 # Constructor API extraction probe
 
+Historical investigation: the runner and matching library APIs are preserved at
+`c5c2643`. Run the commands below in that checkout; see the
+[reproduction instructions](../README.md#historical-probes-and-reproduction).
+Current source-form checks use the [direct-v1 probe](../direct_v1/README.md).
+
 This private Cargo package records the construction API compatibility experiment.
 Its local helpers return existing concrete nodes and use
 `Grammar` bounds, so construction does not require `Eval<Direct>`.

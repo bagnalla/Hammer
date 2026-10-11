@@ -369,7 +369,9 @@ grammar/output and interpreter traits, common sequence/choice/map implementation
 typed tables for numeric and borrowed results, a non-`Clone` final output, and a
 recursive rule with separate cache-policy operations.
 
-Run from `rusthammer/`:
+The runner is retired from v1. Reproduce this investigation from `rusthammer/`
+in a checkout of `c5c2643`, following the
+[checkout instructions](../rusthammer/probes/README.md#historical-probes-and-reproduction):
 
 ```sh
 python3 tools/check_backend_memo.py

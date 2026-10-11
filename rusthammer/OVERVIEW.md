@@ -84,12 +84,16 @@ the specification.
 | [examples/support/](examples/support/) | Shared application grammars used by examples, tests, and extraction |
 | [tests/](tests/) | Oracles, boundary cases, callbacks, ownership/drop and borrow identity tests |
 | [probes/cross_crate/](probes/cross_crate/) | Normal Cargo consumer exercising supported public forms |
+| [probes/direct_v1/check.py](probes/direct_v1/check.py) | Optional runner for supported source forms and known extraction failures |
 | [lean/RustHammer/](lean/RustHammer/) | Generated code, independent specifications, and proofs |
 | [tools/verify.py](tools/verify.py) | Native, extraction, Lean, and axiom verification gates |
 | [lean/ProofAudit.lean](lean/ProofAudit.lean) | Automatic axiom audit of all production Lean declarations |
 
 The core is `no_std`, has no dependencies, and forbids unsafe Rust. Application
 formats are not library API. Research probes are separate from production source.
+`tools/` contains only the main verifier and its auditor regression tests.
+Retired research runners are available in the pre-v1 checkout at `c5c2643`;
+see the [reproduction instructions](probes/README.md#historical-probes-and-reproduction).
 
 ## From Rust to Lean
 
@@ -185,9 +189,12 @@ abstracts allocation and stores a bounded list; loop count obligations are prove
 Arbitrary user destructors are outside that model. Native tests check ownership,
 drop behavior, and pointer identity because Lean's slice model retains contents.
 
-C differential tests compare explicit retained subsets, not the whole C API.
-High-first ordering, primitive decoding, and match restrictions retain C behavior
-on complete inputs. There are no claims about retired bit directions or engines.
+Lean specifications are authoritative for functional correctness. Promised
+C Hammer compatibility must be expressed in those contracts. Specification
+review checks the intended semantics against application requirements; proofs
+check implementation agreement. The retired C comparisons provided historical
+evidence during that review and remain available at `663ad97`. Native tests for
+properties outside the Lean models remain part of verification.
 
 Authentication, signing keys, and replay protection remain application concerns.
 CRC acceptance is not authentication. The current frame proof does not decode
