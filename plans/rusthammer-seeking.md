@@ -1,25 +1,40 @@
-# RustHammer seeking design and verification
+# RustHammer seeking: deferred design and baseline verification
 
-Status: implemented and proved on 2026-10-07. Public `Seek` uses the existing
-`Grammar`/`Eval` interface and ordinary combinators. Production arithmetic,
-evaluation, and an offset-based application have Lean correctness proofs. Native
-tests, both library MIR stages, and the ordinary Cargo consumer exercise the
-production implementation. The original private probe remains investigation
-evidence, including the C characterization and unsupported callback spelling.
+Status: deferred beyond v1 by the 2026-10-10 scope decision. `Seek` remains in
+the verified baseline at `c5c2643`; its production API, exclusive helpers,
+offset-based example, and corresponding extraction/proof roots will be removed
+during the [v1 migration](rusthammer.md#first-version-scope-and-next-steps).
+This is a removal plan, not a claim that the implementation has already changed.
 
-## Implementation decision
+## Version 1 decision
 
-`Seek` is a backend-generic primitive alongside `SkipBits` and `Tell`.
-The current execution interface already supports returning an earlier cursor;
-seeking does not require a new interpreter, mutable input stream, or grammar
-representation. The existing repetition, span, and ordering checks are preserved.
-Span and match-comparison documentation now explains their endpoint semantics
-when children seek backward. Seeking is included in the first-version API.
+The [MAVLink target](rusthammer.md#target-application-mavlink-2-packet-parsing)
+requires sequential parsing. CRC validation reads a saved borrowed byte region
+without moving the cursor. V1 therefore excludes all `Seek` variants: absolute,
+current-relative, and end-relative, including forward-only seeks.
 
-The [private probe](../rusthammer/probes/seeking/README.md) tests this design with
-the actual library. It is investigation evidence, not an alternative production
-parser or a temporary public API. No Aeneas/Charon changes or pin updates were
-needed.
+Retain `SkipBits` for advancing/discarding and `Tell` for validated position
+reporting. From a valid entry, a supported successful parser returns a valid
+cursor at or after its entry. This is an explicit contract for custom parsers
+and `Bind` results, proved compositionally for retained built-ins under child
+contracts. Choice/lookahead can still restore an invocation's entry internally.
+The Rust trait and removal of `Seek` alone do not enforce the law for arbitrary
+user implementations. Keep existing defensive cursor/progress checks.
+
+Remove seeking-only exports, configuration/error variants, tests, consumer and
+application fixtures, generated extraction roots, and active Lean imports/audit
+entries. Retire the `Seek*` and `Offset*` proof families with the excluded source;
+retain shared forward arithmetic and properties still used by readers,
+`SkipBits`, `Tell`, repetition, and spans. No substitute seek wrapper or disabled
+v1 feature is planned.
+
+## Historical contract and evidence
+
+The remaining sections preserve the baseline design, C comparison, proof map,
+and an earlier complete-input migration sketch. Their recommendations to port
+seeking or accept backward results are superseded. Counts and extraction claims
+belong to the baseline, not to the unimplemented single-trait sketch. Reproduce
+API-dependent fixtures at `c5c2643` until seeking is deliberately reprioritized.
 
 ## C Hammer behavior
 
@@ -65,10 +80,11 @@ impl Seek {
     pub const fn from_end(offset_bits: isize) -> Self;
 }
 
-impl<'input> Grammar<'input> for Seek {
+// Earlier complete-input sketch; unimplemented and excluded from v1:
+impl<'input> Parser<'input> for Seek {
     type Output = Cursor;
+    // parse_with(input, cursor, order) -> Result<(Cursor, Cursor), ParseError>
 }
-impl<'input, Backend> Eval<'input, Backend> for Seek { /* ... */ }
 ```
 
 `Seek` is a `Copy`/`Clone` node with private configuration. `to` checks
@@ -86,13 +102,12 @@ position is not a constructible absolute cursor.
 Coordinates are relative to the supplied input slice. Its index zero is the
 absolute origin, including when the caller deliberately supplies a subslice.
 `Cursor.bit` is interpreted in the active bit direction. Seeking preserves
-ordering and finality; restoring a saved cursor does not restore an earlier
+ordering; restoring a saved cursor does not restore an earlier
 ordering context or identify a different input buffer.
 
-Success is `Success(target, target)`: the destination is both the continuation
+Success is `Ok((target, target))`: the destination is both the continuation
 cursor and the output. As with `Tell`, there is no allocation. The input bytes
-are not accessed, and backend state is unchanged. The node supports arbitrary
-backends through `Eval`, with no call to `parse` inside its evaluator.
+are not accessed. The direct implementation takes an `Order` and preserves it.
 
 Use the existing `Bind`/`TryMap` machinery for offsets decoded from input. The
 consumer probe parses a byte displacement, seeks relative to the end of that
@@ -107,22 +122,15 @@ repair an invalid invocation. All following rules assume a valid entry:
 
 | Condition | Result |
 | --- | --- |
-| End-relative seek on partial input | `NeedMore`, before calculating the target. |
 | Mathematical target below zero | Recoverable `Mismatch`. |
-| Target after the available buffer, partial input | `NeedMore`. |
-| Target after the available buffer, final input | Recoverable `UnexpectedEnd`. |
-| Target in bounds, including exactly EOF | `Success(target, target)`. |
+| Target after the supplied complete buffer | Recoverable `UnexpectedEnd`. |
+| Target in bounds, including exactly EOF | `Ok((target, target))`. |
 
-The entry check has priority over end-relative incompleteness. For an
-end-relative seek, waiting for finality applies to positive and zero offsets
-as well as negative offsets. This follows C's evaluation order and the existing
-conservative meaning of `NeedMore`; it does not promise a successful extension.
-
-Out-of-range destinations are ordinary input rejection or incompleteness,
-distinct from a malformed entry cursor. A relative underflow can therefore be
-handled by `Choice`, `Optional`, or `Not`; extending the input cannot repair it.
-An absolute target with `bit < 8` beyond the current buffer can become valid
-after extension, including `(input.len(), nonzero_bit)`.
+The entry check precedes target arithmetic even for an end-relative seek.
+Out-of-range destinations are ordinary input rejection, distinct from a malformed
+entry cursor. A relative underflow can be handled by `Choice`, `Optional`, or
+`Not`. An absolute target with `bit < 8` beyond this input, including
+`(input.len(), nonzero_bit)`, returns `UnexpectedEnd`.
 
 For the specification, use mathematical integers:
 
@@ -131,7 +139,7 @@ position(c) = 8 * c.byte + c.bit
 limit       = 8 * input_length
 target      = position(configured_cursor)        [absolute]
             | position(entry) + signed_offset   [relative]
-            | limit + signed_offset             [from end, final only]
+            | limit + signed_offset             [from end]
 valid(c)    = c.bit < 8 and position(c) <= limit
 ```
 
@@ -151,10 +159,10 @@ are constant-time and independent of the distance moved.
 
 | Existing component | Consequence of seeking |
 | --- | --- |
-| `Grammar`, `Eval`, `Parser`, parser references | Their interfaces do not impose monotonic cursor movement. The primitive fits unchanged. |
+| `Parser` and parser references | The direct interface does not impose monotonic cursor movement. Retain the existing cursor behavior. |
 | Sequence, output selection, `Bind`, transforms | Continue from the returned cursor, even when it is earlier. Child contracts carry the meaning of that movement. |
-| `Choice`, `Optional`, `Xor` | Retry from their original cursor under the existing recoverable-error rules. Backend effects of attempted children remain; seeking adds no effects. |
-| `And`, `Not` | Keep their original cursor after the child. `NeedMore` and fatal errors retain their current behavior. |
+| `Choice`, `Optional`, `Xor` | Retry from their original cursor under the existing recoverable-error rules. Callback/custom-parser effects of attempted children remain; seeking adds no effects. |
+| `And`, `Not` | Keep their original cursor after the child. Fatal errors propagate; recoverable errors follow the existing final-input rules. |
 | Finite repetition and folds | Termination uses remaining permitted calls. Children may move backward, provided each child invocation terminates. |
 | Unbounded repetition and folds | Every successful complete iteration must end strictly after its start. A child may seek backward internally and then finish ahead. Net empty/backward success still yields fatal `NonProgress`. |
 | Separated repetition | The first item, then each whole separator/item pair, must advance when unbounded. A backward separator is permitted if its complete pair advances. |
@@ -188,6 +196,10 @@ remains deferred; seeking does not remove its termination obligations.
 
 ## Extraction evidence
 
+The following records baseline results. They do not establish extraction of the
+single-trait sketch, and seeking is no longer a production verification root in
+the planned v1 build. Keep this evidence for a future, explicitly resumed design.
+
 The production verification runner includes all three constructors, the generic
 evaluator, cloning, and the shared [offset example](../rusthammer/examples/support/offset.rs)
 at both library MIR stages. Nine new ordinary Cargo-consumer roots cover absolute,
@@ -218,6 +230,11 @@ Neither adjustment changes the seek API or requires a tool patch.
 These results do not establish support for every possible callback spelling.
 
 ## Lean proofs and integration
+
+The file map and counts below describe the baseline. Seeking and offset
+application contracts are retired from the planned v1 build; preserve their
+source/proof history instead of porting them. Audit dependencies before removing
+shared arithmetic or endpoint lemmas used by retained forward-only operations.
 
 The existing generic specifications support the composition decisions above:
 [`RepeatSpec`](../rusthammer/lean/RustHammer/RepeatSpec.lean) separates finite

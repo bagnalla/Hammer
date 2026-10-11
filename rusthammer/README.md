@@ -1,5 +1,19 @@
 # RustHammer prototype
 
+On `rusthammer-v1-simplify`, the [v1 plan](../plans/rusthammer.md) now targets
+**direct execution on complete inputs only**. Implementation migration is pending:
+the API examples and proof descriptions below still describe the verified
+`c5c2643` baseline, including the backend and partial-input APIs scheduled for
+removal. Complete input will continue to permit prefix parsing; use `End` to
+require consumption of the entire slice.
+
+**MAVLink 2 packet parsing is the target application for v1.** The
+[application scope](../plans/rusthammer.md#target-application-mavlink-2-packet-parsing)
+starts from the verified unsigned-frame/CRC example. The adopted v1 cuts defer
+diagnostics, permutation, and seeking, and fix bit traversal to high-first while
+retaining both byte orders. Authentication stays in application code. The API
+and proof descriptions below still describe the pre-migration implementation.
+
 This implements the early checkpoints from the
 [RustHammer plan](../plans/rusthammer.md): a dependency-free Rust parsing core,
 its generated Aeneas translation, and Lean-checked specifications and proofs.
@@ -1883,91 +1897,40 @@ the verified `Bind` combinator.
 
 ## Next increments
 
-The first version will support nonrecursive grammars through `Direct`. Recursive
-grammar construction and its extraction-tool investigation are deferred at the
-user's request. Existing repetition, lists, folds, and data-dependent `Bind`
-remain in scope.
+Follow the [v1 migration plan](../plans/rusthammer.md#first-version-scope-and-next-steps)
+on `rusthammer-v1-simplify`. Check the extraction/inference shape of one
+`Parser<'input>` trait returning `Result`, with explicit `ByteOrder` and fixed
+high-first traversal. Then migrate retained source, shared examples, tests,
+downstream consumers, generated Lean, and proofs as one verified core increment.
 
-Typed permutation and seeking are implemented and proved. The
-[agreed API scope](../plans/rusthammer-combinators.md#agreed-api-scope) retains
-diagnostic annotations as a candidate for the first version; their
-final inclusion remains to be selected. Floating-point
-fields/ranges are deferred beyond the first version due to Aeneas limitations.
-The [seeking design](../plans/rusthammer-seeking.md) records its production API,
-proofs, span endpoint intervals, repetition's net-progress checks, and ordering scopes.
-Diagnostic annotations will label parser occurrences and optionally record where
-they were constructed, while preserving parsing behavior.
-The [diagnostics investigation](../plans/rusthammer-diagnostics.md) now records
-scoped reporting rules, private observer hooks, and preservation proofs checked
-against both MIR translations. [Downstream probes](probes/diagnostics/README.md)
-pass with caller-supplied borrowed metadata; constructing and returning static
-string metadata still has a minimized extraction failure. Next settle that gate,
-report storage, and backend migration. No production API has been added, and
-first-version inclusion remains open.
-Deferred actions and a dedicated `h_dispatch` counterpart are omitted from the
-intended API. Named parse-local value storage is outside the first version, with
-its longer-term role undecided pending a concrete use case. Explicit typed values,
-`Bind`, and `Choice` remain the basis for field dependencies and tagged formats.
+Remove `Grammar` / `Eval<Backend>` / `Direct`, finality/outcome wrappers, combined
+`Order` / `WithOrder`, `BitOrder`, span direction, `Permutation` and its entry
+machinery, and `Seek` and its offset-based application. Add no diagnostic hooks
+or reporting state. The [combinator plan](../plans/rusthammer-combinators.md)
+records retained capabilities, constructor policy, and supported callback forms.
 
-The [floating-point investigation](probes/floating_point/README.md) found that
-native Rust decoding works, but the pinned extraction tools lack the float
-types, conversion models, and comparison support needed for verified readers
-and ranges. Integer wire encodings remain supported. The private probe records
-native tests, both MIR stages, and Cargo-consumer results; production float
-readers/ranges and their tool/model work are excluded from the first release.
-The investigation is retained for later work when Aeneas support is available
-or that tooling effort is explicitly reprioritized.
+Use `ByteOrder` / `WithByteOrder` for numeric byte order. Preserve final-input,
+high-first behavior of retained parsers, including unaligned fields, error
+precedence, callbacks, and ownership. Specify nondecreasing successful cursors
+for custom parsers and prove the law compositionally under child contracts.
+Internal choice/lookahead rollback remains; unbounded repetition requires strict
+progress. Keep spans, `SkipBits`, `Tell`, explicit `End`, `Bind`, and MAVLink CRC.
 
-Follow the [combinator API plan](../plans/rusthammer-combinators.md):
+MAVLink framing keeps dialect-dependent CRC validation and borrowed payloads.
+Transport buffering and cryptographic authentication belong in application code;
+parsing signature bytes does not authenticate a sender. The existing unsigned
+example remains the baseline. Any typed payload or signature-field expansion
+needs its own explicit application scope and verification contract.
 
-Basic composition is implemented and proved, including parser references,
-output selection, empty/failing grammars, and checked mapping.
+Recursion, native floats, other engines, partial/streaming input, diagnostics,
+permutation, and seeking are outside v1. Their baseline/research evidence remains
+available, including [diagnostics](../plans/rusthammer-diagnostics.md),
+[seeking](../plans/rusthammer-seeking.md), [backends](../plans/rusthammer-backends.md),
+and [recursion](../plans/rusthammer-recursive-rules.md). Reproduce API-dependent
+old fixtures at `c5c2643` rather than preserving excluded production interfaces.
 
-Collection and folding now support both ordinary and separated repetition with
-shared count, stopping, and progress rules and proofs.
-
-`Bind` and representative count-prefixed formats are also implemented and proved.
-Named length/count convenience wrappers remain proposals; their core composition
-is now available.
-
-Fixed-width typed integer readers, inclusive ranges, byte sets, `SkipBits`,
-`Tell`, `Seek`, `ButNot`, `Difference`, and `Xor` are implemented and proved, with
-semantic and differential checks. Scoped ordering and its context interface are
-also implemented and proved; see the [input plan](../plans/rusthammer-input.md).
-The [backend execution boundary](../plans/rusthammer-backends.md) separates
-`Grammar` output types from `Eval<Backend>`, with `Parser` providing direct parsing
-entry points. `BitSpan`, `Recognize`, and `WithSpan` now implement their
-physical-boundary and borrowed-view contracts. Memoization, cached-output ownership,
-rule identities, and recursive grammar construction remain later work, guided by
-representative protocol benchmarks. The private cache probe remains design evidence.
-
-The [deferred recursion writeup](../plans/rusthammer-recursive-rules.md) records
-the proposed `recursive(|self_ref| body)` API, direct-execution probes, extraction
-failures, and the later packrat direction. It also records a possible change to
-Aeneas's dictionary translation and the missing semantic-preservation argument.
-The handwritten Lean model and diagnostic Charon patch remain private evidence;
-no recursion API or tool update is required for the first version.
-
-The
-[construction helpers](../plans/rusthammer-combinators.md#construction-functions-and-return-types)
-over the existing concrete nodes are implemented and proved. They use `Grammar`
-bounds where needed and preserve backend capabilities through concrete returns.
-Their generic bodies and ordinary consumer uses pass both extraction checks.
-Continue with selected nonrecursive capabilities, conveniences, and first-version
-API/proof coverage, following the
-[active plan](../plans/rusthammer.md#first-version-scope-and-next-steps).
-
-Keep future application grammars in shared example/proof-support source. The
-original `Flags`, `Marker`, and `Record` fixtures have been migrated out of the
-public library while preserving their tests and proofs.
-
-Before implementing streaming buffering and resumption, revisit the
-[deferred eager literal rejection](../plans/rusthammer.md#deferred-eager-literal-rejection)
-work, including its error precedence and proof updates.
-
-After each production increment, run `python3 tools/verify.py`. Packrat and its
-recursion support follow the backend plan above. Keep chunk buffering and
-resumption and other engines as separately specified additions.
-
-CI integration and further investigation of the recorded borrowed-callback
-extraction limitation are deferred. Continue running verification locally.
+Keep shared application source outside the public API. Preserve pinned tools,
+both MIR stages, normal Cargo-consumer checks, and the full retained Lean proof
+and axiom audit. Retire excluded feature roots explicitly and keep the verifier
+strict for supported behavior. Run `python3 tools/verify.py` for the completed
+increment. CI and the broader borrowed-callback investigation remain deferred.

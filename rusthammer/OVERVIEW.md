@@ -1,7 +1,17 @@
 # RustHammer design and verification overview
 
-This overview describes the state of RustHammer on 2026-10-07, including typed
-permutation, seeking, and grammar-building operations under `grammar`.
+This overview describes the verified implementation at `c5c2643`, before the
+2026-10-10 simplification. The [active v1 plan](../plans/rusthammer.md) now targets
+one direct parser interface, complete inputs, high-first bits, and forward
+successful consumption. Diagnostics, permutation, and seeking are deferred.
+That migration is pending; the broader API and proof descriptions here record
+the baseline, not requirements on the new design.
+
+MAVLink 2 packet parsing is the v1 target application. The
+[active application plan](../plans/rusthammer.md#target-application-mavlink-2-packet-parsing)
+uses the unsigned framing/CRC example as the starting point. Byte order remains
+configurable, and authentication/key/replay state belongs to application code.
+The current proofs do not cover additional payload or signature-field decoding.
 
 RustHammer currently has three connected parts: **a typed Rust parser-combinator
 library, a translation of that implementation into Lean, and mathematical
@@ -332,7 +342,8 @@ The limits are explicit:
 - Recursive grammars, production packrat, and buffering/resumption are not
   implemented. Native floating-point fields/ranges are excluded from the first
   release due to the [pinned Aeneas limitations](probes/floating_point/README.md).
-  Seeking is implemented and proved; diagnostics remain a candidate for the first version.
+  Seeking and permutation are implemented/proved in this baseline but are excluded
+  from the simplified v1, along with diagnostics and low-first bit traversal.
 
 ## Suggested reading path
 

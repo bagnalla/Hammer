@@ -1,302 +1,189 @@
-# RustHammer input, ordering, and spans
+# RustHammer input, byte ordering, and spans
 
-Status: restricted ordering implemented and proved, 2026-10-05; spans implemented and proved, 2026-10-06.
-This document extends the
-[main plan](rusthammer.md) and [combinator plan](rusthammer-combinators.md).
-The production library implements the context and scope contract below, with
-numeric-reader and compositional proofs. The
-[restricted probe](#restricted-probe-and-evidence) records the preceding design
-check. The earlier unrestricted-order probe is retained as historical evidence.
-
-**RustHammer allows bit-direction changes only at byte boundaries.** Keep
-big/little byte order, both fixed bit directions, and fields crossing byte
-boundaries. Exclude arbitrary switches between the high and low ends of one
-partially consumed byte. This is an intentional API restriction, not a
-milestone limitation awaiting removal. Reconsider it only if a concrete use
-case justifies its implementation and proof cost.
-
-This decision replaces the earlier proposal for a `(byte, high, low)` cursor.
-Keep typed outputs, static dispatch, immutable input, `no_std`, and the existing
-configuration-error, parse-error, and `NeedMore` distinctions.
+Status: v1 contract revised 2026-10-10; implementation migration pending.
+The [MAVLink 2 target](rusthammer.md#target-application-mavlink-2-packet-parsing)
+uses complete inputs, high-first bit traversal, and little-endian numeric fields.
+High-first-only traversal and forward successful consumption are adopted v1
+constraints. This plan supersedes the baseline's configurable bit direction and
+changed-direction scope guards. Historical proof/probe evidence remains below.
 
 ## Compatibility and motivation
 
-C Hammer's direct parser supports more general order changes. Its
-[`HInputStream`](../src/internal.h),
-[`bit reader`](../src/bitreader.c), and
-[`endianness wrapper`](../src/parsers/endianness.c) track consumption at both
-ends of a byte. RustHammer deliberately supports a smaller ordering contract.
-Compare values and consumption with C within that supported subset; unsupported
-scope transitions should be tested as intentional rejections.
+Retain `(byte, bit)` cursors, typed outputs, static dispatch, independently
+borrowed immutable input, `no_std`, and separate configuration and parse errors.
+V1 still supports unaligned and cross-byte bit fields; it is not restricted to
+byte-only grammars. Complete input means the supplied bytes are all the input for
+this invocation. Prefix parsing remains valid; `End` explicitly requires EOF.
 
-The historical evidence supports ordinary ordering control more strongly than
-arbitrary within-byte direction changes:
+Transport buffering precedes parsing. MAVLink's intentional trailing-zero payload
+omission does not make its fully received frame a partial input; its transmitted
+header specifies the payload length. Message-specific reconstruction is separate.
 
-- [Issue #77](https://github.com/UpstandingHackers/hammer/issues/77) motivated
-  the combinator with TIFF's header-selected byte order.
-- [Issue #118](https://github.com/UpstandingHackers/hammer/issues/118) reported
-  problems with unaligned 4-bit and 10-bit fields. The
-  [retained reproducer](../tests/t_regression.c) uses big bit order and little
-  byte order for those fields. It does not require alternating the bit direction.
-- The bundled DNS, NTP, and TFTP examples do not use ordering overrides. The
-  examples and historical reports inspected did not identify an application
-  requiring consumption from opposite ends of one byte. This is limited
-  evidence, not a claim that no such applications exist.
-
-The C audit was conducted at Hammer commit `b651dfe`. Additional sources are
-[`h_bits` and fixed-width aliases](../src/parsers/bits.c),
-[`h_token`](../src/parsers/token.c), [`h_tell`](../src/parsers/seek.c), and the
-[ordering tests](../tests/t_parser.c). Seeking, live streaming, left recursion,
-and equivalence across all compiled backends need separate work.
+C Hammer's [bit reader](../src/bitreader.c) and
+[endianness wrapper](../src/parsers/endianness.c) support more general bit order.
+V1 deliberately supports the high-first subset. Compare only that subset during
+compatibility checks; low-first behavior is excluded, not a failed v1 feature.
+The earlier two-ended cursor proposal and baseline direction-change guards
+remain historical designs, not implementation prerequisites.
 
 ## Numeric ordering
 
-There are two independent axes:
+Bit traversal is fixed: consume the high, then lower bits of each physical byte.
+`ByteOrder::{Big, Little}` determines the significance of successive physical-byte
+fragments of a numeric field. Big remains the default. Preserve the existing
+high-first behavior for both byte orders, including arbitrary supported field
+widths and unaligned starts.
 
-| Axis | Big / high first | Little / low first |
-| --- | --- | --- |
-| Bit direction | Consume the current byte from its high end. | Consume it from its low end. |
-| Byte order | Earlier physical-byte fragments have greater numeric significance. | Earlier fragments have less numeric significance. |
+Partition a field at physical byte boundaries. Take its requested high-first
+fragments and interpret each with ordinary numeric bit significance. Big byte
+order appends later fragments below the accumulated value; little byte order
+places them above earlier fragments. Byte order still matters for unaligned
+fields and widths that are not multiples of eight. Changing byte order never
+changes which physical bits the cursor denotes.
 
-Both default to big/high first. Bits within each fragment keep their ordinary
-numeric significance. Little bit order does not reverse a fragment's bits. An
-aligned 8-bit read of `0x61` yields `0x61` in all four combinations. A 5-bit read
-from that byte yields `12` in high-first order and `1` in low-first order.
+An aligned 8-bit read of `0x61` yields `0x61` in both byte orders. The first
+high-first 5-bit field from that byte is `12`. MAVLink's aligned 24-bit ID and
+16-bit checksum use little byte order; its CRC's internal shifts do not require
+another parser bit direction.
 
-Partition each field at physical byte boundaries. Take the requested portion
-from the active end, interpret that fragment as an unsigned bit pattern, and
-assemble fragments according to byte order. Big byte order appends each
-fragment below the accumulated value; little byte order places it above the
-fragments already read. Thus byte order still matters for unaligned fields and
-widths that are not multiples of eight. Field boundaries remain part of numeric
-semantics: a low-first 8-bit field is not eight 1-bit fields folded MSB-first.
-
-A parser can read any supported width, including across byte boundaries, while
-using one bit direction. Byte-order changes themselves require no alignment.
-The restriction concerns changing bit direction, including restoration when a
-scope exits.
+Remove `BitOrder` entirely rather than leaving an enum with one variant or an
+always-high argument. Replace combined `Order`/`ParseContext` with `ByteOrder`
+and replace `WithOrder` with `WithByteOrder`.
 
 ## Cursor and context
 
-Retain the existing `Cursor { byte, bit }` representation. `bit` counts how many
-bits of the current byte have been consumed, with `bit < 8`. Exhausting the byte
-increments `byte` and resets `bit` to zero. Input-relative validity remains:
-`byte < input.len()`, or exactly `(input.len(), 0)` at the end.
+Keep `Cursor { byte, bit }`, with `bit < 8` counting consumed high bits.
+Exhausting a byte increments `byte` and resets `bit` to zero. A cursor is valid
+when `bit < 8` and either `byte < input.len()` or it is exactly
+`(input.len(), 0)`. The canonical EOF cursor remains byte-aligned.
 
-There is no need to introduce a second consumed-end count or new cursor
-construction rules for ordering. Existing raw-cursor validation and parser
-configuration constructors retain their roles.
+The unread physical interval within a byte, in LSB-numbered indices, is always
+`[0, 8 - cursor.bit)`. No bit-direction context is needed to interpret a saved
+cursor. It remains relative to its input slice; the type does not track input
+identity or bounds.
 
-Pass interpretation settings separately, by value:
+The target interpretation parameter is:
 
 ```rust,ignore
-pub enum BitOrder { HighFirst, LowFirst }
 pub enum ByteOrder { Big, Little }
-pub struct Order { pub bit: BitOrder, pub byte: ByteOrder }
-pub struct ParseContext { pub status: InputStatus, pub order: Order }
-
-pub trait Grammar<'input> { type Output; }
-pub trait Eval<'input, Backend>: Grammar<'input> {
-    fn eval(
-        &self, backend: &mut Backend, input: &'input [u8], cursor: Cursor, context: ParseContext,
-    ) -> ParseOutcome<Self::Output>;
-    // Parser supplies direct parse / parse_with entry points separately.
-}
+// Parser::parse_with(input, cursor, byte_order) -> Result<(Cursor, Output), ParseError>
+// Parser::parse(input, cursor) supplies ByteOrder::Big.
 ```
 
-For a partial byte, the cursor's physical meaning depends on the active bit
-order. In LSB-numbered physical indices, the unread interval is:
-
-- High first: `[0, 8 - cursor.bit)`.
-- Low first: `[cursor.bit, 8)`.
-
-A cursor is a position within a known parsing context, not a standalone physical
-snapshot. `Tell` continues to return the cursor. Resuming from a saved partial
-cursor requires its original bit direction; callers must not reinterpret a
-cursor obtained inside a low-first scope using the default high-first entry
-point. A bare cursor contains no provenance with which to detect that misuse.
-A span that escapes its context stores the necessary direction explicitly.
-
-`parse` and existing complete-input primitive helpers supply final input and
-the current both-big default. Explicit partial parsing supplies a context;
-retry after `NeedMore` uses the original cursor and order with the accumulated
-input. Finality may change from partial to final. The associated output type
-and input lifetimes are unchanged. `parse_with` now accepts `ParseContext` in
-place of `InputStatus`; there are no temporary public adapters. `Order::DEFAULT`
-and `ParseContext::{FINAL, PARTIAL}` supply the default order explicitly.
+The [single parser trait](rusthammer.md#parsing-interface) takes input and cursor
+separately, with no finality, mutable backend, or reporting state. Remove
+`InputStatus`, `ParseOutcome`, `NeedMore`, and complete-outcome conversions.
+Exhaustion is recoverable `UnexpectedEnd`, following the old final-input rules.
+Preserve invalid-cursor/error precedence and existing zero-width/empty behavior.
 
 ### Position and progress
 
-The existing mathematical position remains:
+Use unbounded positions in Lean:
 
 ```text
 position(cursor) = 8 * cursor.byte + cursor.bit
 ```
 
-Use unbounded naturals in Lean and lexicographic `(byte, bit)` comparisons in
-Rust. No absolute machine bit count or machine subtraction is needed. Position
-still uniquely identifies a normalized cursor value. For parsers running in
-the same enclosing context, the scope rules below also preserve the physical
-interpretation of partial-byte endpoints.
+Rust compares `(byte, bit)` lexicographically and advances with checked byte/bit
+arithmetic, avoiding a machine-sized absolute bit count. From a valid entry, a
+supported successful parser returns a valid cursor at or after that entry.
+Document this law for custom parsers and `Bind` results, and use it as an explicit
+premise when proving generic combinators. The Rust trait alone cannot establish
+it for arbitrary implementations.
 
-Existing match-length comparison, strict forward-progress checks, and the
-termination measure `8 * input.len() - position(cursor)` can therefore retain
-their arithmetic structure. Their generic contracts now carry the full context;
-the existing application theorems retain default order. Arbitrary custom parser
-behavior still needs its own contract.
+Choice can retry its entry cursor, and lookahead can restore it; neither returns
+before its own invocation entry. Finite repetition may accept empty success.
+Unbounded repetition additionally enforces strict progress for each whole
+successful iteration. Retain current invalid-cursor and `NonProgress` checks;
+no universal entry validation is introduced for empty grammars.
+
+`Seek` is excluded, including forward and end-relative variants. `SkipBits`
+remains the advancing/discarding operation and `Tell` the validated position
+reader. Match restrictions compare endpoints from a shared start, corresponding
+to nonnegative consumed lengths under the supported parser contract.
 
 ## Ordering scopes
 
-`WithOrder<P>` overrides both axes for its child and preserves input finality.
-Sequencing supplies its original context to the following child. A scope whose
-bit direction differs from its caller enforces alignment at both boundaries:
+The target wrapper is `WithByteOrder { parser, byte_order }`. It calls its child
+with the selected `ByteOrder` and returns that child's result. Sequencing still
+passes its enclosing byte order to the next child. Nested scopes can override it
+again. Parser copying remains conditional on the stored child.
 
-1. Validate the input cursor. An invalid cursor returns fatal `InvalidCursor`.
-2. Require `cursor.bit == 0` before calling the child; otherwise return fatal
-   `Unaligned` without calling it.
-3. Call the child with the selected order and original finality.
-4. Propagate an error or `NeedMore` unchanged; neither commits a cursor/output.
-5. On success, validate the returned cursor, then require `next.bit == 0` before
-   returning to the enclosing direction. Invalid bounds produce `InvalidCursor`;
-   an unaligned success becomes fatal `Unaligned` and its value is discarded.
+Byte-order changes impose no alignment or cursor checks beyond the child. Remove
+all changed-bit-direction entry/exit guards and their helpers. Unaligned fields
+remain supported inside byte-order scopes. `TakeAligned` still enforces its own
+alignment requirement; removing scope guards does not add implicit padding.
 
-The successful-exit check is essential. Allowing a low-first scope to return
-halfway through a byte would let the enclosing high-first parser reinterpret
-that partial byte. Do not silently discard bits, insert padding, or restart
-from its other end.
-
-If the bit direction is unchanged, the wrapper simply delegates with the new
-context. It adds no alignment or validation checks beyond the child. In
-particular, byte-order-only scopes can start and finish unaligned. Nested scopes
-using the current bit direction also remain unrestricted. All four order
-configurations are valid; alignment failures depend on execution position and
-belong to parsing, not fallible parser construction.
-
-Examples below use pseudocode, starting in high-first mode at a byte boundary:
-
-| Grammar | Result of the scope rule |
-| --- | --- |
-| `with_low_bits(seq(bits(3), bits(5)))` | Allowed: the changed-direction region consumes a whole byte. |
-| `with_low_bits(seq(bits(3), with_low_bits(bits(5))))` | Allowed: the inner scope keeps the active direction. |
-| `seq(bits(3), with_low_bits(bits(5)))` | `Unaligned` on entry to the changed-direction scope. |
-| `with_low_bits(bits(3))` | `Unaligned` on successful exit. More input does not repair this grammar. |
-| A byte-order-only wrapper around an unaligned 10-bit field | Allowed. |
-
-The guard is a rule for entering/exiting a scope, even when its child would
-consume zero bits. For example, entering a different-direction empty scope at
-an unaligned cursor is rejected. Wrap a complete low-first region, including
-any explicit padding, rather than individually scoping fields that leave the
-byte unfinished.
-
-Lookahead follows the same rule: from an aligned cursor,
-`with_low_bits(and(bits(3)))` can succeed because the child lookahead restores
-its cursor before leaving the scope. `and(with_low_bits(bits(3)))` encounters
-the inner scope's unaligned-exit error. No special exemption hides a scope
-violation. Existing fatal-error propagation through choice/lookahead applies.
+The scope proof becomes delegation plus restoration of the enclosing argument,
+with no direction-change cases. New exact names/signatures are checked in the
+focused extraction probe before implementation, without retaining old wrapper
+aliases or hidden bit-order parameters.
 
 ## Primitive and combinator policy
 
-| Family | Proposed behavior |
+| Family | V1 behavior |
 | --- | --- |
-| `Bit`, `Bits`, `SignedBits`, `Literal` | Use the active bit direction and byte-fragment order. Sign extension follows unsigned field assembly. |
-| `Byte`, `I8`, byte sets and ranges over them | Decode an 8-bit field in the active order, including at unaligned starts. |
-| `BytePattern` | Match successive contextual 8-bit fields, like C `h_token`. Preserve the configured pattern slice's independent lifetime. |
-| `BeU16/32/64`, `BeI16/32/64` | Pin big byte order and inherit bit direction. Future `Le` readers do the symmetric operation. |
-| `TakeAligned` | Require `bit == 0`; borrow raw bytes without decoding or implicit alignment. |
-| `SkipBits` | Keep the existing O(1) cursor arithmetic. Consumed count is independent of direction; the active context determines which physical bits it skips. Validate even a zero count. |
-| `Tell`, `End` | Report the validated cursor; require `(input.len(), 0)` and finality for end-of-input. |
-| `Seq`, selection, mapping, predicates, `Bind` | Pass context through ordinary child calls. Existing output types and callback obligations remain. |
-| `Choice`, `Optional`, `And`, `Not` | Restore the original cursor/context for retries and lookahead. Preserve existing outcome rules, including propagation of fatal `Unaligned`. |
-| `ButNot`, `Difference`, `Xor` | Preserve existing selection/outcome rules and byte-and-bit length comparison. Both alternatives receive the same enclosing context. |
-| Repetition and folding | Retain current count, progress, and overflow rules. Successful children obey the enclosing context's bit direction at partial endpoints. |
-
-C's contextual `h_uint16` behavior corresponds to `Bits::new(16)` plus a typed
-conversion when needed. Explicit `Be` readers keep their named byte order even
-inside an opposite byte-order scope. Preserve existing zero-width behavior,
-configuration validation, and shortage classification outside the new scope
-guards. The input buffer still contains whole bytes with no implicit padding.
-The known [C absolute-position overflow issue](rusthammer.md#known-c-issue-absolute-bit-position-overflow)
-remains excluded from compatibility.
+| `Bit`, `Bits`, `SignedBits`, `Literal` | Read high-first bits with the active byte-fragment order. Sign extension follows unsigned assembly. |
+| `Byte`, `I8`, byte sets/ranges | Decode a contextual 8-bit field, including unaligned starts. |
+| `BytePattern` | Match contextual 8-bit fields; retain the pattern's independent lifetime. |
+| `BeU16/32/64`, `BeI16/32/64` | Pin big byte order; high-first traversal is universal. Little-endian reads remain available through byte-order scopes. |
+| `TakeAligned` | Require `bit == 0` and borrow raw bytes without decoding or implicit alignment. |
+| `SkipBits`, `Tell`, `End` | Retain validated forward arithmetic, position reporting, and exact EOF behavior, including zero-count validation where already required. |
+| `Seq`, selection, maps, predicates, `Bind` | Pass byte order to children and preserve success-only callback and ownership rules. |
+| `Choice`, `Optional`, `And`, `Not` | Retain final-input rollback/rejection rules and fatal-error propagation. |
+| `ButNot`, `Difference`, `Xor` | Retain output/selection rules and endpoint comparison under forward child contracts. |
+| Repetition and folding | Retain count, progress, overflow, and separator rollback rules. |
 
 ## Matched-input spans
 
-Retain endpoint positions and record the enclosing bit direction:
+With one physical bit direction, spans need only input and endpoints:
 
 ```rust,ignore
 pub struct BitSpan<'input> {
     input: &'input [u8],
     start: Cursor,
     end: Cursor,
-    bit_order: BitOrder,
 }
 ```
 
-Require valid endpoints and `start <= end` in normalized position order. Permit
-empty spans. A span-producing wrapper validates endpoints even if a custom
-child does not: bad bounds yield `InvalidCursor`, backward movement yields
-fatal `NonProgress`. Child contracts must establish the scope discipline.
-Endpoint checks alone cannot verify how arbitrary custom parsers used the input.
+The target constructor is
+`BitSpan::new(input, start, end) -> Result<BitSpan, ParseError>`.
+Require valid endpoints and `start <= end`; allow empty spans. Preserve private
+fields and `input()`, `start()`, `end()`, `is_empty()`, and `as_bytes()` accessors.
+Remove the bit-order argument, stored field, and accessor. Byte order does not
+affect which source bits a span denotes and need not be stored either.
 
-For a span within one byte, its physical bits form one interval:
+Within one byte, the selected physical interval is
+`[8 - end.bit, 8 - start.bit)`. Across bytes, select the unconsumed low portion of
+the first byte, all interior bytes, and the consumed high portion of the final
+byte. Reuse the baseline's high-first geometry, injectivity, and length proofs.
+Remove low-first branches and mixed-direction obligations from the active model.
 
-- High first: `[8 - end.bit, 8 - start.bit)`.
-- Low first: `[start.bit, end.bit)`.
+`as_bytes()` requires aligned endpoints and borrows the original bytes for the
+input lifetime. Empty aligned spans yield `Some(&[])`; unaligned spans yield
+`None`. Keep bounds, geometry, and borrow-content proofs. No scalar machine bit
+length or iterator is added by this migration.
 
-For a span crossing bytes, take the unread portion of the starting byte, all
-intervening bytes, and the consumed portion of the ending byte, interpreting
-both partial boundaries in `bit_order`. Legal inner direction changes start
-and finish at whole-byte boundaries, so they do not create a second disjoint
-portion in either boundary byte. The consumed-bit count remains the position
-difference.
+`Recognize<P>` returns the span after fully running and discarding the child
+output; `WithSpan<P>` returns `(P::Output, BitSpan<'input>)`. Both use direct
+`parse_with` under the enclosing byte order. Entry validation precedes the child,
+and exit validation applies to success. Keep defensive `InvalidCursor` and
+backward-exit `NonProgress` errors, even though verified supported children obey
+the forward-consumption law. Bounds errors retain precedence over backward exits.
 
-The stored direction matters even after parsing returns: `(byte, bit)` endpoints
-alone do not distinguish a partial high-first match from a partial low-first
-match. Byte order is unnecessary for identifying source bits. Endpoints and the
-boundary direction still do not record internal whole-byte ordering scopes or
-field grouping, so a span does not promise to replay decoding.
-
-A raw `as_bytes()` view requires both endpoints to be byte-aligned and returns
-original source bytes. If an iterator is exposed, specify canonical physical
-order: increasing byte index and highest selected bit first within each byte.
-Avoid an unchecked scalar `usize` bit length; retain positions or use a checked
-conversion.
-
-`Recognize<P>` discards the child's value and returns the span;
-`WithSpan<P>` returns `(P::Output, BitSpan<'input>)`. Both are now implemented
-through `Grammar` and backend-generic `Eval`. They run the child fully and retain
-its backend state on success, rejection, or incompleteness. Entry validation
-precedes the child call; exit validation applies only to a successful child.
-Invalid bounds take precedence over backward movement. Empty spans are allowed,
-including at EOF, and wrapping lookahead measures its zero consumption.
-
-The implemented [seeking primitive](rusthammer-seeking.md#composition-audit)
-retains this endpoint contract. The interval can include
-skipped input and omit input inspected during a seek-and-return excursion; it
-does not describe the history of reads. A net backward exit remains
-`NonProgress`. Seeking preserves ordering-scope guards.
-
-The public constructor is
-`BitSpan::new(input, start, end, bit_order) -> Result<BitSpan, ParseError>`.
-Private fields maintain the invariant. Read-only `input()`, `start()`, `end()`,
-and `bit_order()` accessors expose its coordinates; `is_empty()` checks equality.
-`as_bytes()` borrows the original input for its original lifetime. Aligned empty
-spans yield `Some(&[])`; unaligned ones yield `None`. No iterator or scalar bit
-length is exposed. Wrappers use named `parser` fields and conditional `Copy`/`Clone`
-without imposing those traits on child outputs.
-
-The production [specification](../rusthammer/lean/RustHammer/SpanSpec.lean) and
-[proofs](../rusthammer/lean/RustHammer/SpanProofs.lean) establish bounds, exact
-borrowed byte views, error precedence, generic backend and direct contracts,
-and physical geometry. A mathematical bit enumeration is injective and has
-length equal to the endpoint difference; same-byte intervals, both crossing
-boundaries, interior bytes, and aligned raw regions are characterized separately.
-Native tests cover lifetimes, pointer identity, owned-output destruction, and
-custom backends. Both library MIR stages and five new separate-Cargo-consumer
-entry points extract and type-check. See the [example](../rusthammer/examples/spans.rs).
+Spans describe the interval between endpoints, not a trace of inspected bytes.
+Lookahead can inspect beyond its returned cursor, and `SkipBits` can consume
+without reading. CRC validation can inspect a span's byte view without moving
+the parser cursor; no seeking capability is needed.
 
 ## Production implementation and evidence
 
-The library now implements `BitOrder`, `ByteOrder`, `Order`, `ParseContext`, and
+This section records the pre-v1 ordering increment. References to finality,
+backend support, low-first fields, direction-change guards, and then-planned
+spans are historical, not v1 requirements.
+The implementation and proof migration is tracked at the end of this document.
+
+The baseline library implements `BitOrder`, `ByteOrder`, `Order`, `ParseContext`, and
 `WithOrder`, with the retained `(byte, bit)` cursor. All built-in composition,
 selection, repetition, folding, lookahead, and match combinators forward the
 full context. `Bits`, signed fields, literals, bytes, patterns, and byte sets
@@ -348,6 +235,9 @@ remain planned after the [backend foundation](rusthammer-backends.md); no public
 span type is introduced by this work.
 
 ## Restricted probe and evidence
+
+Historical probe results follow; reproduce old API-dependent fixtures against
+`c5c2643` if they have not been ported after the v1 migration.
 
 [`restricted_order.rs`](../rusthammer/probes/restricted_order.rs) exercises
 the retained `(byte, bit)` cursor, immutable `ParseContext`, guarded `WithOrder`,
@@ -427,27 +317,27 @@ verification as though all of those cases should still be accepted.
 
 ## Implementation order
 
-1. **Restricted scope probe complete.** The probe and evidence above cover entry
-   and successful-exit guards, nested same-direction scopes, unaligned byte-order
-   changes, lookahead, errors/`NeedMore`, and escaped span direction. Both MIR
-   stages and the generic scope proofs pass.
-2. **Production ordering complete.** Context and guarded `WithOrder` are integrated
-   with numeric-reader and compositional proofs, default-format theorems,
-   examples, and tests. Both MIR stages and the separate Cargo consumer pass;
-   differential checks distinguish agreements from intentional rejections.
-3. **Backend execution boundary complete.** Direct execution and its proofs use
-   [Grammar / Eval / Parser](rusthammer-backends.md). Memoization and recursive
-   rule construction are deferred; they do not block the span API.
-4. Add the intended span/recognition APIs with bounds, physical-interval,
-   borrowing, consumed-length, and raw-byte-view proofs. Expose only durable,
-   implemented operations.
+Follow the [main migration sequence](rusthammer.md#first-version-scope-and-next-steps).
+For input, ordering, and spans:
 
-This removes the two-ended cursor invariant, its non-injective position mapping,
-and the need for a separate physical-progress relation. Context plumbing,
-fragment decoding, and scope integration are now implemented and proved in the
-production library. The implemented span and seeking operations use this restricted model.
+1. Retain `Cursor`, `ByteOrder`, and `BitSpan`. Remove finality/outcome wrappers,
+   `BitOrder`, combined `Order`, and direction stored in spans. Use `Result` and
+   a direct `ByteOrder` argument; preserve the default high-first/big behavior.
+2. Simplify numeric readers to the high-first path, retaining both byte orders,
+   unaligned/cross-byte fields, invalid-cursor and exhaustion precedence, and
+   zero-width validation. Replace `WithOrder` with `WithByteOrder` delegation.
+3. Remove `Seek` and direction-change guards. Preserve shared forward cursor
+   arithmetic for `SkipBits`, `Tell`, readers, and repetition. Keep defensive
+   span endpoint checks and simplify construction/accessors and physical geometry.
+4. Port high-first mathematical models and extracted-code contracts. Prove the
+   supported forward-consumption law compositionally under child contracts.
+   Retire low-first, changed-direction, seeking, and offset-application roots;
+   preserve their baseline evidence at `c5c2643` rather than adding v1 adapters.
+5. Migrate retained tests, examples, and downstream fixtures. Check both byte
+   orders and high-first boundary cases, payload borrowing, all MAVLink truncation
+   boundaries, exact frame consumption, and CRC validation. Scope guards and
+   low-first tests no longer describe supported behavior.
 
-Permutation and seeking are implemented and proved in their separate increments.
-Recursion, live streaming, memoization, and additional backends remain later work.
-CI and the older callback investigation remain
-deferred. Revisit eager literal rejection before streaming buffering/resumption.
+The retained probe results are historical evidence. The new source forms still
+need both MIR stages, ordinary dependency extraction, the full Lean build, and
+axiom auditing before the migration is complete.

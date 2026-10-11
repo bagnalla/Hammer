@@ -1,7 +1,47 @@
-# RustHammer backends and packrat parsing
+# RustHammer backend research: deferred beyond v1
 
-Status: direct execution boundary implemented and verified; first-version scope
-is nonrecursive grammars, 2026-10-06.
+Status: v1 scope revised 2026-10-10. The generic backend boundary remains in the
+baseline code at `c5c2643`, but is scheduled for removal on
+`rusthammer-v1-simplify`; implementation migration is pending.
+The [main plan](rusthammer.md) is authoritative for the new implementation.
+
+## Version 1 decision
+
+V1 supports direct execution only. Replace `Grammar` / `Eval<Backend>` / `Direct`
+with the proposed single `Parser` trait, remove generic mutable backend state,
+and use complete-input `Result` contracts. Retain concrete grammar nodes and
+static dispatch because they serve ordinary composition and typed construction.
+They do not imply a public analysis, compilation, or interpreter extension API.
+
+The unused-backend closure extraction issue and direct-state proof adapters are
+specific costs this change aims to remove. Verify the new source shape before
+claiming those workarounds are obsolete. Backend-free borrowed callbacks and
+static diagnostic metadata have independent failures. Complete-input parsing
+also removes finality plumbing, but not every ownership or translation issue.
+
+Diagnostic reporting is excluded from v1. If explicitly resumed later, it can
+use concrete invocation-local state with scoped hooks; multiple execution engines
+are not required. V1 also excludes permutation, seeking, and low-first traversal,
+and keeps authentication state in application code; see the
+[active scope](rusthammer.md#version-1-scope).
+Do not retain arbitrary backend parameters, no-op state, or public compatibility
+wrappers solely for future diagnostics or deferred research probes.
+
+Packrat would still need storage/ownership decisions, supported grammar classes,
+a distinct control-flow implementation, and refinement proofs. A later design
+may change the v1 API. This branch makes no commitment to preserve the earlier
+interpreter boundary or to implement packrat after v1 on a particular schedule.
+
+## Historical design and evidence
+
+Everything below records the pre-v1 proposal and its checkpoints. Recommendations
+to preserve generic backends, finality, or shared direct/packrat APIs are historical,
+not requirements on the simplified library. Keep minimized standalone probes;
+API-dependent deferred probes can be reproduced at `c5c2643` until explicitly
+ported. Existing extraction/proof results do not verify a future backend.
+
+Historical status (2026-10-06): direct execution boundary implemented and
+verified; the then-planned first version targeted nonrecursive grammars.
 Production has the public `Grammar` / `Eval` boundary
 and the `Direct` interpreter. Memoization remains a later optimization, with a
 private feasibility probe to inform its design. This document extends the
@@ -19,7 +59,7 @@ compilation. The later explicit-frame packrat proposal retains its private
 seed/growth, borrowed-view, lowering, and resource/session evidence. Read the
 separate direct and packrat production gates before implementation.
 
-## Requirements and recommendation
+## Historical requirements and recommendation
 
 Preserve a grammar as structured data that can be constructed independently of
 execution. Keep typed outputs, static dispatch, borrowed input, `no_std`, the
@@ -377,7 +417,7 @@ separately from 985 agreements. The proposal explains the recommended effective
 `(rule, context)` symbols, the proposed C compatibility difference, and the
 remaining generated-schema/workspace API checks.
 
-## Work sequence and proof obligations
+## Deferred work sequence and proof obligations
 
 The first version uses `Direct` with nonrecursive grammar definitions. Continue
 the API and verification work in steps 1–2. Steps 3–8 preserve the deferred

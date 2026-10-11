@@ -1,6 +1,6 @@
 # RustHammer recursion: deferred design and investigation
 
-Status: deferred at the user's request, 2026-10-06. The first version of
+Status: deferred at the user's request, reaffirmed 2026-10-10. The first version of
 RustHammer will support nonrecursive grammars. Recursive grammar construction,
 its direct interpreter support, and the associated extraction-tool investigation
 are set aside. This document preserves the proposed direction, evidence, and
@@ -10,19 +10,27 @@ added, and no extraction-tool pin has been changed.
 
 ## First-version scope
 
-Continue developing nonrecursive grammars through the existing concrete nodes,
-`Grammar` / `Eval` boundary, and `Direct` interpreter. Existing repetition and
-data-dependent parsing with `Bind` remain useful within this scope: iterating a
-child parser or selecting its configuration does not require a recursive grammar
-reference. The first version does not depend on a recursive constructor, a
-dictionary-translation change in Aeneas, or the private packrat model.
+V1 supports direct execution of nonrecursive grammars on complete inputs, under
+one `Parser` trait, with high-first bits and forward successful consumption.
+Diagnostics, permutation, and seeking are also deferred beyond v1. The
+[active plan](rusthammer.md) removes the existing `Grammar` / `Eval<Backend>` /
+`Direct` boundary and partial-input outcomes.
+Repetition and data-dependent `Bind` remain in scope: iterating a child or
+selecting its configuration does not require recursive grammar references.
 
-Keep the probes and their reproduction commands as evidence. Do not promote the
-handwritten recursive-parser fallback or the diagnostic tool patch to production
-to fill this gap. Resume this work when it is reprioritized, beginning with the
-soundness and representation questions below. The future packrat design remains
-part of the [backend plan](rusthammer-backends.md), with left recursion in its
-intended production implementation from the outset.
+Keep the probes as evidence. Do not promote the handwritten recursive-parser
+fallback or diagnostic tool patch into production to fill this gap. Removing
+backends and partial input does not by itself solve recursive trait-dictionary
+cycles. No recursive constructor, dictionary-translation change, or private
+packrat model gates the v1 migration.
+
+The rest of this writeup preserves the earlier proposed API, tests, and proof
+obligations for deferred research. References to partial input or shared backend
+capabilities do not constrain v1. Resume by reassessing them against the then
+current library and toolchain. API-dependent old probes may be reproduced at
+`c5c2643`; standalone tool failures remain independently useful. Later packrat
+work also needs a new scope decision, as recorded in the
+[backend research](rusthammer-backends.md).
 
 ## Proposed construction and direct execution
 
