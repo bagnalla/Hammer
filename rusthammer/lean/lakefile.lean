@@ -6,7 +6,7 @@ require aeneas from git
   "557eff83ecef5083b98a52a94ca7fae63d6c1dab" / "backends/lean"
 
 package rusthammer where
-  moreLeanArgs := #["-DwarningAsError=true"]
+  moreLeanArgs := #["-DwarningAsError=true", "-DautoImplicit=false"]
 
 @[default_target]
 lean_lib RustHammer

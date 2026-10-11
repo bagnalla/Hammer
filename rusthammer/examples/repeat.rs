@@ -1,6 +1,4 @@
-use rusthammer::{
-    Bits, ConfigError, Cursor, End, Literal, ParseContext, ParseOutcome, Parser, Repeat, Seq,
-};
+use rusthammer::{Bits, ByteOrder, ConfigError, Cursor, End, Literal, Parser, Repeat, Seq};
 
 fn main() -> Result<(), ConfigError> {
     // Three five-bit fields span two bytes, followed by one padding bit.
@@ -12,8 +10,8 @@ fn main() -> Result<(), ConfigError> {
     println!("fields: {values:?}; next: {next:?}");
 
     println!(
-        "partial first byte: {:?}",
-        fields.parse_with(&input[..1], Cursor::start(), ParseContext::PARTIAL)
+        "truncated fields: {:?}",
+        fields.parse_with(&input[..1], Cursor::start(), ByteOrder::Big)
     );
 
     // The same combinator accepts a runtime count read from the input.
@@ -37,15 +35,10 @@ fn main() -> Result<(), ConfigError> {
     assert_eq!(next, Cursor { byte: 2, bit: 0 });
     println!("bounded values: {values:?}; next: {next:?}");
 
-    // Meeting the minimum does not establish where a partial list stops.
+    // Reaching the maximum stops immediately: no fourth child is attempted.
     assert_eq!(
-        bounded.parse_with(b"aa", Cursor::start(), ParseContext::PARTIAL),
-        ParseOutcome::NeedMore
-    );
-    // Reaching the maximum does: no fourth child is attempted.
-    assert_eq!(
-        bounded.parse_with(b"aaa", Cursor::start(), ParseContext::PARTIAL),
-        ParseOutcome::Success(Cursor { byte: 3, bit: 0 }, vec![97; 3])
+        bounded.parse_with(b"aaa", Cursor::start(), ByteOrder::Big),
+        Ok((Cursor { byte: 3, bit: 0 }, vec![97; 3]))
     );
 
     let unbounded = Repeat::at_least(Literal::new(8, u64::from(b'a'))?, 1);
@@ -54,9 +47,6 @@ fn main() -> Result<(), ConfigError> {
     assert_eq!(values, vec![97; 4]);
     assert_eq!(unbounded.max(), None);
     println!("unbounded values: {values:?}; next: {next:?}");
-    assert_eq!(
-        unbounded.parse_with(b"aaaa", Cursor::start(), ParseContext::PARTIAL),
-        ParseOutcome::NeedMore
-    );
+
     Ok(())
 }

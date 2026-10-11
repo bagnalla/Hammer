@@ -1,9 +1,8 @@
-use super::super::{ConfigError, Cursor, Eval, Grammar, ParseContext, ParseError, ParseOutcome};
+use super::super::{ByteOrder, ConfigError, Cursor, ParseError, Parser};
 
 /// Transform a successful output, preserving its cursor and all child errors.
 ///
-/// The callback runs exactly once after success and never after a child error
-/// or `NeedMore`.
+/// The callback runs exactly once after success and never after a child error.
 /// Verification requires a contract for the callback; `Fn` alone does not imply
 /// purity, termination, or freedom from panics.
 #[derive(Clone, Copy)]
@@ -14,7 +13,7 @@ pub struct Map<P, F> {
 
 /// Construct a [`Map`], inferring the callback argument from the child's output.
 /// The callback is stored without being called. The concrete node preserves
-/// backend support and conditional `Copy`/`Clone`, without requiring either
+/// conditional `Copy`/`Clone`, without requiring either
 /// trait on its output.
 ///
 /// ```
@@ -25,36 +24,31 @@ pub struct Map<P, F> {
 /// ```
 pub fn map<'input, P, F, O>(parser: P, map: F) -> Map<P, F>
 where
-    P: Grammar<'input>,
+    P: Parser<'input>,
     F: Fn(P::Output) -> O,
 {
     Map { parser, map }
 }
 
-impl<'input, P, F, O> Grammar<'input> for Map<P, F>
+impl<'input, P, F, O> Parser<'input> for Map<P, F>
 where
-    P: Grammar<'input>,
+    P: Parser<'input>,
     F: Fn(P::Output) -> O,
 {
     type Output = O;
-}
 
-impl<'input, Backend, P, F, O> Eval<'input, Backend> for Map<P, F>
-where
-    P: Eval<'input, Backend>,
-    F: Fn(P::Output) -> O,
-{
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
-        match self.parser.eval(backend, input, cursor, context) {
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
-            ParseOutcome::Error(error) => ParseOutcome::Error(error),
-            ParseOutcome::Success(next, value) => ParseOutcome::Success(next, (self.map)(value)),
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
+        match self.parser.parse_with(input, cursor, byte_order) {
+            Err(error) => Err(error),
+            Ok(parsed) => {
+                let (next, value) = parsed;
+                Ok((next, (self.map)(value)))
+            }
         }
     }
 }
@@ -65,7 +59,7 @@ where
 /// `Ok(value)` preserves the child's cursor; `Err(_)` discards the conversion
 /// error and returns recoverable `Mismatch`. Even a conversion error of type
 /// `ParseError` is mapped to `Mismatch`, not propagated as a parser error.
-/// Child errors and `NeedMore` propagate unchanged without calling the callback.
+/// Child errors propagate unchanged without calling the callback.
 /// As with `Map`, verification requires a contract for the callback; callback
 /// effects are not rolled back when conversion fails or a parse is retried.
 #[derive(Clone, Copy)]
@@ -85,42 +79,37 @@ pub struct TryMap<P, F> {
 /// ```
 pub fn try_map<'input, P, F, O, E>(parser: P, map: F) -> TryMap<P, F>
 where
-    P: Grammar<'input>,
+    P: Parser<'input>,
     F: Fn(P::Output) -> Result<O, E>,
 {
     TryMap { parser, map }
 }
 
-impl<'input, P, F, O, E> Grammar<'input> for TryMap<P, F>
+impl<'input, P, F, O, E> Parser<'input> for TryMap<P, F>
 where
-    P: Grammar<'input>,
+    P: Parser<'input>,
     F: Fn(P::Output) -> Result<O, E>,
 {
     type Output = O;
-}
 
-impl<'input, Backend, P, F, O, E> Eval<'input, Backend> for TryMap<P, F>
-where
-    P: Eval<'input, Backend>,
-    F: Fn(P::Output) -> Result<O, E>,
-{
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
-        match self.parser.eval(backend, input, cursor, context) {
-            ParseOutcome::Success(next, value) => match (self.map)(value) {
-                Ok(mapped) => ParseOutcome::Success(next, mapped),
-                // Keep `_error`: unlike `_`, it moves the payload out of Result.
-                // This avoids cleanup reads of a partly moved enum in dependency MIR;
-                // see probes/cross_crate/README.md.
-                Err(_error) => ParseOutcome::Error(ParseError::Mismatch),
-            },
-            ParseOutcome::Error(error) => ParseOutcome::Error(error),
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
+        match self.parser.parse_with(input, cursor, byte_order) {
+            Ok(parsed) => {
+                let (next, value) = parsed;
+                match (self.map)(value) {
+                    Ok(mapped) => Ok((next, mapped)),
+                    // Keep `_error`: unlike `_`, it moves the payload out of Result.
+                    // This avoids cleanup reads of a partly moved enum in dependency MIR;
+                    // see probes/cross_crate/README.md.
+                    Err(_error) => Err(ParseError::Mismatch),
+                }
+            }
+            Err(error) => Err(error),
         }
     }
 }
@@ -128,7 +117,7 @@ where
 /// Keep a successful output only when a predicate accepts it.
 ///
 /// Rejection returns `Mismatch`; acceptance preserves the value and cursor.
-/// Child errors and `NeedMore` propagate without calling the predicate. It borrows
+/// Child errors propagate without calling the predicate. It borrows
 /// the output, so non-`Copy` and borrowed outputs are supported. As with `Map`,
 /// verification requires a contract for the callback.
 #[derive(Clone, Copy)]
@@ -147,40 +136,33 @@ pub struct Verify<P, F> {
 /// ```
 pub fn verify<'input, P, F>(parser: P, predicate: F) -> Verify<P, F>
 where
-    P: Grammar<'input>,
+    P: Parser<'input>,
     F: Fn(&P::Output) -> bool,
 {
     Verify { parser, predicate }
 }
 
-impl<'input, P, F> Grammar<'input> for Verify<P, F>
+impl<'input, P, F> Parser<'input> for Verify<P, F>
 where
-    P: Grammar<'input>,
+    P: Parser<'input>,
     F: Fn(&P::Output) -> bool,
 {
     type Output = P::Output;
-}
 
-impl<'input, Backend, P, F> Eval<'input, Backend> for Verify<P, F>
-where
-    P: Eval<'input, Backend>,
-    F: Fn(&P::Output) -> bool,
-{
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
-        match self.parser.eval(backend, input, cursor, context) {
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
-            ParseOutcome::Error(error) => ParseOutcome::Error(error),
-            ParseOutcome::Success(next, value) => {
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
+        match self.parser.parse_with(input, cursor, byte_order) {
+            Err(error) => Err(error),
+            Ok(parsed) => {
+                let (next, value) = parsed;
                 if (self.predicate)(&value) {
-                    ParseOutcome::Success(next, value)
+                    Ok((next, value))
                 } else {
-                    ParseOutcome::Error(ParseError::Mismatch)
+                    Err(ParseError::Mismatch)
                 }
             }
         }
@@ -196,8 +178,8 @@ where
 ///
 /// Construction rejects reversed bounds with `ConfigError::InvalidBounds`.
 /// Parsing delegates to `Verify`: acceptance preserves the child's value and
-/// cursor, rejection returns recoverable `Mismatch`, and child errors and
-/// `NeedMore` propagate unchanged. No input is read during construction.
+/// cursor, rejection returns recoverable `Mismatch`, and child errors propagate unchanged. No
+/// input is read during construction.
 ///
 /// ```
 /// use rusthammer::{BeU16, Byte, Cursor, IntRange, Parser};
@@ -229,7 +211,7 @@ impl<P, T> IntRange<P, T> {
     /// Construct an inclusive range, rejecting `lower > upper` before parsing.
     pub fn new<'input>(parser: P, lower: T, upper: T) -> Result<Self, ConfigError>
     where
-        P: Grammar<'input, Output = T>,
+        P: Parser<'input, Output = T>,
         T: Ord,
     {
         if lower > upper {
@@ -254,30 +236,23 @@ impl<P, T> IntRange<P, T> {
     }
 }
 
-impl<'input, P, T> Grammar<'input> for IntRange<P, T>
+impl<'input, P, T> Parser<'input> for IntRange<P, T>
 where
-    P: Grammar<'input, Output = T>,
+    P: Parser<'input, Output = T>,
     T: Ord,
 {
     type Output = T;
-}
 
-impl<'input, Backend, P, T> Eval<'input, Backend> for IntRange<P, T>
-where
-    P: Eval<'input, Backend, Output = T>,
-    T: Ord,
-{
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<T> {
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, T), ParseError> {
         Verify {
             parser: &self.parser,
             predicate: |value: &T| self.lower <= *value && *value <= self.upper,
         }
-        .eval(backend, input, cursor, context)
+        .parse_with(input, cursor, byte_order)
     }
 }

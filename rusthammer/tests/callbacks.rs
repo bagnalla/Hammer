@@ -1,26 +1,21 @@
-use rusthammer::{Eval, Grammar};
 use std::cell::Cell;
 
 use rusthammer::{
-    Bit, Bits, Choice, Cursor, Map, ParseContext, ParseError, ParseOutcome, Parser, TakeAligned,
-    Verify,
+    Bit, Bits, ByteOrder, Choice, Cursor, Map, ParseError, Parser, TakeAligned, Verify,
 };
 
 struct Reject(ParseError);
 
-impl<'input> Grammar<'input> for Reject {
+impl<'input> Parser<'input> for Reject {
     type Output = bool;
-}
 
-impl<'input, Backend> Eval<'input, Backend> for Reject {
-    fn eval(
+    fn parse_with(
         &self,
-        _: &mut Backend,
         _: &'input [u8],
         _: Cursor,
-        _: ParseContext,
-    ) -> ParseOutcome<bool> {
-        ParseOutcome::Error(self.0)
+        _: ByteOrder,
+    ) -> Result<(Cursor, bool), ParseError> {
+        Err(self.0)
     }
 }
 

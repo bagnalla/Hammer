@@ -1,6 +1,4 @@
-use super::super::{
-    ConfigError, Cursor, Eval, Grammar, InputStatus, ParseContext, ParseError, ParseOutcome,
-};
+use super::super::{ByteOrder, Cursor, ParseError, Parser};
 
 // Advance using the input length alone: skipping never reads the input bytes.
 // Split the count before adding so neither an absolute bit position nor
@@ -67,7 +65,7 @@ mod position_boundary_tests {
 /// inserted, and counts are not limited to 64. Advancement takes constant time
 /// without reading input bytes or allocating. Every `usize` count is valid.
 /// Parsing validates the cursor even when skipping zero bits. Insufficient
-/// input returns `NeedMore` on partial input or `UnexpectedEnd` on final input.
+/// input returns `UnexpectedEnd`.
 ///
 /// ```
 /// use rusthammer::{Cursor, Parser, SkipBits};
@@ -96,23 +94,20 @@ impl SkipBits {
     }
 }
 
-impl<'input> Grammar<'input> for SkipBits {
+impl<'input> Parser<'input> for SkipBits {
     type Output = ();
-}
 
-impl<'input, Backend> Eval<'input, Backend> for SkipBits {
-    fn eval(
+    fn parse_with(
         &self,
-        _: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<()> {
+        _: ByteOrder,
+    ) -> Result<(Cursor, ()), ParseError> {
         let result = match advance_cursor(input.len(), cursor, self.bits) {
             Ok(next) => Ok((next, ())),
             Err(error) => Err(error),
         };
-        context.status.classify(result)
+        result
     }
 }
 
@@ -121,7 +116,7 @@ impl<'input, Backend> Eval<'input, Backend> for SkipBits {
 /// Corresponds to Hammer's `h_tell`, with a byte-and-bit `Cursor` output instead
 /// of an absolute bit count. This avoids overflowing a byte-to-bit conversion.
 /// Returns `InvalidCursor` for invalid positions; every valid position succeeds
-/// immediately on both partial and final input, including canonical end-of-input.
+/// immediately, including canonical end-of-input.
 ///
 /// ```
 /// use rusthammer::{Cursor, Parser, Tell};
@@ -131,213 +126,46 @@ impl<'input, Backend> Eval<'input, Backend> for SkipBits {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Tell;
 
-impl<'input> Grammar<'input> for Tell {
+impl<'input> Parser<'input> for Tell {
     type Output = Cursor;
-}
 
-impl<'input, Backend> Eval<'input, Backend> for Tell {
-    fn eval(
+    fn parse_with(
         &self,
-        _: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        _context: ParseContext,
-    ) -> ParseOutcome<Cursor> {
+        _byte_order: ByteOrder,
+    ) -> Result<(Cursor, Cursor), ParseError> {
         match advance_cursor(input.len(), cursor, 0) {
-            Ok(next) => ParseOutcome::Success(next, next),
-            Err(error) => ParseOutcome::Error(error),
+            Ok(next) => Ok((next, next)),
+            Err(error) => Err(error),
         }
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum SeekTarget {
-    Absolute(Cursor),
-    Relative(isize),
-    End(isize),
-}
-
-/// Reposition within the current input, returning the destination [`Cursor`].
-///
-/// Corresponds to Hammer's `h_seek`. Absolute targets use byte-and-bit cursors;
-/// relative offsets are signed bit counts. Seeking reads no input bytes and does
-/// not allocate or modify backend state. Every invocation validates its entry
-/// cursor, including absolute seeks and zero offsets. A destination before the
-/// start yields recoverable `Mismatch`; a destination beyond available input
-/// yields `NeedMore` on partial input or `UnexpectedEnd` on final input.
-/// End-relative seeks wait for finality before calculating their destination.
-///
-/// Coordinates are relative to the supplied input slice and interpreted in the
-/// active bit direction. Seeking preserves the ordering context; a saved cursor
-/// does not restore another input buffer or an earlier bit direction.
-///
-/// Bounded repetition may move backward. Unbounded repetition requires each
-/// complete iteration to advance. `WithSpan` and `Recognize` describe only the
-/// interval between their endpoints and reject a net backward result. Skipped
-/// bytes may lie inside a span; bytes inspected during an excursion may lie outside.
-///
-/// ```
-/// use rusthammer::{Cursor, Parser, Right, Seek, Byte};
-/// let field = Right { first: Seek::from_end(-8), second: Byte };
-/// assert_eq!(field.parse(b"abc", Cursor::start()),
-///     Ok((Cursor { byte: 3, bit: 0 }, b'c')));
-/// ```
-///
-/// ```compile_fail,E0616
-/// let parser = rusthammer::Seek::relative(1);
-/// let _ = parser.target;
-/// ```
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Seek {
-    target: SeekTarget,
-}
-
-impl Seek {
-    /// Construct an absolute destination. Only `bit < 8` is required here;
-    /// bounds against the actual input are checked when parsing.
-    /// An invalid bit offset returns `ConfigError::InvalidBitOffset`.
-    pub const fn to(target: Cursor) -> Result<Self, ConfigError> {
-        if target.bit >= 8 {
-            Err(ConfigError::InvalidBitOffset)
-        } else {
-            Ok(Self {
-                target: SeekTarget::Absolute(target),
-            })
-        }
-    }
-
-    /// Move by a signed number of bits from the invocation's entry cursor.
-    /// Every `isize` offset is valid configuration, including `isize::MIN`.
-    pub const fn relative(offset_bits: isize) -> Self {
-        Self {
-            target: SeekTarget::Relative(offset_bits),
-        }
-    }
-
-    /// Move by a signed number of bits from the final input boundary.
-    /// Partial input returns `NeedMore`, even for zero or positive offsets.
-    pub const fn from_end(offset_bits: isize) -> Self {
-        Self {
-            target: SeekTarget::End(offset_bits),
-        }
-    }
-}
-
-// Backward counterpart of advance_cursor. Both are total on raw cursors and
-// arbitrary usize counts; no absolute machine bit position is formed.
-fn retreat_cursor(length: usize, cursor: Cursor, bits: usize) -> Result<Cursor, ParseError> {
-    let cursor = advance_cursor(length, cursor, 0)?;
-    let whole = bits / 8;
-    let tail = (bits % 8) as u8;
-    let (bytes, bit) = if tail > cursor.bit {
-        (whole + 1, cursor.bit + 8 - tail)
-    } else {
-        (whole, cursor.bit - tail)
-    };
-    if bytes > cursor.byte {
-        return Err(ParseError::Mismatch);
-    }
-    Ok(Cursor {
-        byte: cursor.byte - bytes,
-        bit,
-    })
-}
-
-fn offset_cursor(length: usize, cursor: Cursor, offset: isize) -> Result<Cursor, ParseError> {
-    if offset < 0 {
-        // Negating the offset itself would overflow at isize::MIN.
-        let magnitude = (-(offset + 1)) as usize + 1;
-        retreat_cursor(length, cursor, magnitude)
-    } else {
-        advance_cursor(length, cursor, offset as usize)
-    }
-}
-
-fn seek_position(
-    parser: Seek,
-    length: usize,
-    cursor: Cursor,
-    status: InputStatus,
-) -> ParseOutcome<Cursor> {
-    if let Err(error) = advance_cursor(length, cursor, 0) {
-        return ParseOutcome::Error(error);
-    }
-    let result = match parser.target {
-        SeekTarget::Absolute(target) => match advance_cursor(length, target, 0) {
-            Ok(next) => Ok(next),
-            Err(_) => Err(ParseError::UnexpectedEnd),
-        },
-        SeekTarget::Relative(offset) => offset_cursor(length, cursor, offset),
-        SeekTarget::End(offset) => match status {
-            InputStatus::Partial => return ParseOutcome::NeedMore,
-            InputStatus::Final => offset_cursor(
-                length,
-                Cursor {
-                    byte: length,
-                    bit: 0,
-                },
-                offset,
-            ),
-        },
-    };
-    let result = match result {
-        Ok(next) => Ok((next, next)),
-        Err(error) => Err(error),
-    };
-    status.classify(result)
-}
-
-#[cfg(test)]
-#[path = "position_seek_tests.rs"]
-mod seek_boundary_tests;
-
-impl<'input> Grammar<'input> for Seek {
-    type Output = Cursor;
-}
-
-impl<'input, Backend> Eval<'input, Backend> for Seek {
-    fn eval(
-        &self,
-        _: &mut Backend,
-        input: &'input [u8],
-        cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Cursor> {
-        seek_position(*self, input.len(), cursor, context.status)
     }
 }
 
 /// Require canonical end-of-input, consuming nothing. Remaining bits, including
 /// zero padding, produce `TrailingInput`; malformed cursors produce `InvalidCursor`.
-/// At the boundary of partial input, return `NeedMore` until finality is known.
 #[derive(Clone, Copy)]
 pub struct End;
 
-impl<'input> Grammar<'input> for End {
+impl<'input> Parser<'input> for End {
     type Output = ();
-}
 
-impl<'input, Backend> Eval<'input, Backend> for End {
-    fn eval(
+    fn parse_with(
         &self,
-        _: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<()> {
+        _: ByteOrder,
+    ) -> Result<(Cursor, ()), ParseError> {
         if cursor.bit >= 8
             || cursor.byte > input.len()
             || (cursor.byte == input.len() && cursor.bit != 0)
         {
-            return ParseOutcome::Error(ParseError::InvalidCursor);
+            return Err(ParseError::InvalidCursor);
         }
         if cursor.byte == input.len() {
-            match context.status {
-                InputStatus::Final => ParseOutcome::Success(cursor, ()),
-                InputStatus::Partial => ParseOutcome::NeedMore,
-            }
+            Ok((cursor, ()))
         } else {
-            ParseOutcome::Error(ParseError::TrailingInput)
+            Err(ParseError::TrailingInput)
         }
     }
 }

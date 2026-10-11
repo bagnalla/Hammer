@@ -1,14 +1,11 @@
 # RustHammer combinator API plan
 
-Status: v1 API plan revised 2026-10-10; implementation migration pending.
-The implemented families below are verified at the pre-migration checkpoint
-`c5c2643`; additional conveniences remain proposals. V1 keeps complete-input
-behavior for retained high-first parsers while replacing backend/finality
-plumbing with the [single direct parser interface](rusthammer.md#parsing-interface).
-Permutation, seeking, low-first bit traversal, and diagnostic annotations are
-excluded from v1; their implementation/research evidence remains labelled below.
-Claims about existing proof files and extraction counts describe that baseline,
-not a completed migration.
+Status: retained v1 families migrated to direct execution on complete input.
+The current interface, proofs, and verifier are described in the
+[main plan](rusthammer.md#verification-and-proof-maintenance). Additional
+conveniences remain proposals. Historical counts and excluded-family evidence
+below refer to `c5c2643`, not the current production surface. Permutation, seeking,
+low-first traversal, and diagnostic annotations remain outside v1.
 
 The first version targets nonrecursive grammars over complete inputs. Recursion,
 packrat, streaming, and native floats remain outside v1. The
@@ -405,12 +402,12 @@ If permutation is resumed, evaluate stack usage and extraction-compatible
 iterative search with bounded explicit backtracking storage before settling the
 resource guarantees. This work does not gate v1.
 
-The [search proofs](../rusthammer/lean/RustHammer/PermutationProofs.lean) establish
+The search proofs (`PermutationProofs.lean` at `c5c2643`) establish
 agreement with a total natural-number model under child and storage contracts,
 including backend transitions, partial/fatal propagation, and safe counters in
 the baseline. Retire these search/tuple contracts from the v1 proof roots;
 retain them as evidence for a later permutation design.
-[Tuple equations](../rusthammer/lean/RustHammer/PermutationTupleProofs.lean) cover
+Tuple equations (`PermutationTupleProofs.lean` at `c5c2643`) cover
 initialization, selected-slot access/clearing, typed output assembly, and child
 dispatch for every supported nonempty arity; the empty case has a separate theorem.
 All 82 new theorems are axiom-audited. Native tests cover ownership, ordering,
@@ -458,9 +455,9 @@ are deferred at the user's request; the probe remains evidence for later work.
 
 ## Implementation order and migration
 
-Follow the [main plan](rusthammer.md#first-version-scope-and-next-steps). The cuts
-are settled: port the retained families and retire excluded source/proof roots
-in one coherent migration. No dummy implementation or compatibility feature is
+The [main plan](rusthammer.md#first-version-scope-and-next-steps) records the
+completed core migration and remaining release review. The following inventory
+records the implemented cuts and retained coverage. No dummy implementation or compatibility feature is
 needed for later backends, diagnostics, permutation, seeking, or low-first order.
 
 | Area | Required migration and retained coverage |
@@ -483,10 +480,11 @@ record actual extraction support without imposing `Copy`/`Clone` on all outputs.
 The [historical main plan](rusthammer-pre-v1.md) records completed increments and
 then-current counts. Remove excluded tests/theorem roots explicitly, preserving
 high-first complete-input, callback, borrowing, and ownership coverage for
-retained families. General contracts in `Partial*` files still need migration;
-feature exclusion does not justify deleting claims used by retained parsers.
+retained families. General contracts formerly in `Partial*` now live in `ParserSpec` and
+`ParserProofs`. Complete-input claims for retained parsers are preserved; excluded
+proof roots and their replacements are listed in the main plan.
 
-After migration, small length/count/ASCII-whitespace conveniences can be selected
+Small length/count/ASCII-whitespace conveniences can be selected
 independently. Diagnostics, permutation, seeking, recursion, floats, packrat, and
 streaming remain outside v1; their research is not a release-completion gate.
 

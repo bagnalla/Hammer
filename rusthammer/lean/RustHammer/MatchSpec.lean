@@ -1,4 +1,4 @@
-import RustHammer.PartialSpec
+import RustHammer.ParserSpec
 
 open RustHammer.Code.input_types
 
@@ -16,41 +16,37 @@ abbrev matchEndpointOrder (allowEqual : Bool) (first second : Cursor) : Prop :=
 
 end RustHammer.Spec
 
-namespace RustHammer.Partial
+namespace RustHammer.Contracts
 open Code
 
 /-- Compare matches from the same cursor. First rejection short-circuits; the
 second child's recoverable rejection accepts, and its success tests length.
-Attempted fatal errors and incompleteness always propagate. -/
+Attempted fatal errors always propagate. -/
 def matchRestriction {α β : Type} (allowEqual : Bool)
-    (first : Cursor → ParseOutcome α → Prop) (second : Cursor → ParseOutcome β → Prop)
-    (cursor : Cursor) (outcome : ParseOutcome α) : Prop :=
+    (first : Cursor → Spec.ParseResult α → Prop) (second : Cursor → Spec.ParseResult β → Prop)
+    (cursor : Cursor) (outcome : Spec.ParseResult α) : Prop :=
   ∃ left, first cursor left ∧ match left with
-    | .NeedMore => outcome = .NeedMore
-    | .Error error => outcome = .Error error
-    | .Success next value => ∃ right, second cursor right ∧ match right with
-      | .NeedMore => outcome = .NeedMore
-      | .Error error =>
-        if Spec.recoverable error then outcome = .Success next value else outcome = .Error error
-      | .Success other _ =>
-        if Spec.matchEndpointOrder allowEqual next other then outcome = .Success next value
-        else outcome = .Error .Mismatch
+    | .Err error => outcome = .Err error
+    | .Ok (next, value) => ∃ right, second cursor right ∧ match right with
+      | .Err error =>
+        if Spec.recoverable error then outcome = .Ok (next, value) else outcome = .Err error
+      | .Ok (other, _) =>
+        if Spec.matchEndpointOrder allowEqual next other then outcome = .Ok (next, value)
+        else outcome = .Err .Mismatch
 
 /-- Exactly one success accepts; a second recoverable rejection after the first
 one becomes the reported error. Incompleteness is not evidence of rejection. -/
-def exclusive {α : Type} (first second : Cursor → ParseOutcome α → Prop)
-    (cursor : Cursor) (outcome : ParseOutcome α) : Prop :=
+def exclusive {α : Type} (first second : Cursor → Spec.ParseResult α → Prop)
+    (cursor : Cursor) (outcome : Spec.ParseResult α) : Prop :=
   ∃ left, first cursor left ∧ match left with
-    | .NeedMore => outcome = .NeedMore
-    | .Error error =>
-      if Spec.recoverable error then second cursor outcome else outcome = .Error error
-    | .Success next value => ∃ right, second cursor right ∧ match right with
-      | .NeedMore => outcome = .NeedMore
-      | .Success _ _ => outcome = .Error .Mismatch
-      | .Error error =>
-        if Spec.recoverable error then outcome = .Success next value else outcome = .Error error
+    | .Err error =>
+      if Spec.recoverable error then second cursor outcome else outcome = .Err error
+    | .Ok (next, value) => ∃ right, second cursor right ∧ match right with
+      | .Ok (_, _) => outcome = .Err .Mismatch
+      | .Err error =>
+        if Spec.recoverable error then outcome = .Ok (next, value) else outcome = .Err error
 
-end RustHammer.Partial
+end RustHammer.Contracts
 
 namespace RustHammer.Spec
 open Code
@@ -58,12 +54,12 @@ open Code
 def matchRestriction {α β : Type} (allowEqual : Bool)
     (first : Cursor → ParseResult α → Prop) (second : Cursor → ParseResult β → Prop)
     (cursor : Cursor) (result : ParseResult α) : Prop :=
-  Partial.matchRestriction allowEqual (fun start => completed (first start))
-    (fun start => completed (second start)) cursor (completedResult result)
+  Contracts.matchRestriction allowEqual (fun start => satisfies (first start))
+    (fun start => satisfies (second start)) cursor (result)
 
 def exclusive {α : Type} (first second : Cursor → ParseResult α → Prop)
     (cursor : Cursor) (result : ParseResult α) : Prop :=
-  Partial.exclusive (fun start => completed (first start)) (fun start => completed (second start))
-    cursor (completedResult result)
+  Contracts.exclusive (fun start => satisfies (first start)) (fun start => satisfies (second start))
+    cursor (result)
 
 end RustHammer.Spec

@@ -1,4 +1,4 @@
-import RustHammer.PartialSpec
+import RustHammer.ParserSpec
 
 open RustHammer.Code.grammar.repeat
   RustHammer.Code.input_types
@@ -23,52 +23,47 @@ def repeatNewOutcome {P : Type} (parser : P) (min max : Usize)
 
 /-- A finite chain of successful child parses. Every invocation contributes one
 value, in order, including unit values and successes that consume no input. -/
-inductive repetitions {α : Type} (child : Cursor → ParseOutcome α → Prop) :
+inductive repetitions {α : Type} (child : Cursor → Spec.ParseResult α → Prop) :
     Cursor → List α → Cursor → Prop where
   | empty (cursor : Cursor) : repetitions child cursor [] cursor
   | append {start middle next : Cursor} {values : List α} {value : α}
       (hprefix : repetitions child start values middle)
-      (last : child middle (.Success next value)) :
+      (last : child middle (.Ok (next, value))) :
       repetitions child start (values ++ [value]) next
 
 /-- Bounded repetition returns an ordered chain between its inclusive bounds.
 Before the maximum, success requires a recoverably rejected next attempt.
-Errors below the minimum and fatal errors propagate; incompleteness always does.
+Errors below the minimum and fatal errors propagate.
 The specification uses natural counts, independently of the implementation loop
 and the allocation strategy of its output vector. -/
-def boundedRepetition {α : Type} (child : Cursor → ParseOutcome α → Prop) (min max : Nat)
-    (cursor : Cursor) (outcome : ParseOutcome (List α)) : Prop :=
+def boundedRepetition {α : Type} (child : Cursor → Spec.ParseResult α → Prop) (min max : Nat)
+    (cursor : Cursor) (outcome : Spec.ParseResult (List α)) : Prop :=
   match outcome with
-  | .Success next values => min ≤ values.length ∧ values.length ≤ max ∧
+  | .Ok (next, values) => min ≤ values.length ∧ values.length ≤ max ∧
       repetitions child cursor values next ∧
-      (values.length = max ∨ ∃ error, recoverable error ∧ child next (.Error error))
-  | .Error error => ∃ (values : List α) (next : Cursor), values.length < max ∧
-      repetitions child cursor values next ∧ child next (.Error error) ∧
+      (values.length = max ∨ ∃ error, recoverable error ∧ child next (.Err error))
+  | .Err error => ∃ (values : List α) (next : Cursor), values.length < max ∧
+      repetitions child cursor values next ∧ child next (.Err error) ∧
       (values.length < min ∨ ¬recoverable error)
-  | .NeedMore => ∃ (values : List α) (next : Cursor), values.length < max ∧
-      repetitions child cursor values next ∧ child next .NeedMore
-
 /-- Forget only vector storage; the shared repetition contract uses lists. -/
-def collectedValues {α : Type} (outcome : ParseOutcome (alloc.vec.Vec α)) : ParseOutcome (List α) :=
+def collectedValues {α : Type} (outcome : Spec.ParseResult (alloc.vec.Vec α)) : Spec.ParseResult (List α) :=
   match outcome with
-  | .Success next values => .Success next values.val
-  | .Error error => .Error error
-  | .NeedMore => .NeedMore
-
-def boundedRepeat {α : Type} (child : Cursor → ParseOutcome α → Prop) (min max : Nat)
-    (cursor : Cursor) (outcome : ParseOutcome (alloc.vec.Vec α)) : Prop :=
+  | .Ok (next, values) => .Ok (next, values.val)
+  | .Err error => .Err error
+def boundedRepeat {α : Type} (child : Cursor → Spec.ParseResult α → Prop) (min max : Nat)
+    (cursor : Cursor) (outcome : Spec.ParseResult (alloc.vec.Vec α)) : Prop :=
   boundedRepetition child min max cursor (collectedValues outcome)
 
 def boundedRepeatComplete {α : Type} (child : Cursor → ParseResult α → Prop) (min max : Nat)
     (cursor : Cursor) (result : ParseResult (alloc.vec.Vec α)) : Prop :=
-  boundedRepeat (fun start => completed (child start)) min max cursor (completedResult result)
+  boundedRepeat (fun start => satisfies (child start)) min max cursor (result)
 
 /-- Successful iterations of an unbounded repetition must move forward to a
 normalized position within the input. Other child outcomes are unchanged. -/
-def advancing {α : Type} (input : Slice U8) (child : Cursor → ParseOutcome α → Prop)
-    (cursor : Cursor) (outcome : ParseOutcome α) : Prop :=
+def advancing {α : Type} (input : Slice U8) (child : Cursor → Spec.ParseResult α → Prop)
+    (cursor : Cursor) (outcome : Spec.ParseResult α) : Prop :=
   child cursor outcome ∧ match outcome with
-    | .Success next _ => validCursor input next ∧ position cursor < position next
+    | .Ok (next, _) => validCursor input next ∧ position cursor < position next
     | _ => True
 
 /-- The error on a successful child whose position or count cannot be retained.
@@ -84,57 +79,49 @@ def repeatSuccessError (input : Slice U8) (count : Nat) (before after : Cursor)
 /-- Unbounded repetition stops on a rejected next attempt, never on an implicit
 finite cap. It validates the starting cursor and preserves the full ordered chain
 of advancing successes. Progress and representation failures are fatal. -/
-def unboundedRepetition {α : Type} (input : Slice U8) (child : Cursor → ParseOutcome α → Prop)
-    (min : Nat) (cursor : Cursor) (outcome : ParseOutcome (List α)) : Prop :=
+def unboundedRepetition {α : Type} (input : Slice U8) (child : Cursor → Spec.ParseResult α → Prop)
+    (min : Nat) (cursor : Cursor) (outcome : Spec.ParseResult (List α)) : Prop :=
   if validCursor input cursor then
     match outcome with
-    | .Success next values => min ≤ values.length ∧
+    | .Ok (next, values) => min ≤ values.length ∧
         repetitions (advancing input child) cursor values next ∧
-        ∃ error, recoverable error ∧ child next (.Error error)
-    | .Error error => ∃ (values : List α) (next : Cursor),
+        ∃ error, recoverable error ∧ child next (.Err error)
+    | .Err error => ∃ (values : List α) (next : Cursor),
         values.length ≤ Usize.max ∧
         repetitions (advancing input child) cursor values next ∧
-        ((child next (.Error error) ∧ (values.length < min ∨ ¬recoverable error)) ∨
-          ∃ after value, child next (.Success after value) ∧
+        ((child next (.Err error) ∧ (values.length < min ∨ ¬recoverable error)) ∨
+          ∃ after value, child next (.Ok (after, value)) ∧
             repeatSuccessError input values.length next after error)
-    | .NeedMore => ∃ (values : List α) (next : Cursor),
-        values.length ≤ Usize.max ∧
-        repetitions (advancing input child) cursor values next ∧ child next .NeedMore
-  else outcome = .Error .InvalidCursor
+  else outcome = .Err .InvalidCursor
 
-def unboundedRepeat {α : Type} (input : Slice U8) (child : Cursor → ParseOutcome α → Prop)
-    (min : Nat) (cursor : Cursor) (outcome : ParseOutcome (alloc.vec.Vec α)) : Prop :=
+def unboundedRepeat {α : Type} (input : Slice U8) (child : Cursor → Spec.ParseResult α → Prop)
+    (min : Nat) (cursor : Cursor) (outcome : Spec.ParseResult (alloc.vec.Vec α)) : Prop :=
   unboundedRepetition input child min cursor (collectedValues outcome)
 
 /-- Relate a stored accumulator to the logical sequence of retained child values.
-Errors and incompleteness use exactly the same stopping contract as collection. -/
+Errors use exactly the same stopping contract as collection. -/
 def accumulated {α R : Type} (invariant : List α → R → Prop)
-    (repetition : ParseOutcome (List α) → Prop) (outcome : ParseOutcome R) : Prop :=
+    (repetition : Spec.ParseResult (List α) → Prop) (outcome : Spec.ParseResult R) : Prop :=
   match outcome with
-  | .Success next state => ∃ values, invariant values state ∧ repetition (.Success next values)
-  | .Error error => repetition (.Error error)
-  | .NeedMore => repetition .NeedMore
-
+  | .Ok (next, state) => ∃ values, invariant values state ∧ repetition (.Ok (next, values))
+  | .Err error => repetition (.Err error)
 def unboundedRepeatComplete {α : Type} (input : Slice U8)
     (child : Cursor → ParseResult α → Prop) (min : Nat)
     (cursor : Cursor) (result : ParseResult (alloc.vec.Vec α)) : Prop :=
-  unboundedRepeat input (fun start => completed (child start)) min cursor (completedResult result)
+  unboundedRepeat input (fun start => satisfies (child start)) min cursor (result)
 
 /-- Exact-count repetition either returns the full chain, or propagates an error
-or incompleteness after a strictly shorter successful prefix. Bounds are natural
+after a strictly shorter successful prefix. Bounds are natural
 numbers, and the specification does not depend on a vector's allocation strategy. -/
-def repeatN {α : Type} (child : Cursor → ParseOutcome α → Prop) (count : Nat)
-    (cursor : Cursor) (outcome : ParseOutcome (alloc.vec.Vec α)) : Prop :=
+def repeatN {α : Type} (child : Cursor → Spec.ParseResult α → Prop) (count : Nat)
+    (cursor : Cursor) (outcome : Spec.ParseResult (alloc.vec.Vec α)) : Prop :=
   match outcome with
-  | .Success next values => values.val.length = count ∧ repetitions child cursor values.val next
-  | .Error error => ∃ (values : List α) (next : Cursor), values.length < count ∧
-      repetitions child cursor values next ∧ child next (.Error error)
-  | .NeedMore => ∃ (values : List α) (next : Cursor), values.length < count ∧
-      repetitions child cursor values next ∧ child next .NeedMore
-
-/-- Complete-input specialization: child contracts exclude incompleteness. -/
+  | .Ok (next, values) => values.val.length = count ∧ repetitions child cursor values.val next
+  | .Err error => ∃ (values : List α) (next : Cursor), values.length < count ∧
+      repetitions child cursor values next ∧ child next (.Err error)
+/-- The convenience entry point uses the same child contracts. -/
 def repeatNComplete {α : Type} (child : Cursor → ParseResult α → Prop) (count : Nat)
     (cursor : Cursor) (result : ParseResult (alloc.vec.Vec α)) : Prop :=
-  repeatN (fun start => completed (child start)) count cursor (completedResult result)
+  repeatN (fun start => satisfies (child start)) count cursor (result)
 
 end RustHammer.Spec

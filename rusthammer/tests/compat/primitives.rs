@@ -1,5 +1,5 @@
 // Standalone driver for tools/compare_primitives.py; not part of the library API.
-#[allow(dead_code)]
+#[allow(dead_code, unused_imports)]
 #[path = "../../src/lib.rs"]
 mod rusthammer;
 

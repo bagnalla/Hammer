@@ -1,13 +1,12 @@
 //! Small, experimental parsing core for translation and verification with Aeneas.
 //!
-//! Bit and byte ordering are configurable. Changes of bit direction require
-//! byte-aligned scope boundaries; see [`WithOrder`] for details. Chunk buffering,
-//! recursion, and compiled backends are not implemented.
+//! Parsers execute directly on complete immutable inputs, traversing bits high
+//! first. Byte order is configurable through [`WithByteOrder`]. MAVLink 2 packet
+//! parsing is the initial target application; see `examples/mavlink.rs`.
 //!
 //! Build concrete grammar nodes with [`seq`], [`choice`], [`optional`], [`map`],
 //! [`try_map`], [`verify`], and [`bind`]. These functions store their arguments;
-//! parsing and callbacks run only when the grammar is evaluated. Construction
-//! does not select a backend or require direct parsing support.
+//! parsing and callbacks run only when a [`Parser`] entry point is called.
 //! All grammar primitives and combinators are grouped in [`grammar`]; their
 //! crate-root exports are also available for convenient imports.
 //!
@@ -45,21 +44,17 @@ mod input_types;
 mod parser_traits;
 mod span_types;
 
-pub use input_types::{
-    BitOrder, ByteOrder, ConfigError, Cursor, InputStatus, Order, ParseContext, ParseError,
-    ParseOutcome,
-};
-pub use parser_traits::{Direct, Eval, Grammar, Parser};
+pub use input_types::{ByteOrder, ConfigError, Cursor, ParseError};
+pub use parser_traits::Parser;
 pub use span_types::BitSpan;
 
 // Keep crate-root imports available alongside the grammar namespace.
 pub use grammar::{
-    bind, choice, map, optional, permutation, read_bit, read_bits, required, seq, take_aligned,
-    try_map, verify, And, BeI16, BeI32, BeI64, BeU16, BeU32, BeU64, Bind, Bit, Bits, ButNot, Byte,
-    ByteIn, ByteNotIn, BytePattern, Choice, Difference, End, Epsilon, Fail, FoldRepeat, FoldSepBy,
-    Ignore, IntRange, Left, Literal, Map, Middle, Not, Optional, Permutation, Recognize, Required,
-    Right, Seek, Seq, SignedBits, SkipBits, TakeAligned, Tell, TryMap, Verify, WithOrder, WithSpan,
-    Xor, I8,
+    bind, choice, map, optional, read_bit, read_bits, seq, take_aligned, try_map, verify, And,
+    BeI16, BeI32, BeI64, BeU16, BeU32, BeU64, Bind, Bit, Bits, ButNot, Byte, ByteIn, ByteNotIn,
+    BytePattern, Choice, Difference, End, Epsilon, Fail, FoldRepeat, FoldSepBy, Ignore, IntRange,
+    Left, Literal, Map, Middle, Not, Optional, Recognize, Right, Seq, SignedBits, SkipBits,
+    TakeAligned, Tell, TryMap, Verify, WithByteOrder, WithSpan, Xor, I8,
 };
 #[cfg(feature = "alloc")]
 pub use grammar::{Repeat, SepBy};
@@ -70,11 +65,6 @@ pub use grammar::{Repeat, SepBy};
 #[allow(dead_code)] // Entry points are reached by Charon, not by Rust library calls.
 #[path = "../examples/support/dependent.rs"]
 mod dependent_examples;
-
-#[cfg(rusthammer_verify)]
-#[allow(dead_code)]
-#[path = "../examples/support/offset.rs"]
-mod offset_example;
 
 #[cfg(rusthammer_verify)]
 #[allow(dead_code)]

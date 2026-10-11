@@ -1,5 +1,5 @@
 import RustHammer.SignedBitsSpec
-import RustHammer.PartialProofs
+import RustHammer.ParserProofs
 
 open RustHammer.Code.grammar.numeric
   RustHammer.Code.input_types
@@ -80,53 +80,49 @@ theorem sign_extend_spec (value : U64) (width : U8)
       simp only [Spec.signedValue, if_neg hnonzero, if_neg hlarge]
       omega
 
-private theorem primitive_ok {α : Type} (status : InputStatus) (next : Cursor) (value : α) :
-    Partial.primitiveResult status (.Ok (next, value)) = .Success next value := by
-  cases status <;> rfl
-
 /-- Total signed decoding reuses the unsigned field's safety and termination proof. -/
-theorem signed_bits_with_spec (parser : SignedBits) (input : Slice U8) (cursor : Cursor)
-    (status : InputStatus) (hconfig : Spec.validSignedBits parser) :
-    SignedBits.Insts.RusthammerParserInputI64.parse_with parser input cursor (Spec.defaultContext status)
-      ⦃ result => Partial.primitive status (Spec.signedBitsOutcome input cursor parser.bits.width) result ⦄ := by
-  rw [SignedBits.Insts.RusthammerParserInputI64.parse_with_eq]
-  step with bits_with_spec parser.bits input cursor status hconfig as ⟨outcome, houtcome⟩
-  rcases houtcome with ⟨parsed, hparsed, rfl⟩
+theorem signed_bits_with_spec (parser : SignedBits) (input : Slice U8) (cursor : Cursor) (hconfig : Spec.validSignedBits parser) :
+    SignedBits.Insts.RusthammerParser_traitsParserInputI64.parse_with parser input cursor ByteOrder.Big
+      ⦃ result => Contracts.primitive (Spec.signedBitsOutcome input cursor parser.bits.width) result ⦄ := by
+  rw [SignedBits.Insts.RusthammerParser_traitsParserInputI64.parse_with]
+  step with bits_with_spec parser.bits input cursor hconfig as ⟨outcome, houtcome⟩
+  rcases houtcome with ⟨parsed, hparsed, heq⟩
+  subst outcome
   by_cases hvalid : Spec.validCursor input cursor
   · by_cases hfit : Spec.position cursor + parser.bits.width.val ≤ 8 * input.val.length
     · simp only [Spec.bitsOutcome, if_pos hvalid, if_pos hfit] at hparsed
       rcases hparsed with ⟨next, value, rfl, hnext, hpos, hvalue⟩
-      rw [primitive_ok]
+
       step with sign_extend_spec value parser.bits.width hconfig
         (by rw [hvalue]; exact unsignedBits_lt_pow _ _ _) as ⟨signed, hsigned⟩
-      refine ⟨.Ok (next, signed), ?_, (primitive_ok status next signed).symm⟩
+      refine ⟨.Ok (next, signed), ?_, rfl⟩
       simp only [Spec.signedBitsOutcome, if_pos hvalid, if_pos hfit]
       exact ⟨next, signed, rfl, hnext, hpos, by simpa [hvalue] using hsigned⟩
     · have heq : parsed = .Err .UnexpectedEnd := by
         simpa only [Spec.bitsOutcome, if_pos hvalid, if_neg hfit] using hparsed
       subst parsed
-      cases status <;> simp only [Partial.primitiveResult, Spec.completedResult, spec_ok]
+      simp only [spec_ok]
       all_goals exact ⟨.Err .UnexpectedEnd,
         by simp only [Spec.signedBitsOutcome, if_pos hvalid, if_neg hfit], rfl⟩
   · have heq : parsed = .Err .InvalidCursor := by
       simpa only [Spec.bitsOutcome, if_neg hvalid] using hparsed
     subst parsed
-    cases status <;> simp only [Partial.primitiveResult, Spec.completedResult, spec_ok]
+    simp only [spec_ok]
     all_goals exact ⟨.Err .InvalidCursor,
       by simp only [Spec.signedBitsOutcome, if_neg hvalid], rfl⟩
 
 theorem signed_bits_final_spec (parser : SignedBits) (input : Slice U8) (cursor : Cursor)
     (hconfig : Spec.validSignedBits parser) :
-    SignedBits.Insts.RusthammerParserInputI64.parse_with parser input cursor ParseContext.FINAL
-      ⦃ result => Spec.completed (Spec.signedBitsOutcome input cursor parser.bits.width) result ⦄ := by
-  simpa only [ParseContext.FINAL, Partial.primitive, Partial.primitiveResult, Spec.completed] using
-    signed_bits_with_spec parser input cursor .Final hconfig
+    SignedBits.Insts.RusthammerParser_traitsParserInputI64.parse_with parser input cursor ByteOrder.Big
+      ⦃ result => Spec.satisfies (Spec.signedBitsOutcome input cursor parser.bits.width) result ⦄ := by
+  simpa only [ByteOrder.Big, Contracts.primitive, Spec.satisfies] using
+    signed_bits_with_spec parser input cursor hconfig
 
 theorem signed_bits_spec (parser : SignedBits) (input : Slice U8) (cursor : Cursor)
     (hconfig : Spec.validSignedBits parser) :
-    DirectParser.parse SignedBits.Insts.RusthammerParserInputI64 parser input cursor
+    parser_traits.Parser.parse.default SignedBits.Insts.RusthammerParser_traitsParserInputI64 parser input cursor
       ⦃ result => Spec.signedBitsOutcome input cursor parser.bits.width result ⦄ := by
-  exact complete_spec SignedBits.Insts.RusthammerParserInputI64 parser input cursor
+  exact complete_spec SignedBits.Insts.RusthammerParser_traitsParserInputI64 parser input cursor
     (Spec.signedBitsOutcome input cursor parser.bits.width) (signed_bits_final_spec parser input cursor hconfig)
 
 /-- Nonempty fields use precisely the signed range for their bit width. -/

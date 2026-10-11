@@ -2,9 +2,7 @@
 mod mavlink;
 
 use mavlink::{heartbeat_crc_extra, mavlink_v2, Header, HEARTBEAT_FRAME};
-use rusthammer::{
-    BitOrder, ByteOrder, Cursor, End, Left, Order, ParseContext, ParseError, ParseOutcome, Parser,
-};
+use rusthammer::{ByteOrder, Cursor, End, Left, ParseError, Parser};
 
 #[test]
 fn heartbeat_matches_reference_crc_and_borrows_payload() {
@@ -31,22 +29,19 @@ fn heartbeat_matches_reference_crc_and_borrows_payload() {
 }
 
 #[test]
-fn every_truncated_prefix_waits_only_when_input_is_partial() {
+fn every_truncated_prefix_returns_unexpected_end() {
     let parser = mavlink_v2(heartbeat_crc_extra);
     for end in 0..HEARTBEAT_FRAME.len() {
         let input = &HEARTBEAT_FRAME[..end];
-        assert_eq!(
-            parser.parse_with(input, Cursor::start(), ParseContext::PARTIAL),
-            ParseOutcome::NeedMore
-        );
+
         assert_eq!(
             parser.parse(input, Cursor::start()),
             Err(ParseError::UnexpectedEnd)
         );
     }
     assert!(matches!(
-        parser.parse_with(&HEARTBEAT_FRAME, Cursor::start(), ParseContext::PARTIAL),
-        ParseOutcome::Success(Cursor { byte: 21, bit: 0 }, _)
+        parser.parse_with(&HEARTBEAT_FRAME, Cursor::start(), ByteOrder::Big),
+        Ok((Cursor { byte: 21, bit: 0 }, _))
     ));
 }
 
@@ -77,16 +72,16 @@ fn corruption_unknown_messages_and_unsupported_flags_are_rejected() {
     for flag in [1, 2, 0x80, 0xff] {
         let input = [0xfd, 9, flag];
         assert_eq!(
-            parser.parse_with(&input, Cursor::start(), ParseContext::PARTIAL),
-            ParseOutcome::Error(ParseError::Mismatch)
+            parser.parse_with(&input, Cursor::start(), ByteOrder::Big),
+            Err(ParseError::Mismatch)
         );
     }
     for index in [5, 6] {
         let mut bad = HEARTBEAT_FRAME;
         bad[index] = 0;
         assert_eq!(
-            parser.parse_with(&bad[..=index], Cursor::start(), ParseContext::PARTIAL),
-            ParseOutcome::Error(ParseError::Mismatch)
+            parser.parse_with(&bad[..=index], Cursor::start(), ByteOrder::Big),
+            Err(ParseError::Mismatch)
         );
     }
 }
@@ -127,18 +122,11 @@ fn alignment_is_checked_and_wire_order_is_independent_of_the_caller() {
         parser.parse(&HEARTBEAT_FRAME, Cursor { byte: 22, bit: 0 }),
         Err(ParseError::InvalidCursor)
     );
-    let expected = parser.parse_with(&HEARTBEAT_FRAME, Cursor::start(), ParseContext::FINAL);
-    for bit in [BitOrder::HighFirst, BitOrder::LowFirst] {
+    let expected = parser.parse_with(&HEARTBEAT_FRAME, Cursor::start(), ByteOrder::Big);
+    {
         for byte in [ByteOrder::Big, ByteOrder::Little] {
             assert_eq!(
-                parser.parse_with(
-                    &HEARTBEAT_FRAME,
-                    Cursor::start(),
-                    ParseContext {
-                        order: Order { bit, byte },
-                        ..ParseContext::FINAL
-                    },
-                ),
+                parser.parse_with(&HEARTBEAT_FRAME, Cursor::start(), byte,),
                 expected
             );
         }

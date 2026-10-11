@@ -1,25 +1,19 @@
-use super::{BitOrder, Cursor, ParseError};
+use super::{Cursor, ParseError};
 
 /// A validated region of the original input, including partial boundary bytes.
 ///
-/// Positions count bits consumed from the end of each byte selected by
-/// `bit_order`. The span retains that direction after parsing returns. It
-/// identifies source bits, not the field grouping or internal ordering scopes
-/// used to decode them. Byte order does not affect the source region.
-///
+/// Positions count high-first bits. Byte order does not affect the source region.
 /// Both endpoints are normalized, within `input`, and in forward order; equal
 /// endpoints describe an empty span. Fields are private to preserve those bounds.
-/// Use [`Self::as_bytes`] for a borrowed byte view when both endpoints are aligned.
-/// Partial-byte spans expose their input, positions, and direction instead.
-/// No absolute machine-sized bit count is needed.
-/// When a parser seeks, its span still describes only this endpoint interval;
-/// it does not record the positions visited or the number of reads performed.
+/// Use [`Self::as_bytes`] for a borrowed view when both endpoints are aligned.
+/// Partial-byte spans expose their input and positions. No absolute machine-sized
+/// bit count is needed. The interval includes skipped input; it does not record
+/// speculative reads performed by lookahead or rejected alternatives.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct BitSpan<'input> {
     input: &'input [u8],
     start: Cursor,
     end: Cursor,
-    bit_order: BitOrder,
 }
 
 pub(crate) fn span_cursor_valid(length: usize, cursor: Cursor) -> bool {
@@ -29,24 +23,14 @@ pub(crate) fn span_cursor_valid(length: usize, cursor: Cursor) -> bool {
 impl<'input> BitSpan<'input> {
     /// Validate a region. Invalid endpoints yield `InvalidCursor` before checking
     /// for a backward span (`NonProgress`). Empty and unaligned spans are valid.
-    pub fn new(
-        input: &'input [u8],
-        start: Cursor,
-        end: Cursor,
-        bit_order: BitOrder,
-    ) -> Result<Self, ParseError> {
+    pub fn new(input: &'input [u8], start: Cursor, end: Cursor) -> Result<Self, ParseError> {
         if !span_cursor_valid(input.len(), start) || !span_cursor_valid(input.len(), end) {
             return Err(ParseError::InvalidCursor);
         }
         if end.byte < start.byte || (end.byte == start.byte && end.bit < start.bit) {
             return Err(ParseError::NonProgress);
         }
-        Ok(Self {
-            input,
-            start,
-            end,
-            bit_order,
-        })
+        Ok(Self { input, start, end })
     }
 
     /// The complete input buffer from which this region was selected.
@@ -60,11 +44,6 @@ impl<'input> BitSpan<'input> {
 
     pub const fn end(&self) -> Cursor {
         self.end
-    }
-
-    /// Direction used to identify the selected bits in partial boundary bytes.
-    pub const fn bit_order(&self) -> BitOrder {
-        self.bit_order
     }
 
     pub fn is_empty(&self) -> bool {

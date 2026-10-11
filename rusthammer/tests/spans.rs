@@ -1,9 +1,8 @@
 use std::cell::Cell;
 
 use rusthammer::{
-    And, BeU16, BitOrder, BitSpan, Bits, ByteOrder, BytePattern, Cursor, Epsilon, Eval, Grammar,
-    Order, ParseContext, ParseError, ParseOutcome, Parser, Recognize, Seq, SkipBits, TakeAligned,
-    WithOrder, WithSpan,
+    And, BeU16, BitSpan, Bits, ByteOrder, BytePattern, Cursor, Epsilon, ParseError, Parser,
+    Recognize, Seq, SkipBits, TakeAligned, WithByteOrder, WithSpan,
 };
 
 fn pos(bit: usize) -> Cursor {
@@ -25,70 +24,56 @@ fn constructor_checks_all_small_bounds_and_preserves_original_views() {
         .collect();
     for start in &cursors {
         for end in &cursors {
-            for order in [BitOrder::HighFirst, BitOrder::LowFirst] {
-                let valid = |c: &Cursor| {
-                    c.bit < 8 && (c.byte < input.len() || (c.byte == input.len() && c.bit == 0))
-                };
-                let result = BitSpan::new(&input, *start, *end, order);
-                if !valid(start) || !valid(end) {
-                    assert_eq!(result, Err(ParseError::InvalidCursor));
-                } else if (end.byte, end.bit) < (start.byte, start.bit) {
-                    assert_eq!(result, Err(ParseError::NonProgress));
+            let valid = |c: &Cursor| {
+                c.bit < 8 && (c.byte < input.len() || (c.byte == input.len() && c.bit == 0))
+            };
+            let result = BitSpan::new(&input, *start, *end);
+            if !valid(start) || !valid(end) {
+                assert_eq!(result, Err(ParseError::InvalidCursor));
+            } else if (end.byte, end.bit) < (start.byte, start.bit) {
+                assert_eq!(result, Err(ParseError::NonProgress));
+            } else {
+                let span = result.unwrap();
+                assert_eq!(span.start(), *start);
+                assert_eq!(span.end(), *end);
+
+                assert!(std::ptr::eq(span.input(), input.as_slice()));
+                assert_eq!(span.is_empty(), start == end);
+                if start.bit == 0 && end.bit == 0 {
+                    let bytes = span.as_bytes().unwrap();
+                    assert!(std::ptr::eq(bytes, &input[start.byte..end.byte]));
                 } else {
-                    let span = result.unwrap();
-                    assert_eq!(span.start(), *start);
-                    assert_eq!(span.end(), *end);
-                    assert_eq!(span.bit_order(), order);
-                    assert!(std::ptr::eq(span.input(), input.as_slice()));
-                    assert_eq!(span.is_empty(), start == end);
-                    if start.bit == 0 && end.bit == 0 {
-                        let bytes = span.as_bytes().unwrap();
-                        assert!(std::ptr::eq(bytes, &input[start.byte..end.byte]));
-                    } else {
-                        assert_eq!(span.as_bytes(), None);
-                    }
+                    assert_eq!(span.as_bytes(), None);
                 }
             }
         }
     }
-    let empty = BitSpan::new(&[], Cursor::start(), Cursor::start(), BitOrder::LowFirst).unwrap();
+    let empty = BitSpan::new(&[], Cursor::start(), Cursor::start()).unwrap();
     assert!(empty.is_empty());
     assert_eq!(empty.as_bytes(), Some([].as_slice()));
 }
 
 #[test]
-fn wrappers_agree_on_region_for_every_bit_range_order_and_finality() {
+fn wrappers_agree_on_region_for_every_bit_range_and_byte_order() {
     let input = [0x96, 0x53, 0xe1];
     for start in 0..=24 {
         for end in start..=24 {
-            for bit in [BitOrder::HighFirst, BitOrder::LowFirst] {
-                for byte in [ByteOrder::Big, ByteOrder::Little] {
-                    for status in [
-                        rusthammer::InputStatus::Partial,
-                        rusthammer::InputStatus::Final,
-                    ] {
-                        let ctx = ParseContext {
-                            order: Order { bit, byte },
-                            status,
-                        };
-                        let parser = Bits::new((end - start) as u8).unwrap();
-                        let span = BitSpan::new(&input, pos(start), pos(end), bit).unwrap();
-                        let ParseOutcome::Success(next, value) =
-                            parser.parse_with(&input, pos(start), ctx)
-                        else {
-                            panic!("valid field rejected");
-                        };
-                        assert_eq!(next, pos(end));
-                        assert_eq!(
-                            WithSpan { parser }.parse_with(&input, pos(start), ctx),
-                            ParseOutcome::Success(next, (value, span))
-                        );
-                        assert_eq!(
-                            Recognize { parser }.parse_with(&input, pos(start), ctx),
-                            ParseOutcome::Success(next, span)
-                        );
-                    }
-                }
+            for byte in [ByteOrder::Big, ByteOrder::Little] {
+                let ctx = byte;
+                let parser = Bits::new((end - start) as u8).unwrap();
+                let span = BitSpan::new(&input, pos(start), pos(end)).unwrap();
+                let Ok((next, value)) = parser.parse_with(&input, pos(start), ctx) else {
+                    panic!("valid field rejected");
+                };
+                assert_eq!(next, pos(end));
+                assert_eq!(
+                    WithSpan { parser }.parse_with(&input, pos(start), ctx),
+                    Ok((next, (value, span)))
+                );
+                assert_eq!(
+                    Recognize { parser }.parse_with(&input, pos(start), ctx),
+                    Ok((next, span))
+                );
             }
         }
     }
@@ -104,14 +89,8 @@ fn byte_view_outlives_parser_and_span_and_keeps_original_order() {
         span.as_bytes().unwrap()
     };
     assert!(std::ptr::eq(bytes, &input[..2]));
-    let ctx = ParseContext {
-        order: Order {
-            bit: BitOrder::LowFirst,
-            byte: ByteOrder::Little,
-        },
-        ..ParseContext::FINAL
-    };
-    let ParseOutcome::Success(_, span) = (Recognize {
+    let ctx = ByteOrder::Little;
+    let Ok((_, span)) = (Recognize {
         parser: Bits::new(16).unwrap(),
     })
     .parse_with(&input, Cursor::start(), ctx) else {
@@ -121,15 +100,12 @@ fn byte_view_outlives_parser_and_span_and_keeps_original_order() {
 }
 
 #[test]
-fn escaped_partial_span_remembers_inner_direction_and_nested_scopes() {
+fn partial_byte_spans_preserve_endpoints_across_nested_byte_order_scopes() {
     let input = [0x96, 0x53, 0xe1];
     let parser = WithSpan {
         parser: Seq {
-            first: WithOrder {
-                order: Order {
-                    bit: BitOrder::LowFirst,
-                    byte: ByteOrder::Little,
-                },
+            first: WithByteOrder {
+                byte_order: ByteOrder::Little,
                 parser: Seq {
                     first: WithSpan {
                         parser: Bits::new(3).unwrap(),
@@ -144,13 +120,13 @@ fn escaped_partial_span_remembers_inner_direction_and_nested_scopes() {
     };
     let (_, ((((value, inner), ()), (following, tail)), outer)) =
         parser.parse(&input, Cursor::start()).unwrap();
-    assert_eq!(value, 6);
-    assert_eq!(inner.bit_order(), BitOrder::LowFirst);
+    assert_eq!(value, 4);
+
     assert_eq!((inner.start(), inner.end()), (pos(0), pos(3)));
     assert_eq!(following, 2);
-    assert_eq!(tail.bit_order(), BitOrder::HighFirst);
+
     assert_eq!((tail.start(), tail.end()), (pos(8), pos(11)));
-    assert_eq!(outer.bit_order(), BitOrder::HighFirst);
+
     assert_eq!((outer.start(), outer.end()), (pos(0), pos(11)));
     assert_eq!(outer.as_bytes(), None);
 }
@@ -180,11 +156,11 @@ fn configuration_and_input_borrows_are_independent() {
 fn lookahead_and_empty_children_report_consumption_not_inspection() {
     let input = [0x96];
     for cursor in [pos(0), pos(3), pos(8)] {
-        for ctx in [ParseContext::PARTIAL, ParseContext::FINAL] {
-            let expected = BitSpan::new(&input, cursor, cursor, ctx.order.bit).unwrap();
+        for ctx in [ByteOrder::Big] {
+            let expected = BitSpan::new(&input, cursor, cursor).unwrap();
             assert_eq!(
                 (Recognize { parser: Epsilon }).parse_with(&input, cursor, ctx),
-                ParseOutcome::Success(cursor, expected)
+                Ok((cursor, expected))
             );
         }
     }
@@ -197,20 +173,15 @@ fn lookahead_and_empty_children_report_consumption_not_inspection() {
 }
 
 #[test]
-fn incomplete_retry_returns_a_span_of_the_new_buffer() {
+fn truncated_input_retry_returns_a_span_of_the_new_buffer() {
     let parser = WithSpan { parser: BeU16 };
-    assert_eq!(
-        parser.parse_with(&[0x12], pos(0), ParseContext::PARTIAL),
-        ParseOutcome::NeedMore
-    );
+
     assert_eq!(
         parser.parse(&[0x12], pos(0)),
         Err(ParseError::UnexpectedEnd)
     );
     let accumulated = [0x12, 0x34];
-    let ParseOutcome::Success(_, (value, span)) =
-        parser.parse_with(&accumulated, pos(0), ParseContext::PARTIAL)
-    else {
+    let Ok((_, (value, span))) = parser.parse_with(&accumulated, pos(0), ByteOrder::Big) else {
         panic!()
     };
     assert_eq!(value, 0x1234);
@@ -218,7 +189,7 @@ fn incomplete_retry_returns_a_span_of_the_new_buffer() {
 }
 
 #[derive(Default)]
-struct Trace(Vec<(Cursor, ParseContext)>);
+struct Trace(std::cell::RefCell<Vec<(Cursor, ByteOrder)>>);
 
 struct Dropped<'a>(&'a Cell<usize>);
 
@@ -228,58 +199,51 @@ impl Drop for Dropped<'_> {
     }
 }
 
-// Only supports this stateful backend. Its output is neither Clone nor Copy.
+// Records calls inside the custom child. Its output is neither Clone nor Copy.
 #[derive(Clone, Copy)]
 struct Script<'a> {
-    outcome: &'a ParseOutcome<()>,
+    trace: &'a Trace,
+    outcome: &'a Result<(Cursor, ()), ParseError>,
     drops: &'a Cell<usize>,
 }
 
-impl<'input, 'a> Grammar<'input> for Script<'a> {
+impl<'input, 'a> Parser<'input> for Script<'a> {
     type Output = Dropped<'a>;
-}
 
-impl<'input> Eval<'input, Trace> for Script<'_> {
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Trace,
         _: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
-        backend.0.push((cursor, context));
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
+        self.trace.0.borrow_mut().push((cursor, byte_order));
         match *self.outcome {
-            ParseOutcome::Success(next, ()) => ParseOutcome::Success(next, Dropped(self.drops)),
-            ParseOutcome::Error(error) => ParseOutcome::Error(error),
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+            Ok(parsed) => {
+                let (next, ()) = parsed;
+                Ok((next, Dropped(self.drops)))
+            }
+            Err(error) => Err(error),
         }
     }
 }
 
 #[test]
-fn validation_propagation_backend_effects_and_output_drop() {
+fn validation_propagation_child_effects_and_output_drop() {
     let input = [0x96];
-    let ctx = ParseContext {
-        order: Order {
-            bit: BitOrder::LowFirst,
-            byte: ByteOrder::Little,
-        },
-        ..ParseContext::PARTIAL
-    };
+    let ctx = ByteOrder::Little;
     let outcomes = [
-        ParseOutcome::Success(pos(4), ()),
-        ParseOutcome::Success(pos(3), ()),
-        ParseOutcome::Success(pos(2), ()),
-        ParseOutcome::Success(pos(9), ()),
-        ParseOutcome::Success(Cursor { byte: 0, bit: 8 }, ()),
-        ParseOutcome::NeedMore,
-        ParseOutcome::Error(ParseError::Mismatch),
-        ParseOutcome::Error(ParseError::UnexpectedEnd),
-        ParseOutcome::Error(ParseError::Unaligned),
-        ParseOutcome::Error(ParseError::NonProgress),
-        ParseOutcome::Error(ParseError::InvalidCursor),
-        ParseOutcome::Error(ParseError::TrailingInput),
-        ParseOutcome::Error(ParseError::CountOverflow),
+        Ok((pos(4), ())),
+        Ok((pos(3), ())),
+        Ok((pos(2), ())),
+        Ok((pos(9), ())),
+        Ok((Cursor { byte: 0, bit: 8 }, ())),
+        Err(ParseError::Mismatch),
+        Err(ParseError::UnexpectedEnd),
+        Err(ParseError::Unaligned),
+        Err(ParseError::NonProgress),
+        Err(ParseError::InvalidCursor),
+        Err(ParseError::TrailingInput),
+        Err(ParseError::CountOverflow),
     ];
     for outcome in &outcomes {
         for start in [
@@ -291,52 +255,49 @@ fn validation_propagation_backend_effects_and_output_drop() {
             },
         ] {
             let drops = Cell::new(0);
+            let trace = Trace::default();
             let parser = Script {
+                trace: &trace,
                 outcome,
                 drops: &drops,
             };
-            let mut trace = Trace::default();
             let copied = WithSpan { parser };
             let _copy = copied;
-            let result = copied.eval(&mut trace, &input, start, ctx);
+            let result = copied.parse_with(&input, start, ctx);
             let expected = if start != pos(3) {
-                assert!(trace.0.is_empty());
-                ParseOutcome::Error(ParseError::InvalidCursor)
+                assert!(trace.0.borrow().is_empty());
+                Err(ParseError::InvalidCursor)
             } else {
-                assert_eq!(trace.0, [(start, ctx)]);
+                assert_eq!(*trace.0.borrow(), [(start, ctx)]);
                 match *outcome {
-                    ParseOutcome::Success(end, ()) => {
-                        match BitSpan::new(&input, start, end, ctx.order.bit) {
-                            Ok(span) => ParseOutcome::Success(end, span),
-                            Err(error) => ParseOutcome::Error(error),
+                    Ok(parsed) => {
+                        let (end, ()) = parsed;
+                        match BitSpan::new(&input, start, end) {
+                            Ok(span) => Ok((end, span)),
+                            Err(error) => Err(error),
                         }
                     }
-                    ParseOutcome::Error(error) => ParseOutcome::Error(error),
-                    ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+                    Err(error) => Err(error),
                 }
             };
             let projected = match result {
-                ParseOutcome::Success(end, (value, span)) => {
+                Ok(parsed) => {
+                    let (end, (value, span)) = parsed;
                     assert_eq!(drops.get(), 0);
                     drop(value);
-                    ParseOutcome::Success(end, span)
+                    Ok((end, span))
                 }
-                ParseOutcome::Error(error) => ParseOutcome::Error(error),
-                ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+                Err(error) => Err(error),
             };
             assert_eq!(projected, expected);
-            let produced =
-                usize::from(start == pos(3) && matches!(outcome, ParseOutcome::Success(..)));
+            let produced = usize::from(start == pos(3) && matches!(outcome, Ok((..))));
             assert_eq!(drops.get(), produced);
             drops.set(0);
-            let mut second_trace = Trace::default();
+            trace.0.borrow_mut().clear();
             let recognized = Recognize { parser };
             let _copy = recognized;
-            assert_eq!(
-                recognized.eval(&mut second_trace, &input, start, ctx),
-                expected
-            );
-            assert_eq!(second_trace.0, trace.0);
+            assert_eq!(recognized.parse_with(&input, start, ctx), expected);
+            assert_eq!(trace.0.borrow().len(), usize::from(start == pos(3)));
             assert_eq!(drops.get(), produced);
         }
     }

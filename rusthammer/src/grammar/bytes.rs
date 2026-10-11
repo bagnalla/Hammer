@@ -1,4 +1,4 @@
-use super::super::{Byte, Cursor, Eval, Grammar, ParseContext, ParseError, ParseOutcome, Verify};
+use super::super::{Byte, ByteOrder, Cursor, ParseError, Parser, Verify};
 
 /// Fixed bitmap over the byte domain, shared by inclusion and exclusion.
 #[derive(Clone, Copy)]
@@ -35,7 +35,7 @@ impl ByteSet {
 /// Parsing delegates to `Verify` over `Byte`, returning the decoded `u8` and
 /// consuming eight bits on success, even from an unaligned cursor. A decoded
 /// nonmember returns `Mismatch`. Invalid cursors and short input follow `Byte`'s
-/// rules, including `NeedMore` on partial input, even when the set is empty.
+/// rules, even when the set is empty.
 /// The output does not borrow the set, input, or parser.
 ///
 /// ```
@@ -68,23 +68,20 @@ impl ByteIn {
     }
 }
 
-impl<'input> Grammar<'input> for ByteIn {
+impl<'input> Parser<'input> for ByteIn {
     type Output = u8;
-}
 
-impl<'input, Backend> Eval<'input, Backend> for ByteIn {
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<u8> {
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, u8), ParseError> {
         Verify {
             parser: Byte,
             predicate: |value: &u8| self.accepts(*value),
         }
-        .eval(backend, input, cursor, context)
+        .parse_with(input, cursor, byte_order)
     }
 }
 
@@ -94,8 +91,7 @@ impl<'input, Backend> Eval<'input, Backend> for ByteIn {
 /// and allocation-free, and parsing uses `Verify` over `Byte`. A decoded member
 /// returns `Mismatch`; success returns the decoded `u8` and consumes eight bits
 /// without implicit alignment. An empty exclusion set accepts any decoded byte.
-/// Short input still returns `NeedMore` on partial input or `UnexpectedEnd` on
-/// final input. The output does not borrow the set, input, or parser.
+/// Short input returns `UnexpectedEnd`. The output does not borrow the set, input, or parser.
 /// Construction scans the slice once into an owned 32-byte bitmap; membership
 /// takes constant time. The parser does not borrow the slice or preserve its
 /// order and duplicates. Copying a parser copies its bitmap.
@@ -131,23 +127,20 @@ impl ByteNotIn {
     }
 }
 
-impl<'input> Grammar<'input> for ByteNotIn {
+impl<'input> Parser<'input> for ByteNotIn {
     type Output = u8;
-}
 
-impl<'input, Backend> Eval<'input, Backend> for ByteNotIn {
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<u8> {
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, u8), ParseError> {
         Verify {
             parser: Byte,
             predicate: |value: &u8| self.accepts(*value),
         }
-        .eval(backend, input, cursor, context)
+        .parse_with(input, cursor, byte_order)
     }
 }
 
@@ -159,8 +152,7 @@ impl<'input, Backend> Eval<'input, Backend> for ByteNotIn {
 /// An empty pattern succeeds without reading input or validating the cursor.
 ///
 /// Bytes are compared in order: a complete differing byte rejects immediately.
-/// A missing or incomplete byte returns `NeedMore` on partial input and
-/// `UnexpectedEnd` on final input, even if its available bits already differ.
+/// A missing or incomplete byte returns `UnexpectedEnd`, even if its available bits already differ.
 ///
 /// ```
 /// use rusthammer::{BytePattern, Cursor, Parser};
@@ -188,52 +180,50 @@ impl<'pattern> BytePattern<'pattern> {
     }
 }
 
-impl<'input, 'pattern> Grammar<'input> for BytePattern<'pattern> {
+impl<'input, 'pattern> Parser<'input> for BytePattern<'pattern> {
     type Output = &'pattern [u8];
-}
 
-impl<'input, 'pattern, Backend> Eval<'input, Backend> for BytePattern<'pattern> {
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
         // Keep the returned pattern borrow outside the matching loop. The pinned
         // Aeneas cannot join the loop's borrow contexts when it returns the slice.
         // See probes/pattern_loop_borrow.rs and the accompanying probe notes.
-        match match_byte_pattern(backend, self.pattern, input, cursor, context) {
-            ParseOutcome::Success(next, ()) => ParseOutcome::Success(next, self.pattern),
-            ParseOutcome::Error(error) => ParseOutcome::Error(error),
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+        match match_byte_pattern(self.pattern, input, cursor, byte_order) {
+            Ok(parsed) => {
+                let (next, ()) = parsed;
+                Ok((next, self.pattern))
+            }
+            Err(error) => Err(error),
         }
     }
 }
 
-fn match_byte_pattern<Backend>(
-    backend: &mut Backend,
+fn match_byte_pattern(
     pattern: &[u8],
     input: &[u8],
     cursor: Cursor,
-    context: ParseContext,
-) -> ParseOutcome<()> {
+    byte_order: ByteOrder,
+) -> Result<(Cursor, ()), ParseError> {
     let mut next = cursor;
     let mut index = 0;
     while index < pattern.len() {
-        match Byte.eval(backend, input, next, context) {
-            ParseOutcome::Success(after, value) => {
+        match Byte.parse_with(input, next, byte_order) {
+            Ok(parsed) => {
+                let (after, value) = parsed;
                 if value != pattern[index] {
-                    return ParseOutcome::Error(ParseError::Mismatch);
+                    return Err(ParseError::Mismatch);
                 }
                 next = after;
                 index += 1;
             }
-            ParseOutcome::Error(error) => return ParseOutcome::Error(error),
-            ParseOutcome::NeedMore => return ParseOutcome::NeedMore,
+            Err(error) => return Err(error),
         }
     }
-    ParseOutcome::Success(next, ())
+    Ok((next, ()))
 }
 
 /// Borrow an explicitly byte-aligned payload without copying.
@@ -245,21 +235,16 @@ pub struct TakeAligned {
     pub count: usize,
 }
 
-impl<'input> Grammar<'input> for TakeAligned {
+impl<'input> Parser<'input> for TakeAligned {
     type Output = &'input [u8];
-}
 
-impl<'input, Backend> Eval<'input, Backend> for TakeAligned {
-    fn eval(
+    fn parse_with(
         &self,
-        _: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
-        context
-            .status
-            .classify(take_aligned(input, cursor, self.count))
+        _: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
+        take_aligned(input, cursor, self.count)
     }
 }
 

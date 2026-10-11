@@ -21,42 +21,35 @@ noncomputable section
 open Classical
 
 /-- Invalid endpoints take precedence over backward consumption. -/
-def checked (input : Slice U8) (start finish : Cursor) (order : BitOrder) :
+def checked (input : Slice U8) (start finish : Cursor) :
     core.result.Result BitSpan ParseError :=
   if validCursor input.val.length start ∧ validCursor input.val.length finish then
-    if Spec.position start ≤ Spec.position finish then .Ok ⟨input, start, finish, order⟩
+    if Spec.position start ≤ Spec.position finish then .Ok ⟨input, start, finish⟩
     else .Err .NonProgress
   else .Err .InvalidCursor
 
-def attach {α : Type} (input : Slice U8) (start : Cursor) (order : BitOrder)
-    (child : ParseOutcome α) : ParseOutcome (α × BitSpan) :=
+def attach {α : Type} (input : Slice U8) (start : Cursor)
+    (child : Spec.ParseResult α) : Spec.ParseResult (α × BitSpan) :=
   match child with
-  | .Success finish value => match checked input start finish order with
-    | .Ok span => .Success finish (value, span)
-    | .Err error => .Error error
-  | .Error error => .Error error
-  | .NeedMore => .NeedMore
-
-def discard {α : Type} (outcome : ParseOutcome (α × BitSpan)) : ParseOutcome BitSpan :=
+  | .Ok (finish, value) => match checked input start finish with
+    | .Ok span => .Ok (finish, (value, span))
+    | .Err error => .Err error
+  | .Err error => .Err error
+def discard {α : Type} (outcome : Spec.ParseResult (α × BitSpan)) : Spec.ParseResult BitSpan :=
   match outcome with
-  | .Success finish (_, span) => .Success finish span
-  | .Error error => .Error error
-  | .NeedMore => .NeedMore
-
-/-- The child runs only for a valid entry. Its state is retained even if span
-validation subsequently rejects its successful endpoint. -/
-def capture {State α : Type} (input : Slice U8) (start : Cursor) (order : BitOrder)
-    (state : State) (child : ParseOutcome α × State → Prop)
-    (result : ParseOutcome (α × BitSpan) × State) : Prop :=
+  | .Ok (finish, (_, span)) => .Ok (finish, span)
+  | .Err error => .Err error
+/-- The child runs only for a valid entry. A successful endpoint is checked
+before a span is returned. -/
+def capture {α : Type} (input : Slice U8) (start : Cursor)
+    (child : Spec.ParseResult α → Prop) (result : Spec.ParseResult (α × BitSpan)) : Prop :=
   if validCursor input.val.length start then
-    ∃ outcome final, child (outcome, final) ∧ result = (attach input start order outcome, final)
-  else result = (.Error .InvalidCursor, state)
+    ∃ outcome, child outcome ∧ result = attach input start outcome
+  else result = .Err .InvalidCursor
 
-def recognize {State α : Type} (input : Slice U8) (start : Cursor) (order : BitOrder)
-    (state : State) (child : ParseOutcome α × State → Prop)
-    (result : ParseOutcome BitSpan × State) : Prop :=
-  ∃ captured final, capture input start order state child (captured, final) ∧
-    result = (discard captured, final)
+def recognize {α : Type} (input : Slice U8) (start : Cursor)
+    (child : Spec.ParseResult α → Prop) (result : Spec.ParseResult BitSpan) : Prop :=
+  ∃ captured, capture input start child captured ∧ result = discard captured
 
 /-- Complete source bytes are available exactly when both endpoints are aligned. -/
 def byteView (span : BitSpan) (result : Option (Slice U8)) : Prop :=
@@ -69,19 +62,19 @@ end
 
 /-- Convert a physical bit (numbered from the low end) into a consumed-bit offset.
 This identifies the set of selected bits, not their internal decoding order. -/
-def offset (order : BitOrder) (byte bit : Nat) : Nat :=
-  8 * byte + match order with | .HighFirst => 7 - bit | .LowFirst => bit
+def offset (byte bit : Nat) : Nat :=
+  8 * byte + (7 - bit)
 
 def selected (span : BitSpan) (byte bit : Nat) : Prop :=
-  bit < 8 ∧ Spec.position span.start ≤ offset span.bit_order byte bit ∧
-    offset span.bit_order byte bit < Spec.position span.end
+  bit < 8 ∧ Spec.position span.start ≤ offset byte bit ∧
+    offset byte bit < Spec.position span.end
 
-def physical (order : BitOrder) (index : Nat) : Nat × Nat :=
-  (index / 8, match order with | .HighFirst => 7 - index % 8 | .LowFirst => index % 8)
+def physical (index : Nat) : Nat × Nat :=
+  (index / 8, 7 - index % 8)
 
 /-- Mathematical enumeration only; no runtime allocation or iterator is implied. -/
 def bits (span : BitSpan) : List (Nat × Nat) :=
   (List.range' (Spec.position span.start) (Spec.position span.end - Spec.position span.start)).map
-    (physical span.bit_order)
+    physical
 
 end RustHammer.Span

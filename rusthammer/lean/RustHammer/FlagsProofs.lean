@@ -14,8 +14,8 @@ open flags_example
 /-- The typed example refines its three-bit grammar, including every error path. -/
 theorem flags_spec (input : Slice U8) (cursor : Cursor) :
     parse_flags input cursor ⦃ result => Spec.flagsOutcome input cursor result ⦄ := by
-  let bi := Bit.Insts.RusthammerParserInputBool
-  let pair := Seq.Insts.RusthammerParserInputPair bi bi
+  let bi := Bit.Insts.RusthammerParser_traitsParserInputBool
+  let pair := Seq.Insts.RusthammerParser_traitsParserInputPair bi bi
   have hbit := bit_spec input
   have hpair (start : Cursor) :=
     seq_spec bi bi { first := (), second := () } input start
@@ -35,18 +35,19 @@ theorem flags_spec (input : Slice U8) (cursor : Cursor) :
       parse_flags.closure.Insts.CoreOpsFunctionFnTuplePairBoolPairBoolBoolFlags.call, spec_ok]
   let parser : Map (Seq Unit (Seq Unit Unit)) Unit :=
     { parser := { first := (), second := { first := (), second := () } }, map := () }
-  let mi := Map.Insts.RusthammerParser (Seq.Insts.RusthammerParserInputPair bi pair) fi
-  have hfinal : mi.parse_with parser input cursor ParseContext.FINAL
-      ⦃ result => Spec.completed (Spec.flagsOutcome input cursor) result ⦄ := by
-    change Map.Insts.RusthammerParser.parse_with
-      (Seq.Insts.RusthammerParserInputPair bi pair) fi parser input cursor ParseContext.FINAL
-        ⦃ result => Spec.completed (Spec.flagsOutcome input cursor) result ⦄
-    step with map_spec (Seq.Insts.RusthammerParserInputPair bi pair) fi parser
+  let mi := Map.Insts.RusthammerParser_traitsParser (Seq.Insts.RusthammerParser_traitsParserInputPair bi pair) fi
+  have hfinal : mi.parse_with parser input cursor ByteOrder.Big
+      ⦃ result => Spec.satisfies (Spec.flagsOutcome input cursor) result ⦄ := by
+    change Map.Insts.RusthammerParser_traitsParser.parse_with
+      (Seq.Insts.RusthammerParser_traitsParserInputPair bi pair) fi parser input cursor ByteOrder.Big
+        ⦃ result => Spec.satisfies (Spec.flagsOutcome input cursor) result ⦄
+    step with map_spec (Seq.Insts.RusthammerParser_traitsParserInputPair bi pair) fi parser
       input cursor (Spec.sequence (Spec.bitOutcome input)
         (Spec.sequence (Spec.bitOutcome input) (Spec.bitOutcome input))) mapping hfields hf
       as ⟨outcome, houtcome⟩
-    rcases houtcome with ⟨result, hresult, rfl⟩
-    simp only [Spec.completed_embed]
+    rcases houtcome with ⟨result, hresult, heq⟩
+    subst outcome
+    simp only [Spec.satisfies_iff]
     rcases hresult with ⟨fields, hfields, hmapped⟩
     cases fields with
     | Err error =>

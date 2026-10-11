@@ -1,6 +1,6 @@
 use rusthammer::{
-    And, ByteIn, ByteNotIn, Choice, Cursor, FoldRepeat, Not, Optional, ParseContext, ParseError,
-    ParseOutcome, Parser, Seq,
+    And, ByteIn, ByteNotIn, ByteOrder, Choice, Cursor, FoldRepeat, Not, Optional, ParseError,
+    Parser, Seq,
 };
 use std::collections::BTreeSet;
 
@@ -10,33 +10,30 @@ fn oracle(
     excluded: bool,
     input: &[u8],
     cursor: Cursor,
-    context: ParseContext,
-) -> ParseOutcome<u8> {
+    _byte_order: ByteOrder,
+) -> Result<(Cursor, u8), ParseError> {
     if cursor.bit >= 8
         || cursor.byte > input.len()
         || (cursor.byte == input.len() && cursor.bit != 0)
     {
-        return ParseOutcome::Error(ParseError::InvalidCursor);
+        return Err(ParseError::InvalidCursor);
     }
     let bits: String = input.iter().map(|byte| format!("{byte:08b}")).collect();
     let position = cursor.byte * 8 + usize::from(cursor.bit);
     let Some(field) = bits.get(position..position + 8) else {
-        return match context.status {
-            rusthammer::InputStatus::Partial => ParseOutcome::NeedMore,
-            rusthammer::InputStatus::Final => ParseOutcome::Error(ParseError::UnexpectedEnd),
-        };
+        return Err(ParseError::UnexpectedEnd);
     };
     let value = u8::from_str_radix(field, 2).unwrap();
     if set.contains(&value) == excluded {
-        ParseOutcome::Error(ParseError::Mismatch)
+        Err(ParseError::Mismatch)
     } else {
-        ParseOutcome::Success(
+        Ok((
             Cursor {
                 byte: cursor.byte + 1,
                 bit: cursor.bit,
             },
             value,
-        )
+        ))
     }
 }
 
@@ -77,16 +74,16 @@ fn every_byte_and_offset_matches_set_oracle_with_truncation_and_both_statuses() 
                 let cursor = Cursor { byte: 0, bit };
                 for length in 0..=input.len() {
                     let prefix = &input[..length];
-                    for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
+                    for byte_order in [ByteOrder::Big] {
                         assert_eq!(
-                            include.parse_with(prefix, cursor, context),
-                            oracle(&set, false, prefix, cursor, context),
-                            "include {bytes:?}, value={value}, bit={bit}, length={length}, {context:?}"
+                            include.parse_with(prefix, cursor, byte_order),
+                            oracle(&set, false, prefix, cursor, byte_order),
+                            "include {bytes:?}, value={value}, bit={bit}, length={length}, {byte_order:?}"
                         );
                         assert_eq!(
-                            exclude.parse_with(prefix, cursor, context),
-                            oracle(&set, true, prefix, cursor, context),
-                            "exclude {bytes:?}, value={value}, bit={bit}, length={length}, {context:?}"
+                            exclude.parse_with(prefix, cursor, byte_order),
+                            oracle(&set, true, prefix, cursor, byte_order),
+                            "exclude {bytes:?}, value={value}, bit={bit}, length={length}, {byte_order:?}"
                         );
                     }
                 }
@@ -134,23 +131,20 @@ fn arbitrary_cursors_preserve_validation_and_short_input_precedence() {
                 },
             ]);
         for cursor in cursors {
-            for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
+            for byte_order in [ByteOrder::Big] {
                 assert_eq!(
-                    ByteIn::new(bytes).parse_with(&input, cursor, context),
-                    oracle(&set, false, &input, cursor, context)
+                    ByteIn::new(bytes).parse_with(&input, cursor, byte_order),
+                    oracle(&set, false, &input, cursor, byte_order)
                 );
                 assert_eq!(
-                    ByteNotIn::new(bytes).parse_with(&input, cursor, context),
-                    oracle(&set, true, &input, cursor, context)
+                    ByteNotIn::new(bytes).parse_with(&input, cursor, byte_order),
+                    oracle(&set, true, &input, cursor, byte_order)
                 );
             }
         }
     }
     // Even an empty inclusion set waits for a byte before testing membership.
-    assert_eq!(
-        ByteIn::new(b"").parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
-        ParseOutcome::NeedMore
-    );
+
     assert_eq!(
         ByteIn::new(b"").parse(&[], Cursor::start()),
         Err(ParseError::UnexpectedEnd)
@@ -204,7 +198,7 @@ fn construction_is_const_and_owns_a_fixed_bitmap() {
 }
 
 #[test]
-fn composition_preserves_backtracking_lookahead_and_incompleteness() {
+fn composition_preserves_backtracking_lookahead_and_errors() {
     let digit = ByteIn::new(b"0123456789");
     let other = ByteNotIn::new(b"0123456789");
     let choice = Choice {
@@ -229,22 +223,11 @@ fn composition_preserves_backtracking_lookahead_and_incompleteness() {
         Not { parser: &digit }.parse(b"x", Cursor::start()),
         Ok((Cursor::start(), ()))
     );
-    assert_eq!(
-        choice.parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
-        ParseOutcome::NeedMore
-    );
-    assert_eq!(
-        Not { parser: &digit }.parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
-        ParseOutcome::NeedMore
-    );
+
     let leading = FoldRepeat::at_least(&digit, 0, || 0usize, |count, _| count + 1);
     assert_eq!(
         leading.parse(b"12x", Cursor::start()),
         Ok((Cursor { byte: 2, bit: 0 }, 2))
-    );
-    assert_eq!(
-        leading.parse_with(b"12", Cursor::start(), ParseContext::PARTIAL),
-        ParseOutcome::NeedMore
     );
 }
 

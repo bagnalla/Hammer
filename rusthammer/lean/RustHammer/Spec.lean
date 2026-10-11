@@ -1,4 +1,4 @@
-import RustHammer.DirectEquations
+import RustHammer.Rusthammer
 
 open RustHammer.Code.grammar.transform
   RustHammer.Code.input_types
@@ -11,50 +11,22 @@ open flags_example
 
 abbrev ParseResult (α : Type) := core.result.Result (Cursor × α) ParseError
 
-/-- Existing format contracts use the default numeric order. -/
-abbrev defaultContext (status : InputStatus) : ParseContext :=
-  { order := Order.DEFAULT, status }
+/-- A relational contract with an explicit result witness. -/
+def satisfies {α : Type} (contract : ParseResult α → Prop) (outcome : ParseResult α) : Prop :=
+  ∃ result, contract result ∧ outcome = result
 
-@[simp] theorem default_order_pin :
-    ({ bit := Order.DEFAULT.bit, byte := ByteOrder.Big } : Order) = Order.DEFAULT := by
-  simp [Order.DEFAULT]
-
-/-- Embed a complete parsing result in the three-outcome interface. -/
-def completedResult {α : Type} : ParseResult α → ParseOutcome α
-  | .Ok (next, value) => .Success next value
-  | .Err error => .Error error
-
-/-- A final-input contract preserves the earlier complete-buffer specification
-and rules out NeedMore, rather than merely converting it into an error. -/
-def completed {α : Type} (contract : ParseResult α → Prop) (outcome : ParseOutcome α) : Prop :=
-  ∃ result, contract result ∧ outcome = completedResult result
-
-@[simp] theorem completed_success {α : Type} (contract : ParseResult α → Prop)
+@[simp] theorem satisfies_success {α : Type} (contract : ParseResult α → Prop)
     (cursor : Cursor) (value : α) :
-    completed contract (.Success cursor value) ↔ contract (.Ok (cursor, value)) := by
-  constructor
-  · rintro ⟨result, h, heq⟩
-    cases result with
-    | Err _ => cases heq
-    | Ok pair => cases pair; cases heq; exact h
-  · intro h
-    exact ⟨.Ok (cursor, value), h, rfl⟩
+    satisfies contract (.Ok (cursor, value)) ↔ contract (.Ok (cursor, value)) := by
+  simp [satisfies]
 
-@[simp] theorem completed_error {α : Type} (contract : ParseResult α → Prop)
-    (error : ParseError) : completed contract (.Error error) ↔ contract (.Err error) := by
-  constructor
-  · rintro ⟨result, h, heq⟩
-    cases result with
-    | Err _ => cases heq; exact h
-    | Ok pair => cases pair; cases heq
-  · intro h
-    exact ⟨.Err error, h, rfl⟩
+@[simp] theorem satisfies_error {α : Type} (contract : ParseResult α → Prop)
+    (error : ParseError) : satisfies contract (.Err error) ↔ contract (.Err error) := by
+  simp [satisfies]
 
-@[simp] theorem completed_embed {α : Type} (contract : ParseResult α → Prop)
-    (result : ParseResult α) : completed contract (completedResult result) ↔ contract result := by
-  cases result with
-  | Err _ => exact completed_error _ _
-  | Ok pair => cases pair; exact completed_success _ _ _
+@[simp] theorem satisfies_iff {α : Type} (contract : ParseResult α → Prop)
+    (result : ParseResult α) : satisfies contract result ↔ contract result := by
+  simp [satisfies]
 
 /-- Logical bit position uses unbounded naturals, independently of machine arithmetic. -/
 def position (cursor : Cursor) : Nat := 8 * cursor.byte.val + cursor.bit.val

@@ -1,24 +1,26 @@
 use rusthammer::{
-    Bits, Choice, ConfigError, Cursor, Optional, ParseContext, ParseError, ParseOutcome, Parser,
-    Seq, SignedBits, Verify,
+    Bits, ByteOrder, Choice, ConfigError, Cursor, Optional, ParseError, Parser, Seq, SignedBits,
+    Verify,
 };
 
 // A binary-string/i128 oracle independent of the implementation's u64 arithmetic.
-fn oracle(input: &[u8], cursor: Cursor, width: u8, context: ParseContext) -> ParseOutcome<i64> {
+fn oracle(
+    input: &[u8],
+    cursor: Cursor,
+    width: u8,
+    _byte_order: ByteOrder,
+) -> Result<(Cursor, i64), ParseError> {
     if cursor.bit >= 8
         || cursor.byte > input.len()
         || (cursor.byte == input.len() && cursor.bit != 0)
     {
-        return ParseOutcome::Error(ParseError::InvalidCursor);
+        return Err(ParseError::InvalidCursor);
     }
     let text: String = input.iter().map(|byte| format!("{byte:08b}")).collect();
     let start = 8 * cursor.byte + usize::from(cursor.bit);
     let end = start + usize::from(width);
     let Some(field) = text.get(start..end) else {
-        return match context.status {
-            rusthammer::InputStatus::Partial => ParseOutcome::NeedMore,
-            rusthammer::InputStatus::Final => ParseOutcome::Error(ParseError::UnexpectedEnd),
-        };
+        return Err(ParseError::UnexpectedEnd);
     };
     let value = if field.is_empty() {
         0
@@ -30,13 +32,13 @@ fn oracle(input: &[u8], cursor: Cursor, width: u8, context: ParseContext) -> Par
             unsigned
         }
     };
-    ParseOutcome::Success(
+    Ok((
         Cursor {
             byte: end / 8,
             bit: (end % 8) as u8,
         },
         i64::try_from(value).unwrap(),
-    )
+    ))
 }
 
 fn encode(value: u64, width: u8, offset: u8) -> Vec<u8> {
@@ -106,11 +108,11 @@ fn all_widths_and_cursors_match_the_independent_oracle() {
                 let cursor = Cursor { byte, bit };
                 for width in 0..=64 {
                     let parser = SignedBits::new(width).unwrap();
-                    for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
+                    for byte_order in [ByteOrder::Big] {
                         assert_eq!(
-                            parser.parse_with(&input, cursor, context),
-                            oracle(&input, cursor, width, context),
-                            "input={input:?}, cursor={cursor:?}, width={width}, context={context:?}"
+                            parser.parse_with(&input, cursor, byte_order),
+                            oracle(&input, cursor, width, byte_order),
+                            "input={input:?}, cursor={cursor:?}, width={width}, byte_order={byte_order:?}"
                         );
                     }
                 }
@@ -135,11 +137,11 @@ fn sign_boundaries_at_every_width_and_offset_include_the_full_i64_range() {
                 let cursor = Cursor { byte: 0, bit };
                 let parser = SignedBits::new(width).unwrap();
                 for len in 0..=input.len() {
-                    for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
+                    for byte_order in [ByteOrder::Big] {
                         assert_eq!(
-                            parser.parse_with(&input[..len], cursor, context),
-                            oracle(&input[..len], cursor, width, context),
-                            "value={value}, width={width}, bit={bit}, len={len}, context={context:?}"
+                            parser.parse_with(&input[..len], cursor, byte_order),
+                            oracle(&input[..len], cursor, width, byte_order),
+                            "value={value}, width={width}, bit={bit}, len={len}, byte_order={byte_order:?}"
                         );
                     }
                 }
@@ -158,15 +160,15 @@ fn sign_boundaries_at_every_width_and_offset_include_the_full_i64_range() {
 #[test]
 fn zero_width_validates_cursor_and_returns_zero_without_reading() {
     let parser = SignedBits::new(0).unwrap();
-    for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
+    for byte_order in [ByteOrder::Big] {
         assert_eq!(
-            parser.parse_with(&[], Cursor::start(), context),
-            ParseOutcome::Success(Cursor::start(), 0)
+            parser.parse_with(&[], Cursor::start(), byte_order),
+            Ok((Cursor::start(), 0))
         );
         for cursor in [Cursor { byte: 0, bit: 7 }, Cursor { byte: 1, bit: 0 }] {
             assert_eq!(
-                parser.parse_with(&[0xff], cursor, context),
-                ParseOutcome::Success(cursor, 0)
+                parser.parse_with(&[0xff], cursor, byte_order),
+                Ok((cursor, 0))
             );
         }
     }
@@ -185,10 +187,10 @@ fn invalid_raw_cursors_are_fatal_even_for_empty_fields() {
                 bit: u8::MAX,
             },
         ] {
-            for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
+            for byte_order in [ByteOrder::Big] {
                 assert_eq!(
-                    parser.parse_with(&[0], cursor, context),
-                    ParseOutcome::Error(ParseError::InvalidCursor)
+                    parser.parse_with(&[0], cursor, byte_order),
+                    Err(ParseError::InvalidCursor)
                 );
             }
         }
@@ -196,24 +198,20 @@ fn invalid_raw_cursors_are_fatal_even_for_empty_fields() {
 }
 
 #[test]
-fn partial_retry_and_final_input_have_distinct_outcomes() {
+fn truncated_signed_fields_reject_until_all_bytes_are_available() {
     let parser = SignedBits::new(13).unwrap();
     let input = encode(0x1ffb, 13, 5); // -5, spanning three input bytes.
     let start = Cursor { byte: 0, bit: 5 };
     for length in 1..3 {
         assert_eq!(
-            parser.parse_with(&input[..length], start, ParseContext::PARTIAL),
-            ParseOutcome::NeedMore
-        );
-        assert_eq!(
             parser.parse(&input[..length], start),
             Err(ParseError::UnexpectedEnd)
         );
     }
-    for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
+    for byte_order in [ByteOrder::Big] {
         assert_eq!(
-            parser.parse_with(&input, start, context),
-            ParseOutcome::Success(Cursor { byte: 2, bit: 2 }, -5)
+            parser.parse_with(&input, start, byte_order),
+            Ok((Cursor { byte: 2, bit: 2 }, -5))
         );
     }
 }
@@ -230,10 +228,6 @@ fn signed_and_unsigned_values_sequence_with_their_own_types() {
     assert_eq!(
         Optional { parser: signed }.parse(&[], Cursor::start()),
         Ok((Cursor::start(), None))
-    );
-    assert_eq!(
-        Optional { parser: signed }.parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
-        ParseOutcome::NeedMore
     );
 }
 
@@ -253,9 +247,5 @@ fn signed_predicates_and_choice_preserve_rejection_and_rollback() {
     assert_eq!(
         parser.parse(&[0x71], Cursor::start()),
         Ok((Cursor { byte: 1, bit: 0 }, 113))
-    );
-    assert_eq!(
-        parser.parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
-        ParseOutcome::NeedMore
     );
 }

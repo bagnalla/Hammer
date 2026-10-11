@@ -108,23 +108,22 @@ def Shared0F.Insts.CoreOpsFunctionFn {A : Type} {F : Type}
 }
 
 /-- [rusthammer::input_types::ConfigError]
-    Source: 'src/input_types.rs', lines 21:0-30:1
+    Source: 'src/input_types.rs', lines 21:0-28:1
     Visibility: public -/
 @[discriminant isize]
 inductive input_types.ConfigError where
-| InvalidBitOffset : input_types.ConfigError
 | InvalidWidth : input_types.ConfigError
 | InvalidLiteral : input_types.ConfigError
 | InvalidBounds : input_types.ConfigError
 
 /-- [rusthammer::grammar::numeric::Bits]
-    Source: 'src/grammar/numeric.rs', lines 79:0-81:1
+    Source: 'src/grammar/numeric.rs', lines 60:0-62:1
     Visibility: public -/
 structure grammar.numeric.Bits where
   width : Std.U8
 
 /-- [rusthammer::grammar::numeric::{rusthammer::grammar::numeric::Bits}::new]:
-    Source: 'src/grammar/numeric.rs', lines 85:4-91:5
+    Source: 'src/grammar/numeric.rs', lines 66:4-72:5
     Visibility: public -/
 def grammar.numeric.Bits.new
   (width : Std.U8) :
@@ -135,7 +134,7 @@ def grammar.numeric.Bits.new
   else ok (core.result.Result.Ok { width })
 
 /-- [rusthammer::dependent_examples::fixed_bits]:
-    Source: 'src/../examples/support/dependent.rs', lines 14:0-19:1 -/
+    Source: 'src/../examples/support/dependent.rs', lines 12:0-17:1 -/
 def dependent_examples.fixed_bits
   (width : Std.U8) : Result grammar.numeric.Bits := do
   let r ← grammar.numeric.Bits.new width
@@ -144,38 +143,25 @@ def dependent_examples.fixed_bits
   | core.result.Result.Err _ => fail panic
 
 /-- [rusthammer::dependent_examples::CountPrefix]
-    Source: 'src/../examples/support/dependent.rs', lines 23:0-23:23
+    Source: 'src/../examples/support/dependent.rs', lines 21:0-21:23
     Visibility: public -/
 @[reducible]
 def dependent_examples.CountPrefix := Unit
 
-/-- Trait declaration: [rusthammer::parser_traits::Grammar]
-    Source: 'src/parser_traits.rs', lines 7:0-9:1
-    Visibility: public -/
-structure parser_traits.Grammar (Self : Type) (Self_Output : Type) where
-
-/-- Trait implementation: [rusthammer::dependent_examples::{impl rusthammer::parser_traits::Grammar<'input, usize> for rusthammer::dependent_examples::CountPrefix}]
-    Source: 'src/../examples/support/dependent.rs', lines 25:0-27:1 -/
-@[reducible]
-def
-  dependent_examples.CountPrefix.Insts.RusthammerParser_traitsGrammarInputUsize
-  : parser_traits.Grammar dependent_examples.CountPrefix Std.Usize := {
-}
-
 /-- [rusthammer::grammar::transform::TryMap]
-    Source: 'src/grammar/transform.rs', lines 72:0-75:1
+    Source: 'src/grammar/transform.rs', lines 66:0-69:1
     Visibility: public -/
 structure grammar.transform.TryMap (P : Type) (F : Type) where
   parser : P
   map : F
 
 /-- [rusthammer::dependent_examples::count_parser::{closure}]
-    Source: 'src/../examples/support/dependent.rs', lines 35:13-41:9 -/
+    Source: 'src/../examples/support/dependent.rs', lines 28:13-34:9 -/
 @[reducible]
 def dependent_examples.count_parser.closure := Unit
 
 /-- [rusthammer::dependent_examples::count_parser]:
-    Source: 'src/../examples/support/dependent.rs', lines 31:0-43:1 -/
+    Source: 'src/../examples/support/dependent.rs', lines 24:0-36:1 -/
 def dependent_examples.count_parser
   :
   Result (grammar.transform.TryMap grammar.numeric.Bits
@@ -185,7 +171,7 @@ def dependent_examples.count_parser
   ok { parser := b, map := () }
 
 /-- [rusthammer::dependent_examples::count_parser::{impl core::ops::function::Fn<(u64,), core::result::Result<usize, ()>> for rusthammer::dependent_examples::count_parser::{closure}}::call]:
-    Source: 'src/../examples/support/dependent.rs', lines 35:13-41:9 -/
+    Source: 'src/../examples/support/dependent.rs', lines 28:13-34:9 -/
 def
   dependent_examples.count_parser.closure.Insts.CoreOpsFunctionFnTupleU64ResultUsizeTuple.call
   (c : dependent_examples.count_parser.closure) (tupled_args : Std.U64) :
@@ -198,7 +184,7 @@ def
   else ok (core.result.Result.Err ())
 
 /-- [rusthammer::dependent_examples::count_parser::{impl core::ops::function::FnMut<(u64,), core::result::Result<usize, ()>> for rusthammer::dependent_examples::count_parser::{closure}}::call_mut]:
-    Source: 'src/../examples/support/dependent.rs', lines 35:13-41:9 -/
+    Source: 'src/../examples/support/dependent.rs', lines 28:13-34:9 -/
 def
   dependent_examples.count_parser.closure.Insts.CoreOpsFunctionFnMutTupleU64ResultUsizeTuple.call_mut
   (state : dependent_examples.count_parser.closure) (args : Std.U64) :
@@ -211,7 +197,7 @@ def
   ok (r, state)
 
 /-- [rusthammer::dependent_examples::count_parser::{impl core::ops::function::FnOnce<(u64,), core::result::Result<usize, ()>> for rusthammer::dependent_examples::count_parser::{closure}}::call_once]:
-    Source: 'src/../examples/support/dependent.rs', lines 35:13-41:9 -/
+    Source: 'src/../examples/support/dependent.rs', lines 28:13-34:9 -/
 def
   dependent_examples.count_parser.closure.Insts.CoreOpsFunctionFnOnceTupleU64ResultUsizeTuple.call_once
   (c : dependent_examples.count_parser.closure) (i : Std.U64) :
@@ -223,7 +209,7 @@ def
   ok r
 
 /-- Trait implementation: [rusthammer::dependent_examples::count_parser::{impl core::ops::function::FnOnce<(u64,), core::result::Result<usize, ()>> for rusthammer::dependent_examples::count_parser::{closure}}]
-    Source: 'src/../examples/support/dependent.rs', lines 35:13-41:9 -/
+    Source: 'src/../examples/support/dependent.rs', lines 28:13-34:9 -/
 @[reducible]
 def
   dependent_examples.count_parser.closure.Insts.CoreOpsFunctionFnOnceTupleU64ResultUsizeTuple
@@ -234,7 +220,7 @@ def
 }
 
 /-- Trait implementation: [rusthammer::dependent_examples::count_parser::{impl core::ops::function::FnMut<(u64,), core::result::Result<usize, ()>> for rusthammer::dependent_examples::count_parser::{closure}}]
-    Source: 'src/../examples/support/dependent.rs', lines 35:13-41:9 -/
+    Source: 'src/../examples/support/dependent.rs', lines 28:13-34:9 -/
 @[reducible]
 def
   dependent_examples.count_parser.closure.Insts.CoreOpsFunctionFnMutTupleU64ResultUsizeTuple
@@ -247,7 +233,7 @@ def
 }
 
 /-- Trait implementation: [rusthammer::dependent_examples::count_parser::{impl core::ops::function::Fn<(u64,), core::result::Result<usize, ()>> for rusthammer::dependent_examples::count_parser::{closure}}]
-    Source: 'src/../examples/support/dependent.rs', lines 35:13-41:9 -/
+    Source: 'src/../examples/support/dependent.rs', lines 28:13-34:9 -/
 @[reducible]
 def
   dependent_examples.count_parser.closure.Insts.CoreOpsFunctionFnTupleU64ResultUsizeTuple
@@ -259,8 +245,16 @@ def
     dependent_examples.count_parser.closure.Insts.CoreOpsFunctionFnTupleU64ResultUsizeTuple.call
 }
 
+/-- [rusthammer::input_types::ByteOrder]
+    Source: 'src/input_types.rs', lines 60:0-63:1
+    Visibility: public -/
+@[discriminant isize]
+inductive input_types.ByteOrder where
+| Big : input_types.ByteOrder
+| Little : input_types.ByteOrder
+
 /-- [rusthammer::input_types::ParseError]
-    Source: 'src/input_types.rs', lines 34:0-44:1
+    Source: 'src/input_types.rs', lines 32:0-42:1
     Visibility: public -/
 @[discriminant isize]
 inductive input_types.ParseError where
@@ -279,130 +273,56 @@ structure input_types.Cursor where
   byte : Std.Usize
   bit : Std.U8
 
-/-- [rusthammer::input_types::ParseOutcome]
-    Source: 'src/input_types.rs', lines 126:0-130:1
+/-- Trait declaration: [rusthammer::parser_traits::Parser]
+    Source: 'src/parser_traits.rs', lines 16:0-36:1
     Visibility: public -/
-@[discriminant isize]
-inductive input_types.ParseOutcome (T : Type) where
-| Success : input_types.Cursor → T → input_types.ParseOutcome T
-| Error : input_types.ParseError → input_types.ParseOutcome T
-| NeedMore : input_types.ParseOutcome T
+structure parser_traits.Parser (Self : Type) (Self_Output : Type) where
+  parse_with : Self → Slice Std.U8 → input_types.Cursor → input_types.ByteOrder
+    → Result (core.result.Result (input_types.Cursor × Self_Output)
+    input_types.ParseError)
+  parse : Self → Slice Std.U8 → input_types.Cursor → Result (core.result.Result
+    (input_types.Cursor × Self_Output) input_types.ParseError)
 
-/-- [rusthammer::input_types::ByteOrder]
-    Source: 'src/input_types.rs', lines 79:0-82:1
+/-- [rusthammer::parser_traits::Parser::parse]:
+    Source: 'src/parser_traits.rs', lines 29:4-35:5
     Visibility: public -/
-@[discriminant isize]
-inductive input_types.ByteOrder where
-| Big : input_types.ByteOrder
-| Little : input_types.ByteOrder
-
-/-- [rusthammer::input_types::BitOrder]
-    Source: 'src/input_types.rs', lines 72:0-75:1
-    Visibility: public -/
-@[discriminant isize]
-inductive input_types.BitOrder where
-| HighFirst : input_types.BitOrder
-| LowFirst : input_types.BitOrder
-
-/-- [rusthammer::input_types::Order]
-    Source: 'src/input_types.rs', lines 86:0-89:1
-    Visibility: public -/
-structure input_types.Order where
-  bit : input_types.BitOrder
-  byte : input_types.ByteOrder
-
-/-- [rusthammer::input_types::InputStatus]
-    Source: 'src/input_types.rs', lines 62:0-67:1
-    Visibility: public -/
-@[discriminant isize]
-inductive input_types.InputStatus where
-| Partial : input_types.InputStatus
-| Final : input_types.InputStatus
-
-/-- [rusthammer::input_types::ParseContext]
-    Source: 'src/input_types.rs', lines 104:0-107:1
-    Visibility: public -/
-structure input_types.ParseContext where
-  order : input_types.Order
-  status : input_types.InputStatus
-
-/-- Trait declaration: [rusthammer::parser_traits::Eval]
-    Source: 'src/parser_traits.rs', lines 32:0-40:1
-    Visibility: public -/
-structure parser_traits.Eval (Self : Type) (Backend : Type)
-  (Self_Clause0_Output : Type) where
-  GrammarInst : parser_traits.Grammar Self Self_Clause0_Output
-  eval : Self → Backend → Slice Std.U8 → input_types.Cursor →
-    input_types.ParseContext → Result ((input_types.ParseOutcome
-    Self_Clause0_Output) × Backend)
-
-/-- [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Eval<'input, Backend, O> for rusthammer::grammar::transform::TryMap<P, F>}::eval]:
-    Source: 'src/grammar/transform.rs', lines 107:4-125:5
-    Visibility: public -/
-def grammar.transform.TryMap.Insts.RusthammerParser_traitsEval.eval
-  {Backend : Type} {P : Type} {F : Type} {O : Type} {E : Type}
-  {Clause0_Clause0_Output : Type} (parser_traitsEvalInst : parser_traits.Eval P
-  Backend Clause0_Clause0_Output)
-  (coreopsfunctionFnFTupleClause0_Clause0_OutputResultInst :
-  core.ops.function.Fn F Clause0_Clause0_Output (core.result.Result O E))
-  (self : grammar.transform.TryMap P F) (backend : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome O) × Backend)
+@[trait_default]
+def parser_traits.Parser.parse.default
+  {Self : Type} {Clause0_Output : Type} (ParserInst : parser_traits.Parser Self
+  Clause0_Output) (self : Self) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) :
+  Result (core.result.Result (input_types.Cursor × Clause0_Output)
+    input_types.ParseError)
   := do
-  let (po, backend1) ←
-    parser_traitsEvalInst.eval self.parser backend input cursor context
-  match po with
-  | input_types.ParseOutcome.Success next value =>
-    let r ←
-      coreopsfunctionFnFTupleClause0_Clause0_OutputResultInst.call self.map
-        value
-    match r with
-    | core.result.Result.Ok mapped =>
-      ok (input_types.ParseOutcome.Success next mapped, backend1)
-    | core.result.Result.Err _ =>
-      ok (input_types.ParseOutcome.Error input_types.ParseError.Mismatch,
-        backend1)
-  | input_types.ParseOutcome.Error error =>
-    ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
+  ParserInst.parse_with self input cursor input_types.ByteOrder.Big
 
-/-- [rusthammer::input_types::{rusthammer::input_types::InputStatus}::classify]:
-    Source: 'src/input_types.rs', lines 135:4-151:5 -/
-def input_types.InputStatus.classify
-  {T : Type} (self : input_types.InputStatus)
-  (result : core.result.Result (input_types.Cursor × T) input_types.ParseError)
-  :
-  Result (input_types.ParseOutcome T)
+/-- [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Parser<'input, O> for rusthammer::grammar::transform::TryMap<P, F>}::parse_with]:
+    Source: 'src/grammar/transform.rs', lines 95:4-114:5
+    Visibility: public -/
+def grammar.transform.TryMap.Insts.RusthammerParser_traitsParser.parse_with
+  {P : Type} {F : Type} {O : Type} {E : Type} {Clause0_Output : Type}
+  (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
+  (coreopsfunctionFnFTupleClause0_OutputResultInst : core.ops.function.Fn F
+  Clause0_Output (core.result.Result O E))
+  (self : grammar.transform.TryMap P F) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × O) input_types.ParseError)
   := do
-  match result with
+  let r ←
+    parser_traitsParserInst.parse_with self.parser input cursor byte_order
+  match r with
   | core.result.Result.Ok parsed =>
     let (next, value) := parsed
-    ok (input_types.ParseOutcome.Success next value)
-  | core.result.Result.Err pe =>
-    match pe with
-    | input_types.ParseError.InvalidCursor =>
-      ok (input_types.ParseOutcome.Error input_types.ParseError.InvalidCursor)
-    | input_types.ParseError.UnexpectedEnd =>
-      match self with
-      | input_types.InputStatus.Partial => ok input_types.ParseOutcome.NeedMore
-      | input_types.InputStatus.Final =>
-        ok (input_types.ParseOutcome.Error
-          input_types.ParseError.UnexpectedEnd)
-    | input_types.ParseError.Unaligned =>
-      ok (input_types.ParseOutcome.Error input_types.ParseError.Unaligned)
-    | input_types.ParseError.Mismatch =>
-      ok (input_types.ParseOutcome.Error input_types.ParseError.Mismatch)
-    | input_types.ParseError.TrailingInput =>
-      ok (input_types.ParseOutcome.Error input_types.ParseError.TrailingInput)
-    | input_types.ParseError.NonProgress =>
-      ok (input_types.ParseOutcome.Error input_types.ParseError.NonProgress)
-    | input_types.ParseError.CountOverflow =>
-      ok (input_types.ParseOutcome.Error input_types.ParseError.CountOverflow)
+    let r1 ←
+      coreopsfunctionFnFTupleClause0_OutputResultInst.call self.map value
+    match r1 with
+    | core.result.Result.Ok mapped => ok (core.result.Result.Ok (next, mapped))
+    | core.result.Result.Err _ =>
+      ok (core.result.Result.Err input_types.ParseError.Mismatch)
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
 
 /-- [rusthammer::grammar::numeric::advance_fragment]:
-    Source: 'src/grammar/numeric.rs', lines 176:0-189:1 -/
+    Source: 'src/grammar/numeric.rs', lines 141:0-154:1 -/
 def grammar.numeric.advance_fragment
   (cursor : input_types.Cursor) (take : Std.U8) :
   Result input_types.Cursor
@@ -414,7 +334,7 @@ def grammar.numeric.advance_fragment
   else ok { cursor with bit }
 
 /-- [rusthammer::grammar::numeric::append_fragment]:
-    Source: 'src/grammar/numeric.rs', lines 169:0-174:1 -/
+    Source: 'src/grammar/numeric.rs', lines 134:0-139:1 -/
 def grammar.numeric.append_fragment
   (value : Std.U64) (fragment : Std.U64) (done1 : Std.U8) (take : Std.U8)
   (order : input_types.ByteOrder) :
@@ -430,22 +350,11 @@ def grammar.numeric.append_fragment
     let i1 ← fragment * i
     value + i1
 
-/-- [rusthammer::grammar::numeric::fragment_offset]:
-    Source: 'src/grammar/numeric.rs', lines 162:0-167:1 -/
-def grammar.numeric.fragment_offset
-  (bit : Std.U8) (take : Std.U8) (order : input_types.BitOrder) :
-  Result Std.U8
-  := do
-  match order with
-  | input_types.BitOrder.HighFirst => ok bit
-  | input_types.BitOrder.LowFirst => let i ← 8#u8 - bit
-                                     i - take
-
-/-- [rusthammer::grammar::numeric::read_bit_ordered]:
-    Source: 'src/grammar/numeric.rs', lines 12:0-45:1 -/
-def grammar.numeric.read_bit_ordered
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (order : input_types.BitOrder) :
+/-- [rusthammer::grammar::numeric::read_bit]:
+    Source: 'src/grammar/numeric.rs', lines 5:0-31:1
+    Visibility: public -/
+def grammar.numeric.read_bit
+  (input : Slice Std.U8) (cursor : input_types.Cursor) :
   Result (core.result.Result (input_types.Cursor × Bool)
     input_types.ParseError)
   := do
@@ -463,10 +372,7 @@ def grammar.numeric.read_bit_ordered
         else ok (core.result.Result.Err input_types.ParseError.InvalidCursor)
       else ok (core.result.Result.Err input_types.ParseError.InvalidCursor)
     else
-      let shift ←
-        match order with
-        | input_types.BitOrder.HighFirst => 7#u8 - cursor.bit
-        | input_types.BitOrder.LowFirst => ok cursor.bit
+      let shift ← 7#u8 - cursor.bit
       let i1 ← Slice.index_usize input cursor.byte
       let i2 ← i1 >>> shift
       let i3 ← lift (i2 &&& 1#u8)
@@ -478,18 +384,8 @@ def grammar.numeric.read_bit_ordered
         let i4 ← cursor.bit + 1#u8
         ok (core.result.Result.Ok ({ cursor with bit := i4 }, i3 != 0#u8))
 
-/-- [rusthammer::grammar::numeric::read_bit]:
-    Source: 'src/grammar/numeric.rs', lines 8:0-10:1
-    Visibility: public -/
-def grammar.numeric.read_bit
-  (input : Slice Std.U8) (cursor : input_types.Cursor) :
-  Result (core.result.Result (input_types.Cursor × Bool)
-    input_types.ParseError)
-  := do
-  grammar.numeric.read_bit_ordered input cursor input_types.BitOrder.HighFirst
-
 /-- [rusthammer::grammar::numeric::read_bits]: loop body 0:
-    Source: 'src/grammar/numeric.rs', lines 129:4-141:1
+    Source: 'src/grammar/numeric.rs', lines 105:4-117:1
     Visibility: public -/
 @[rust_loop_body]
 def grammar.numeric.read_bits_loop0.body
@@ -515,7 +411,7 @@ def grammar.numeric.read_bits_loop0.body
   else ok (done (core.result.Result.Ok (next, value)))
 
 /-- [rusthammer::grammar::numeric::read_bits]: loop 0:
-    Source: 'src/grammar/numeric.rs', lines 129:4-141:1
+    Source: 'src/grammar/numeric.rs', lines 105:4-117:1
     Visibility: public -/
 @[rust_loop]
 def grammar.numeric.read_bits_loop0
@@ -530,7 +426,7 @@ def grammar.numeric.read_bits_loop0
     (next, remaining, value)
 
 /-- [rusthammer::grammar::numeric::read_bits]: loop body 1:
-    Source: 'src/grammar/numeric.rs', lines 129:4-141:1
+    Source: 'src/grammar/numeric.rs', lines 105:4-117:1
     Visibility: public -/
 @[rust_loop_body]
 def grammar.numeric.read_bits_loop1.body
@@ -556,7 +452,7 @@ def grammar.numeric.read_bits_loop1.body
   else ok (done (core.result.Result.Ok (next, value)))
 
 /-- [rusthammer::grammar::numeric::read_bits]: loop 1:
-    Source: 'src/grammar/numeric.rs', lines 129:4-141:1
+    Source: 'src/grammar/numeric.rs', lines 105:4-117:1
     Visibility: public -/
 @[rust_loop]
 def grammar.numeric.read_bits_loop1
@@ -571,7 +467,7 @@ def grammar.numeric.read_bits_loop1
     (next, remaining, value)
 
 /-- [rusthammer::grammar::numeric::read_bits]:
-    Source: 'src/grammar/numeric.rs', lines 119:0-141:1
+    Source: 'src/grammar/numeric.rs', lines 95:0-117:1
     Visibility: public -/
 def grammar.numeric.read_bits
   (input : Slice Std.U8) (cursor : input_types.Cursor)
@@ -595,10 +491,10 @@ def grammar.numeric.read_bits
       else grammar.numeric.read_bits_loop1 input cursor parser.width 0#u64
 
 /-- [rusthammer::grammar::numeric::read_fragments]: loop body 0:
-    Source: 'src/grammar/numeric.rs', lines 206:4-233:1 -/
+    Source: 'src/grammar/numeric.rs', lines 171:4-198:1 -/
 @[rust_loop_body]
 def grammar.numeric.read_fragments_loop0.body
-  (input : Slice Std.U8) (width : Std.U8) (order : input_types.Order)
+  (input : Slice Std.U8) (width : Std.U8) (order : input_types.ByteOrder)
   (next : input_types.Cursor) (remaining : Std.U8) (value : Std.U64) :
   Result (ControlFlow (input_types.Cursor × Std.U8 × Std.U64)
     (core.result.Result (input_types.Cursor × Std.U64) input_types.ParseError))
@@ -614,15 +510,13 @@ def grammar.numeric.read_fragments_loop0.body
       let take ← if remaining < available
                  then ok remaining
                  else ok available
-      let bit ← grammar.numeric.fragment_offset next.bit take order.bit
-      let r ←
-        grammar.numeric.read_bits input { next with bit } { width := take }
+      let r ← grammar.numeric.read_bits input next { width := take }
       match r with
       | core.result.Result.Ok p =>
         let (_, fragment) := p
         let i1 ← width - remaining
         let value1 ←
-          grammar.numeric.append_fragment value fragment i1 take order.byte
+          grammar.numeric.append_fragment value fragment i1 take order
         let next1 ← grammar.numeric.advance_fragment next take
         let remaining1 ← remaining - take
         ok (cont (next1, remaining1, value1))
@@ -630,10 +524,10 @@ def grammar.numeric.read_fragments_loop0.body
   else ok (done (core.result.Result.Ok (next, value)))
 
 /-- [rusthammer::grammar::numeric::read_fragments]: loop 0:
-    Source: 'src/grammar/numeric.rs', lines 206:4-233:1 -/
+    Source: 'src/grammar/numeric.rs', lines 171:4-198:1 -/
 @[rust_loop]
 def grammar.numeric.read_fragments_loop0
-  (input : Slice Std.U8) (width : Std.U8) (order : input_types.Order)
+  (input : Slice Std.U8) (width : Std.U8) (order : input_types.ByteOrder)
   (next : input_types.Cursor) (remaining : Std.U8) (value : Std.U64) :
   Result (core.result.Result (input_types.Cursor × Std.U64)
     input_types.ParseError)
@@ -645,10 +539,10 @@ def grammar.numeric.read_fragments_loop0
     (next, remaining, value)
 
 /-- [rusthammer::grammar::numeric::read_fragments]: loop body 1:
-    Source: 'src/grammar/numeric.rs', lines 206:4-233:1 -/
+    Source: 'src/grammar/numeric.rs', lines 171:4-198:1 -/
 @[rust_loop_body]
 def grammar.numeric.read_fragments_loop1.body
-  (input : Slice Std.U8) (width : Std.U8) (order : input_types.Order)
+  (input : Slice Std.U8) (width : Std.U8) (order : input_types.ByteOrder)
   (next : input_types.Cursor) (remaining : Std.U8) (value : Std.U64) :
   Result (ControlFlow (input_types.Cursor × Std.U8 × Std.U64)
     (core.result.Result (input_types.Cursor × Std.U64) input_types.ParseError))
@@ -664,15 +558,13 @@ def grammar.numeric.read_fragments_loop1.body
       let take ← if remaining < available
                  then ok remaining
                  else ok available
-      let bit ← grammar.numeric.fragment_offset next.bit take order.bit
-      let r ←
-        grammar.numeric.read_bits input { next with bit } { width := take }
+      let r ← grammar.numeric.read_bits input next { width := take }
       match r with
       | core.result.Result.Ok p =>
         let (_, fragment) := p
         let i1 ← width - remaining
         let value1 ←
-          grammar.numeric.append_fragment value fragment i1 take order.byte
+          grammar.numeric.append_fragment value fragment i1 take order
         let next1 ← grammar.numeric.advance_fragment next take
         let remaining1 ← remaining - take
         ok (cont (next1, remaining1, value1))
@@ -680,10 +572,10 @@ def grammar.numeric.read_fragments_loop1.body
   else ok (done (core.result.Result.Ok (next, value)))
 
 /-- [rusthammer::grammar::numeric::read_fragments]: loop 1:
-    Source: 'src/grammar/numeric.rs', lines 206:4-233:1 -/
+    Source: 'src/grammar/numeric.rs', lines 171:4-198:1 -/
 @[rust_loop]
 def grammar.numeric.read_fragments_loop1
-  (input : Slice Std.U8) (width : Std.U8) (order : input_types.Order)
+  (input : Slice Std.U8) (width : Std.U8) (order : input_types.ByteOrder)
   (next : input_types.Cursor) (remaining : Std.U8) (value : Std.U64) :
   Result (core.result.Result (input_types.Cursor × Std.U64)
     input_types.ParseError)
@@ -695,10 +587,10 @@ def grammar.numeric.read_fragments_loop1
     (next, remaining, value)
 
 /-- [rusthammer::grammar::numeric::read_fragments]:
-    Source: 'src/grammar/numeric.rs', lines 191:0-233:1 -/
+    Source: 'src/grammar/numeric.rs', lines 156:0-198:1 -/
 def grammar.numeric.read_fragments
   (input : Slice Std.U8) (cursor : input_types.Cursor) (width : Std.U8)
-  (order : input_types.Order) :
+  (order : input_types.ByteOrder) :
   Result (core.result.Result (input_types.Cursor × Std.U64)
     input_types.ParseError)
   := do
@@ -722,249 +614,100 @@ def grammar.numeric.read_fragments
           0#u64
 
 /-- [rusthammer::grammar::numeric::read_ordered_bits]:
-    Source: 'src/grammar/numeric.rs', lines 146:0-160:1 -/
+    Source: 'src/grammar/numeric.rs', lines 122:0-132:1 -/
 def grammar.numeric.read_ordered_bits
   (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (parser : grammar.numeric.Bits) (order : input_types.Order) :
+  (parser : grammar.numeric.Bits) (order : input_types.ByteOrder) :
   Result (core.result.Result (input_types.Cursor × Std.U64)
     input_types.ParseError)
   := do
-  match order.bit with
-  | input_types.BitOrder.HighFirst =>
-    match order.byte with
-    | input_types.ByteOrder.Big =>
-      grammar.numeric.read_bits input cursor parser
-    | input_types.ByteOrder.Little =>
-      grammar.numeric.read_fragments input cursor parser.width
-        {
-          bit := input_types.BitOrder.HighFirst,
-          byte := input_types.ByteOrder.Little
-        }
-  | input_types.BitOrder.LowFirst =>
-    grammar.numeric.read_fragments input cursor parser.width order
+  match order with
+  | input_types.ByteOrder.Big => grammar.numeric.read_bits input cursor parser
+  | input_types.ByteOrder.Little =>
+    grammar.numeric.read_fragments input cursor parser.width
+      input_types.ByteOrder.Little
 
-/-- [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Eval<'input, Backend, u64> for rusthammer::grammar::numeric::Bits}::eval]:
-    Source: 'src/grammar/numeric.rs', lines 104:4-114:5
+/-- [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Parser<'input, u64> for rusthammer::grammar::numeric::Bits}::parse_with]:
+    Source: 'src/grammar/numeric.rs', lines 83:4-90:5
     Visibility: public -/
-def grammar.numeric.Bits.Insts.RusthammerParser_traitsEvalInputBackendU64.eval
-  {Backend : Type} (self : grammar.numeric.Bits) (t : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Std.U64) × Backend)
+def grammar.numeric.Bits.Insts.RusthammerParser_traitsParserInputU64.parse_with
+  (self : grammar.numeric.Bits) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Std.U64)
+    input_types.ParseError)
   := do
-  let r ← grammar.numeric.read_ordered_bits input cursor self context.order
-  let po ← input_types.InputStatus.classify context.status r
-  ok (po, t)
+  grammar.numeric.read_ordered_bits input cursor self byte_order
 
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Grammar<'input, u64> for rusthammer::grammar::numeric::Bits}]
-    Source: 'src/grammar/numeric.rs', lines 99:0-101:1 -/
+/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Parser<'input, u64> for rusthammer::grammar::numeric::Bits}]
+    Source: 'src/grammar/numeric.rs', lines 80:0-91:1 -/
 @[reducible]
-def grammar.numeric.Bits.Insts.RusthammerParser_traitsGrammarInputU64 :
-  parser_traits.Grammar grammar.numeric.Bits Std.U64 := {
+impl_def grammar.numeric.Bits.Insts.RusthammerParser_traitsParserInputU64 :
+  parser_traits.Parser grammar.numeric.Bits Std.U64 := {
+  parse_with :=
+    grammar.numeric.Bits.Insts.RusthammerParser_traitsParserInputU64.parse_with
+  parse := parser_traits.Parser.parse.default
+    grammar.numeric.Bits.Insts.RusthammerParser_traitsParserInputU64
 }
 
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Eval<'input, Backend, u64> for rusthammer::grammar::numeric::Bits}]
-    Source: 'src/grammar/numeric.rs', lines 103:0-115:1 -/
-@[reducible]
-def grammar.numeric.Bits.Insts.RusthammerParser_traitsEvalInputBackendU64
-  (Backend : Type) : parser_traits.Eval grammar.numeric.Bits Backend Std.U64
-  := {
-  GrammarInst :=
-    grammar.numeric.Bits.Insts.RusthammerParser_traitsGrammarInputU64
-  eval :=
-    grammar.numeric.Bits.Insts.RusthammerParser_traitsEvalInputBackendU64.eval
-}
-
-/-- [rusthammer::dependent_examples::{impl rusthammer::parser_traits::Eval<'input, Backend, usize> for rusthammer::dependent_examples::CountPrefix}::eval]:
-    Source: 'src/../examples/support/dependent.rs', lines 46:4-54:5
+/-- [rusthammer::dependent_examples::{impl rusthammer::parser_traits::Parser<'input, usize> for rusthammer::dependent_examples::CountPrefix}::parse_with]:
+    Source: 'src/../examples/support/dependent.rs', lines 41:4-48:5
     Visibility: public -/
 def
-  dependent_examples.CountPrefix.Insts.RusthammerParser_traitsEvalInputBackendUsize.eval
-  {Backend : Type} (self : dependent_examples.CountPrefix) (backend : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Std.Usize) × Backend)
+  dependent_examples.CountPrefix.Insts.RusthammerParser_traitsParserInputUsize.parse_with
+  (self : dependent_examples.CountPrefix) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Std.Usize)
+    input_types.ParseError)
   := do
   let tm ← dependent_examples.count_parser
-  grammar.transform.TryMap.Insts.RusthammerParser_traitsEval.eval
-    (grammar.numeric.Bits.Insts.RusthammerParser_traitsEvalInputBackendU64
-    Backend)
+  grammar.transform.TryMap.Insts.RusthammerParser_traitsParser.parse_with
+    grammar.numeric.Bits.Insts.RusthammerParser_traitsParserInputU64
     dependent_examples.count_parser.closure.Insts.CoreOpsFunctionFnTupleU64ResultUsizeTuple
-    tm backend input cursor context
+    tm input cursor byte_order
 
-/-- Trait implementation: [rusthammer::dependent_examples::{impl rusthammer::parser_traits::Eval<'input, Backend, usize> for rusthammer::dependent_examples::CountPrefix}]
-    Source: 'src/../examples/support/dependent.rs', lines 45:0-55:1 -/
+/-- Trait implementation: [rusthammer::dependent_examples::{impl rusthammer::parser_traits::Parser<'input, usize> for rusthammer::dependent_examples::CountPrefix}]
+    Source: 'src/../examples/support/dependent.rs', lines 38:0-49:1 -/
 @[reducible]
-def
-  dependent_examples.CountPrefix.Insts.RusthammerParser_traitsEvalInputBackendUsize
-  (Backend : Type) : parser_traits.Eval dependent_examples.CountPrefix Backend
-  Std.Usize := {
-  GrammarInst :=
-    dependent_examples.CountPrefix.Insts.RusthammerParser_traitsGrammarInputUsize
-  eval :=
-    dependent_examples.CountPrefix.Insts.RusthammerParser_traitsEvalInputBackendUsize.eval
-}
-
-/-- [rusthammer::parser_traits::Direct]
-    Source: 'src/parser_traits.rs', lines 46:0-46:18
-    Visibility: public -/
-@[reducible]
-def parser_traits.Direct := Unit
-
-/-- Trait declaration: [rusthammer::parser_traits::Parser]
-    Source: 'src/parser_traits.rs', lines 52:0-77:1
-    Visibility: public -/
-structure parser_traits.Parser (Self : Type) (Self_Clause0_Clause0_Output :
-  Type) where
-  EvalInputSelfDirectSelf_Clause0_Clause0_OutputInst : parser_traits.Eval Self
-    parser_traits.Direct Self_Clause0_Clause0_Output
-  parse_with : Self → Slice Std.U8 → input_types.Cursor →
-    input_types.ParseContext → Result (input_types.ParseOutcome
-    Self_Clause0_Clause0_Output)
-  parse : Self → Slice Std.U8 → input_types.Cursor → Result (core.result.Result
-    (input_types.Cursor × Self_Clause0_Clause0_Output) input_types.ParseError)
-
-/-- [rusthammer::input_types::{rusthammer::input_types::ParseOutcome<T>}::into_complete]:
-    Source: 'src/input_types.rs', lines 155:4-163:5 -/
-def input_types.ParseOutcome.into_complete
-  {T : Type} (self : input_types.ParseOutcome T) :
-  Result (core.result.Result (input_types.Cursor × T) input_types.ParseError)
-  := do
-  match self with
-  | input_types.ParseOutcome.Success next value =>
-    ok (core.result.Result.Ok (next, value))
-  | input_types.ParseOutcome.Error error => ok (core.result.Result.Err error)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (core.result.Result.Err input_types.ParseError.UnexpectedEnd)
-
-/-- [rusthammer::input_types::{rusthammer::input_types::Order}::DEFAULT]
-    Source: 'src/input_types.rs', lines 92:4-95:6
-    Visibility: public -/
-@[global_simps, irreducible]
-def input_types.Order.DEFAULT : input_types.Order :=
-  { bit := input_types.BitOrder.HighFirst, byte := input_types.ByteOrder.Big }
-
-/-- [rusthammer::input_types::{rusthammer::input_types::ParseContext}::FINAL]
-    Source: 'src/input_types.rs', lines 111:4-114:6
-    Visibility: public -/
-@[global_simps, irreducible]
-def input_types.ParseContext.FINAL : input_types.ParseContext :=
-  { order := input_types.Order.DEFAULT, status := input_types.InputStatus.Final
-  }
-
-/-- [rusthammer::parser_traits::Parser::parse]:
-    Source: 'src/parser_traits.rs', lines 69:4-76:5
-    Visibility: public -/
-@[trait_default]
-def parser_traits.Parser.parse.default
-  {Self : Type} {Clause0_Clause0_Clause0_Output : Type} (ParserInst :
-  parser_traits.Parser Self Clause0_Clause0_Clause0_Output) (self : Self)
-  (input : Slice Std.U8) (cursor : input_types.Cursor) :
-  Result (core.result.Result (input_types.Cursor ×
-    Clause0_Clause0_Clause0_Output) input_types.ParseError)
-  := do
-  let po ←
-    ParserInst.parse_with self input cursor input_types.ParseContext.FINAL
-  input_types.ParseOutcome.into_complete po
-
-/-- [rusthammer::parser_traits::Parser::parse_with]:
-    Source: 'src/parser_traits.rs', lines 58:4-65:5
-    Visibility: public -/
-@[trait_default]
-def parser_traits.Parser.parse_with.default
-  {Self : Type} {Clause0_Clause0_Clause0_Output : Type} (ParserInst :
-  parser_traits.Parser Self Clause0_Clause0_Clause0_Output) (self : Self)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result (input_types.ParseOutcome Clause0_Clause0_Clause0_Output)
-  := do
-  let (po, _) ←
-    ParserInst.EvalInputSelfDirectSelf_Clause0_Clause0_OutputInst.eval self ()
-      input cursor context
-  ok po
-
-/-- Trait implementation: [rusthammer::parser_traits::{impl rusthammer::parser_traits::Parser<'input, Clause0_Clause0_Output> for P}]
-    Source: 'src/parser_traits.rs', lines 79:0-79:61 -/
-@[reducible]
-impl_def parser_traits.Parser.Blanket {P : Type} {Clause0_Clause0_Output :
-  Type} (EvalInputPDirectClause0_Clause0_OutputInst : parser_traits.Eval P
-  parser_traits.Direct Clause0_Clause0_Output) : parser_traits.Parser P
-  Clause0_Clause0_Output := {
-  EvalInputSelfDirectSelf_Clause0_Clause0_OutputInst :=
-    EvalInputPDirectClause0_Clause0_OutputInst
-  parse_with := parser_traits.Parser.parse_with.default
-    (parser_traits.Parser.Blanket EvalInputPDirectClause0_Clause0_OutputInst)
-  parse := parser_traits.Parser.parse.default (parser_traits.Parser.Blanket
-    EvalInputPDirectClause0_Clause0_OutputInst)
+impl_def
+  dependent_examples.CountPrefix.Insts.RusthammerParser_traitsParserInputUsize
+  : parser_traits.Parser dependent_examples.CountPrefix Std.Usize := {
+  parse_with :=
+    dependent_examples.CountPrefix.Insts.RusthammerParser_traitsParserInputUsize.parse_with
+  parse := parser_traits.Parser.parse.default
+    dependent_examples.CountPrefix.Insts.RusthammerParser_traitsParserInputUsize
 }
 
 /-- [rusthammer::grammar::sequence::Bind]
-    Source: 'src/grammar/sequence.rs', lines 86:0-89:1
+    Source: 'src/grammar/sequence.rs', lines 81:0-84:1
     Visibility: public -/
 structure grammar.sequence.Bind (P : Type) (F : Type) where
   parser : P
   «then» : F
 
-/-- [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Eval<'input, Backend, Clause2_Clause0_Output> for rusthammer::grammar::sequence::Bind<P, F>}::eval]:
-    Source: 'src/grammar/sequence.rs', lines 125:4-139:5
+/-- [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Parser<'input, Clause2_Output> for rusthammer::grammar::sequence::Bind<P, F>}::parse_with]:
+    Source: 'src/grammar/sequence.rs', lines 112:4-125:5
     Visibility: public -/
-def grammar.sequence.Bind.Insts.RusthammerParser_traitsEval.eval
-  {Backend : Type} {P : Type} {F : Type} {Q : Type} {Clause0_Clause0_Output :
-  Type} {Clause2_Clause0_Output : Type} (parser_traitsEvalInst :
-  parser_traits.Eval P Backend Clause0_Clause0_Output)
-  (coreopsfunctionFnFTupleClause0_Clause0_OutputQInst : core.ops.function.Fn F
-  Clause0_Clause0_Output Q) (parser_traitsEvalInst1 : parser_traits.Eval Q
-  Backend Clause2_Clause0_Output) (self : grammar.sequence.Bind P F)
-  (backend : Backend) (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Clause2_Clause0_Output) × Backend)
-  := do
-  let (po, backend1) ←
-    parser_traitsEvalInst.eval self.parser backend input cursor context
-  match po with
-  | input_types.ParseOutcome.Success next value =>
-    let t ←
-      coreopsfunctionFnFTupleClause0_Clause0_OutputQInst.call self.then value
-    parser_traitsEvalInst1.eval t backend1 input next context
-  | input_types.ParseOutcome.Error error =>
-    ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
-
-/-- Trait implementation: [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Grammar<'input, Clause2_Output> for rusthammer::grammar::sequence::Bind<P, F>}]
-    Source: 'src/grammar/sequence.rs', lines 110:0-117:1 -/
-@[reducible]
-def grammar.sequence.Bind.Insts.RusthammerParser_traitsGrammar {P : Type} {F :
-  Type} {Q : Type} {Clause0_Output : Type} {Clause2_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
+def grammar.sequence.Bind.Insts.RusthammerParser_traitsParser.parse_with
+  {P : Type} {F : Type} {Q : Type} {Clause0_Output : Type} {Clause2_Output :
+  Type} (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
   (coreopsfunctionFnFTupleClause0_OutputQInst : core.ops.function.Fn F
-  Clause0_Output Q) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
-  Clause2_Output) : parser_traits.Grammar (grammar.sequence.Bind P F)
-  Clause2_Output := {
-}
-
-/-- Trait implementation: [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Eval<'input, Backend, Clause2_Clause0_Output> for rusthammer::grammar::sequence::Bind<P, F>}]
-    Source: 'src/grammar/sequence.rs', lines 119:0-140:1 -/
-@[reducible]
-def grammar.sequence.Bind.Insts.RusthammerParser_traitsEval {Backend : Type} {P
-  : Type} {F : Type} {Q : Type} {Clause0_Clause0_Output : Type}
-  {Clause2_Clause0_Output : Type} (parser_traitsEvalInst : parser_traits.Eval P
-  Backend Clause0_Clause0_Output)
-  (coreopsfunctionFnFTupleClause0_Clause0_OutputQInst : core.ops.function.Fn F
-  Clause0_Clause0_Output Q) (parser_traitsEvalInst1 : parser_traits.Eval Q
-  Backend Clause2_Clause0_Output) : parser_traits.Eval (grammar.sequence.Bind P
-  F) Backend Clause2_Clause0_Output := {
-  GrammarInst := grammar.sequence.Bind.Insts.RusthammerParser_traitsGrammar
-    parser_traitsEvalInst.GrammarInst
-    coreopsfunctionFnFTupleClause0_Clause0_OutputQInst
-    parser_traitsEvalInst1.GrammarInst
-  eval := grammar.sequence.Bind.Insts.RusthammerParser_traitsEval.eval
-    parser_traitsEvalInst coreopsfunctionFnFTupleClause0_Clause0_OutputQInst
-    parser_traitsEvalInst1
-}
+  Clause0_Output Q) (parser_traitsParserInst1 : parser_traits.Parser Q
+  Clause2_Output) (self : grammar.sequence.Bind P F) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Clause2_Output)
+    input_types.ParseError)
+  := do
+  let r ←
+    parser_traitsParserInst.parse_with self.parser input cursor byte_order
+  match r with
+  | core.result.Result.Ok parsed =>
+    let (next, value) := parsed
+    let t ← coreopsfunctionFnFTupleClause0_OutputQInst.call self.then value
+    parser_traitsParserInst1.parse_with t input next byte_order
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
 
 /-- [rusthammer::grammar::bytes::take_aligned]:
-    Source: 'src/grammar/bytes.rs', lines 267:0-286:1
+    Source: 'src/grammar/bytes.rs', lines 252:0-271:1
     Visibility: public -/
 def grammar.bytes.take_aligned
   (input : Slice Std.U8) (cursor : input_types.Cursor) (count : Std.Usize) :
@@ -1016,53 +759,42 @@ def grammar.bytes.take_aligned
             ok (core.result.Result.Ok ({ byte := «end», bit := 0#u8 }, s))
 
 /-- [rusthammer::grammar::bytes::TakeAligned]
-    Source: 'src/grammar/bytes.rs', lines 244:0-246:1
+    Source: 'src/grammar/bytes.rs', lines 234:0-236:1
     Visibility: public -/
 structure grammar.bytes.TakeAligned where
   count : Std.Usize
 
-/-- [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, &'_ [u8]> for rusthammer::grammar::bytes::TakeAligned}::eval]:
-    Source: 'src/grammar/bytes.rs', lines 253:4-263:5
+/-- [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, &'input [u8]> for rusthammer::grammar::bytes::TakeAligned}::parse_with]:
+    Source: 'src/grammar/bytes.rs', lines 241:4-248:5
     Visibility: public -/
 def
-  grammar.bytes.TakeAligned.Insts.RusthammerParser_traitsEvalInputBackendSharedSliceU8.eval
-  {Backend : Type} (self : grammar.bytes.TakeAligned) (t : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome (Slice Std.U8)) × Backend)
+  grammar.bytes.TakeAligned.Insts.RusthammerParser_traitsParserInputSharedInputSliceU8.parse_with
+  (self : grammar.bytes.TakeAligned) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (bo : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × (Slice Std.U8))
+    input_types.ParseError)
   := do
-  let r ← grammar.bytes.take_aligned input cursor self.count
-  let po ← input_types.InputStatus.classify context.status r
-  ok (po, t)
+  grammar.bytes.take_aligned input cursor self.count
 
-/-- Trait implementation: [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Grammar<'input, &'input [u8]> for rusthammer::grammar::bytes::TakeAligned}]
-    Source: 'src/grammar/bytes.rs', lines 248:0-250:1 -/
+/-- Trait implementation: [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, &'input [u8]> for rusthammer::grammar::bytes::TakeAligned}]
+    Source: 'src/grammar/bytes.rs', lines 238:0-249:1 -/
 @[reducible]
-def
-  grammar.bytes.TakeAligned.Insts.RusthammerParser_traitsGrammarInputSharedInputSliceU8
-  : parser_traits.Grammar grammar.bytes.TakeAligned (Slice Std.U8) := {
-}
-
-/-- Trait implementation: [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, &'_ [u8]> for rusthammer::grammar::bytes::TakeAligned}]
-    Source: 'src/grammar/bytes.rs', lines 252:0-264:1 -/
-@[reducible]
-def
-  grammar.bytes.TakeAligned.Insts.RusthammerParser_traitsEvalInputBackendSharedSliceU8
-  (Backend : Type) : parser_traits.Eval grammar.bytes.TakeAligned Backend
-  (Slice Std.U8) := {
-  GrammarInst :=
-    grammar.bytes.TakeAligned.Insts.RusthammerParser_traitsGrammarInputSharedInputSliceU8
-  eval :=
-    grammar.bytes.TakeAligned.Insts.RusthammerParser_traitsEvalInputBackendSharedSliceU8.eval
+impl_def
+  grammar.bytes.TakeAligned.Insts.RusthammerParser_traitsParserInputSharedInputSliceU8
+  : parser_traits.Parser grammar.bytes.TakeAligned (Slice Std.U8) := {
+  parse_with :=
+    grammar.bytes.TakeAligned.Insts.RusthammerParser_traitsParserInputSharedInputSliceU8.parse_with
+  parse := parser_traits.Parser.parse.default
+    grammar.bytes.TakeAligned.Insts.RusthammerParser_traitsParserInputSharedInputSliceU8
 }
 
 /-- [rusthammer::dependent_examples::payload::{closure}]
-    Source: 'src/../examples/support/dependent.rs', lines 62:14-62:43 -/
+    Source: 'src/../examples/support/dependent.rs', lines 60:14-60:43 -/
 @[reducible]
 def dependent_examples.payload.closure := Unit
 
 /-- [rusthammer::dependent_examples::payload::{impl core::ops::function::Fn<(usize,), rusthammer::grammar::bytes::TakeAligned> for rusthammer::dependent_examples::payload::{closure}}::call]:
-    Source: 'src/../examples/support/dependent.rs', lines 62:14-62:43 -/
+    Source: 'src/../examples/support/dependent.rs', lines 60:14-60:43 -/
 def
   dependent_examples.payload.closure.Insts.CoreOpsFunctionFnTupleUsizeTakeAligned.call
   (c : dependent_examples.payload.closure) (tupled_args : Std.Usize) :
@@ -1071,7 +803,7 @@ def
   ok { count := tupled_args }
 
 /-- [rusthammer::dependent_examples::payload::{impl core::ops::function::FnMut<(usize,), rusthammer::grammar::bytes::TakeAligned> for rusthammer::dependent_examples::payload::{closure}}::call_mut]:
-    Source: 'src/../examples/support/dependent.rs', lines 62:14-62:43 -/
+    Source: 'src/../examples/support/dependent.rs', lines 60:14-60:43 -/
 def
   dependent_examples.payload.closure.Insts.CoreOpsFunctionFnMutTupleUsizeTakeAligned.call_mut
   (state : dependent_examples.payload.closure) (args : Std.Usize) :
@@ -1083,7 +815,7 @@ def
   ok (ta, state)
 
 /-- [rusthammer::dependent_examples::payload::{impl core::ops::function::FnOnce<(usize,), rusthammer::grammar::bytes::TakeAligned> for rusthammer::dependent_examples::payload::{closure}}::call_once]:
-    Source: 'src/../examples/support/dependent.rs', lines 62:14-62:43 -/
+    Source: 'src/../examples/support/dependent.rs', lines 60:14-60:43 -/
 def
   dependent_examples.payload.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeTakeAligned.call_once
   (c : dependent_examples.payload.closure) (i : Std.Usize) :
@@ -1095,7 +827,7 @@ def
   ok ta
 
 /-- Trait implementation: [rusthammer::dependent_examples::payload::{impl core::ops::function::FnOnce<(usize,), rusthammer::grammar::bytes::TakeAligned> for rusthammer::dependent_examples::payload::{closure}}]
-    Source: 'src/../examples/support/dependent.rs', lines 62:14-62:43 -/
+    Source: 'src/../examples/support/dependent.rs', lines 60:14-60:43 -/
 @[reducible]
 def
   dependent_examples.payload.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeTakeAligned
@@ -1106,7 +838,7 @@ def
 }
 
 /-- Trait implementation: [rusthammer::dependent_examples::payload::{impl core::ops::function::FnMut<(usize,), rusthammer::grammar::bytes::TakeAligned> for rusthammer::dependent_examples::payload::{closure}}]
-    Source: 'src/../examples/support/dependent.rs', lines 62:14-62:43 -/
+    Source: 'src/../examples/support/dependent.rs', lines 60:14-60:43 -/
 @[reducible]
 def
   dependent_examples.payload.closure.Insts.CoreOpsFunctionFnMutTupleUsizeTakeAligned
@@ -1119,7 +851,7 @@ def
 }
 
 /-- Trait implementation: [rusthammer::dependent_examples::payload::{impl core::ops::function::Fn<(usize,), rusthammer::grammar::bytes::TakeAligned> for rusthammer::dependent_examples::payload::{closure}}]
-    Source: 'src/../examples/support/dependent.rs', lines 62:14-62:43 -/
+    Source: 'src/../examples/support/dependent.rs', lines 60:14-60:43 -/
 @[reducible]
 def
   dependent_examples.payload.closure.Insts.CoreOpsFunctionFnTupleUsizeTakeAligned
@@ -1132,23 +864,22 @@ def
 }
 
 /-- [rusthammer::dependent_examples::payload]:
-    Source: 'src/../examples/support/dependent.rs', lines 59:0-65:1
+    Source: 'src/../examples/support/dependent.rs', lines 53:0-63:1
     Visibility: public -/
 def dependent_examples.payload
   (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result (input_types.ParseOutcome (Slice Std.U8))
+  (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × (Slice Std.U8))
+    input_types.ParseError)
   := do
-  parser_traits.Parser.parse_with.default (parser_traits.Parser.Blanket
-    (grammar.sequence.Bind.Insts.RusthammerParser_traitsEval
-    (dependent_examples.CountPrefix.Insts.RusthammerParser_traitsEvalInputBackendUsize
-    parser_traits.Direct)
+  grammar.sequence.Bind.Insts.RusthammerParser_traitsParser.parse_with
+    dependent_examples.CountPrefix.Insts.RusthammerParser_traitsParserInputUsize
     dependent_examples.payload.closure.Insts.CoreOpsFunctionFnTupleUsizeTakeAligned
-    (grammar.bytes.TakeAligned.Insts.RusthammerParser_traitsEvalInputBackendSharedSliceU8
-    parser_traits.Direct))) { parser := (), «then» := () } input cursor context
+    grammar.bytes.TakeAligned.Insts.RusthammerParser_traitsParserInputSharedInputSliceU8
+    { parser := (), «then» := () } input cursor byte_order
 
 /-- [rusthammer::input_types::{rusthammer::input_types::ParseError}::is_recoverable]:
-    Source: 'src/input_types.rs', lines 50:4-57:5
+    Source: 'src/input_types.rs', lines 48:4-55:5
     Visibility: public -/
 def input_types.ParseError.is_recoverable
   (self : input_types.ParseError) : Result Bool := do
@@ -1162,22 +893,22 @@ def input_types.ParseError.is_recoverable
   | input_types.ParseError.CountOverflow => ok false
 
 /-- [rusthammer::grammar::repeat::repeat_parse]:
-    Source: 'src/grammar/repeat.rs', lines 623:0-641:1 -/
+    Source: 'src/grammar/repeat.rs', lines 581:0-598:1 -/
 def grammar.repeat.repeat_parse
-  {Backend : Type} {P : Type} {Q : Type} {Clause0_Clause0_Output : Type}
-  (parser_traitsEvalInst : parser_traits.Eval P Backend Clause0_Clause0_Output)
-  (parser_traitsEvalInst1 : parser_traits.Eval Q Backend
-  Clause0_Clause0_Output) (backend : Backend) (parser : P) (following : Q)
+  {P : Type} {Q : Type} {Clause0_Output : Type} (parser_traitsParserInst :
+  parser_traits.Parser P Clause0_Output) (parser_traitsParserInst1 :
+  parser_traits.Parser Q Clause0_Output) (parser : P) (following : Q)
   (count : Std.Usize) (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Clause0_Clause0_Output) × Backend)
+  (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Clause0_Output)
+    input_types.ParseError)
   := do
   if count = 0#usize
-  then parser_traitsEvalInst.eval parser backend input cursor context
-  else parser_traitsEvalInst1.eval following backend input cursor context
+  then parser_traitsParserInst.parse_with parser input cursor byte_order
+  else parser_traitsParserInst1.parse_with following input cursor byte_order
 
 /-- [rusthammer::grammar::repeat::repeat_next_count]:
-    Source: 'src/grammar/repeat.rs', lines 455:0-461:1 -/
+    Source: 'src/grammar/repeat.rs', lines 453:0-459:1 -/
 def grammar.repeat.repeat_next_count
   (count : Std.Usize) :
   Result (core.result.Result Std.Usize input_types.ParseError)
@@ -1188,7 +919,7 @@ def grammar.repeat.repeat_next_count
        ok (core.result.Result.Ok i)
 
 /-- [rusthammer::grammar::repeat::repeat_cursor_valid]:
-    Source: 'src/grammar/repeat.rs', lines 426:0-428:1 -/
+    Source: 'src/grammar/repeat.rs', lines 424:0-426:1 -/
 def grammar.repeat.repeat_cursor_valid
   (input : Slice Std.U8) (cursor : input_types.Cursor) : Result Bool := do
   if cursor.bit < 8#u8
@@ -1204,7 +935,7 @@ def grammar.repeat.repeat_cursor_valid
   else ok false
 
 /-- [rusthammer::grammar::repeat::repeat_progress]:
-    Source: 'src/grammar/repeat.rs', lines 445:0-453:1 -/
+    Source: 'src/grammar/repeat.rs', lines 443:0-451:1 -/
 def grammar.repeat.repeat_progress
   (input : Slice Std.U8) (before : input_types.Cursor)
   (after : input_types.Cursor) :
@@ -1225,7 +956,7 @@ def grammar.repeat.repeat_progress
   else ok (core.result.Result.Err input_types.ParseError.InvalidCursor)
 
 /-- [rusthammer::grammar::repeat::repeat_below_max]:
-    Source: 'src/grammar/repeat.rs', lines 438:0-443:1 -/
+    Source: 'src/grammar/repeat.rs', lines 436:0-441:1 -/
 def grammar.repeat.repeat_below_max
   (count : Std.Usize) (max : Option Std.Usize) : Result Bool := do
   match max with
@@ -1233,7 +964,7 @@ def grammar.repeat.repeat_below_max
   | some max1 => ok (count < max1)
 
 /-- [rusthammer::grammar::repeat::repeat_start]:
-    Source: 'src/grammar/repeat.rs', lines 430:0-436:1 -/
+    Source: 'src/grammar/repeat.rs', lines 428:0-434:1 -/
 def grammar.repeat.repeat_start
   (input : Slice Std.U8) (cursor : input_types.Cursor) (unbounded : Bool) :
   Result (core.result.Result Unit input_types.ParseError)
@@ -1247,147 +978,145 @@ def grammar.repeat.repeat_start
   else ok (core.result.Result.Ok ())
 
 /-- Trait declaration: [rusthammer::grammar::repeat::RepeatAccumulator]
-    Source: 'src/grammar/repeat.rs', lines 376:0-380:1 -/
+    Source: 'src/grammar/repeat.rs', lines 374:0-378:1 -/
 structure grammar.repeat.RepeatAccumulator (Self : Type) (A : Type)
   (Self_Output : Type) where
   init : Self → Result Self_Output
   step : Self → Self_Output → A → Result Self_Output
 
 /-- [rusthammer::grammar::repeat::RepeatBounds]
-    Source: 'src/grammar/repeat.rs', lines 346:0-349:1 -/
+    Source: 'src/grammar/repeat.rs', lines 344:0-347:1 -/
 structure grammar.repeat.RepeatBounds where
   min : Std.Usize
   max : Option Std.Usize
 
 /-- [rusthammer::grammar::repeat::repeat_run_with]: loop body 0:
-    Source: 'src/grammar/repeat.rs', lines 670:4-696:5 -/
+    Source: 'src/grammar/repeat.rs', lines 626:4-652:5 -/
 @[rust_loop_body]
 def grammar.repeat.repeat_run_with_loop.body
-  {Backend : Type} {P : Type} {Q : Type} {A : Type} {Clause0_Clause0_Output :
-  Type} {Clause2_Output : Type} (parser_traitsEvalInst : parser_traits.Eval P
-  Backend Clause0_Clause0_Output) (parser_traitsEvalInst1 : parser_traits.Eval
-  Q Backend Clause0_Clause0_Output) (RepeatAccumulatorInst :
-  grammar.repeat.RepeatAccumulator A Clause0_Clause0_Output Clause2_Output)
-  (parser : P) (following : Q) (i : Std.Usize) (o : Option Std.Usize)
-  (accumulator : A) (input : Slice Std.U8) (context : input_types.ParseContext)
-  (unbounded : Bool) (backend : Backend) (values : Clause2_Output)
-  (next : input_types.Cursor) (count : Std.Usize) :
-  Result (ControlFlow (Backend × Clause2_Output × input_types.Cursor ×
-    Std.Usize) ((input_types.ParseOutcome Clause2_Output) × Backend))
+  {P : Type} {Q : Type} {A : Type} {Clause0_Output : Type} {Clause2_Output :
+  Type} (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
+  (parser_traitsParserInst1 : parser_traits.Parser Q Clause0_Output)
+  (RepeatAccumulatorInst : grammar.repeat.RepeatAccumulator A Clause0_Output
+  Clause2_Output) (parser : P) (following : Q) (i : Std.Usize)
+  (o : Option Std.Usize) (accumulator : A) (input : Slice Std.U8)
+  (byte_order : input_types.ByteOrder) (unbounded : Bool)
+  (values : Clause2_Output) (next : input_types.Cursor) (count : Std.Usize) :
+  Result (ControlFlow (Clause2_Output × input_types.Cursor × Std.Usize)
+    (core.result.Result (input_types.Cursor × Clause2_Output)
+    input_types.ParseError))
   := do
   let b ← grammar.repeat.repeat_below_max count o
   if b
   then
-    let (po, backend1) ←
-      grammar.repeat.repeat_parse parser_traitsEvalInst parser_traitsEvalInst1
-        backend parser following count input next context
-    match po with
-    | input_types.ParseOutcome.Success after value =>
+    let r ←
+      grammar.repeat.repeat_parse parser_traitsParserInst
+        parser_traitsParserInst1 parser following count input next byte_order
+    match r with
+    | core.result.Result.Ok parsed =>
+      let (after, value) := parsed
       if unbounded
       then
-        let r ← grammar.repeat.repeat_progress input next after
-        match r with
+        let r1 ← grammar.repeat.repeat_progress input next after
+        match r1 with
         | core.result.Result.Ok _ =>
-          let r1 ← grammar.repeat.repeat_next_count count
-          match r1 with
+          let r2 ← grammar.repeat.repeat_next_count count
+          match r2 with
           | core.result.Result.Ok count1 =>
             let values1 ← RepeatAccumulatorInst.step accumulator values value
-            ok (cont (backend1, values1, after, count1))
+            ok (cont (values1, after, count1))
           | core.result.Result.Err error =>
-            ok (done (input_types.ParseOutcome.Error error, backend1))
+            ok (done (core.result.Result.Err error))
         | core.result.Result.Err error =>
-          ok (done (input_types.ParseOutcome.Error error, backend1))
+          ok (done (core.result.Result.Err error))
       else
-        let r ← grammar.repeat.repeat_next_count count
-        match r with
+        let r1 ← grammar.repeat.repeat_next_count count
+        match r1 with
         | core.result.Result.Ok count1 =>
           let values1 ← RepeatAccumulatorInst.step accumulator values value
-          ok (cont (backend1, values1, after, count1))
+          ok (cont (values1, after, count1))
         | core.result.Result.Err error =>
-          ok (done (input_types.ParseOutcome.Error error, backend1))
-    | input_types.ParseOutcome.Error error =>
+          ok (done (core.result.Result.Err error))
+    | core.result.Result.Err error =>
       if count >= i
       then
         let b1 ← input_types.ParseError.is_recoverable error
         if b1
-        then ok (done (input_types.ParseOutcome.Success next values, backend1))
-        else ok (done (input_types.ParseOutcome.Error error, backend1))
-      else ok (done (input_types.ParseOutcome.Error error, backend1))
-    | input_types.ParseOutcome.NeedMore =>
-      ok (done (input_types.ParseOutcome.NeedMore, backend1))
-  else ok (done (input_types.ParseOutcome.Success next values, backend))
+        then ok (done (core.result.Result.Ok (next, values)))
+        else ok (done (core.result.Result.Err error))
+      else ok (done (core.result.Result.Err error))
+  else ok (done (core.result.Result.Ok (next, values)))
 
 /-- [rusthammer::grammar::repeat::repeat_run_with]: loop 0:
-    Source: 'src/grammar/repeat.rs', lines 670:4-696:5 -/
+    Source: 'src/grammar/repeat.rs', lines 626:4-652:5 -/
 @[rust_loop]
 def grammar.repeat.repeat_run_with_loop
-  {Backend : Type} {P : Type} {Q : Type} {A : Type} {Clause0_Clause0_Output :
-  Type} {Clause2_Output : Type} (parser_traitsEvalInst : parser_traits.Eval P
-  Backend Clause0_Clause0_Output) (parser_traitsEvalInst1 : parser_traits.Eval
-  Q Backend Clause0_Clause0_Output) (RepeatAccumulatorInst :
-  grammar.repeat.RepeatAccumulator A Clause0_Clause0_Output Clause2_Output)
-  (backend : Backend) (parser : P) (following : Q) (i : Std.Usize)
+  {P : Type} {Q : Type} {A : Type} {Clause0_Output : Type} {Clause2_Output :
+  Type} (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
+  (parser_traitsParserInst1 : parser_traits.Parser Q Clause0_Output)
+  (RepeatAccumulatorInst : grammar.repeat.RepeatAccumulator A Clause0_Output
+  Clause2_Output) (parser : P) (following : Q) (i : Std.Usize)
   (o : Option Std.Usize) (accumulator : A) (input : Slice Std.U8)
-  (context : input_types.ParseContext) (unbounded : Bool)
+  (byte_order : input_types.ByteOrder) (unbounded : Bool)
   (values : Clause2_Output) (next : input_types.Cursor) (count : Std.Usize) :
-  Result ((input_types.ParseOutcome Clause2_Output) × Backend)
+  Result (core.result.Result (input_types.Cursor × Clause2_Output)
+    input_types.ParseError)
   := do
   loop
-    (fun (backend1, values1, next1, count1) =>
-      grammar.repeat.repeat_run_with_loop.body parser_traitsEvalInst
-      parser_traitsEvalInst1 RepeatAccumulatorInst parser following i o
-      accumulator input context unbounded backend1 values1 next1 count1)
-    (backend, values, next, count)
+    (fun (values1, next1, count1) => grammar.repeat.repeat_run_with_loop.body
+      parser_traitsParserInst parser_traitsParserInst1 RepeatAccumulatorInst
+      parser following i o accumulator input byte_order unbounded values1 next1
+      count1)
+    (values, next, count)
 
 /-- [rusthammer::grammar::repeat::repeat_run_with]:
-    Source: 'src/grammar/repeat.rs', lines 646:0-697:1 -/
+    Source: 'src/grammar/repeat.rs', lines 603:0-653:1 -/
 def grammar.repeat.repeat_run_with
-  {Backend : Type} {P : Type} {Q : Type} {A : Type} {Clause0_Clause0_Output :
-  Type} {Clause2_Output : Type} (parser_traitsEvalInst : parser_traits.Eval P
-  Backend Clause0_Clause0_Output) (parser_traitsEvalInst1 : parser_traits.Eval
-  Q Backend Clause0_Clause0_Output) (RepeatAccumulatorInst :
-  grammar.repeat.RepeatAccumulator A Clause0_Clause0_Output Clause2_Output)
-  (backend : Backend) (parser : P) (following : Q)
+  {P : Type} {Q : Type} {A : Type} {Clause0_Output : Type} {Clause2_Output :
+  Type} (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
+  (parser_traitsParserInst1 : parser_traits.Parser Q Clause0_Output)
+  (RepeatAccumulatorInst : grammar.repeat.RepeatAccumulator A Clause0_Output
+  Clause2_Output) (parser : P) (following : Q)
   (bounds : grammar.repeat.RepeatBounds) (accumulator : A)
   (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Clause2_Output) × Backend)
+  (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Clause2_Output)
+    input_types.ParseError)
   := do
   let unbounded := core.option.Option.is_none bounds.max
   let r ← grammar.repeat.repeat_start input cursor unbounded
   match r with
   | core.result.Result.Ok _ =>
     let values ← RepeatAccumulatorInst.init accumulator
-    grammar.repeat.repeat_run_with_loop parser_traitsEvalInst
-      parser_traitsEvalInst1 RepeatAccumulatorInst backend parser following
-      bounds.min bounds.max accumulator input context unbounded values cursor
-      0#usize
-  | core.result.Result.Err error =>
-    ok (input_types.ParseOutcome.Error error, backend)
+    grammar.repeat.repeat_run_with_loop parser_traitsParserInst
+      parser_traitsParserInst1 RepeatAccumulatorInst parser following
+      bounds.min bounds.max accumulator input byte_order unbounded values
+      cursor 0#usize
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
 
 /-- [rusthammer::grammar::repeat::repeat_run]:
-    Source: 'src/grammar/repeat.rs', lines 523:0-546:1 -/
+    Source: 'src/grammar/repeat.rs', lines 500:0-521:1 -/
 def grammar.repeat.repeat_run
-  {Backend : Type} {P : Type} {A : Type} {Clause0_Clause0_Output : Type}
-  {Clause1_Output : Type} (parser_traitsEvalInst : parser_traits.Eval P Backend
-  Clause0_Clause0_Output) (RepeatAccumulatorInst :
-  grammar.repeat.RepeatAccumulator A Clause0_Clause0_Output Clause1_Output)
-  (backend : Backend) (parser : P) (bounds : grammar.repeat.RepeatBounds)
+  {P : Type} {A : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+  (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
+  (RepeatAccumulatorInst : grammar.repeat.RepeatAccumulator A Clause0_Output
+  Clause1_Output) (parser : P) (bounds : grammar.repeat.RepeatBounds)
   (accumulator : A) (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Clause1_Output) × Backend)
+  (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Clause1_Output)
+    input_types.ParseError)
   := do
-  grammar.repeat.repeat_run_with parser_traitsEvalInst parser_traitsEvalInst
-    RepeatAccumulatorInst backend parser parser bounds accumulator input cursor
-    context
+  grammar.repeat.repeat_run_with parser_traitsParserInst
+    parser_traitsParserInst RepeatAccumulatorInst parser parser bounds
+    accumulator input cursor byte_order
 
 /-- [rusthammer::grammar::repeat::Collect]
-    Source: 'src/grammar/repeat.rs', lines 383:0-383:15 -/
+    Source: 'src/grammar/repeat.rs', lines 381:0-381:15 -/
 @[reducible]
 def grammar.repeat.Collect := Unit
 
 /-- [rusthammer::grammar::repeat::{impl rusthammer::grammar::repeat::RepeatAccumulator<A, alloc::vec::Vec<A>> for rusthammer::grammar::repeat::Collect}::step]:
-    Source: 'src/grammar/repeat.rs', lines 391:4-394:5 -/
+    Source: 'src/grammar/repeat.rs', lines 389:4-392:5 -/
 def
   grammar.repeat.Collect.Insts.RusthammerGrammarRepeatRepeatAccumulatorAVec.step
   {A : Type} (self : grammar.repeat.Collect) (accumulated : alloc.vec.Vec A)
@@ -1397,14 +1126,14 @@ def
   alloc.vec.Vec.push accumulated value
 
 /-- [rusthammer::grammar::repeat::{impl rusthammer::grammar::repeat::RepeatAccumulator<A, alloc::vec::Vec<A>> for rusthammer::grammar::repeat::Collect}::init]:
-    Source: 'src/grammar/repeat.rs', lines 388:4-390:5 -/
+    Source: 'src/grammar/repeat.rs', lines 386:4-388:5 -/
 def
   grammar.repeat.Collect.Insts.RusthammerGrammarRepeatRepeatAccumulatorAVec.init
   (A : Type) (self : grammar.repeat.Collect) : Result (alloc.vec.Vec A) := do
   ok (alloc.vec.Vec.new A)
 
 /-- Trait implementation: [rusthammer::grammar::repeat::{impl rusthammer::grammar::repeat::RepeatAccumulator<A, alloc::vec::Vec<A>> for rusthammer::grammar::repeat::Collect}]
-    Source: 'src/grammar/repeat.rs', lines 386:0-395:1 -/
+    Source: 'src/grammar/repeat.rs', lines 384:0-393:1 -/
 @[reducible]
 def grammar.repeat.Collect.Insts.RusthammerGrammarRepeatRepeatAccumulatorAVec
   (A : Type) : grammar.repeat.RepeatAccumulator grammar.repeat.Collect A
@@ -1417,61 +1146,51 @@ def grammar.repeat.Collect.Insts.RusthammerGrammarRepeatRepeatAccumulatorAVec
 }
 
 /-- [rusthammer::grammar::repeat::Repeat]
-    Source: 'src/grammar/repeat.rs', lines 50:0-53:1
+    Source: 'src/grammar/repeat.rs', lines 48:0-51:1
     Visibility: public -/
 structure grammar.repeat.Repeat (P : Type) where
   parser : P
   bounds : grammar.repeat.RepeatBounds
 
-/-- [rusthammer::grammar::repeat::{impl rusthammer::parser_traits::Eval<'input, Backend, alloc::vec::Vec<Clause0_Clause0_Output>> for rusthammer::grammar::repeat::Repeat<P>}::eval]:
-    Source: 'src/grammar/repeat.rs', lines 470:4-486:5
+/-- [rusthammer::grammar::repeat::{impl rusthammer::parser_traits::Parser<'input, alloc::vec::Vec<Clause0_Output>> for rusthammer::grammar::repeat::Repeat<P>}::parse_with]:
+    Source: 'src/grammar/repeat.rs', lines 465:4-479:5
     Visibility: public -/
-def grammar.repeat.Repeat.Insts.RusthammerParser_traitsEvalInputBackendVec.eval
-  {Backend : Type} {P : Type} {Clause0_Clause0_Output : Type}
-  (parser_traitsEvalInst : parser_traits.Eval P Backend Clause0_Clause0_Output)
-  (self : grammar.repeat.Repeat P) (backend : Backend) (input : Slice Std.U8)
-  (cursor : input_types.Cursor) (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome (alloc.vec.Vec Clause0_Clause0_Output)) ×
-    Backend)
+def
+  grammar.repeat.Repeat.Insts.RusthammerParser_traitsParserInputVec.parse_with
+  {P : Type} {Clause0_Output : Type} (parser_traitsParserInst :
+  parser_traits.Parser P Clause0_Output) (self : grammar.repeat.Repeat P)
+  (input : Slice Std.U8) (cursor : input_types.Cursor)
+  (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × (alloc.vec.Vec
+    Clause0_Output)) input_types.ParseError)
   := do
-  grammar.repeat.repeat_run parser_traitsEvalInst
+  grammar.repeat.repeat_run parser_traitsParserInst
     (grammar.repeat.Collect.Insts.RusthammerGrammarRepeatRepeatAccumulatorAVec
-    Clause0_Clause0_Output) backend self.parser self.bounds () input cursor
-    context
+    Clause0_Output) self.parser self.bounds () input cursor byte_order
 
-/-- Trait implementation: [rusthammer::grammar::repeat::{impl rusthammer::parser_traits::Grammar<'input, alloc::vec::Vec<Clause0_Output>> for rusthammer::grammar::repeat::Repeat<P>}]
-    Source: 'src/grammar/repeat.rs', lines 464:0-466:1 -/
+/-- Trait implementation: [rusthammer::grammar::repeat::{impl rusthammer::parser_traits::Parser<'input, alloc::vec::Vec<Clause0_Output>> for rusthammer::grammar::repeat::Repeat<P>}]
+    Source: 'src/grammar/repeat.rs', lines 462:0-480:1 -/
 @[reducible]
-def grammar.repeat.Repeat.Insts.RusthammerParser_traitsGrammarInputVec {P :
-  Type} {Clause0_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) : parser_traits.Grammar
-  (grammar.repeat.Repeat P) (alloc.vec.Vec Clause0_Output) := {
-}
-
-/-- Trait implementation: [rusthammer::grammar::repeat::{impl rusthammer::parser_traits::Eval<'input, Backend, alloc::vec::Vec<Clause0_Clause0_Output>> for rusthammer::grammar::repeat::Repeat<P>}]
-    Source: 'src/grammar/repeat.rs', lines 469:0-487:1 -/
-@[reducible]
-def grammar.repeat.Repeat.Insts.RusthammerParser_traitsEvalInputBackendVec
-  {Backend : Type} {P : Type} {Clause0_Clause0_Output : Type}
-  (parser_traitsEvalInst : parser_traits.Eval P Backend Clause0_Clause0_Output)
-  : parser_traits.Eval (grammar.repeat.Repeat P) Backend (alloc.vec.Vec
-  Clause0_Clause0_Output) := {
-  GrammarInst :=
-    grammar.repeat.Repeat.Insts.RusthammerParser_traitsGrammarInputVec
-    parser_traitsEvalInst.GrammarInst
-  eval :=
-    grammar.repeat.Repeat.Insts.RusthammerParser_traitsEvalInputBackendVec.eval
-    parser_traitsEvalInst
+impl_def grammar.repeat.Repeat.Insts.RusthammerParser_traitsParserInputVec {P :
+  Type} {Clause0_Output : Type} (parser_traitsParserInst : parser_traits.Parser
+  P Clause0_Output) : parser_traits.Parser (grammar.repeat.Repeat P)
+  (alloc.vec.Vec Clause0_Output) := {
+  parse_with :=
+    grammar.repeat.Repeat.Insts.RusthammerParser_traitsParserInputVec.parse_with
+    parser_traitsParserInst
+  parse := parser_traits.Parser.parse.default
+    (grammar.repeat.Repeat.Insts.RusthammerParser_traitsParserInputVec
+    parser_traitsParserInst)
 }
 
 /-- [rusthammer::grammar::repeat::{rusthammer::grammar::repeat::RepeatBounds}::exact]:
-    Source: 'src/grammar/repeat.rs', lines 363:4-368:5 -/
+    Source: 'src/grammar/repeat.rs', lines 361:4-366:5 -/
 def grammar.repeat.RepeatBounds.exact
   (count : Std.Usize) : Result grammar.repeat.RepeatBounds := do
   ok { min := count, max := (some count) }
 
 /-- [rusthammer::grammar::repeat::{rusthammer::grammar::repeat::Repeat<P>}::exact]:
-    Source: 'src/grammar/repeat.rs', lines 64:4-69:5
+    Source: 'src/grammar/repeat.rs', lines 62:4-67:5
     Visibility: public -/
 def grammar.repeat.Repeat.exact
   {P : Type} (parser : P) (count : Std.Usize) :
@@ -1481,12 +1200,12 @@ def grammar.repeat.Repeat.exact
   ok { parser, bounds := rb }
 
 /-- [rusthammer::dependent_examples::fields::{closure}]
-    Source: 'src/../examples/support/dependent.rs', lines 77:14-77:63 -/
+    Source: 'src/../examples/support/dependent.rs', lines 75:14-75:63 -/
 @[reducible]
 def dependent_examples.fields.closure := grammar.numeric.Bits
 
 /-- [rusthammer::dependent_examples::fields::{impl core::ops::function::Fn<(usize,), rusthammer::grammar::repeat::Repeat<rusthammer::grammar::numeric::Bits>> for rusthammer::dependent_examples::fields::{closure}<'_0>}::call]:
-    Source: 'src/../examples/support/dependent.rs', lines 77:14-77:63 -/
+    Source: 'src/../examples/support/dependent.rs', lines 75:14-75:63 -/
 def
   dependent_examples.fields.closure.Insts.CoreOpsFunctionFnTupleUsizeRepeatBits.call
   (c : dependent_examples.fields.closure) (tupled_args : Std.Usize) :
@@ -1495,7 +1214,7 @@ def
   grammar.repeat.Repeat.exact c tupled_args
 
 /-- [rusthammer::dependent_examples::fields::{impl core::ops::function::FnMut<(usize,), rusthammer::grammar::repeat::Repeat<rusthammer::grammar::numeric::Bits>> for rusthammer::dependent_examples::fields::{closure}<'_0>}::call_mut]:
-    Source: 'src/../examples/support/dependent.rs', lines 77:14-77:63 -/
+    Source: 'src/../examples/support/dependent.rs', lines 75:14-75:63 -/
 def
   dependent_examples.fields.closure.Insts.CoreOpsFunctionFnMutTupleUsizeRepeatBits.call_mut
   (state : dependent_examples.fields.closure) (args : Std.Usize) :
@@ -1508,7 +1227,7 @@ def
   ok (r, state)
 
 /-- [rusthammer::dependent_examples::fields::{impl core::ops::function::FnOnce<(usize,), rusthammer::grammar::repeat::Repeat<rusthammer::grammar::numeric::Bits>> for rusthammer::dependent_examples::fields::{closure}<'_0>}::call_once]:
-    Source: 'src/../examples/support/dependent.rs', lines 77:14-77:63 -/
+    Source: 'src/../examples/support/dependent.rs', lines 75:14-75:63 -/
 def
   dependent_examples.fields.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeRepeatBits.call_once
   (c : dependent_examples.fields.closure) (i : Std.Usize) :
@@ -1520,7 +1239,7 @@ def
   ok r
 
 /-- Trait implementation: [rusthammer::dependent_examples::fields::{impl core::ops::function::FnOnce<(usize,), rusthammer::grammar::repeat::Repeat<rusthammer::grammar::numeric::Bits>> for rusthammer::dependent_examples::fields::{closure}<'_0>}]
-    Source: 'src/../examples/support/dependent.rs', lines 77:14-77:63 -/
+    Source: 'src/../examples/support/dependent.rs', lines 75:14-75:63 -/
 @[reducible]
 def
   dependent_examples.fields.closure.Insts.CoreOpsFunctionFnOnceTupleUsizeRepeatBits
@@ -1531,7 +1250,7 @@ def
 }
 
 /-- Trait implementation: [rusthammer::dependent_examples::fields::{impl core::ops::function::FnMut<(usize,), rusthammer::grammar::repeat::Repeat<rusthammer::grammar::numeric::Bits>> for rusthammer::dependent_examples::fields::{closure}<'_0>}]
-    Source: 'src/../examples/support/dependent.rs', lines 77:14-77:63 -/
+    Source: 'src/../examples/support/dependent.rs', lines 75:14-75:63 -/
 @[reducible]
 def
   dependent_examples.fields.closure.Insts.CoreOpsFunctionFnMutTupleUsizeRepeatBits
@@ -1544,7 +1263,7 @@ def
 }
 
 /-- Trait implementation: [rusthammer::dependent_examples::fields::{impl core::ops::function::Fn<(usize,), rusthammer::grammar::repeat::Repeat<rusthammer::grammar::numeric::Bits>> for rusthammer::dependent_examples::fields::{closure}<'_0>}]
-    Source: 'src/../examples/support/dependent.rs', lines 77:14-77:63 -/
+    Source: 'src/../examples/support/dependent.rs', lines 75:14-75:63 -/
 @[reducible]
 def
   dependent_examples.fields.closure.Insts.CoreOpsFunctionFnTupleUsizeRepeatBits
@@ -1557,23 +1276,21 @@ def
 }
 
 /-- [rusthammer::dependent_examples::fields]:
-    Source: 'src/../examples/support/dependent.rs', lines 69:0-80:1
+    Source: 'src/../examples/support/dependent.rs', lines 67:0-78:1
     Visibility: public -/
 def dependent_examples.fields
   (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result (input_types.ParseOutcome (alloc.vec.Vec Std.U64))
+  (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × (alloc.vec.Vec Std.U64))
+    input_types.ParseError)
   := do
   let element ← dependent_examples.fixed_bits 4#u8
-  parser_traits.Parser.parse_with.default (parser_traits.Parser.Blanket
-    (grammar.sequence.Bind.Insts.RusthammerParser_traitsEval
-    (dependent_examples.CountPrefix.Insts.RusthammerParser_traitsEvalInputBackendUsize
-    parser_traits.Direct)
+  grammar.sequence.Bind.Insts.RusthammerParser_traitsParser.parse_with
+    dependent_examples.CountPrefix.Insts.RusthammerParser_traitsParserInputUsize
     dependent_examples.fields.closure.Insts.CoreOpsFunctionFnTupleUsizeRepeatBits
-    (grammar.repeat.Repeat.Insts.RusthammerParser_traitsEvalInputBackendVec
-    (grammar.numeric.Bits.Insts.RusthammerParser_traitsEvalInputBackendU64
-    parser_traits.Direct)))) { parser := (), «then» := element } input cursor
-    context
+    (grammar.repeat.Repeat.Insts.RusthammerParser_traitsParserInputVec
+    grammar.numeric.Bits.Insts.RusthammerParser_traitsParserInputU64)
+    { parser := (), «then» := element } input cursor byte_order
 
 /-- [rusthammer::flags_example::Flags]
     Source: 'src/../examples/support/flags.rs', lines 8:0-12:1
@@ -1584,60 +1301,46 @@ structure flags_example.Flags where
   compressed : Bool
 
 /-- [rusthammer::grammar::transform::Map]
-    Source: 'src/grammar/transform.rs', lines 10:0-13:1
+    Source: 'src/grammar/transform.rs', lines 9:0-12:1
     Visibility: public -/
 structure grammar.transform.Map (P : Type) (F : Type) where
   parser : P
   map : F
 
-/-- [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Eval<'input, Backend, O> for rusthammer::grammar::transform::Map<P, F>}::eval]:
-    Source: 'src/grammar/transform.rs', lines 47:4-59:5
+/-- [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Parser<'input, O> for rusthammer::grammar::transform::Map<P, F>}::parse_with]:
+    Source: 'src/grammar/transform.rs', lines 40:4-53:5
     Visibility: public -/
-def grammar.transform.Map.Insts.RusthammerParser_traitsEval.eval
-  {Backend : Type} {P : Type} {F : Type} {O : Type} {Clause0_Clause0_Output :
-  Type} (parser_traitsEvalInst : parser_traits.Eval P Backend
-  Clause0_Clause0_Output) (coreopsfunctionFnFTupleClause0_Clause0_OutputOInst :
-  core.ops.function.Fn F Clause0_Clause0_Output O)
-  (self : grammar.transform.Map P F) (backend : Backend) (input : Slice Std.U8)
-  (cursor : input_types.Cursor) (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome O) × Backend)
-  := do
-  let (po, backend1) ←
-    parser_traitsEvalInst.eval self.parser backend input cursor context
-  match po with
-  | input_types.ParseOutcome.Success next value =>
-    let t ←
-      coreopsfunctionFnFTupleClause0_Clause0_OutputOInst.call self.map value
-    ok (input_types.ParseOutcome.Success next t, backend1)
-  | input_types.ParseOutcome.Error error =>
-    ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
-
-/-- Trait implementation: [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Grammar<'input, O> for rusthammer::grammar::transform::Map<P, F>}]
-    Source: 'src/grammar/transform.rs', lines 34:0-40:1 -/
-@[reducible]
-def grammar.transform.Map.Insts.RusthammerParser_traitsGrammar {P : Type} {F :
-  Type} {O : Type} {Clause0_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output)
+def grammar.transform.Map.Insts.RusthammerParser_traitsParser.parse_with
+  {P : Type} {F : Type} {O : Type} {Clause0_Output : Type}
+  (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
   (coreopsfunctionFnFTupleClause0_OutputOInst : core.ops.function.Fn F
-  Clause0_Output O) : parser_traits.Grammar (grammar.transform.Map P F) O := {
-}
+  Clause0_Output O) (self : grammar.transform.Map P F) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × O) input_types.ParseError)
+  := do
+  let r ←
+    parser_traitsParserInst.parse_with self.parser input cursor byte_order
+  match r with
+  | core.result.Result.Ok parsed =>
+    let (next, value) := parsed
+    let t ← coreopsfunctionFnFTupleClause0_OutputOInst.call self.map value
+    ok (core.result.Result.Ok (next, t))
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
 
-/-- Trait implementation: [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Eval<'input, Backend, O> for rusthammer::grammar::transform::Map<P, F>}]
-    Source: 'src/grammar/transform.rs', lines 42:0-60:1 -/
+/-- Trait implementation: [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Parser<'input, O> for rusthammer::grammar::transform::Map<P, F>}]
+    Source: 'src/grammar/transform.rs', lines 33:0-54:1 -/
 @[reducible]
-def grammar.transform.Map.Insts.RusthammerParser_traitsEval {Backend : Type} {P
-  : Type} {F : Type} {O : Type} {Clause0_Clause0_Output : Type}
-  (parser_traitsEvalInst : parser_traits.Eval P Backend Clause0_Clause0_Output)
-  (coreopsfunctionFnFTupleClause0_Clause0_OutputOInst : core.ops.function.Fn F
-  Clause0_Clause0_Output O) : parser_traits.Eval (grammar.transform.Map P F)
-  Backend O := {
-  GrammarInst := grammar.transform.Map.Insts.RusthammerParser_traitsGrammar
-    parser_traitsEvalInst.GrammarInst
-    coreopsfunctionFnFTupleClause0_Clause0_OutputOInst
-  eval := grammar.transform.Map.Insts.RusthammerParser_traitsEval.eval
-    parser_traitsEvalInst coreopsfunctionFnFTupleClause0_Clause0_OutputOInst
+impl_def grammar.transform.Map.Insts.RusthammerParser_traitsParser {P : Type}
+  {F : Type} {O : Type} {Clause0_Output : Type} (parser_traitsParserInst :
+  parser_traits.Parser P Clause0_Output)
+  (coreopsfunctionFnFTupleClause0_OutputOInst : core.ops.function.Fn F
+  Clause0_Output O) : parser_traits.Parser (grammar.transform.Map P F) O := {
+  parse_with :=
+    grammar.transform.Map.Insts.RusthammerParser_traitsParser.parse_with
+    parser_traitsParserInst coreopsfunctionFnFTupleClause0_OutputOInst
+  parse := parser_traits.Parser.parse.default
+    (grammar.transform.Map.Insts.RusthammerParser_traitsParser
+    parser_traitsParserInst coreopsfunctionFnFTupleClause0_OutputOInst)
 }
 
 /-- [rusthammer::grammar::sequence::Seq]
@@ -1647,100 +1350,75 @@ structure grammar.sequence.Seq (P : Type) (Q : Type) where
   first : P
   second : Q
 
-/-- [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Eval<'input, Backend, (Clause0_Clause0_Output, Clause1_Clause0_Output)> for rusthammer::grammar::sequence::Seq<P, Q>}::eval]:
-    Source: 'src/grammar/sequence.rs', lines 32:4-52:5
+/-- [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Parser<'input, (Clause0_Output, Clause1_Output)> for rusthammer::grammar::sequence::Seq<P, Q>}::parse_with]:
+    Source: 'src/grammar/sequence.rs', lines 28:4-47:5
     Visibility: public -/
-def grammar.sequence.Seq.Insts.RusthammerParser_traitsEvalInputBackendPair.eval
-  {Backend : Type} {P : Type} {Q : Type} {Clause0_Clause0_Output : Type}
-  {Clause1_Clause0_Output : Type} (parser_traitsEvalInst : parser_traits.Eval P
-  Backend Clause0_Clause0_Output) (parser_traitsEvalInst1 : parser_traits.Eval
-  Q Backend Clause1_Clause0_Output) (self : grammar.sequence.Seq P Q)
-  (backend : Backend) (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome (Clause0_Clause0_Output ×
-    Clause1_Clause0_Output)) × Backend)
+def
+  grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair.parse_with
+  {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+  (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
+  (parser_traitsParserInst1 : parser_traits.Parser Q Clause1_Output)
+  (self : grammar.sequence.Seq P Q) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × (Clause0_Output ×
+    Clause1_Output)) input_types.ParseError)
   := do
-  let (po, backend1) ←
-    parser_traitsEvalInst.eval self.first backend input cursor context
-  match po with
-  | input_types.ParseOutcome.Success next first =>
-    let (po1, backend2) ←
-      parser_traitsEvalInst1.eval self.second backend1 input next context
-    match po1 with
-    | input_types.ParseOutcome.Success «end» second =>
-      ok (input_types.ParseOutcome.Success «end» (first, second), backend2)
-    | input_types.ParseOutcome.Error error =>
-      ok (input_types.ParseOutcome.Error error, backend2)
-    | input_types.ParseOutcome.NeedMore =>
-      ok (input_types.ParseOutcome.NeedMore, backend2)
-  | input_types.ParseOutcome.Error error =>
-    ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
+  let r ← parser_traitsParserInst.parse_with self.first input cursor byte_order
+  match r with
+  | core.result.Result.Ok parsed =>
+    let (next, first) := parsed
+    let r1 ←
+      parser_traitsParserInst1.parse_with self.second input next byte_order
+    match r1 with
+    | core.result.Result.Ok parsed1 =>
+      let («end», second) := parsed1
+      ok (core.result.Result.Ok («end», (first, second)))
+    | core.result.Result.Err error => ok (core.result.Result.Err error)
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
 
-/-- Trait implementation: [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Grammar<'input, (Clause0_Output, Clause1_Output)> for rusthammer::grammar::sequence::Seq<P, Q>}]
-    Source: 'src/grammar/sequence.rs', lines 25:0-27:1 -/
+/-- Trait implementation: [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Parser<'input, (Clause0_Output, Clause1_Output)> for rusthammer::grammar::sequence::Seq<P, Q>}]
+    Source: 'src/grammar/sequence.rs', lines 25:0-48:1 -/
 @[reducible]
-def grammar.sequence.Seq.Insts.RusthammerParser_traitsGrammarInputPair {P :
+impl_def grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair {P :
   Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
-  (parser_traitsGrammarInst1 : parser_traits.Grammar Q Clause1_Output) :
-  parser_traits.Grammar (grammar.sequence.Seq P Q) (Clause0_Output ×
+  (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
+  (parser_traitsParserInst1 : parser_traits.Parser Q Clause1_Output) :
+  parser_traits.Parser (grammar.sequence.Seq P Q) (Clause0_Output ×
   Clause1_Output) := {
-}
-
-/-- Trait implementation: [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Eval<'input, Backend, (Clause0_Clause0_Output, Clause1_Clause0_Output)> for rusthammer::grammar::sequence::Seq<P, Q>}]
-    Source: 'src/grammar/sequence.rs', lines 29:0-53:1 -/
-@[reducible]
-def grammar.sequence.Seq.Insts.RusthammerParser_traitsEvalInputBackendPair
-  {Backend : Type} {P : Type} {Q : Type} {Clause0_Clause0_Output : Type}
-  {Clause1_Clause0_Output : Type} (parser_traitsEvalInst : parser_traits.Eval P
-  Backend Clause0_Clause0_Output) (parser_traitsEvalInst1 : parser_traits.Eval
-  Q Backend Clause1_Clause0_Output) : parser_traits.Eval (grammar.sequence.Seq
-  P Q) Backend (Clause0_Clause0_Output × Clause1_Clause0_Output) := {
-  GrammarInst :=
-    grammar.sequence.Seq.Insts.RusthammerParser_traitsGrammarInputPair
-    parser_traitsEvalInst.GrammarInst parser_traitsEvalInst1.GrammarInst
-  eval :=
-    grammar.sequence.Seq.Insts.RusthammerParser_traitsEvalInputBackendPair.eval
-    parser_traitsEvalInst parser_traitsEvalInst1
+  parse_with :=
+    grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair.parse_with
+    parser_traitsParserInst parser_traitsParserInst1
+  parse := parser_traits.Parser.parse.default
+    (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+    parser_traitsParserInst parser_traitsParserInst1)
 }
 
 /-- [rusthammer::grammar::numeric::Bit]
-    Source: 'src/grammar/numeric.rs', lines 48:0-48:15
+    Source: 'src/grammar/numeric.rs', lines 34:0-34:15
     Visibility: public -/
 @[reducible]
 def grammar.numeric.Bit := Unit
 
-/-- [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Eval<'input, Backend, bool> for rusthammer::grammar::numeric::Bit}::eval]:
-    Source: 'src/grammar/numeric.rs', lines 55:4-65:5
+/-- [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Parser<'input, bool> for rusthammer::grammar::numeric::Bit}::parse_with]:
+    Source: 'src/grammar/numeric.rs', lines 39:4-46:5
     Visibility: public -/
-def grammar.numeric.Bit.Insts.RusthammerParser_traitsEvalInputBackendBool.eval
-  {Backend : Type} (self : grammar.numeric.Bit) (t : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Bool) × Backend)
+def grammar.numeric.Bit.Insts.RusthammerParser_traitsParserInputBool.parse_with
+  (self : grammar.numeric.Bit) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (bo : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Bool)
+    input_types.ParseError)
   := do
-  let r ← grammar.numeric.read_bit_ordered input cursor context.order.bit
-  let po ← input_types.InputStatus.classify context.status r
-  ok (po, t)
+  grammar.numeric.read_bit input cursor
 
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Grammar<'input, bool> for rusthammer::grammar::numeric::Bit}]
-    Source: 'src/grammar/numeric.rs', lines 50:0-52:1 -/
+/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Parser<'input, bool> for rusthammer::grammar::numeric::Bit}]
+    Source: 'src/grammar/numeric.rs', lines 36:0-47:1 -/
 @[reducible]
-def grammar.numeric.Bit.Insts.RusthammerParser_traitsGrammarInputBool :
-  parser_traits.Grammar grammar.numeric.Bit Bool := {
-}
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Eval<'input, Backend, bool> for rusthammer::grammar::numeric::Bit}]
-    Source: 'src/grammar/numeric.rs', lines 54:0-66:1 -/
-@[reducible]
-def grammar.numeric.Bit.Insts.RusthammerParser_traitsEvalInputBackendBool
-  (Backend : Type) : parser_traits.Eval grammar.numeric.Bit Backend Bool := {
-  GrammarInst :=
-    grammar.numeric.Bit.Insts.RusthammerParser_traitsGrammarInputBool
-  eval :=
-    grammar.numeric.Bit.Insts.RusthammerParser_traitsEvalInputBackendBool.eval
+impl_def grammar.numeric.Bit.Insts.RusthammerParser_traitsParserInputBool :
+  parser_traits.Parser grammar.numeric.Bit Bool := {
+  parse_with :=
+    grammar.numeric.Bit.Insts.RusthammerParser_traitsParserInputBool.parse_with
+  parse := parser_traits.Parser.parse.default
+    grammar.numeric.Bit.Insts.RusthammerParser_traitsParserInputBool
 }
 
 /-- [rusthammer::flags_example::parse_flags::{closure}]
@@ -1828,58 +1506,55 @@ def flags_example.parse_flags
   Result (core.result.Result (input_types.Cursor × flags_example.Flags)
     input_types.ParseError)
   := do
-  parser_traits.Parser.parse.default (parser_traits.Parser.Blanket
-    (grammar.transform.Map.Insts.RusthammerParser_traitsEval
-    (grammar.sequence.Seq.Insts.RusthammerParser_traitsEvalInputBackendPair
-    (grammar.numeric.Bit.Insts.RusthammerParser_traitsEvalInputBackendBool
-    parser_traits.Direct)
-    (grammar.sequence.Seq.Insts.RusthammerParser_traitsEvalInputBackendPair
-    (grammar.numeric.Bit.Insts.RusthammerParser_traitsEvalInputBackendBool
-    parser_traits.Direct)
-    (grammar.numeric.Bit.Insts.RusthammerParser_traitsEvalInputBackendBool
-    parser_traits.Direct)))
-    flags_example.parse_flags.closure.Insts.CoreOpsFunctionFnTuplePairBoolPairBoolBoolFlags))
+  parser_traits.Parser.parse.default
+    (grammar.transform.Map.Insts.RusthammerParser_traitsParser
+    (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+    grammar.numeric.Bit.Insts.RusthammerParser_traitsParserInputBool
+    (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+    grammar.numeric.Bit.Insts.RusthammerParser_traitsParserInputBool
+    grammar.numeric.Bit.Insts.RusthammerParser_traitsParserInputBool))
+    flags_example.parse_flags.closure.Insts.CoreOpsFunctionFnTuplePairBoolPairBoolBoolFlags)
     {
       parser := { first := (), second := { first := (), second := () } },
       map := ()
     } input cursor
 
 /-- [rusthammer::grammar::position::End]
-    Source: 'src/grammar/position.rs', lines 314:0-314:15
+    Source: 'src/grammar/position.rs', lines 148:0-148:15
     Visibility: public -/
 @[reducible]
 def grammar.position.End := Unit
 
 /-- [rusthammer::grammar::numeric::Literal]
-    Source: 'src/grammar/numeric.rs', lines 476:0-479:1
+    Source: 'src/grammar/numeric.rs', lines 436:0-439:1
     Visibility: public -/
 structure grammar.numeric.Literal where
   bits : grammar.numeric.Bits
   value : Std.U64
 
 /-- [rusthammer::grammar::control::Choice]
-    Source: 'src/grammar/control.rs', lines 81:0-84:1
+    Source: 'src/grammar/control.rs', lines 74:0-77:1
     Visibility: public -/
 structure grammar.control.Choice (P : Type) (Q : Type) where
   first : P
   second : Q
 
 /-- [rusthammer::marker_example::Marker]
-    Source: 'src/../examples/support/marker.rs', lines 12:0-14:1
+    Source: 'src/../examples/support/marker.rs', lines 9:0-11:1
     Visibility: public -/
 structure marker_example.Marker where
   parser : grammar.sequence.Seq (grammar.control.Choice grammar.numeric.Literal
     grammar.numeric.Literal) grammar.position.End
 
 /-- [rusthammer::marker_example::{impl core::clone::Clone for rusthammer::marker_example::Marker}::clone]:
-    Source: 'src/../examples/support/marker.rs', lines 11:9-11:14
+    Source: 'src/../examples/support/marker.rs', lines 8:9-8:14
     Visibility: public -/
 def marker_example.Marker.Insts.CoreCloneClone.clone
   (self : marker_example.Marker) : Result marker_example.Marker := do
   ok self
 
 /-- Trait implementation: [rusthammer::marker_example::{impl core::clone::Clone for rusthammer::marker_example::Marker}]
-    Source: 'src/../examples/support/marker.rs', lines 11:9-11:14 -/
+    Source: 'src/../examples/support/marker.rs', lines 8:9-8:14 -/
 @[reducible]
 def marker_example.Marker.Insts.CoreCloneClone : core.clone.Clone
   marker_example.Marker := {
@@ -1887,7 +1562,7 @@ def marker_example.Marker.Insts.CoreCloneClone : core.clone.Clone
 }
 
 /-- [rusthammer::grammar::numeric::{rusthammer::grammar::numeric::Literal}::new]:
-    Source: 'src/grammar/numeric.rs', lines 484:4-494:5
+    Source: 'src/grammar/numeric.rs', lines 444:4-454:5
     Visibility: public -/
 def grammar.numeric.Literal.new
   (width : Std.U8) (value : Std.U64) :
@@ -1906,7 +1581,7 @@ def grammar.numeric.Literal.new
   | core.result.Result.Err error => ok (core.result.Result.Err error)
 
 /-- [rusthammer::marker_example::{rusthammer::marker_example::Marker}::new]:
-    Source: 'src/../examples/support/marker.rs', lines 19:4-34:5
+    Source: 'src/../examples/support/marker.rs', lines 16:4-31:5
     Visibility: public -/
 def marker_example.Marker.new
   :
@@ -1926,88 +1601,55 @@ def marker_example.Marker.new
     | core.result.Result.Err error => ok (core.result.Result.Err error)
   | core.result.Result.Err error => ok (core.result.Result.Err error)
 
-/-- Trait implementation: [rusthammer::marker_example::{impl rusthammer::parser_traits::Grammar<'input, u64> for rusthammer::marker_example::Marker}]
-    Source: 'src/../examples/support/marker.rs', lines 37:0-39:1 -/
-@[reducible]
-def marker_example.Marker.Insts.RusthammerParser_traitsGrammarInputU64 :
-  parser_traits.Grammar marker_example.Marker Std.U64 := {
-}
-
-/-- [rusthammer::grammar::position::{impl rusthammer::parser_traits::Eval<'input, Backend, ()> for rusthammer::grammar::position::End}::eval]:
-    Source: 'src/grammar/position.rs', lines 321:4-342:5
+/-- [rusthammer::grammar::position::{impl rusthammer::parser_traits::Parser<'input, ()> for rusthammer::grammar::position::End}::parse_with]:
+    Source: 'src/grammar/position.rs', lines 153:4-170:5
     Visibility: public -/
 def
-  grammar.position.End.Insts.RusthammerParser_traitsEvalInputBackendTuple.eval
-  {Backend : Type} (self : grammar.position.End) (t : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Unit) × Backend)
+  grammar.position.End.Insts.RusthammerParser_traitsParserInputTuple.parse_with
+  (self : grammar.position.End) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (bo : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Unit)
+    input_types.ParseError)
   := do
   if cursor.bit >= 8#u8
-  then
-    ok (input_types.ParseOutcome.Error input_types.ParseError.InvalidCursor, t)
+  then ok (core.result.Result.Err input_types.ParseError.InvalidCursor)
   else
     let i := Slice.len input
     if cursor.byte > i
-    then
-      ok (input_types.ParseOutcome.Error input_types.ParseError.InvalidCursor,
-        t)
+    then ok (core.result.Result.Err input_types.ParseError.InvalidCursor)
     else
       let i1 := Slice.len input
       if cursor.byte = i1
       then
         if cursor.bit != 0#u8
-        then
-          ok (input_types.ParseOutcome.Error
-            input_types.ParseError.InvalidCursor, t)
+        then ok (core.result.Result.Err input_types.ParseError.InvalidCursor)
         else
           let i2 := Slice.len input
           if cursor.byte = i2
-          then
-            match context.status with
-            | input_types.InputStatus.Partial =>
-              ok (input_types.ParseOutcome.NeedMore, t)
-            | input_types.InputStatus.Final =>
-              ok (input_types.ParseOutcome.Success cursor (), t)
-          else
-            ok (input_types.ParseOutcome.Error
-              input_types.ParseError.TrailingInput, t)
+          then ok (core.result.Result.Ok (cursor, ()))
+          else ok (core.result.Result.Err input_types.ParseError.TrailingInput)
       else
         let i2 := Slice.len input
         if cursor.byte = i2
-        then
-          match context.status with
-          | input_types.InputStatus.Partial =>
-            ok (input_types.ParseOutcome.NeedMore, t)
-          | input_types.InputStatus.Final =>
-            ok (input_types.ParseOutcome.Success cursor (), t)
-        else
-          ok (input_types.ParseOutcome.Error
-            input_types.ParseError.TrailingInput, t)
+        then ok (core.result.Result.Ok (cursor, ()))
+        else ok (core.result.Result.Err input_types.ParseError.TrailingInput)
 
-/-- Trait implementation: [rusthammer::grammar::position::{impl rusthammer::parser_traits::Grammar<'input, ()> for rusthammer::grammar::position::End}]
-    Source: 'src/grammar/position.rs', lines 316:0-318:1 -/
+/-- Trait implementation: [rusthammer::grammar::position::{impl rusthammer::parser_traits::Parser<'input, ()> for rusthammer::grammar::position::End}]
+    Source: 'src/grammar/position.rs', lines 150:0-171:1 -/
 @[reducible]
-def grammar.position.End.Insts.RusthammerParser_traitsGrammarInputTuple :
-  parser_traits.Grammar grammar.position.End Unit := {
-}
-
-/-- Trait implementation: [rusthammer::grammar::position::{impl rusthammer::parser_traits::Eval<'input, Backend, ()> for rusthammer::grammar::position::End}]
-    Source: 'src/grammar/position.rs', lines 320:0-343:1 -/
-@[reducible]
-def grammar.position.End.Insts.RusthammerParser_traitsEvalInputBackendTuple
-  (Backend : Type) : parser_traits.Eval grammar.position.End Backend Unit := {
-  GrammarInst :=
-    grammar.position.End.Insts.RusthammerParser_traitsGrammarInputTuple
-  eval :=
-    grammar.position.End.Insts.RusthammerParser_traitsEvalInputBackendTuple.eval
+impl_def grammar.position.End.Insts.RusthammerParser_traitsParserInputTuple :
+  parser_traits.Parser grammar.position.End Unit := {
+  parse_with :=
+    grammar.position.End.Insts.RusthammerParser_traitsParserInputTuple.parse_with
+  parse := parser_traits.Parser.parse.default
+    grammar.position.End.Insts.RusthammerParser_traitsParserInputTuple
 }
 
 /-- [rusthammer::grammar::numeric::read_literal]:
-    Source: 'src/grammar/numeric.rs', lines 525:0-541:1 -/
+    Source: 'src/grammar/numeric.rs', lines 480:0-496:1 -/
 def grammar.numeric.read_literal
   (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (parser : grammar.numeric.Literal) (order : input_types.Order) :
+  (parser : grammar.numeric.Literal) (order : input_types.ByteOrder) :
   Result (core.result.Result (input_types.Cursor × Std.U64)
     input_types.ParseError)
   := do
@@ -2020,129 +1662,103 @@ def grammar.numeric.read_literal
     else ok (core.result.Result.Err input_types.ParseError.Mismatch)
   | core.result.Result.Err _ => ok r
 
-/-- [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Eval<'input, Backend, u64> for rusthammer::grammar::numeric::Literal}::eval]:
-    Source: 'src/grammar/numeric.rs', lines 512:4-522:5
+/-- [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Parser<'input, u64> for rusthammer::grammar::numeric::Literal}::parse_with]:
+    Source: 'src/grammar/numeric.rs', lines 470:4-477:5
     Visibility: public -/
 def
-  grammar.numeric.Literal.Insts.RusthammerParser_traitsEvalInputBackendU64.eval
-  {Backend : Type} (self : grammar.numeric.Literal) (t : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Std.U64) × Backend)
+  grammar.numeric.Literal.Insts.RusthammerParser_traitsParserInputU64.parse_with
+  (self : grammar.numeric.Literal) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Std.U64)
+    input_types.ParseError)
   := do
-  let r ← grammar.numeric.read_literal input cursor self context.order
-  let po ← input_types.InputStatus.classify context.status r
-  ok (po, t)
+  grammar.numeric.read_literal input cursor self byte_order
 
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Grammar<'input, u64> for rusthammer::grammar::numeric::Literal}]
-    Source: 'src/grammar/numeric.rs', lines 507:0-509:1 -/
+/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Parser<'input, u64> for rusthammer::grammar::numeric::Literal}]
+    Source: 'src/grammar/numeric.rs', lines 467:0-478:1 -/
 @[reducible]
-def grammar.numeric.Literal.Insts.RusthammerParser_traitsGrammarInputU64 :
-  parser_traits.Grammar grammar.numeric.Literal Std.U64 := {
+impl_def grammar.numeric.Literal.Insts.RusthammerParser_traitsParserInputU64 :
+  parser_traits.Parser grammar.numeric.Literal Std.U64 := {
+  parse_with :=
+    grammar.numeric.Literal.Insts.RusthammerParser_traitsParserInputU64.parse_with
+  parse := parser_traits.Parser.parse.default
+    grammar.numeric.Literal.Insts.RusthammerParser_traitsParserInputU64
 }
 
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Eval<'input, Backend, u64> for rusthammer::grammar::numeric::Literal}]
-    Source: 'src/grammar/numeric.rs', lines 511:0-523:1 -/
-@[reducible]
-def grammar.numeric.Literal.Insts.RusthammerParser_traitsEvalInputBackendU64
-  (Backend : Type) : parser_traits.Eval grammar.numeric.Literal Backend Std.U64
-  := {
-  GrammarInst :=
-    grammar.numeric.Literal.Insts.RusthammerParser_traitsGrammarInputU64
-  eval :=
-    grammar.numeric.Literal.Insts.RusthammerParser_traitsEvalInputBackendU64.eval
-}
-
-/-- [rusthammer::grammar::control::{impl rusthammer::parser_traits::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::grammar::control::Choice<P, Q>}::eval]:
-    Source: 'src/grammar/control.rs', lines 123:4-141:5
+/-- [rusthammer::grammar::control::{impl rusthammer::parser_traits::Parser<'input, Clause0_Output> for rusthammer::grammar::control::Choice<P, Q>}::parse_with]:
+    Source: 'src/grammar/control.rs', lines 110:4-129:5
     Visibility: public -/
-def grammar.control.Choice.Insts.RusthammerParser_traitsEval.eval
-  {Backend : Type} {P : Type} {Q : Type} {Clause0_Clause0_Output : Type}
-  (parser_traitsEvalInst : parser_traits.Eval P Backend Clause0_Clause0_Output)
-  (parser_traitsEvalInst1 : parser_traits.Eval Q Backend
-  Clause0_Clause0_Output) (self : grammar.control.Choice P Q)
-  (backend : Backend) (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Clause0_Clause0_Output) × Backend)
+def grammar.control.Choice.Insts.RusthammerParser_traitsParser.parse_with
+  {P : Type} {Q : Type} {Clause0_Output : Type} (parser_traitsParserInst :
+  parser_traits.Parser P Clause0_Output) (parser_traitsParserInst1 :
+  parser_traits.Parser Q Clause0_Output) (self : grammar.control.Choice P Q)
+  (input : Slice Std.U8) (cursor : input_types.Cursor)
+  (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Clause0_Output)
+    input_types.ParseError)
   := do
-  let (po, backend1) ←
-    parser_traitsEvalInst.eval self.first backend input cursor context
-  match po with
-  | input_types.ParseOutcome.Success _ _ => ok (po, backend1)
-  | input_types.ParseOutcome.Error error =>
+  let r ← parser_traitsParserInst.parse_with self.first input cursor byte_order
+  match r with
+  | core.result.Result.Ok _ => ok r
+  | core.result.Result.Err error =>
     let b ← input_types.ParseError.is_recoverable error
     if b
-    then parser_traitsEvalInst1.eval self.second backend1 input cursor context
-    else ok (po, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
+    then
+      parser_traitsParserInst1.parse_with self.second input cursor byte_order
+    else ok r
 
-/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Grammar<'input, Clause0_Output> for rusthammer::grammar::control::Choice<P, Q>}]
-    Source: 'src/grammar/control.rs', lines 110:0-116:1 -/
+/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Parser<'input, Clause0_Output> for rusthammer::grammar::control::Choice<P, Q>}]
+    Source: 'src/grammar/control.rs', lines 103:0-130:1 -/
 @[reducible]
-def grammar.control.Choice.Insts.RusthammerParser_traitsGrammar {P : Type} {Q :
-  Type} {Clause0_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause0_Output) : parser_traits.Grammar
+impl_def grammar.control.Choice.Insts.RusthammerParser_traitsParser {P : Type}
+  {Q : Type} {Clause0_Output : Type} (parser_traitsParserInst :
+  parser_traits.Parser P Clause0_Output) (parser_traitsParserInst1 :
+  parser_traits.Parser Q Clause0_Output) : parser_traits.Parser
   (grammar.control.Choice P Q) Clause0_Output := {
+  parse_with :=
+    grammar.control.Choice.Insts.RusthammerParser_traitsParser.parse_with
+    parser_traitsParserInst parser_traitsParserInst1
+  parse := parser_traits.Parser.parse.default
+    (grammar.control.Choice.Insts.RusthammerParser_traitsParser
+    parser_traitsParserInst parser_traitsParserInst1)
 }
 
-/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::grammar::control::Choice<P, Q>}]
-    Source: 'src/grammar/control.rs', lines 118:0-142:1 -/
-@[reducible]
-def grammar.control.Choice.Insts.RusthammerParser_traitsEval {Backend : Type}
-  {P : Type} {Q : Type} {Clause0_Clause0_Output : Type} (parser_traitsEvalInst
-  : parser_traits.Eval P Backend Clause0_Clause0_Output)
-  (parser_traitsEvalInst1 : parser_traits.Eval Q Backend
-  Clause0_Clause0_Output) : parser_traits.Eval (grammar.control.Choice P Q)
-  Backend Clause0_Clause0_Output := {
-  GrammarInst := grammar.control.Choice.Insts.RusthammerParser_traitsGrammar
-    parser_traitsEvalInst.GrammarInst parser_traitsEvalInst1.GrammarInst
-  eval := grammar.control.Choice.Insts.RusthammerParser_traitsEval.eval
-    parser_traitsEvalInst parser_traitsEvalInst1
-}
-
-/-- [rusthammer::marker_example::{impl rusthammer::parser_traits::Eval<'input, Backend, u64> for rusthammer::marker_example::Marker}::eval]:
-    Source: 'src/../examples/support/marker.rs', lines 42:4-54:5
+/-- [rusthammer::marker_example::{impl rusthammer::parser_traits::Parser<'input, u64> for rusthammer::marker_example::Marker}::parse_with]:
+    Source: 'src/../examples/support/marker.rs', lines 37:4-50:5
     Visibility: public -/
-def marker_example.Marker.Insts.RusthammerParser_traitsEvalInputBackendU64.eval
-  {Backend : Type} (self : marker_example.Marker) (backend : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Std.U64) × Backend)
+def
+  marker_example.Marker.Insts.RusthammerParser_traitsParserInputU64.parse_with
+  (self : marker_example.Marker) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Std.U64)
+    input_types.ParseError)
   := do
-  let (po, backend1) ←
-    grammar.sequence.Seq.Insts.RusthammerParser_traitsEvalInputBackendPair.eval
-      (grammar.control.Choice.Insts.RusthammerParser_traitsEval
-      (grammar.numeric.Literal.Insts.RusthammerParser_traitsEvalInputBackendU64
-      Backend)
-      (grammar.numeric.Literal.Insts.RusthammerParser_traitsEvalInputBackendU64
-      Backend))
-      (grammar.position.End.Insts.RusthammerParser_traitsEvalInputBackendTuple
-      Backend) self.parser backend input cursor context
-  match po with
-  | input_types.ParseOutcome.Success next p =>
-    let (value, _) := p
-    ok (input_types.ParseOutcome.Success next value, backend1)
-  | input_types.ParseOutcome.Error error =>
-    ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
+  let r ←
+    grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair.parse_with
+      (grammar.control.Choice.Insts.RusthammerParser_traitsParser
+      grammar.numeric.Literal.Insts.RusthammerParser_traitsParserInputU64
+      grammar.numeric.Literal.Insts.RusthammerParser_traitsParserInputU64)
+      grammar.position.End.Insts.RusthammerParser_traitsParserInputTuple
+      self.parser input cursor byte_order
+  match r with
+  | core.result.Result.Ok parsed =>
+    let (next, (value, _)) := parsed
+    ok (core.result.Result.Ok (next, value))
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
 
-/-- Trait implementation: [rusthammer::marker_example::{impl rusthammer::parser_traits::Eval<'input, Backend, u64> for rusthammer::marker_example::Marker}]
-    Source: 'src/../examples/support/marker.rs', lines 41:0-55:1 -/
+/-- Trait implementation: [rusthammer::marker_example::{impl rusthammer::parser_traits::Parser<'input, u64> for rusthammer::marker_example::Marker}]
+    Source: 'src/../examples/support/marker.rs', lines 34:0-51:1 -/
 @[reducible]
-def marker_example.Marker.Insts.RusthammerParser_traitsEvalInputBackendU64
-  (Backend : Type) : parser_traits.Eval marker_example.Marker Backend Std.U64
-  := {
-  GrammarInst :=
-    marker_example.Marker.Insts.RusthammerParser_traitsGrammarInputU64
-  eval :=
-    marker_example.Marker.Insts.RusthammerParser_traitsEvalInputBackendU64.eval
+impl_def marker_example.Marker.Insts.RusthammerParser_traitsParserInputU64 :
+  parser_traits.Parser marker_example.Marker Std.U64 := {
+  parse_with :=
+    marker_example.Marker.Insts.RusthammerParser_traitsParserInputU64.parse_with
+  parse := parser_traits.Parser.parse.default
+    marker_example.Marker.Insts.RusthammerParser_traitsParserInputU64
 }
 
 /-- [rusthammer::marker_example::parse_marker]:
-    Source: 'src/../examples/support/marker.rs', lines 58:0-64:1
+    Source: 'src/../examples/support/marker.rs', lines 54:0-60:1
     Visibility: public -/
 def marker_example.parse_marker
   (input : Slice Std.U8) (cursor : input_types.Cursor)
@@ -2150,12 +1766,12 @@ def marker_example.parse_marker
   Result (core.result.Result (input_types.Cursor × Std.U64)
     input_types.ParseError)
   := do
-  parser_traits.Parser.parse.default (parser_traits.Parser.Blanket
-    (marker_example.Marker.Insts.RusthammerParser_traitsEvalInputBackendU64
-    parser_traits.Direct)) parser input cursor
+  parser_traits.Parser.parse.default
+    marker_example.Marker.Insts.RusthammerParser_traitsParserInputU64 parser
+    input cursor
 
 /-- [rusthammer::mavlink_example::Header]
-    Source: 'src/../examples/support/mavlink.rs', lines 15:0-23:1
+    Source: 'src/../examples/support/mavlink.rs', lines 14:0-22:1
     Visibility: public -/
 structure mavlink_example.Header where
   payload_length : Std.U8
@@ -2167,7 +1783,7 @@ structure mavlink_example.Header where
   message_id : Std.U32
 
 /-- [rusthammer::mavlink_example::Packet]
-    Source: 'src/../examples/support/mavlink.rs', lines 26:0-32:1
+    Source: 'src/../examples/support/mavlink.rs', lines 25:0-31:1
     Visibility: public -/
 structure mavlink_example.Packet where
   header : mavlink_example.Header
@@ -2175,7 +1791,7 @@ structure mavlink_example.Packet where
   checksum : Std.U16
 
 /-- [rusthammer::mavlink_example::fixed_bits]:
-    Source: 'src/../examples/support/mavlink.rs', lines 34:0-39:1 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 33:0-38:1 -/
 def mavlink_example.fixed_bits
   (width : Std.U8) : Result grammar.numeric.Bits := do
   let r ← grammar.numeric.Bits.new width
@@ -2184,11 +1800,11 @@ def mavlink_example.fixed_bits
   | core.result.Result.Err _ => fail panic
 
 /-- [rusthammer::grammar::transform::map]:
-    Source: 'src/grammar/transform.rs', lines 26:0-32:1
+    Source: 'src/grammar/transform.rs', lines 25:0-31:1
     Visibility: public -/
 def grammar.transform.map
   {P : Type} {F : Type} {O : Type} {Clause0_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
+  (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
   (coreopsfunctionFnFTupleClause0_OutputOInst : core.ops.function.Fn F
   Clause0_Output O) (parser : P) (map : F) :
   Result (grammar.transform.Map P F)
@@ -2205,17 +1821,73 @@ def grammar.sequence.seq
   ok { first, second }
 
 /-- [rusthammer::grammar::numeric::Byte]
-    Source: 'src/grammar/numeric.rs', lines 313:0-313:16
+    Source: 'src/grammar/numeric.rs', lines 275:0-275:16
     Visibility: public -/
 @[reducible]
 def grammar.numeric.Byte := Unit
 
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Grammar<'input, u8> for rusthammer::grammar::numeric::Byte}]
-    Source: 'src/grammar/numeric.rs', lines 315:0-317:1 -/
+/-- [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::numeric::Byte}::parse_with]:
+    Source: 'src/grammar/numeric.rs', lines 280:4-294:5
+    Visibility: public -/
+def grammar.numeric.Byte.Insts.RusthammerParser_traitsParserInputU8.parse_with
+  (self : grammar.numeric.Byte) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Std.U8)
+    input_types.ParseError)
+  := do
+  let r ←
+    grammar.numeric.Bits.Insts.RusthammerParser_traitsParserInputU64.parse_with
+      { width := 8#u8 } input cursor byte_order
+  match r with
+  | core.result.Result.Ok parsed =>
+    let (next, value) := parsed
+    let i ← lift (UScalar.cast .U8 value)
+    ok (core.result.Result.Ok (next, i))
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
+
+/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::numeric::Byte}]
+    Source: 'src/grammar/numeric.rs', lines 277:0-295:1 -/
 @[reducible]
-def grammar.numeric.Byte.Insts.RusthammerParser_traitsGrammarInputU8 :
-  parser_traits.Grammar grammar.numeric.Byte Std.U8 := {
+impl_def grammar.numeric.Byte.Insts.RusthammerParser_traitsParserInputU8 :
+  parser_traits.Parser grammar.numeric.Byte Std.U8 := {
+  parse_with :=
+    grammar.numeric.Byte.Insts.RusthammerParser_traitsParserInputU8.parse_with
+  parse := parser_traits.Parser.parse.default
+    grammar.numeric.Byte.Insts.RusthammerParser_traitsParserInputU8
 }
+
+/-- [rusthammer::grammar::transform::Verify]
+    Source: 'src/grammar/transform.rs', lines 124:0-127:1
+    Visibility: public -/
+structure grammar.transform.Verify (P : Type) (F : Type) where
+  parser : P
+  predicate : F
+
+/-- [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Parser<'input, Clause0_Output> for rusthammer::grammar::transform::Verify<P, F>}::parse_with]:
+    Source: 'src/grammar/transform.rs', lines 152:4-169:5
+    Visibility: public -/
+def grammar.transform.Verify.Insts.RusthammerParser_traitsParser.parse_with
+  {P : Type} {F : Type} {Clause0_Output : Type} (parser_traitsParserInst :
+  parser_traits.Parser P Clause0_Output)
+  (coreopsfunctionFnFTupleSharedInputClause0_OutputBoolInst :
+  core.ops.function.Fn F Clause0_Output Bool)
+  (self : grammar.transform.Verify P F) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Clause0_Output)
+    input_types.ParseError)
+  := do
+  let r ←
+    parser_traitsParserInst.parse_with self.parser input cursor byte_order
+  match r with
+  | core.result.Result.Ok parsed =>
+    let (_, value) := parsed
+    let b ←
+      coreopsfunctionFnFTupleSharedInputClause0_OutputBoolInst.call
+        self.predicate value
+    if b
+    then ok r
+    else ok (core.result.Result.Err input_types.ParseError.Mismatch)
+  | core.result.Result.Err _ => ok r
 
 /-- [rusthammer::grammar::bytes::ByteSet]
     Source: 'src/grammar/bytes.rs', lines 5:0-7:1 -/
@@ -2223,16 +1895,133 @@ structure grammar.bytes.ByteSet where
   words : Array Std.U64 4#usize
 
 /-- [rusthammer::grammar::bytes::ByteNotIn]
-    Source: 'src/grammar/bytes.rs', lines 115:0-117:1
+    Source: 'src/grammar/bytes.rs', lines 111:0-113:1
     Visibility: public -/
 structure grammar.bytes.ByteNotIn where
   set : grammar.bytes.ByteSet
 
-/-- Trait implementation: [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Grammar<'input, u8> for rusthammer::grammar::bytes::ByteNotIn}]
-    Source: 'src/grammar/bytes.rs', lines 134:0-136:1 -/
+/-- [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteNotIn}::parse_with::{closure}]
+    Source: 'src/grammar/bytes.rs', lines 141:23-141:56 -/
 @[reducible]
-def grammar.bytes.ByteNotIn.Insts.RusthammerParser_traitsGrammarInputU8 :
-  parser_traits.Grammar grammar.bytes.ByteNotIn Std.U8 := {
+def grammar.bytes.ParserInputByteNotInU8.parse_with.closure :=
+  grammar.bytes.ByteNotIn
+
+/-- [rusthammer::grammar::bytes::{rusthammer::grammar::bytes::ByteSet}::contains]:
+    Source: 'src/grammar/bytes.rs', lines 21:4-23:5 -/
+def grammar.bytes.ByteSet.contains
+  (self : grammar.bytes.ByteSet) (byte : Std.U8) : Result Bool := do
+  let i ← byte / 64#u8
+  let i1 ← lift (UScalar.cast .Usize i)
+  let i2 ← Array.index_usize self.words i1
+  let i3 ← byte % 64#u8
+  let i4 ← 1#u64 <<< i3
+  let i5 ← lift (i2 &&& i4)
+  ok (i5 != 0#u64)
+
+/-- [rusthammer::grammar::bytes::{rusthammer::grammar::bytes::ByteNotIn}::accepts]:
+    Source: 'src/grammar/bytes.rs', lines 125:4-127:5
+    Visibility: public -/
+def grammar.bytes.ByteNotIn.accepts
+  (self : grammar.bytes.ByteNotIn) (byte : Std.U8) : Result Bool := do
+  let b ← grammar.bytes.ByteSet.contains self.set byte
+  ok (¬ b)
+
+/-- [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteNotIn}::parse_with::{impl core::ops::function::Fn<(&'_2 u8,), bool> for rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteNotIn}::parse_with::{closure}<'input, '_1>}::call]:
+    Source: 'src/grammar/bytes.rs', lines 141:23-141:56 -/
+def
+  grammar.bytes.ParserInputByteNotInU8.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool.call
+  (c : grammar.bytes.ParserInputByteNotInU8.parse_with.closure)
+  (tupled_args : Std.U8) :
+  Result Bool
+  := do
+  grammar.bytes.ByteNotIn.accepts c tupled_args
+
+/-- [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteNotIn}::parse_with::{impl core::ops::function::FnMut<(&'_2 u8,), bool> for rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteNotIn}::parse_with::{closure}<'input, '_1>}::call_mut]:
+    Source: 'src/grammar/bytes.rs', lines 141:23-141:56 -/
+def
+  grammar.bytes.ParserInputByteNotInU8.parse_with.closure.Insts.CoreOpsFunctionFnMutTupleShared1U8Bool.call_mut
+  (state : grammar.bytes.ParserInputByteNotInU8.parse_with.closure)
+  (args : Std.U8) :
+  Result (Bool × grammar.bytes.ParserInputByteNotInU8.parse_with.closure)
+  := do
+  let b ←
+    grammar.bytes.ParserInputByteNotInU8.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool.call
+      state args
+  ok (b, state)
+
+/-- [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteNotIn}::parse_with::{impl core::ops::function::FnOnce<(&'_2 u8,), bool> for rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteNotIn}::parse_with::{closure}<'input, '_1>}::call_once]:
+    Source: 'src/grammar/bytes.rs', lines 141:23-141:56 -/
+def
+  grammar.bytes.ParserInputByteNotInU8.parse_with.closure.Insts.CoreOpsFunctionFnOnceTupleShared1U8Bool.call_once
+  (c : grammar.bytes.ParserInputByteNotInU8.parse_with.closure) (i : Std.U8) :
+  Result Bool
+  := do
+  let (b, _) ←
+    grammar.bytes.ParserInputByteNotInU8.parse_with.closure.Insts.CoreOpsFunctionFnMutTupleShared1U8Bool.call_mut
+      c i
+  ok b
+
+/-- Trait implementation: [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteNotIn}::parse_with::{impl core::ops::function::FnOnce<(&'_2 u8,), bool> for rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteNotIn}::parse_with::{closure}<'input, '_1>}]
+    Source: 'src/grammar/bytes.rs', lines 141:23-141:56 -/
+@[reducible]
+def
+  grammar.bytes.ParserInputByteNotInU8.parse_with.closure.Insts.CoreOpsFunctionFnOnceTupleShared1U8Bool
+  : core.ops.function.FnOnce
+  grammar.bytes.ParserInputByteNotInU8.parse_with.closure Std.U8 Bool := {
+  call_once :=
+    grammar.bytes.ParserInputByteNotInU8.parse_with.closure.Insts.CoreOpsFunctionFnOnceTupleShared1U8Bool.call_once
+}
+
+/-- Trait implementation: [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteNotIn}::parse_with::{impl core::ops::function::FnMut<(&'_2 u8,), bool> for rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteNotIn}::parse_with::{closure}<'input, '_1>}]
+    Source: 'src/grammar/bytes.rs', lines 141:23-141:56 -/
+@[reducible]
+def
+  grammar.bytes.ParserInputByteNotInU8.parse_with.closure.Insts.CoreOpsFunctionFnMutTupleShared1U8Bool
+  : core.ops.function.FnMut
+  grammar.bytes.ParserInputByteNotInU8.parse_with.closure Std.U8 Bool := {
+  FnOnceInst :=
+    grammar.bytes.ParserInputByteNotInU8.parse_with.closure.Insts.CoreOpsFunctionFnOnceTupleShared1U8Bool
+  call_mut :=
+    grammar.bytes.ParserInputByteNotInU8.parse_with.closure.Insts.CoreOpsFunctionFnMutTupleShared1U8Bool.call_mut
+}
+
+/-- Trait implementation: [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteNotIn}::parse_with::{impl core::ops::function::Fn<(&'_2 u8,), bool> for rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteNotIn}::parse_with::{closure}<'input, '_1>}]
+    Source: 'src/grammar/bytes.rs', lines 141:23-141:56 -/
+@[reducible]
+def
+  grammar.bytes.ParserInputByteNotInU8.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool
+  : core.ops.function.Fn
+  grammar.bytes.ParserInputByteNotInU8.parse_with.closure Std.U8 Bool := {
+  FnMutInst :=
+    grammar.bytes.ParserInputByteNotInU8.parse_with.closure.Insts.CoreOpsFunctionFnMutTupleShared1U8Bool
+  call :=
+    grammar.bytes.ParserInputByteNotInU8.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool.call
+}
+
+/-- [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteNotIn}::parse_with]:
+    Source: 'src/grammar/bytes.rs', lines 133:4-144:5
+    Visibility: public -/
+def
+  grammar.bytes.ByteNotIn.Insts.RusthammerParser_traitsParserInputU8.parse_with
+  (self : grammar.bytes.ByteNotIn) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Std.U8)
+    input_types.ParseError)
+  := do
+  grammar.transform.Verify.Insts.RusthammerParser_traitsParser.parse_with
+    grammar.numeric.Byte.Insts.RusthammerParser_traitsParserInputU8
+    grammar.bytes.ParserInputByteNotInU8.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool
+    { parser := (), predicate := self } input cursor byte_order
+
+/-- Trait implementation: [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteNotIn}]
+    Source: 'src/grammar/bytes.rs', lines 130:0-145:1 -/
+@[reducible]
+impl_def grammar.bytes.ByteNotIn.Insts.RusthammerParser_traitsParserInputU8 :
+  parser_traits.Parser grammar.bytes.ByteNotIn Std.U8 := {
+  parse_with :=
+    grammar.bytes.ByteNotIn.Insts.RusthammerParser_traitsParserInputU8.parse_with
+  parse := parser_traits.Parser.parse.default
+    grammar.bytes.ByteNotIn.Insts.RusthammerParser_traitsParserInputU8
 }
 
 /-- [rusthammer::grammar::bytes::{rusthammer::grammar::bytes::ByteSet}::new]: loop body 0:
@@ -2279,7 +2068,7 @@ def grammar.bytes.ByteSet.new
   ok { words := words1 }
 
 /-- [rusthammer::grammar::bytes::{rusthammer::grammar::bytes::ByteNotIn}::new]:
-    Source: 'src/grammar/bytes.rs', lines 121:4-125:5
+    Source: 'src/grammar/bytes.rs', lines 117:4-121:5
     Visibility: public -/
 def grammar.bytes.ByteNotIn.new
   (bytes : Slice Std.U8) : Result grammar.bytes.ByteNotIn := do
@@ -2292,11 +2081,114 @@ def grammar.bytes.ByteNotIn.new
 structure grammar.bytes.ByteIn where
   set : grammar.bytes.ByteSet
 
-/-- Trait implementation: [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Grammar<'input, u8> for rusthammer::grammar::bytes::ByteIn}]
-    Source: 'src/grammar/bytes.rs', lines 71:0-73:1 -/
+/-- [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteIn}::parse_with::{closure}]
+    Source: 'src/grammar/bytes.rs', lines 82:23-82:56 -/
 @[reducible]
-def grammar.bytes.ByteIn.Insts.RusthammerParser_traitsGrammarInputU8 :
-  parser_traits.Grammar grammar.bytes.ByteIn Std.U8 := {
+def grammar.bytes.ParserInputByteInU8.parse_with.closure :=
+  grammar.bytes.ByteIn
+
+/-- [rusthammer::grammar::bytes::{rusthammer::grammar::bytes::ByteIn}::accepts]:
+    Source: 'src/grammar/bytes.rs', lines 66:4-68:5
+    Visibility: public -/
+def grammar.bytes.ByteIn.accepts
+  (self : grammar.bytes.ByteIn) (byte : Std.U8) : Result Bool := do
+  grammar.bytes.ByteSet.contains self.set byte
+
+/-- [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteIn}::parse_with::{impl core::ops::function::Fn<(&'_2 u8,), bool> for rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteIn}::parse_with::{closure}<'input, '_1>}::call]:
+    Source: 'src/grammar/bytes.rs', lines 82:23-82:56 -/
+def
+  grammar.bytes.ParserInputByteInU8.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool.call
+  (c : grammar.bytes.ParserInputByteInU8.parse_with.closure)
+  (tupled_args : Std.U8) :
+  Result Bool
+  := do
+  grammar.bytes.ByteIn.accepts c tupled_args
+
+/-- [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteIn}::parse_with::{impl core::ops::function::FnMut<(&'_2 u8,), bool> for rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteIn}::parse_with::{closure}<'input, '_1>}::call_mut]:
+    Source: 'src/grammar/bytes.rs', lines 82:23-82:56 -/
+def
+  grammar.bytes.ParserInputByteInU8.parse_with.closure.Insts.CoreOpsFunctionFnMutTupleShared1U8Bool.call_mut
+  (state : grammar.bytes.ParserInputByteInU8.parse_with.closure)
+  (args : Std.U8) :
+  Result (Bool × grammar.bytes.ParserInputByteInU8.parse_with.closure)
+  := do
+  let b ←
+    grammar.bytes.ParserInputByteInU8.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool.call
+      state args
+  ok (b, state)
+
+/-- [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteIn}::parse_with::{impl core::ops::function::FnOnce<(&'_2 u8,), bool> for rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteIn}::parse_with::{closure}<'input, '_1>}::call_once]:
+    Source: 'src/grammar/bytes.rs', lines 82:23-82:56 -/
+def
+  grammar.bytes.ParserInputByteInU8.parse_with.closure.Insts.CoreOpsFunctionFnOnceTupleShared1U8Bool.call_once
+  (c : grammar.bytes.ParserInputByteInU8.parse_with.closure) (i : Std.U8) :
+  Result Bool
+  := do
+  let (b, _) ←
+    grammar.bytes.ParserInputByteInU8.parse_with.closure.Insts.CoreOpsFunctionFnMutTupleShared1U8Bool.call_mut
+      c i
+  ok b
+
+/-- Trait implementation: [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteIn}::parse_with::{impl core::ops::function::FnOnce<(&'_2 u8,), bool> for rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteIn}::parse_with::{closure}<'input, '_1>}]
+    Source: 'src/grammar/bytes.rs', lines 82:23-82:56 -/
+@[reducible]
+def
+  grammar.bytes.ParserInputByteInU8.parse_with.closure.Insts.CoreOpsFunctionFnOnceTupleShared1U8Bool
+  : core.ops.function.FnOnce
+  grammar.bytes.ParserInputByteInU8.parse_with.closure Std.U8 Bool := {
+  call_once :=
+    grammar.bytes.ParserInputByteInU8.parse_with.closure.Insts.CoreOpsFunctionFnOnceTupleShared1U8Bool.call_once
+}
+
+/-- Trait implementation: [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteIn}::parse_with::{impl core::ops::function::FnMut<(&'_2 u8,), bool> for rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteIn}::parse_with::{closure}<'input, '_1>}]
+    Source: 'src/grammar/bytes.rs', lines 82:23-82:56 -/
+@[reducible]
+def
+  grammar.bytes.ParserInputByteInU8.parse_with.closure.Insts.CoreOpsFunctionFnMutTupleShared1U8Bool
+  : core.ops.function.FnMut
+  grammar.bytes.ParserInputByteInU8.parse_with.closure Std.U8 Bool := {
+  FnOnceInst :=
+    grammar.bytes.ParserInputByteInU8.parse_with.closure.Insts.CoreOpsFunctionFnOnceTupleShared1U8Bool
+  call_mut :=
+    grammar.bytes.ParserInputByteInU8.parse_with.closure.Insts.CoreOpsFunctionFnMutTupleShared1U8Bool.call_mut
+}
+
+/-- Trait implementation: [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteIn}::parse_with::{impl core::ops::function::Fn<(&'_2 u8,), bool> for rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteIn}::parse_with::{closure}<'input, '_1>}]
+    Source: 'src/grammar/bytes.rs', lines 82:23-82:56 -/
+@[reducible]
+def
+  grammar.bytes.ParserInputByteInU8.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool
+  : core.ops.function.Fn grammar.bytes.ParserInputByteInU8.parse_with.closure
+  Std.U8 Bool := {
+  FnMutInst :=
+    grammar.bytes.ParserInputByteInU8.parse_with.closure.Insts.CoreOpsFunctionFnMutTupleShared1U8Bool
+  call :=
+    grammar.bytes.ParserInputByteInU8.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool.call
+}
+
+/-- [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteIn}::parse_with]:
+    Source: 'src/grammar/bytes.rs', lines 74:4-85:5
+    Visibility: public -/
+def grammar.bytes.ByteIn.Insts.RusthammerParser_traitsParserInputU8.parse_with
+  (self : grammar.bytes.ByteIn) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Std.U8)
+    input_types.ParseError)
+  := do
+  grammar.transform.Verify.Insts.RusthammerParser_traitsParser.parse_with
+    grammar.numeric.Byte.Insts.RusthammerParser_traitsParserInputU8
+    grammar.bytes.ParserInputByteInU8.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool
+    { parser := (), predicate := self } input cursor byte_order
+
+/-- Trait implementation: [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, u8> for rusthammer::grammar::bytes::ByteIn}]
+    Source: 'src/grammar/bytes.rs', lines 71:0-86:1 -/
+@[reducible]
+impl_def grammar.bytes.ByteIn.Insts.RusthammerParser_traitsParserInputU8 :
+  parser_traits.Parser grammar.bytes.ByteIn Std.U8 := {
+  parse_with :=
+    grammar.bytes.ByteIn.Insts.RusthammerParser_traitsParserInputU8.parse_with
+  parse := parser_traits.Parser.parse.default
+    grammar.bytes.ByteIn.Insts.RusthammerParser_traitsParserInputU8
 }
 
 /-- [rusthammer::grammar::bytes::{rusthammer::grammar::bytes::ByteIn}::new]:
@@ -2308,12 +2200,12 @@ def grammar.bytes.ByteIn.new
   ok { set := bs }
 
 /-- [rusthammer::mavlink_example::header::{closure}]
-    Source: 'src/../examples/support/mavlink.rs', lines 52:8-63:9 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 50:8-61:9 -/
 @[reducible]
 def mavlink_example.header.closure := Unit
 
 /-- [rusthammer::mavlink_example::header::{impl core::ops::function::Fn<(((u8, (u8, u8)), ((u8, (u8, u8)), u64)),), rusthammer::mavlink_example::Header> for rusthammer::mavlink_example::header::{closure}}::call]:
-    Source: 'src/../examples/support/mavlink.rs', lines 52:8-63:9 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 50:8-61:9 -/
 def
   mavlink_example.header.closure.Insts.CoreOpsFunctionFnTuplePairPairU8PairU8U8PairPairU8PairU8U8U64Header.call
   (c : mavlink_example.header.closure)
@@ -2337,7 +2229,7 @@ def
     }
 
 /-- [rusthammer::mavlink_example::header::{impl core::ops::function::FnMut<(((u8, (u8, u8)), ((u8, (u8, u8)), u64)),), rusthammer::mavlink_example::Header> for rusthammer::mavlink_example::header::{closure}}::call_mut]:
-    Source: 'src/../examples/support/mavlink.rs', lines 52:8-63:9 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 50:8-61:9 -/
 def
   mavlink_example.header.closure.Insts.CoreOpsFunctionFnMutTuplePairPairU8PairU8U8PairPairU8PairU8U8U64Header.call_mut
   (state : mavlink_example.header.closure)
@@ -2351,7 +2243,7 @@ def
   ok (h, state)
 
 /-- [rusthammer::mavlink_example::header::{impl core::ops::function::FnOnce<(((u8, (u8, u8)), ((u8, (u8, u8)), u64)),), rusthammer::mavlink_example::Header> for rusthammer::mavlink_example::header::{closure}}::call_once]:
-    Source: 'src/../examples/support/mavlink.rs', lines 52:8-63:9 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 50:8-61:9 -/
 def
   mavlink_example.header.closure.Insts.CoreOpsFunctionFnOnceTuplePairPairU8PairU8U8PairPairU8PairU8U8U64Header.call_once
   (c : mavlink_example.header.closure)
@@ -2365,7 +2257,7 @@ def
   ok h
 
 /-- Trait implementation: [rusthammer::mavlink_example::header::{impl core::ops::function::FnOnce<(((u8, (u8, u8)), ((u8, (u8, u8)), u64)),), rusthammer::mavlink_example::Header> for rusthammer::mavlink_example::header::{closure}}]
-    Source: 'src/../examples/support/mavlink.rs', lines 52:8-63:9 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 50:8-61:9 -/
 @[reducible]
 def
   mavlink_example.header.closure.Insts.CoreOpsFunctionFnOnceTuplePairPairU8PairU8U8PairPairU8PairU8U8U64Header
@@ -2377,7 +2269,7 @@ def
 }
 
 /-- Trait implementation: [rusthammer::mavlink_example::header::{impl core::ops::function::FnMut<(((u8, (u8, u8)), ((u8, (u8, u8)), u64)),), rusthammer::mavlink_example::Header> for rusthammer::mavlink_example::header::{closure}}]
-    Source: 'src/../examples/support/mavlink.rs', lines 52:8-63:9 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 50:8-61:9 -/
 @[reducible]
 def
   mavlink_example.header.closure.Insts.CoreOpsFunctionFnMutTuplePairPairU8PairU8U8PairPairU8PairU8U8U64Header
@@ -2391,7 +2283,7 @@ def
 }
 
 /-- Trait implementation: [rusthammer::mavlink_example::header::{impl core::ops::function::Fn<(((u8, (u8, u8)), ((u8, (u8, u8)), u64)),), rusthammer::mavlink_example::Header> for rusthammer::mavlink_example::header::{closure}}]
-    Source: 'src/../examples/support/mavlink.rs', lines 52:8-63:9 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 50:8-61:9 -/
 @[reducible]
 def
   mavlink_example.header.closure.Insts.CoreOpsFunctionFnTuplePairPairU8PairU8U8PairPairU8PairU8U8U64Header
@@ -2405,7 +2297,7 @@ def
 }
 
 /-- [rusthammer::mavlink_example::header]:
-    Source: 'src/../examples/support/mavlink.rs', lines 47:0-65:1 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 45:0-63:1 -/
 def mavlink_example.header
   :
   Result (grammar.transform.Map (grammar.sequence.Seq (grammar.sequence.Seq
@@ -2429,30 +2321,30 @@ def mavlink_example.header
   let s5 ← grammar.sequence.seq sender b
   let s6 ← grammar.sequence.seq length_and_flags s5
   grammar.transform.map
-    (grammar.sequence.Seq.Insts.RusthammerParser_traitsGrammarInputPair
-    (grammar.sequence.Seq.Insts.RusthammerParser_traitsGrammarInputPair
-    grammar.numeric.Byte.Insts.RusthammerParser_traitsGrammarInputU8
-    (grammar.sequence.Seq.Insts.RusthammerParser_traitsGrammarInputPair
-    grammar.bytes.ByteIn.Insts.RusthammerParser_traitsGrammarInputU8
-    grammar.numeric.Byte.Insts.RusthammerParser_traitsGrammarInputU8))
-    (grammar.sequence.Seq.Insts.RusthammerParser_traitsGrammarInputPair
-    (grammar.sequence.Seq.Insts.RusthammerParser_traitsGrammarInputPair
-    grammar.numeric.Byte.Insts.RusthammerParser_traitsGrammarInputU8
-    (grammar.sequence.Seq.Insts.RusthammerParser_traitsGrammarInputPair
-    grammar.bytes.ByteNotIn.Insts.RusthammerParser_traitsGrammarInputU8
-    grammar.bytes.ByteNotIn.Insts.RusthammerParser_traitsGrammarInputU8))
-    grammar.numeric.Bits.Insts.RusthammerParser_traitsGrammarInputU64))
+    (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+    (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+    grammar.numeric.Byte.Insts.RusthammerParser_traitsParserInputU8
+    (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+    grammar.bytes.ByteIn.Insts.RusthammerParser_traitsParserInputU8
+    grammar.numeric.Byte.Insts.RusthammerParser_traitsParserInputU8))
+    (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+    (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+    grammar.numeric.Byte.Insts.RusthammerParser_traitsParserInputU8
+    (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+    grammar.bytes.ByteNotIn.Insts.RusthammerParser_traitsParserInputU8
+    grammar.bytes.ByteNotIn.Insts.RusthammerParser_traitsParserInputU8))
+    grammar.numeric.Bits.Insts.RusthammerParser_traitsParserInputU64))
     mavlink_example.header.closure.Insts.CoreOpsFunctionFnTuplePairPairU8PairU8U8PairPairU8PairU8U8U64Header
     s6 ()
 
 /-- [rusthammer::mavlink_example::MavlinkV2]
-    Source: 'src/../examples/support/mavlink.rs', lines 86:0-88:1
+    Source: 'src/../examples/support/mavlink.rs', lines 83:0-85:1
     Visibility: public -/
 structure mavlink_example.MavlinkV2 (F : Type) where
   crc_extra : F
 
 /-- [rusthammer::mavlink_example::mavlink_v2]:
-    Source: 'src/../examples/support/mavlink.rs', lines 79:0-81:1
+    Source: 'src/../examples/support/mavlink.rs', lines 76:0-78:1
     Visibility: public -/
 def mavlink_example.mavlink_v2
   {F : Type} (coreopsfunctionFnFTupleU32OptionU8Inst : core.ops.function.Fn F
@@ -2461,89 +2353,35 @@ def mavlink_example.mavlink_v2
   := do
   ok { crc_extra }
 
-/-- Trait implementation: [rusthammer::mavlink_example::{impl rusthammer::parser_traits::Grammar<'input, rusthammer::mavlink_example::Packet<'input>> for rusthammer::mavlink_example::MavlinkV2<F>}]
-    Source: 'src/../examples/support/mavlink.rs', lines 90:0-92:1 -/
-@[reducible]
-def mavlink_example.MavlinkV2.Insts.RusthammerParser_traitsGrammarInputPacket
-  (F : Type) : parser_traits.Grammar (mavlink_example.MavlinkV2 F)
-  mavlink_example.Packet := {
-}
-
 /-- [rusthammer::span_types::BitSpan]
-    Source: 'src/span_types.rs', lines 18:0-23:1
+    Source: 'src/span_types.rs', lines 13:0-17:1
     Visibility: public -/
 structure span_types.BitSpan where
   input : Slice Std.U8
   start : input_types.Cursor
   «end» : input_types.Cursor
-  bit_order : input_types.BitOrder
 
-/-- [rusthammer::grammar::transform::Verify]
-    Source: 'src/grammar/transform.rs', lines 135:0-138:1
-    Visibility: public -/
-structure grammar.transform.Verify (P : Type) (F : Type) where
-  parser : P
-  predicate : F
-
-/-- [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::grammar::transform::Verify<P, F>}::eval]:
-    Source: 'src/grammar/transform.rs', lines 169:4-187:5
-    Visibility: public -/
-def grammar.transform.Verify.Insts.RusthammerParser_traitsEval.eval
-  {Backend : Type} {P : Type} {F : Type} {Clause0_Clause0_Output : Type}
-  (parser_traitsEvalInst : parser_traits.Eval P Backend Clause0_Clause0_Output)
-  (coreopsfunctionFnFTupleSharedInputClause0_Clause0_OutputBoolInst :
-  core.ops.function.Fn F Clause0_Clause0_Output Bool)
-  (self : grammar.transform.Verify P F) (backend : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Clause0_Clause0_Output) × Backend)
-  := do
-  let (po, backend1) ←
-    parser_traitsEvalInst.eval self.parser backend input cursor context
-  match po with
-  | input_types.ParseOutcome.Success _ value =>
-    let b ←
-      coreopsfunctionFnFTupleSharedInputClause0_Clause0_OutputBoolInst.call
-        self.predicate value
-    if b
-    then ok (po, backend1)
-    else
-      ok (input_types.ParseOutcome.Error input_types.ParseError.Mismatch,
-        backend1)
-  | input_types.ParseOutcome.Error _ => ok (po, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
-
-/-- Trait implementation: [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Grammar<'input, Clause0_Output> for rusthammer::grammar::transform::Verify<P, F>}]
-    Source: 'src/grammar/transform.rs', lines 156:0-162:1 -/
+/-- Trait implementation: [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Parser<'input, Clause0_Output> for rusthammer::grammar::transform::Verify<P, F>}]
+    Source: 'src/grammar/transform.rs', lines 145:0-170:1 -/
 @[reducible]
-def grammar.transform.Verify.Insts.RusthammerParser_traitsGrammar {P : Type} {F
-  : Type} {Clause0_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output)
+impl_def grammar.transform.Verify.Insts.RusthammerParser_traitsParser {P :
+  Type} {F : Type} {Clause0_Output : Type} (parser_traitsParserInst :
+  parser_traits.Parser P Clause0_Output)
   (coreopsfunctionFnFTupleSharedInputClause0_OutputBoolInst :
-  core.ops.function.Fn F Clause0_Output Bool) : parser_traits.Grammar
+  core.ops.function.Fn F Clause0_Output Bool) : parser_traits.Parser
   (grammar.transform.Verify P F) Clause0_Output := {
-}
-
-/-- Trait implementation: [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::grammar::transform::Verify<P, F>}]
-    Source: 'src/grammar/transform.rs', lines 164:0-188:1 -/
-@[reducible]
-def grammar.transform.Verify.Insts.RusthammerParser_traitsEval {Backend : Type}
-  {P : Type} {F : Type} {Clause0_Clause0_Output : Type} (parser_traitsEvalInst
-  : parser_traits.Eval P Backend Clause0_Clause0_Output)
-  (coreopsfunctionFnFTupleSharedInputClause0_Clause0_OutputBoolInst :
-  core.ops.function.Fn F Clause0_Clause0_Output Bool) : parser_traits.Eval
-  (grammar.transform.Verify P F) Backend Clause0_Clause0_Output := {
-  GrammarInst := grammar.transform.Verify.Insts.RusthammerParser_traitsGrammar
-    parser_traitsEvalInst.GrammarInst
-    coreopsfunctionFnFTupleSharedInputClause0_Clause0_OutputBoolInst
-  eval := grammar.transform.Verify.Insts.RusthammerParser_traitsEval.eval
-    parser_traitsEvalInst
-    coreopsfunctionFnFTupleSharedInputClause0_Clause0_OutputBoolInst
+  parse_with :=
+    grammar.transform.Verify.Insts.RusthammerParser_traitsParser.parse_with
+    parser_traitsParserInst
+    coreopsfunctionFnFTupleSharedInputClause0_OutputBoolInst
+  parse := parser_traits.Parser.parse.default
+    (grammar.transform.Verify.Insts.RusthammerParser_traitsParser
+    parser_traitsParserInst
+    coreopsfunctionFnFTupleSharedInputClause0_OutputBoolInst)
 }
 
 /-- [rusthammer::span_types::span_cursor_valid]:
-    Source: 'src/span_types.rs', lines 25:0-27:1 -/
+    Source: 'src/span_types.rs', lines 19:0-21:1 -/
 def span_types.span_cursor_valid
   (length : Std.Usize) (cursor : input_types.Cursor) : Result Bool := do
   if cursor.bit < 8#u8
@@ -2556,11 +2394,11 @@ def span_types.span_cursor_valid
   else ok false
 
 /-- [rusthammer::span_types::{rusthammer::span_types::BitSpan<'input>}::new]:
-    Source: 'src/span_types.rs', lines 32:4-50:5
+    Source: 'src/span_types.rs', lines 26:4-34:5
     Visibility: public -/
 def span_types.BitSpan.new
   (input : Slice Std.U8) (start : input_types.Cursor)
-  («end» : input_types.Cursor) (bit_order : input_types.BitOrder) :
+  («end» : input_types.Cursor) :
   Result (core.result.Result span_types.BitSpan input_types.ParseError)
   := do
   let i := Slice.len input
@@ -2578,676 +2416,258 @@ def span_types.BitSpan.new
         then
           if «end».bit < start.bit
           then ok (core.result.Result.Err input_types.ParseError.NonProgress)
-          else ok (core.result.Result.Ok { input, start, «end», bit_order })
-        else ok (core.result.Result.Ok { input, start, «end», bit_order })
+          else ok (core.result.Result.Ok { input, start, «end» })
+        else ok (core.result.Result.Ok { input, start, «end» })
     else ok (core.result.Result.Err input_types.ParseError.InvalidCursor)
   else ok (core.result.Result.Err input_types.ParseError.InvalidCursor)
 
 /-- [rusthammer::grammar::span::WithSpan]
-    Source: 'src/grammar/span.rs', lines 30:0-32:1
+    Source: 'src/grammar/span.rs', lines 27:0-29:1
     Visibility: public -/
 structure grammar.span.WithSpan (P : Type) where
   parser : P
 
-/-- [rusthammer::grammar::span::{impl rusthammer::parser_traits::Eval<'input, Backend, (Clause0_Clause0_Output, rusthammer::span_types::BitSpan<'_>)> for rusthammer::grammar::span::WithSpan<P>}::eval]:
-    Source: 'src/grammar/span.rs', lines 39:4-60:5
+/-- [rusthammer::grammar::span::{impl rusthammer::parser_traits::Parser<'input, (Clause0_Output, rusthammer::span_types::BitSpan<'input>)> for rusthammer::grammar::span::WithSpan<P>}::parse_with]:
+    Source: 'src/grammar/span.rs', lines 34:4-54:5
     Visibility: public -/
 def
-  grammar.span.WithSpan.Insts.RusthammerParser_traitsEvalInputBackendPairClause0_Clause0_OutputBitSpan.eval
-  {Backend : Type} {P : Type} {Clause0_Clause0_Output : Type}
-  (parser_traitsEvalInst : parser_traits.Eval P Backend Clause0_Clause0_Output)
-  (self : grammar.span.WithSpan P) (backend : Backend) (input : Slice Std.U8)
-  (cursor : input_types.Cursor) (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome (Clause0_Clause0_Output ×
-    span_types.BitSpan)) × Backend)
+  grammar.span.WithSpan.Insts.RusthammerParser_traitsParserInputPairClause0_OutputBitSpan.parse_with
+  {P : Type} {Clause0_Output : Type} (parser_traitsParserInst :
+  parser_traits.Parser P Clause0_Output) (self : grammar.span.WithSpan P)
+  (input : Slice Std.U8) (cursor : input_types.Cursor)
+  (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × (Clause0_Output ×
+    span_types.BitSpan)) input_types.ParseError)
   := do
   let i := Slice.len input
   let b ← span_types.span_cursor_valid i cursor
   if b
   then
-    let (po, backend1) ←
-      parser_traitsEvalInst.eval self.parser backend input cursor context
-    match po with
-    | input_types.ParseOutcome.Success next value =>
-      let r ← span_types.BitSpan.new input cursor next context.order.bit
-      match r with
+    let r ←
+      parser_traitsParserInst.parse_with self.parser input cursor byte_order
+    match r with
+    | core.result.Result.Ok parsed =>
+      let (next, value) := parsed
+      let r1 ← span_types.BitSpan.new input cursor next
+      match r1 with
       | core.result.Result.Ok bs =>
-        ok (input_types.ParseOutcome.Success next (value, bs), backend1)
-      | core.result.Result.Err error =>
-        ok (input_types.ParseOutcome.Error error, backend1)
-    | input_types.ParseOutcome.Error error =>
-      ok (input_types.ParseOutcome.Error error, backend1)
-    | input_types.ParseOutcome.NeedMore =>
-      ok (input_types.ParseOutcome.NeedMore, backend1)
-  else
-    ok (input_types.ParseOutcome.Error input_types.ParseError.InvalidCursor,
-      backend)
+        ok (core.result.Result.Ok (next, (value, bs)))
+      | core.result.Result.Err error => ok (core.result.Result.Err error)
+    | core.result.Result.Err error => ok (core.result.Result.Err error)
+  else ok (core.result.Result.Err input_types.ParseError.InvalidCursor)
 
-/-- Trait implementation: [rusthammer::grammar::span::{impl rusthammer::parser_traits::Grammar<'input, (Clause0_Output, rusthammer::span_types::BitSpan<'input>)> for rusthammer::grammar::span::WithSpan<P>}]
-    Source: 'src/grammar/span.rs', lines 34:0-36:1 -/
+/-- Trait implementation: [rusthammer::grammar::span::{impl rusthammer::parser_traits::Parser<'input, (Clause0_Output, rusthammer::span_types::BitSpan<'input>)> for rusthammer::grammar::span::WithSpan<P>}]
+    Source: 'src/grammar/span.rs', lines 31:0-55:1 -/
 @[reducible]
-def
-  grammar.span.WithSpan.Insts.RusthammerParser_traitsGrammarInputPairClause0_OutputBitSpan
-  {P : Type} {Clause0_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) : parser_traits.Grammar
+impl_def
+  grammar.span.WithSpan.Insts.RusthammerParser_traitsParserInputPairClause0_OutputBitSpan
+  {P : Type} {Clause0_Output : Type} (parser_traitsParserInst :
+  parser_traits.Parser P Clause0_Output) : parser_traits.Parser
   (grammar.span.WithSpan P) (Clause0_Output × span_types.BitSpan) := {
+  parse_with :=
+    grammar.span.WithSpan.Insts.RusthammerParser_traitsParserInputPairClause0_OutputBitSpan.parse_with
+    parser_traitsParserInst
+  parse := parser_traits.Parser.parse.default
+    (grammar.span.WithSpan.Insts.RusthammerParser_traitsParserInputPairClause0_OutputBitSpan
+    parser_traitsParserInst)
 }
 
-/-- Trait implementation: [rusthammer::grammar::span::{impl rusthammer::parser_traits::Eval<'input, Backend, (Clause0_Clause0_Output, rusthammer::span_types::BitSpan<'_>)> for rusthammer::grammar::span::WithSpan<P>}]
-    Source: 'src/grammar/span.rs', lines 38:0-61:1 -/
-@[reducible]
-def
-  grammar.span.WithSpan.Insts.RusthammerParser_traitsEvalInputBackendPairClause0_Clause0_OutputBitSpan
-  {Backend : Type} {P : Type} {Clause0_Clause0_Output : Type}
-  (parser_traitsEvalInst : parser_traits.Eval P Backend Clause0_Clause0_Output)
-  : parser_traits.Eval (grammar.span.WithSpan P) Backend
-  (Clause0_Clause0_Output × span_types.BitSpan) := {
-  GrammarInst :=
-    grammar.span.WithSpan.Insts.RusthammerParser_traitsGrammarInputPairClause0_OutputBitSpan
-    parser_traitsEvalInst.GrammarInst
-  eval :=
-    grammar.span.WithSpan.Insts.RusthammerParser_traitsEvalInputBackendPairClause0_Clause0_OutputBitSpan.eval
-    parser_traitsEvalInst
-}
-
-/-- [rusthammer::parser_traits::{impl rusthammer::parser_traits::Eval<'input, Backend, Clause0_Clause0_Output> for &'_1 P}::eval]:
-    Source: 'src/parser_traits.rs', lines 88:4-96:5
+/-- [rusthammer::parser_traits::{impl rusthammer::parser_traits::Parser<'input, Clause0_Output> for &'_1 P}::parse_with]:
+    Source: 'src/parser_traits.rs', lines 42:4-49:5
     Visibility: public -/
-def Shared0P.Insts.RusthammerParser_traitsEval.eval
-  {Backend : Type} {P : Type} {Clause0_Clause0_Output : Type} (EvalInst :
-  parser_traits.Eval P Backend Clause0_Clause0_Output) (self : P)
-  (backend : Backend) (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Clause0_Clause0_Output) × Backend)
+def Shared0P.Insts.RusthammerParser_traitsParser.parse_with
+  {P : Type} {Clause0_Output : Type} (ParserInst : parser_traits.Parser P
+  Clause0_Output) (self : P) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Clause0_Output)
+    input_types.ParseError)
   := do
-  EvalInst.eval self backend input cursor context
+  ParserInst.parse_with self input cursor byte_order
 
-/-- Trait implementation: [rusthammer::parser_traits::{impl rusthammer::parser_traits::Grammar<'input, Clause0_Output> for &'_1 P}]
-    Source: 'src/parser_traits.rs', lines 83:0-85:1 -/
+/-- Trait implementation: [rusthammer::parser_traits::{impl rusthammer::parser_traits::Parser<'input, Clause0_Output> for &'_1 P}]
+    Source: 'src/parser_traits.rs', lines 39:0-50:1 -/
 @[reducible]
-def Shared0P.Insts.RusthammerParser_traitsGrammar {P : Type} {Clause0_Output :
-  Type} (GrammarInst : parser_traits.Grammar P Clause0_Output) :
-  parser_traits.Grammar P Clause0_Output := {
-}
-
-/-- Trait implementation: [rusthammer::parser_traits::{impl rusthammer::parser_traits::Eval<'input, Backend, Clause0_Clause0_Output> for &'_1 P}]
-    Source: 'src/parser_traits.rs', lines 87:0-97:1 -/
-@[reducible]
-def Shared0P.Insts.RusthammerParser_traitsEval {Backend : Type} {P : Type}
-  {Clause0_Clause0_Output : Type} (EvalInst : parser_traits.Eval P Backend
-  Clause0_Clause0_Output) : parser_traits.Eval P Backend Clause0_Clause0_Output
-  := {
-  GrammarInst := Shared0P.Insts.RusthammerParser_traitsGrammar
-    EvalInst.GrammarInst
-  eval := Shared0P.Insts.RusthammerParser_traitsEval.eval EvalInst
+impl_def Shared0P.Insts.RusthammerParser_traitsParser {P : Type}
+  {Clause0_Output : Type} (ParserInst : parser_traits.Parser P Clause0_Output)
+  : parser_traits.Parser P Clause0_Output := {
+  parse_with := Shared0P.Insts.RusthammerParser_traitsParser.parse_with
+    ParserInst
+  parse := parser_traits.Parser.parse.default
+    (Shared0P.Insts.RusthammerParser_traitsParser ParserInst)
 }
 
 /-- [rusthammer::grammar::sequence::Right]
-    Source: 'src/grammar/sequence.rs', lines 186:0-189:1
+    Source: 'src/grammar/sequence.rs', lines 167:0-170:1
     Visibility: public -/
 structure grammar.sequence.Right (P : Type) (Q : Type) where
   first : P
   second : Q
 
-/-- [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Eval<'input, Backend, Clause1_Clause0_Output> for rusthammer::grammar::sequence::Right<P, Q>}::eval]:
-    Source: 'src/grammar/sequence.rs', lines 198:4-219:5
+/-- [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Parser<'input, Clause1_Output> for rusthammer::grammar::sequence::Right<P, Q>}::parse_with]:
+    Source: 'src/grammar/sequence.rs', lines 175:4-195:5
     Visibility: public -/
-def grammar.sequence.Right.Insts.RusthammerParser_traitsEval.eval
-  {Backend : Type} {P : Type} {Q : Type} {Clause0_Clause0_Output : Type}
-  {Clause1_Clause0_Output : Type} (parser_traitsEvalInst : parser_traits.Eval P
-  Backend Clause0_Clause0_Output) (parser_traitsEvalInst1 : parser_traits.Eval
-  Q Backend Clause1_Clause0_Output) (self : grammar.sequence.Right P Q)
-  (backend : Backend) (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Clause1_Clause0_Output) × Backend)
+def grammar.sequence.Right.Insts.RusthammerParser_traitsParser.parse_with
+  {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+  (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
+  (parser_traitsParserInst1 : parser_traits.Parser Q Clause1_Output)
+  (self : grammar.sequence.Right P Q) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Clause1_Output)
+    input_types.ParseError)
   := do
-  let (po, backend1) ←
-    grammar.sequence.Seq.Insts.RusthammerParser_traitsEvalInputBackendPair.eval
-      (Shared0P.Insts.RusthammerParser_traitsEval parser_traitsEvalInst)
-      (Shared0P.Insts.RusthammerParser_traitsEval parser_traitsEvalInst1)
-      { first := self.first, second := self.second } backend input cursor
-      context
-  match po with
-  | input_types.ParseOutcome.Success next values =>
-    let (_, second) := values
-    ok (input_types.ParseOutcome.Success next second, backend1)
-  | input_types.ParseOutcome.Error error =>
-    ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
+  let r ←
+    grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair.parse_with
+      (Shared0P.Insts.RusthammerParser_traitsParser parser_traitsParserInst)
+      (Shared0P.Insts.RusthammerParser_traitsParser parser_traitsParserInst1)
+      { first := self.first, second := self.second } input cursor byte_order
+  match r with
+  | core.result.Result.Ok parsed =>
+    let (next, (_, second)) := parsed
+    ok (core.result.Result.Ok (next, second))
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
 
-/-- Trait implementation: [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Grammar<'input, Clause1_Output> for rusthammer::grammar::sequence::Right<P, Q>}]
-    Source: 'src/grammar/sequence.rs', lines 191:0-193:1 -/
+/-- Trait implementation: [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Parser<'input, Clause1_Output> for rusthammer::grammar::sequence::Right<P, Q>}]
+    Source: 'src/grammar/sequence.rs', lines 172:0-196:1 -/
 @[reducible]
-def grammar.sequence.Right.Insts.RusthammerParser_traitsGrammar {P : Type} {Q :
-  Type} {Clause0_Output : Type} {Clause1_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
-  (parser_traitsGrammarInst1 : parser_traits.Grammar Q Clause1_Output) :
-  parser_traits.Grammar (grammar.sequence.Right P Q) Clause1_Output := {
+impl_def grammar.sequence.Right.Insts.RusthammerParser_traitsParser {P : Type}
+  {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+  (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
+  (parser_traitsParserInst1 : parser_traits.Parser Q Clause1_Output) :
+  parser_traits.Parser (grammar.sequence.Right P Q) Clause1_Output := {
+  parse_with :=
+    grammar.sequence.Right.Insts.RusthammerParser_traitsParser.parse_with
+    parser_traitsParserInst parser_traitsParserInst1
+  parse := parser_traits.Parser.parse.default
+    (grammar.sequence.Right.Insts.RusthammerParser_traitsParser
+    parser_traitsParserInst parser_traitsParserInst1)
 }
 
-/-- Trait implementation: [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Eval<'input, Backend, Clause1_Clause0_Output> for rusthammer::grammar::sequence::Right<P, Q>}]
-    Source: 'src/grammar/sequence.rs', lines 195:0-220:1 -/
+/-- Trait implementation: [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Parser<'input, Clause2_Output> for rusthammer::grammar::sequence::Bind<P, F>}]
+    Source: 'src/grammar/sequence.rs', lines 104:0-126:1 -/
 @[reducible]
-def grammar.sequence.Right.Insts.RusthammerParser_traitsEval {Backend : Type}
-  {P : Type} {Q : Type} {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output
-  : Type} (parser_traitsEvalInst : parser_traits.Eval P Backend
-  Clause0_Clause0_Output) (parser_traitsEvalInst1 : parser_traits.Eval Q
-  Backend Clause1_Clause0_Output) : parser_traits.Eval (grammar.sequence.Right
-  P Q) Backend Clause1_Clause0_Output := {
-  GrammarInst := grammar.sequence.Right.Insts.RusthammerParser_traitsGrammar
-    parser_traitsEvalInst.GrammarInst parser_traitsEvalInst1.GrammarInst
-  eval := grammar.sequence.Right.Insts.RusthammerParser_traitsEval.eval
-    parser_traitsEvalInst parser_traitsEvalInst1
+impl_def grammar.sequence.Bind.Insts.RusthammerParser_traitsParser {P : Type}
+  {F : Type} {Q : Type} {Clause0_Output : Type} {Clause2_Output : Type}
+  (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
+  (coreopsfunctionFnFTupleClause0_OutputQInst : core.ops.function.Fn F
+  Clause0_Output Q) (parser_traitsParserInst1 : parser_traits.Parser Q
+  Clause2_Output) : parser_traits.Parser (grammar.sequence.Bind P F)
+  Clause2_Output := {
+  parse_with :=
+    grammar.sequence.Bind.Insts.RusthammerParser_traitsParser.parse_with
+    parser_traitsParserInst coreopsfunctionFnFTupleClause0_OutputQInst
+    parser_traitsParserInst1
+  parse := parser_traits.Parser.parse.default
+    (grammar.sequence.Bind.Insts.RusthammerParser_traitsParser
+    parser_traitsParserInst coreopsfunctionFnFTupleClause0_OutputQInst
+    parser_traitsParserInst1)
 }
 
-/-- [rusthammer::input_types::{impl core::cmp::PartialEq<rusthammer::input_types::BitOrder> for rusthammer::input_types::BitOrder}::eq]:
-    Source: 'src/input_types.rs', lines 71:29-71:38
+/-- [rusthammer::grammar::order::WithByteOrder]
+    Source: 'src/grammar/order.rs', lines 6:0-9:1
     Visibility: public -/
-def input_types.BitOrder.Insts.CoreCmpPartialEqBitOrder.eq
-  (self : input_types.BitOrder) (other : input_types.BitOrder) :
-  Result Bool
-  := do
-  let self1 := read_discriminant self
-  let other1 := read_discriminant other
-  ok (self1 = other1)
-
-/-- Trait implementation: [rusthammer::input_types::{impl core::cmp::PartialEq<rusthammer::input_types::BitOrder> for rusthammer::input_types::BitOrder}]
-    Source: 'src/input_types.rs', lines 71:29-71:38 -/
-@[reducible]
-impl_def input_types.BitOrder.Insts.CoreCmpPartialEqBitOrder :
-  core.cmp.PartialEq input_types.BitOrder input_types.BitOrder := {
-  eq := input_types.BitOrder.Insts.CoreCmpPartialEqBitOrder.eq
-  ne := core.cmp.PartialEq.ne.trait_default
-    input_types.BitOrder.Insts.CoreCmpPartialEqBitOrder
-}
-
-/-- [rusthammer::grammar::order::scope_boundary_error]:
-    Source: 'src/grammar/order.rs', lines 30:0-38:1 -/
-def grammar.order.scope_boundary_error
-  (length : Std.Usize) (cursor : input_types.Cursor) :
-  Result (Option input_types.ParseError)
-  := do
-  if cursor.bit >= 8#u8
-  then ok (some input_types.ParseError.InvalidCursor)
-  else
-    if cursor.byte > length
-    then ok (some input_types.ParseError.InvalidCursor)
-    else
-      if cursor.byte = length
-      then
-        if cursor.bit != 0#u8
-        then ok (some input_types.ParseError.InvalidCursor)
-        else
-          if cursor.bit != 0#u8
-          then ok (some input_types.ParseError.Unaligned)
-          else ok none
-      else
-        if cursor.bit != 0#u8
-        then ok (some input_types.ParseError.Unaligned)
-        else ok none
-
-/-- [rusthammer::grammar::order::finish_order_scope]:
-    Source: 'src/grammar/order.rs', lines 40:0-52:1 -/
-def grammar.order.finish_order_scope
-  {T : Type} (length : Std.Usize) (changed : Bool)
-  (result : input_types.ParseOutcome T) :
-  Result (input_types.ParseOutcome T)
-  := do
-  if changed
-  then
-    match result with
-    | input_types.ParseOutcome.Success next _ =>
-      let o ← grammar.order.scope_boundary_error length next
-      match o with
-      | none => ok result
-      | some error => ok (input_types.ParseOutcome.Error error)
-    | input_types.ParseOutcome.Error _ => ok result
-    | input_types.ParseOutcome.NeedMore => ok input_types.ParseOutcome.NeedMore
-  else ok result
-
-/-- [rusthammer::grammar::order::WithOrder]
-    Source: 'src/grammar/order.rs', lines 25:0-28:1
-    Visibility: public -/
-structure grammar.order.WithOrder (P : Type) where
+structure grammar.order.WithByteOrder (P : Type) where
   parser : P
-  order : input_types.Order
+  byte_order : input_types.ByteOrder
 
-/-- [rusthammer::grammar::order::{impl rusthammer::parser_traits::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::grammar::order::WithOrder<P>}::eval]:
-    Source: 'src/grammar/order.rs', lines 59:4-82:5
+/-- [rusthammer::grammar::order::{impl rusthammer::parser_traits::Parser<'input, Clause0_Output> for rusthammer::grammar::order::WithByteOrder<P>}::parse_with]:
+    Source: 'src/grammar/order.rs', lines 14:4-21:5
     Visibility: public -/
-def grammar.order.WithOrder.Insts.RusthammerParser_traitsEval.eval
-  {Backend : Type} {P : Type} {Clause0_Clause0_Output : Type}
-  (parser_traitsEvalInst : parser_traits.Eval P Backend Clause0_Clause0_Output)
-  (self : grammar.order.WithOrder P) (backend : Backend) (input : Slice Std.U8)
-  (cursor : input_types.Cursor) (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Clause0_Clause0_Output) × Backend)
-  := do
-  let changed ←
-    core.cmp.PartialEq.ne.trait_default
-      input_types.BitOrder.Insts.CoreCmpPartialEqBitOrder self.order.bit
-      context.order.bit
-  if changed
-  then
-    let i := Slice.len input
-    let o ← grammar.order.scope_boundary_error i cursor
-    match o with
-    | none =>
-      let (result, backend1) ←
-        parser_traitsEvalInst.eval self.parser backend input cursor
-          { context with order := self.order }
-      let i1 := Slice.len input
-      let po ← grammar.order.finish_order_scope i1 changed result
-      ok (po, backend1)
-    | some error => ok (input_types.ParseOutcome.Error error, backend)
-  else
-    let (result, backend1) ←
-      parser_traitsEvalInst.eval self.parser backend input cursor
-        { context with order := self.order }
-    let i := Slice.len input
-    let po ← grammar.order.finish_order_scope i changed result
-    ok (po, backend1)
-
-/-- [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::numeric::Byte}::eval]:
-    Source: 'src/grammar/numeric.rs', lines 320:4-333:5
-    Visibility: public -/
-def grammar.numeric.Byte.Insts.RusthammerParser_traitsEvalInputBackendU8.eval
-  {Backend : Type} (self : grammar.numeric.Byte) (backend : Backend)
+def grammar.order.WithByteOrder.Insts.RusthammerParser_traitsParser.parse_with
+  {P : Type} {Clause0_Output : Type} (parser_traitsParserInst :
+  parser_traits.Parser P Clause0_Output) (self : grammar.order.WithByteOrder P)
   (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Std.U8) × Backend)
+  (bo : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Clause0_Output)
+    input_types.ParseError)
   := do
-  let (po, backend1) ←
-    grammar.numeric.Bits.Insts.RusthammerParser_traitsEvalInputBackendU64.eval
-      { width := 8#u8 } backend input cursor context
-  match po with
-  | input_types.ParseOutcome.Success next value =>
-    let i ← lift (UScalar.cast .U8 value)
-    ok (input_types.ParseOutcome.Success next i, backend1)
-  | input_types.ParseOutcome.Error error =>
-    ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::numeric::Byte}]
-    Source: 'src/grammar/numeric.rs', lines 319:0-334:1 -/
-@[reducible]
-def grammar.numeric.Byte.Insts.RusthammerParser_traitsEvalInputBackendU8
-  (Backend : Type) : parser_traits.Eval grammar.numeric.Byte Backend Std.U8
-  := {
-  GrammarInst :=
-    grammar.numeric.Byte.Insts.RusthammerParser_traitsGrammarInputU8
-  eval :=
-    grammar.numeric.Byte.Insts.RusthammerParser_traitsEvalInputBackendU8.eval
-}
-
-/-- [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteNotIn}::eval::{closure}]
-    Source: 'src/grammar/bytes.rs', lines 148:23-148:56 -/
-@[reducible]
-def grammar.bytes.EvalInputByteNotInBackendU8.eval.closure (Backend : Type) :=
-  grammar.bytes.ByteNotIn
-
-/-- [rusthammer::grammar::bytes::{rusthammer::grammar::bytes::ByteSet}::contains]:
-    Source: 'src/grammar/bytes.rs', lines 21:4-23:5 -/
-def grammar.bytes.ByteSet.contains
-  (self : grammar.bytes.ByteSet) (byte : Std.U8) : Result Bool := do
-  let i ← byte / 64#u8
-  let i1 ← lift (UScalar.cast .Usize i)
-  let i2 ← Array.index_usize self.words i1
-  let i3 ← byte % 64#u8
-  let i4 ← 1#u64 <<< i3
-  let i5 ← lift (i2 &&& i4)
-  ok (i5 != 0#u64)
-
-/-- [rusthammer::grammar::bytes::{rusthammer::grammar::bytes::ByteNotIn}::accepts]:
-    Source: 'src/grammar/bytes.rs', lines 129:4-131:5
-    Visibility: public -/
-def grammar.bytes.ByteNotIn.accepts
-  (self : grammar.bytes.ByteNotIn) (byte : Std.U8) : Result Bool := do
-  let b ← grammar.bytes.ByteSet.contains self.set byte
-  ok (¬ b)
-
-/-- [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteNotIn}::eval::{impl core::ops::function::Fn<(&'_2 u8,), bool> for rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteNotIn}::eval::{closure}<'input, '_1, Backend>}::call]:
-    Source: 'src/grammar/bytes.rs', lines 148:23-148:56 -/
-def
-  grammar.bytes.EvalInputByteNotInBackendU8.eval.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool.call
-  {Backend : Type}
-  (c : grammar.bytes.EvalInputByteNotInBackendU8.eval.closure Backend)
-  (tupled_args : Std.U8) :
-  Result Bool
-  := do
-  grammar.bytes.ByteNotIn.accepts c tupled_args
-
-/-- [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteNotIn}::eval::{impl core::ops::function::FnMut<(&'_2 u8,), bool> for rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteNotIn}::eval::{closure}<'input, '_1, Backend>}::call_mut]:
-    Source: 'src/grammar/bytes.rs', lines 148:23-148:56 -/
-def
-  grammar.bytes.EvalInputByteNotInBackendU8.eval.closure.Insts.CoreOpsFunctionFnMutTupleShared1U8Bool.call_mut
-  {Backend : Type}
-  (state : grammar.bytes.EvalInputByteNotInBackendU8.eval.closure Backend)
-  (args : Std.U8) :
-  Result (Bool × (grammar.bytes.EvalInputByteNotInBackendU8.eval.closure
-    Backend))
-  := do
-  let b ←
-    grammar.bytes.EvalInputByteNotInBackendU8.eval.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool.call
-      state args
-  ok (b, state)
-
-/-- [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteNotIn}::eval::{impl core::ops::function::FnOnce<(&'_2 u8,), bool> for rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteNotIn}::eval::{closure}<'input, '_1, Backend>}::call_once]:
-    Source: 'src/grammar/bytes.rs', lines 148:23-148:56 -/
-def
-  grammar.bytes.EvalInputByteNotInBackendU8.eval.closure.Insts.CoreOpsFunctionFnOnceTupleShared1U8Bool.call_once
-  {Backend : Type}
-  (c : grammar.bytes.EvalInputByteNotInBackendU8.eval.closure Backend)
-  (i : Std.U8) :
-  Result Bool
-  := do
-  let (b, _) ←
-    grammar.bytes.EvalInputByteNotInBackendU8.eval.closure.Insts.CoreOpsFunctionFnMutTupleShared1U8Bool.call_mut
-      c i
-  ok b
-
-/-- Trait implementation: [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteNotIn}::eval::{impl core::ops::function::FnOnce<(&'_2 u8,), bool> for rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteNotIn}::eval::{closure}<'input, '_1, Backend>}]
-    Source: 'src/grammar/bytes.rs', lines 148:23-148:56 -/
-@[reducible]
-def
-  grammar.bytes.EvalInputByteNotInBackendU8.eval.closure.Insts.CoreOpsFunctionFnOnceTupleShared1U8Bool
-  (Backend : Type) : core.ops.function.FnOnce
-  (grammar.bytes.EvalInputByteNotInBackendU8.eval.closure Backend) Std.U8 Bool
-  := {
-  call_once :=
-    grammar.bytes.EvalInputByteNotInBackendU8.eval.closure.Insts.CoreOpsFunctionFnOnceTupleShared1U8Bool.call_once
-}
-
-/-- Trait implementation: [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteNotIn}::eval::{impl core::ops::function::FnMut<(&'_2 u8,), bool> for rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteNotIn}::eval::{closure}<'input, '_1, Backend>}]
-    Source: 'src/grammar/bytes.rs', lines 148:23-148:56 -/
-@[reducible]
-def
-  grammar.bytes.EvalInputByteNotInBackendU8.eval.closure.Insts.CoreOpsFunctionFnMutTupleShared1U8Bool
-  (Backend : Type) : core.ops.function.FnMut
-  (grammar.bytes.EvalInputByteNotInBackendU8.eval.closure Backend) Std.U8 Bool
-  := {
-  FnOnceInst :=
-    grammar.bytes.EvalInputByteNotInBackendU8.eval.closure.Insts.CoreOpsFunctionFnOnceTupleShared1U8Bool
-    Backend
-  call_mut :=
-    grammar.bytes.EvalInputByteNotInBackendU8.eval.closure.Insts.CoreOpsFunctionFnMutTupleShared1U8Bool.call_mut
-}
-
-/-- Trait implementation: [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteNotIn}::eval::{impl core::ops::function::Fn<(&'_2 u8,), bool> for rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteNotIn}::eval::{closure}<'input, '_1, Backend>}]
-    Source: 'src/grammar/bytes.rs', lines 148:23-148:56 -/
-@[reducible]
-def
-  grammar.bytes.EvalInputByteNotInBackendU8.eval.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool
-  (Backend : Type) : core.ops.function.Fn
-  (grammar.bytes.EvalInputByteNotInBackendU8.eval.closure Backend) Std.U8 Bool
-  := {
-  FnMutInst :=
-    grammar.bytes.EvalInputByteNotInBackendU8.eval.closure.Insts.CoreOpsFunctionFnMutTupleShared1U8Bool
-    Backend
-  call :=
-    grammar.bytes.EvalInputByteNotInBackendU8.eval.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool.call
-}
-
-/-- [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteNotIn}::eval]:
-    Source: 'src/grammar/bytes.rs', lines 139:4-151:5
-    Visibility: public -/
-def
-  grammar.bytes.ByteNotIn.Insts.RusthammerParser_traitsEvalInputBackendU8.eval
-  {Backend : Type} (self : grammar.bytes.ByteNotIn) (backend : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Std.U8) × Backend)
-  := do
-  grammar.transform.Verify.Insts.RusthammerParser_traitsEval.eval
-    (grammar.numeric.Byte.Insts.RusthammerParser_traitsEvalInputBackendU8
-    Backend)
-    (grammar.bytes.EvalInputByteNotInBackendU8.eval.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool
-    Backend) { parser := (), predicate := self } backend input cursor context
-
-/-- Trait implementation: [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteNotIn}]
-    Source: 'src/grammar/bytes.rs', lines 138:0-152:1 -/
-@[reducible]
-def grammar.bytes.ByteNotIn.Insts.RusthammerParser_traitsEvalInputBackendU8
-  (Backend : Type) : parser_traits.Eval grammar.bytes.ByteNotIn Backend Std.U8
-  := {
-  GrammarInst :=
-    grammar.bytes.ByteNotIn.Insts.RusthammerParser_traitsGrammarInputU8
-  eval :=
-    grammar.bytes.ByteNotIn.Insts.RusthammerParser_traitsEvalInputBackendU8.eval
-}
-
-/-- [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteIn}::eval::{closure}]
-    Source: 'src/grammar/bytes.rs', lines 85:23-85:56 -/
-@[reducible]
-def grammar.bytes.EvalInputByteInBackendU8.eval.closure (Backend : Type) :=
-  grammar.bytes.ByteIn
-
-/-- [rusthammer::grammar::bytes::{rusthammer::grammar::bytes::ByteIn}::accepts]:
-    Source: 'src/grammar/bytes.rs', lines 66:4-68:5
-    Visibility: public -/
-def grammar.bytes.ByteIn.accepts
-  (self : grammar.bytes.ByteIn) (byte : Std.U8) : Result Bool := do
-  grammar.bytes.ByteSet.contains self.set byte
-
-/-- [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteIn}::eval::{impl core::ops::function::Fn<(&'_2 u8,), bool> for rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteIn}::eval::{closure}<'input, '_1, Backend>}::call]:
-    Source: 'src/grammar/bytes.rs', lines 85:23-85:56 -/
-def
-  grammar.bytes.EvalInputByteInBackendU8.eval.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool.call
-  {Backend : Type}
-  (c : grammar.bytes.EvalInputByteInBackendU8.eval.closure Backend)
-  (tupled_args : Std.U8) :
-  Result Bool
-  := do
-  grammar.bytes.ByteIn.accepts c tupled_args
-
-/-- [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteIn}::eval::{impl core::ops::function::FnMut<(&'_2 u8,), bool> for rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteIn}::eval::{closure}<'input, '_1, Backend>}::call_mut]:
-    Source: 'src/grammar/bytes.rs', lines 85:23-85:56 -/
-def
-  grammar.bytes.EvalInputByteInBackendU8.eval.closure.Insts.CoreOpsFunctionFnMutTupleShared1U8Bool.call_mut
-  {Backend : Type}
-  (state : grammar.bytes.EvalInputByteInBackendU8.eval.closure Backend)
-  (args : Std.U8) :
-  Result (Bool × (grammar.bytes.EvalInputByteInBackendU8.eval.closure Backend))
-  := do
-  let b ←
-    grammar.bytes.EvalInputByteInBackendU8.eval.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool.call
-      state args
-  ok (b, state)
-
-/-- [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteIn}::eval::{impl core::ops::function::FnOnce<(&'_2 u8,), bool> for rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteIn}::eval::{closure}<'input, '_1, Backend>}::call_once]:
-    Source: 'src/grammar/bytes.rs', lines 85:23-85:56 -/
-def
-  grammar.bytes.EvalInputByteInBackendU8.eval.closure.Insts.CoreOpsFunctionFnOnceTupleShared1U8Bool.call_once
-  {Backend : Type}
-  (c : grammar.bytes.EvalInputByteInBackendU8.eval.closure Backend)
-  (i : Std.U8) :
-  Result Bool
-  := do
-  let (b, _) ←
-    grammar.bytes.EvalInputByteInBackendU8.eval.closure.Insts.CoreOpsFunctionFnMutTupleShared1U8Bool.call_mut
-      c i
-  ok b
-
-/-- Trait implementation: [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteIn}::eval::{impl core::ops::function::FnOnce<(&'_2 u8,), bool> for rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteIn}::eval::{closure}<'input, '_1, Backend>}]
-    Source: 'src/grammar/bytes.rs', lines 85:23-85:56 -/
-@[reducible]
-def
-  grammar.bytes.EvalInputByteInBackendU8.eval.closure.Insts.CoreOpsFunctionFnOnceTupleShared1U8Bool
-  (Backend : Type) : core.ops.function.FnOnce
-  (grammar.bytes.EvalInputByteInBackendU8.eval.closure Backend) Std.U8 Bool
-  := {
-  call_once :=
-    grammar.bytes.EvalInputByteInBackendU8.eval.closure.Insts.CoreOpsFunctionFnOnceTupleShared1U8Bool.call_once
-}
-
-/-- Trait implementation: [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteIn}::eval::{impl core::ops::function::FnMut<(&'_2 u8,), bool> for rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteIn}::eval::{closure}<'input, '_1, Backend>}]
-    Source: 'src/grammar/bytes.rs', lines 85:23-85:56 -/
-@[reducible]
-def
-  grammar.bytes.EvalInputByteInBackendU8.eval.closure.Insts.CoreOpsFunctionFnMutTupleShared1U8Bool
-  (Backend : Type) : core.ops.function.FnMut
-  (grammar.bytes.EvalInputByteInBackendU8.eval.closure Backend) Std.U8 Bool
-  := {
-  FnOnceInst :=
-    grammar.bytes.EvalInputByteInBackendU8.eval.closure.Insts.CoreOpsFunctionFnOnceTupleShared1U8Bool
-    Backend
-  call_mut :=
-    grammar.bytes.EvalInputByteInBackendU8.eval.closure.Insts.CoreOpsFunctionFnMutTupleShared1U8Bool.call_mut
-}
-
-/-- Trait implementation: [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteIn}::eval::{impl core::ops::function::Fn<(&'_2 u8,), bool> for rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteIn}::eval::{closure}<'input, '_1, Backend>}]
-    Source: 'src/grammar/bytes.rs', lines 85:23-85:56 -/
-@[reducible]
-def
-  grammar.bytes.EvalInputByteInBackendU8.eval.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool
-  (Backend : Type) : core.ops.function.Fn
-  (grammar.bytes.EvalInputByteInBackendU8.eval.closure Backend) Std.U8 Bool
-  := {
-  FnMutInst :=
-    grammar.bytes.EvalInputByteInBackendU8.eval.closure.Insts.CoreOpsFunctionFnMutTupleShared1U8Bool
-    Backend
-  call :=
-    grammar.bytes.EvalInputByteInBackendU8.eval.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool.call
-}
-
-/-- [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteIn}::eval]:
-    Source: 'src/grammar/bytes.rs', lines 76:4-88:5
-    Visibility: public -/
-def grammar.bytes.ByteIn.Insts.RusthammerParser_traitsEvalInputBackendU8.eval
-  {Backend : Type} (self : grammar.bytes.ByteIn) (backend : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Std.U8) × Backend)
-  := do
-  grammar.transform.Verify.Insts.RusthammerParser_traitsEval.eval
-    (grammar.numeric.Byte.Insts.RusthammerParser_traitsEvalInputBackendU8
-    Backend)
-    (grammar.bytes.EvalInputByteInBackendU8.eval.closure.Insts.CoreOpsFunctionFnTupleShared1U8Bool
-    Backend) { parser := (), predicate := self } backend input cursor context
-
-/-- Trait implementation: [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, u8> for rusthammer::grammar::bytes::ByteIn}]
-    Source: 'src/grammar/bytes.rs', lines 75:0-89:1 -/
-@[reducible]
-def grammar.bytes.ByteIn.Insts.RusthammerParser_traitsEvalInputBackendU8
-  (Backend : Type) : parser_traits.Eval grammar.bytes.ByteIn Backend Std.U8
-  := {
-  GrammarInst :=
-    grammar.bytes.ByteIn.Insts.RusthammerParser_traitsGrammarInputU8
-  eval :=
-    grammar.bytes.ByteIn.Insts.RusthammerParser_traitsEvalInputBackendU8.eval
-}
+  parser_traitsParserInst.parse_with self.parser input cursor self.byte_order
 
 /-- [rusthammer::mavlink_example::PacketFields]
-    Source: 'src/../examples/support/mavlink.rs', lines 184:0-186:1 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 171:0-173:1 -/
 structure mavlink_example.PacketFields (P : Type) where
   parser : P
 
-/-- [rusthammer::mavlink_example::{impl rusthammer::parser_traits::Eval<'input, Backend, rusthammer::mavlink_example::Packet<'_>> for rusthammer::mavlink_example::PacketFields<P>}::eval]:
-    Source: 'src/../examples/support/mavlink.rs', lines 196:4-218:5
+/-- [rusthammer::mavlink_example::{impl rusthammer::parser_traits::Parser<'input, rusthammer::mavlink_example::Packet<'input>> for rusthammer::mavlink_example::PacketFields<P>}::parse_with]:
+    Source: 'src/../examples/support/mavlink.rs', lines 181:4-202:5
     Visibility: public -/
 def
-  mavlink_example.PacketFields.Insts.RusthammerParser_traitsEvalInputBackendPacket.eval
-  {Backend : Type} {P : Type}
-  (parser_traitsEvalInputPBackendPairPairPairHeaderSharedInputSliceU8BitSpanU16Inst
-  : parser_traits.Eval P Backend (((mavlink_example.Header × (Slice Std.U8)) ×
+  mavlink_example.PacketFields.Insts.RusthammerParser_traitsParserInputPacket.parse_with
+  {P : Type}
+  (parser_traitsParserInputPPairPairPairHeaderSharedInputSliceU8BitSpanU16Inst
+  : parser_traits.Parser P (((mavlink_example.Header × (Slice Std.U8)) ×
   span_types.BitSpan) × Std.U16)) (self : mavlink_example.PacketFields P)
-  (backend : Backend) (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome mavlink_example.Packet) × Backend)
+  (input : Slice Std.U8) (cursor : input_types.Cursor)
+  (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × mavlink_example.Packet)
+    input_types.ParseError)
   := do
-  let (po, backend1) ←
-    parser_traitsEvalInputPBackendPairPairPairHeaderSharedInputSliceU8BitSpanU16Inst.eval
-      self.parser backend input cursor context
-  match po with
-  | input_types.ParseOutcome.Success next p =>
-    let (((header, payload), _), checksum) := p
-    ok (input_types.ParseOutcome.Success next { header, payload, checksum },
-      backend1)
-  | input_types.ParseOutcome.Error error =>
-    ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
+  let r ←
+    parser_traitsParserInputPPairPairPairHeaderSharedInputSliceU8BitSpanU16Inst.parse_with
+      self.parser input cursor byte_order
+  match r with
+  | core.result.Result.Ok p =>
+    let (next, (((header, payload), _), checksum)) := p
+    ok (core.result.Result.Ok (next, { header, payload, checksum }))
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
 
-/-- Trait implementation: [rusthammer::mavlink_example::{impl rusthammer::parser_traits::Grammar<'input, rusthammer::mavlink_example::Packet<'input>> for rusthammer::mavlink_example::PacketFields<P>}]
-    Source: 'src/../examples/support/mavlink.rs', lines 188:0-190:1 -/
+/-- Trait implementation: [rusthammer::mavlink_example::{impl rusthammer::parser_traits::Parser<'input, rusthammer::mavlink_example::Packet<'input>> for rusthammer::mavlink_example::PacketFields<P>}]
+    Source: 'src/../examples/support/mavlink.rs', lines 175:0-203:1 -/
 @[reducible]
-def
-  mavlink_example.PacketFields.Insts.RusthammerParser_traitsGrammarInputPacket
-  (P : Type) : parser_traits.Grammar (mavlink_example.PacketFields P)
-  mavlink_example.Packet := {
-}
-
-/-- Trait implementation: [rusthammer::mavlink_example::{impl rusthammer::parser_traits::Eval<'input, Backend, rusthammer::mavlink_example::Packet<'_>> for rusthammer::mavlink_example::PacketFields<P>}]
-    Source: 'src/../examples/support/mavlink.rs', lines 192:0-219:1 -/
-@[reducible]
-def
-  mavlink_example.PacketFields.Insts.RusthammerParser_traitsEvalInputBackendPacket
-  {Backend : Type} {P : Type}
-  (parser_traitsEvalInputPBackendPairPairPairHeaderSharedInputSliceU8BitSpanU16Inst
-  : parser_traits.Eval P Backend (((mavlink_example.Header × (Slice Std.U8)) ×
-  span_types.BitSpan) × Std.U16)) : parser_traits.Eval
-  (mavlink_example.PacketFields P) Backend mavlink_example.Packet := {
-  GrammarInst :=
-    mavlink_example.PacketFields.Insts.RusthammerParser_traitsGrammarInputPacket
-    P
-  eval :=
-    mavlink_example.PacketFields.Insts.RusthammerParser_traitsEvalInputBackendPacket.eval
-    parser_traitsEvalInputPBackendPairPairPairHeaderSharedInputSliceU8BitSpanU16Inst
+impl_def
+  mavlink_example.PacketFields.Insts.RusthammerParser_traitsParserInputPacket
+  {P : Type}
+  (parser_traitsParserInputPPairPairPairHeaderSharedInputSliceU8BitSpanU16Inst
+  : parser_traits.Parser P (((mavlink_example.Header × (Slice Std.U8)) ×
+  span_types.BitSpan) × Std.U16)) : parser_traits.Parser
+  (mavlink_example.PacketFields P) mavlink_example.Packet := {
+  parse_with :=
+    mavlink_example.PacketFields.Insts.RusthammerParser_traitsParserInputPacket.parse_with
+    parser_traitsParserInputPPairPairPairHeaderSharedInputSliceU8BitSpanU16Inst
+  parse := parser_traits.Parser.parse.default
+    (mavlink_example.PacketFields.Insts.RusthammerParser_traitsParserInputPacket
+    parser_traitsParserInputPPairPairPairHeaderSharedInputSliceU8BitSpanU16Inst)
 }
 
 /-- [rusthammer::mavlink_example::Payload]
-    Source: 'src/../examples/support/mavlink.rs', lines 155:0-157:1 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 145:0-147:1 -/
 structure mavlink_example.Payload where
   header : mavlink_example.Header
 
-/-- [rusthammer::mavlink_example::{impl rusthammer::parser_traits::Eval<'input, Backend, (rusthammer::mavlink_example::Header, &'_ [u8])> for rusthammer::mavlink_example::Payload}::eval]:
-    Source: 'src/../examples/support/mavlink.rs', lines 164:4-181:5
+/-- [rusthammer::mavlink_example::{impl rusthammer::parser_traits::Parser<'input, (rusthammer::mavlink_example::Header, &'input [u8])> for rusthammer::mavlink_example::Payload}::parse_with]:
+    Source: 'src/../examples/support/mavlink.rs', lines 152:4-168:5
     Visibility: public -/
 def
-  mavlink_example.Payload.Insts.RusthammerParser_traitsEvalInputBackendPairHeaderSharedSliceU8.eval
-  {Backend : Type} (self : mavlink_example.Payload) (backend : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome (mavlink_example.Header × (Slice Std.U8)))
-    × Backend)
+  mavlink_example.Payload.Insts.RusthammerParser_traitsParserInputPairHeaderSharedInputSliceU8.parse_with
+  (self : mavlink_example.Payload) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × (mavlink_example.Header ×
+    (Slice Std.U8))) input_types.ParseError)
   := do
   let i ← lift (core.convert.num.FromUsizeU8.from self.header.payload_length)
-  let (po, backend1) ←
-    grammar.bytes.TakeAligned.Insts.RusthammerParser_traitsEvalInputBackendSharedSliceU8.eval
-      { count := i } backend input cursor context
-  match po with
-  | input_types.ParseOutcome.Success next payload =>
-    ok (input_types.ParseOutcome.Success next (self.header, payload), backend1)
-  | input_types.ParseOutcome.Error error =>
-    ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
+  let r ←
+    grammar.bytes.TakeAligned.Insts.RusthammerParser_traitsParserInputSharedInputSliceU8.parse_with
+      { count := i } input cursor byte_order
+  match r with
+  | core.result.Result.Ok p =>
+    let (next, payload) := p
+    ok (core.result.Result.Ok (next, (self.header, payload)))
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
 
-/-- Trait implementation: [rusthammer::mavlink_example::{impl rusthammer::parser_traits::Grammar<'input, (rusthammer::mavlink_example::Header, &'input [u8])> for rusthammer::mavlink_example::Payload}]
-    Source: 'src/../examples/support/mavlink.rs', lines 159:0-161:1 -/
+/-- Trait implementation: [rusthammer::mavlink_example::{impl rusthammer::parser_traits::Parser<'input, (rusthammer::mavlink_example::Header, &'input [u8])> for rusthammer::mavlink_example::Payload}]
+    Source: 'src/../examples/support/mavlink.rs', lines 149:0-169:1 -/
 @[reducible]
-def
-  mavlink_example.Payload.Insts.RusthammerParser_traitsGrammarInputPairHeaderSharedInputSliceU8
-  : parser_traits.Grammar mavlink_example.Payload (mavlink_example.Header ×
+impl_def
+  mavlink_example.Payload.Insts.RusthammerParser_traitsParserInputPairHeaderSharedInputSliceU8
+  : parser_traits.Parser mavlink_example.Payload (mavlink_example.Header ×
   (Slice Std.U8)) := {
-}
-
-/-- Trait implementation: [rusthammer::mavlink_example::{impl rusthammer::parser_traits::Eval<'input, Backend, (rusthammer::mavlink_example::Header, &'_ [u8])> for rusthammer::mavlink_example::Payload}]
-    Source: 'src/../examples/support/mavlink.rs', lines 163:0-182:1 -/
-@[reducible]
-def
-  mavlink_example.Payload.Insts.RusthammerParser_traitsEvalInputBackendPairHeaderSharedSliceU8
-  (Backend : Type) : parser_traits.Eval mavlink_example.Payload Backend
-  (mavlink_example.Header × (Slice Std.U8)) := {
-  GrammarInst :=
-    mavlink_example.Payload.Insts.RusthammerParser_traitsGrammarInputPairHeaderSharedInputSliceU8
-  eval :=
-    mavlink_example.Payload.Insts.RusthammerParser_traitsEvalInputBackendPairHeaderSharedSliceU8.eval
+  parse_with :=
+    mavlink_example.Payload.Insts.RusthammerParser_traitsParserInputPairHeaderSharedInputSliceU8.parse_with
+  parse := parser_traits.Parser.parse.default
+    mavlink_example.Payload.Insts.RusthammerParser_traitsParserInputPairHeaderSharedInputSliceU8
 }
 
 /-- [rusthammer::span_types::{rusthammer::span_types::BitSpan<'input>}::as_bytes]:
-    Source: 'src/span_types.rs', lines 77:4-82:5
+    Source: 'src/span_types.rs', lines 56:4-61:5
     Visibility: public -/
 def span_types.BitSpan.as_bytes
   (self : span_types.BitSpan) : Result (Option (Slice Std.U8)) := do
@@ -3264,7 +2684,7 @@ def span_types.BitSpan.as_bytes
       ok (some s)
 
 /-- [rusthammer::mavlink_example::crc_accumulate]: loop body 0:
-    Source: 'src/../examples/support/mavlink.rs', lines 236:4-243:5 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 220:4-227:5 -/
 @[rust_loop_body]
 def mavlink_example.crc_accumulate_loop.body
   (crc : Std.U16) (bit : Std.U8) :
@@ -3284,7 +2704,7 @@ def mavlink_example.crc_accumulate_loop.body
   else ok (done crc)
 
 /-- [rusthammer::mavlink_example::crc_accumulate]: loop 0:
-    Source: 'src/../examples/support/mavlink.rs', lines 236:4-243:5 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 220:4-227:5 -/
 @[rust_loop]
 def mavlink_example.crc_accumulate_loop
   (crc : Std.U16) (bit : Std.U8) : Result Std.U16 := do
@@ -3293,7 +2713,7 @@ def mavlink_example.crc_accumulate_loop
     (crc, bit)
 
 /-- [rusthammer::mavlink_example::crc_accumulate]:
-    Source: 'src/../examples/support/mavlink.rs', lines 233:0-245:1 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 217:0-229:1 -/
 def mavlink_example.crc_accumulate
   (crc : Std.U16) (byte : Std.U8) : Result Std.U16 := do
   let i ← lift (core.convert.num.FromU16U8.from byte)
@@ -3301,7 +2721,7 @@ def mavlink_example.crc_accumulate
   mavlink_example.crc_accumulate_loop crc1 0#u8
 
 /-- [rusthammer::mavlink_example::crc_mcrf4xx]: loop body 0:
-    Source: 'src/../examples/support/mavlink.rs', lines 226:4-229:5 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 210:4-213:5 -/
 @[rust_loop_body]
 def mavlink_example.crc_mcrf4xx_loop.body
   (bytes : Slice Std.U8) (crc : Std.U16) (index : Std.Usize) :
@@ -3317,7 +2737,7 @@ def mavlink_example.crc_mcrf4xx_loop.body
   else ok (done crc)
 
 /-- [rusthammer::mavlink_example::crc_mcrf4xx]: loop 0:
-    Source: 'src/../examples/support/mavlink.rs', lines 226:4-229:5 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 210:4-213:5 -/
 @[rust_loop]
 def mavlink_example.crc_mcrf4xx_loop
   (bytes : Slice Std.U8) (crc : Std.U16) (index : Std.Usize) :
@@ -3329,19 +2749,19 @@ def mavlink_example.crc_mcrf4xx_loop
     (crc, index)
 
 /-- [rusthammer::mavlink_example::crc_mcrf4xx]:
-    Source: 'src/../examples/support/mavlink.rs', lines 223:0-231:1 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 207:0-215:1 -/
 def mavlink_example.crc_mcrf4xx
   (bytes : Slice Std.U8) (extra : Std.U8) : Result Std.U16 := do
   let crc ← mavlink_example.crc_mcrf4xx_loop bytes 65535#u16 0#usize
   mavlink_example.crc_accumulate crc extra
 
 /-- [rusthammer::mavlink_example::checksum_predicate::{closure}]
-    Source: 'src/../examples/support/mavlink.rs', lines 144:4-150:5 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 134:4-140:5 -/
 @[reducible]
 def mavlink_example.checksum_predicate.closure (T0 : Type) := T0
 
 /-- [rusthammer::mavlink_example::checksum_predicate::{impl core::ops::function::Fn<(&'_0 (((rusthammer::mavlink_example::Header, &'_1 [u8]), rusthammer::span_types::BitSpan<'_1>), u16),), bool> for rusthammer::mavlink_example::checksum_predicate::{closure}<T0>}::call]:
-    Source: 'src/../examples/support/mavlink.rs', lines 144:4-150:5 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 134:4-140:5 -/
 def
   mavlink_example.checksum_predicate.closure.Insts.CoreOpsFunctionFnTupleShared0PairPairPairHeaderShared1SliceU8BitSpanU16Bool.call
   {T0 : Type} (coreopsfunctionFnT0TupleU32OptionU8Inst : core.ops.function.Fn
@@ -3364,7 +2784,7 @@ def
       ok (i = checksum)
 
 /-- [rusthammer::mavlink_example::checksum_predicate::{impl core::ops::function::FnMut<(&'_0 (((rusthammer::mavlink_example::Header, &'_1 [u8]), rusthammer::span_types::BitSpan<'_1>), u16),), bool> for rusthammer::mavlink_example::checksum_predicate::{closure}<T0>}::call_mut]:
-    Source: 'src/../examples/support/mavlink.rs', lines 144:4-150:5 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 134:4-140:5 -/
 def
   mavlink_example.checksum_predicate.closure.Insts.CoreOpsFunctionFnMutTupleShared0PairPairPairHeaderShared1SliceU8BitSpanU16Bool.call_mut
   {T0 : Type} (coreopsfunctionFnT0TupleU32OptionU8Inst : core.ops.function.Fn
@@ -3380,7 +2800,7 @@ def
   ok (b, state)
 
 /-- [rusthammer::mavlink_example::checksum_predicate::{impl core::ops::function::FnOnce<(&'_0 (((rusthammer::mavlink_example::Header, &'_1 [u8]), rusthammer::span_types::BitSpan<'_1>), u16),), bool> for rusthammer::mavlink_example::checksum_predicate::{closure}<T0>}::call_once]:
-    Source: 'src/../examples/support/mavlink.rs', lines 144:4-150:5 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 134:4-140:5 -/
 def
   mavlink_example.checksum_predicate.closure.Insts.CoreOpsFunctionFnOnceTupleShared0PairPairPairHeaderShared1SliceU8BitSpanU16Bool.call_once
   {T0 : Type} (coreopsfunctionFnT0TupleU32OptionU8Inst : core.ops.function.Fn
@@ -3396,7 +2816,7 @@ def
   ok b
 
 /-- Trait implementation: [rusthammer::mavlink_example::checksum_predicate::{impl core::ops::function::FnOnce<(&'_0 (((rusthammer::mavlink_example::Header, &'_1 [u8]), rusthammer::span_types::BitSpan<'_1>), u16),), bool> for rusthammer::mavlink_example::checksum_predicate::{closure}<T0>}]
-    Source: 'src/../examples/support/mavlink.rs', lines 144:4-150:5 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 134:4-140:5 -/
 @[reducible]
 def
   mavlink_example.checksum_predicate.closure.Insts.CoreOpsFunctionFnOnceTupleShared0PairPairPairHeaderShared1SliceU8BitSpanU16Bool
@@ -3410,7 +2830,7 @@ def
 }
 
 /-- Trait implementation: [rusthammer::mavlink_example::checksum_predicate::{impl core::ops::function::FnMut<(&'_0 (((rusthammer::mavlink_example::Header, &'_1 [u8]), rusthammer::span_types::BitSpan<'_1>), u16),), bool> for rusthammer::mavlink_example::checksum_predicate::{closure}<T0>}]
-    Source: 'src/../examples/support/mavlink.rs', lines 144:4-150:5 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 134:4-140:5 -/
 @[reducible]
 def
   mavlink_example.checksum_predicate.closure.Insts.CoreOpsFunctionFnMutTupleShared0PairPairPairHeaderShared1SliceU8BitSpanU16Bool
@@ -3427,7 +2847,7 @@ def
 }
 
 /-- Trait implementation: [rusthammer::mavlink_example::checksum_predicate::{impl core::ops::function::Fn<(&'_0 (((rusthammer::mavlink_example::Header, &'_1 [u8]), rusthammer::span_types::BitSpan<'_1>), u16),), bool> for rusthammer::mavlink_example::checksum_predicate::{closure}<T0>}]
-    Source: 'src/../examples/support/mavlink.rs', lines 144:4-150:5 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 134:4-140:5 -/
 @[reducible]
 def
   mavlink_example.checksum_predicate.closure.Insts.CoreOpsFunctionFnTupleShared0PairPairPairHeaderShared1SliceU8BitSpanU16Bool
@@ -3444,12 +2864,12 @@ def
 }
 
 /-- [rusthammer::mavlink_example::checksum_reader::{closure}]
-    Source: 'src/../examples/support/mavlink.rs', lines 136:24-136:36 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 126:24-126:36 -/
 @[reducible]
 def mavlink_example.checksum_reader.closure := Unit
 
 /-- [rusthammer::mavlink_example::checksum_reader::{impl core::ops::function::Fn<(u64,), u16> for rusthammer::mavlink_example::checksum_reader::{closure}}::call]:
-    Source: 'src/../examples/support/mavlink.rs', lines 136:24-136:36 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 126:24-126:36 -/
 def
   mavlink_example.checksum_reader.closure.Insts.CoreOpsFunctionFnTupleU64U16.call
   (c : mavlink_example.checksum_reader.closure) (tupled_args : Std.U64) :
@@ -3458,7 +2878,7 @@ def
   ok (UScalar.cast .U16 tupled_args)
 
 /-- [rusthammer::mavlink_example::checksum_reader::{impl core::ops::function::FnMut<(u64,), u16> for rusthammer::mavlink_example::checksum_reader::{closure}}::call_mut]:
-    Source: 'src/../examples/support/mavlink.rs', lines 136:24-136:36 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 126:24-126:36 -/
 def
   mavlink_example.checksum_reader.closure.Insts.CoreOpsFunctionFnMutTupleU64U16.call_mut
   (state : mavlink_example.checksum_reader.closure) (args : Std.U64) :
@@ -3470,7 +2890,7 @@ def
   ok (i, state)
 
 /-- [rusthammer::mavlink_example::checksum_reader::{impl core::ops::function::FnOnce<(u64,), u16> for rusthammer::mavlink_example::checksum_reader::{closure}}::call_once]:
-    Source: 'src/../examples/support/mavlink.rs', lines 136:24-136:36 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 126:24-126:36 -/
 def
   mavlink_example.checksum_reader.closure.Insts.CoreOpsFunctionFnOnceTupleU64U16.call_once
   (c : mavlink_example.checksum_reader.closure) (i : Std.U64) :
@@ -3482,7 +2902,7 @@ def
   ok i1
 
 /-- Trait implementation: [rusthammer::mavlink_example::checksum_reader::{impl core::ops::function::FnOnce<(u64,), u16> for rusthammer::mavlink_example::checksum_reader::{closure}}]
-    Source: 'src/../examples/support/mavlink.rs', lines 136:24-136:36 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 126:24-126:36 -/
 @[reducible]
 def
   mavlink_example.checksum_reader.closure.Insts.CoreOpsFunctionFnOnceTupleU64U16
@@ -3493,7 +2913,7 @@ def
 }
 
 /-- Trait implementation: [rusthammer::mavlink_example::checksum_reader::{impl core::ops::function::FnMut<(u64,), u16> for rusthammer::mavlink_example::checksum_reader::{closure}}]
-    Source: 'src/../examples/support/mavlink.rs', lines 136:24-136:36 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 126:24-126:36 -/
 @[reducible]
 def
   mavlink_example.checksum_reader.closure.Insts.CoreOpsFunctionFnMutTupleU64U16
@@ -3506,7 +2926,7 @@ def
 }
 
 /-- Trait implementation: [rusthammer::mavlink_example::checksum_reader::{impl core::ops::function::Fn<(u64,), u16> for rusthammer::mavlink_example::checksum_reader::{closure}}]
-    Source: 'src/../examples/support/mavlink.rs', lines 136:24-136:36 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 126:24-126:36 -/
 @[reducible]
 def mavlink_example.checksum_reader.closure.Insts.CoreOpsFunctionFnTupleU64U16
   : core.ops.function.Fn mavlink_example.checksum_reader.closure Std.U64
@@ -3518,12 +2938,12 @@ def mavlink_example.checksum_reader.closure.Insts.CoreOpsFunctionFnTupleU64U16
 }
 
 /-- [rusthammer::mavlink_example::payload_factory::{closure}]
-    Source: 'src/../examples/support/mavlink.rs', lines 132:4-132:31 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 122:4-122:31 -/
 @[reducible]
 def mavlink_example.payload_factory.closure := Unit
 
 /-- [rusthammer::mavlink_example::payload_factory::{impl core::ops::function::Fn<(rusthammer::mavlink_example::Header,), rusthammer::mavlink_example::Payload> for rusthammer::mavlink_example::payload_factory::{closure}}::call]:
-    Source: 'src/../examples/support/mavlink.rs', lines 132:4-132:31 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 122:4-122:31 -/
 def
   mavlink_example.payload_factory.closure.Insts.CoreOpsFunctionFnTupleHeaderPayload.call
   (c : mavlink_example.payload_factory.closure)
@@ -3533,7 +2953,7 @@ def
   ok { header := tupled_args }
 
 /-- [rusthammer::mavlink_example::payload_factory::{impl core::ops::function::FnMut<(rusthammer::mavlink_example::Header,), rusthammer::mavlink_example::Payload> for rusthammer::mavlink_example::payload_factory::{closure}}::call_mut]:
-    Source: 'src/../examples/support/mavlink.rs', lines 132:4-132:31 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 122:4-122:31 -/
 def
   mavlink_example.payload_factory.closure.Insts.CoreOpsFunctionFnMutTupleHeaderPayload.call_mut
   (state : mavlink_example.payload_factory.closure)
@@ -3546,7 +2966,7 @@ def
   ok (p, state)
 
 /-- [rusthammer::mavlink_example::payload_factory::{impl core::ops::function::FnOnce<(rusthammer::mavlink_example::Header,), rusthammer::mavlink_example::Payload> for rusthammer::mavlink_example::payload_factory::{closure}}::call_once]:
-    Source: 'src/../examples/support/mavlink.rs', lines 132:4-132:31 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 122:4-122:31 -/
 def
   mavlink_example.payload_factory.closure.Insts.CoreOpsFunctionFnOnceTupleHeaderPayload.call_once
   (c : mavlink_example.payload_factory.closure) (h : mavlink_example.Header) :
@@ -3558,7 +2978,7 @@ def
   ok p
 
 /-- Trait implementation: [rusthammer::mavlink_example::payload_factory::{impl core::ops::function::FnOnce<(rusthammer::mavlink_example::Header,), rusthammer::mavlink_example::Payload> for rusthammer::mavlink_example::payload_factory::{closure}}]
-    Source: 'src/../examples/support/mavlink.rs', lines 132:4-132:31 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 122:4-122:31 -/
 @[reducible]
 def
   mavlink_example.payload_factory.closure.Insts.CoreOpsFunctionFnOnceTupleHeaderPayload
@@ -3569,7 +2989,7 @@ def
 }
 
 /-- Trait implementation: [rusthammer::mavlink_example::payload_factory::{impl core::ops::function::FnMut<(rusthammer::mavlink_example::Header,), rusthammer::mavlink_example::Payload> for rusthammer::mavlink_example::payload_factory::{closure}}]
-    Source: 'src/../examples/support/mavlink.rs', lines 132:4-132:31 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 122:4-122:31 -/
 @[reducible]
 def
   mavlink_example.payload_factory.closure.Insts.CoreOpsFunctionFnMutTupleHeaderPayload
@@ -3582,7 +3002,7 @@ def
 }
 
 /-- Trait implementation: [rusthammer::mavlink_example::payload_factory::{impl core::ops::function::Fn<(rusthammer::mavlink_example::Header,), rusthammer::mavlink_example::Payload> for rusthammer::mavlink_example::payload_factory::{closure}}]
-    Source: 'src/../examples/support/mavlink.rs', lines 132:4-132:31 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 122:4-122:31 -/
 @[reducible]
 def
   mavlink_example.payload_factory.closure.Insts.CoreOpsFunctionFnTupleHeaderPayload
@@ -3595,11 +3015,11 @@ def
 }
 
 /-- [rusthammer::grammar::transform::verify]:
-    Source: 'src/grammar/transform.rs', lines 148:0-154:1
+    Source: 'src/grammar/transform.rs', lines 137:0-143:1
     Visibility: public -/
 def grammar.transform.verify
-  {P : Type} {F : Type} {Clause0_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output)
+  {P : Type} {F : Type} {Clause0_Output : Type} (parser_traitsParserInst :
+  parser_traits.Parser P Clause0_Output)
   (coreopsfunctionFnFTupleSharedInputClause0_OutputBoolInst :
   core.ops.function.Fn F Clause0_Output Bool) (parser : P) (predicate : F) :
   Result (grammar.transform.Verify P F)
@@ -3607,20 +3027,20 @@ def grammar.transform.verify
   ok { parser, predicate }
 
 /-- [rusthammer::grammar::sequence::bind]:
-    Source: 'src/grammar/sequence.rs', lines 101:0-108:1
+    Source: 'src/grammar/sequence.rs', lines 95:0-102:1
     Visibility: public -/
 def grammar.sequence.bind
   {P : Type} {F : Type} {Q : Type} {Clause0_Output : Type} {Clause2_Output :
-  Type} (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
+  Type} (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
   (coreopsfunctionFnFTupleClause0_OutputQInst : core.ops.function.Fn F
-  Clause0_Output Q) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
+  Clause0_Output Q) (parser_traitsParserInst1 : parser_traits.Parser Q
   Clause2_Output) (parser : P) («then» : F) :
   Result (grammar.sequence.Bind P F)
   := do
   ok { parser, «then» }
 
 /-- [rusthammer::mavlink_example::checksum_predicate]:
-    Source: 'src/../examples/support/mavlink.rs', lines 141:0-151:1 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 131:0-141:1 -/
 def mavlink_example.checksum_predicate
   {T0 : Type} (coreopsfunctionFnT0TupleU32OptionU8Inst : core.ops.function.Fn
   T0 Std.U32 (Option Std.U8)) (crc_extra : T0) :
@@ -3629,7 +3049,7 @@ def mavlink_example.checksum_predicate
   ok crc_extra
 
 /-- [rusthammer::mavlink_example::checksum_reader]:
-    Source: 'src/../examples/support/mavlink.rs', lines 135:0-137:1 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 125:0-127:1 -/
 def mavlink_example.checksum_reader
   :
   Result (grammar.transform.Map grammar.numeric.Bits
@@ -3637,23 +3057,23 @@ def mavlink_example.checksum_reader
   := do
   let b ← mavlink_example.fixed_bits 16#u8
   grammar.transform.map
-    grammar.numeric.Bits.Insts.RusthammerParser_traitsGrammarInputU64
+    grammar.numeric.Bits.Insts.RusthammerParser_traitsParserInputU64
     mavlink_example.checksum_reader.closure.Insts.CoreOpsFunctionFnTupleU64U16
     b ()
 
 /-- [rusthammer::mavlink_example::payload_factory]:
-    Source: 'src/../examples/support/mavlink.rs', lines 131:0-133:1 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 121:0-123:1 -/
 def mavlink_example.payload_factory
   : Result mavlink_example.payload_factory.closure := do
   ok ()
 
 /-- [rusthammer::mavlink_example::frame_grammar]:
-    Source: 'src/../examples/support/mavlink.rs', lines 106:0-129:1 -/
+    Source: 'src/../examples/support/mavlink.rs', lines 99:0-119:1 -/
 def mavlink_example.frame_grammar
-  (Backend : Type) {T2 : Type} (coreopsfunctionFnT2TupleU32OptionU8Inst :
-  core.ops.function.Fn T2 Std.U32 (Option Std.U8)) (crc_extra : T2) :
-  Result (grammar.order.WithOrder (grammar.sequence.Right (grammar.sequence.Seq
-    grammar.bytes.TakeAligned grammar.bytes.ByteIn)
+  {T1 : Type} (coreopsfunctionFnT1TupleU32OptionU8Inst : core.ops.function.Fn
+  T1 Std.U32 (Option Std.U8)) (crc_extra : T1) :
+  Result (grammar.order.WithByteOrder (grammar.sequence.Right
+    (grammar.sequence.Seq grammar.bytes.TakeAligned grammar.bytes.ByteIn)
     (mavlink_example.PacketFields (grammar.transform.Verify
     (grammar.sequence.Seq (grammar.span.WithSpan (grammar.sequence.Bind
     (grammar.transform.Map (grammar.sequence.Seq (grammar.sequence.Seq
@@ -3664,29 +3084,29 @@ def mavlink_example.frame_grammar
     mavlink_example.header.closure) mavlink_example.payload_factory.closure))
     (grammar.transform.Map grammar.numeric.Bits
     mavlink_example.checksum_reader.closure))
-    (mavlink_example.checksum_predicate.closure T2)))))
+    (mavlink_example.checksum_predicate.closure T1)))))
   := do
   let m ← mavlink_example.header
   let c ← mavlink_example.payload_factory
   let body ←
     grammar.sequence.bind
-      (grammar.transform.Map.Insts.RusthammerParser_traitsGrammar
-      (grammar.sequence.Seq.Insts.RusthammerParser_traitsGrammarInputPair
-      (grammar.sequence.Seq.Insts.RusthammerParser_traitsGrammarInputPair
-      grammar.numeric.Byte.Insts.RusthammerParser_traitsGrammarInputU8
-      (grammar.sequence.Seq.Insts.RusthammerParser_traitsGrammarInputPair
-      grammar.bytes.ByteIn.Insts.RusthammerParser_traitsGrammarInputU8
-      grammar.numeric.Byte.Insts.RusthammerParser_traitsGrammarInputU8))
-      (grammar.sequence.Seq.Insts.RusthammerParser_traitsGrammarInputPair
-      (grammar.sequence.Seq.Insts.RusthammerParser_traitsGrammarInputPair
-      grammar.numeric.Byte.Insts.RusthammerParser_traitsGrammarInputU8
-      (grammar.sequence.Seq.Insts.RusthammerParser_traitsGrammarInputPair
-      grammar.bytes.ByteNotIn.Insts.RusthammerParser_traitsGrammarInputU8
-      grammar.bytes.ByteNotIn.Insts.RusthammerParser_traitsGrammarInputU8))
-      grammar.numeric.Bits.Insts.RusthammerParser_traitsGrammarInputU64))
+      (grammar.transform.Map.Insts.RusthammerParser_traitsParser
+      (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+      (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+      grammar.numeric.Byte.Insts.RusthammerParser_traitsParserInputU8
+      (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+      grammar.bytes.ByteIn.Insts.RusthammerParser_traitsParserInputU8
+      grammar.numeric.Byte.Insts.RusthammerParser_traitsParserInputU8))
+      (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+      (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+      grammar.numeric.Byte.Insts.RusthammerParser_traitsParserInputU8
+      (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+      grammar.bytes.ByteNotIn.Insts.RusthammerParser_traitsParserInputU8
+      grammar.bytes.ByteNotIn.Insts.RusthammerParser_traitsParserInputU8))
+      grammar.numeric.Bits.Insts.RusthammerParser_traitsParserInputU64))
       mavlink_example.header.closure.Insts.CoreOpsFunctionFnTuplePairPairU8PairU8U8PairPairU8PairU8U8U64Header)
       mavlink_example.payload_factory.closure.Insts.CoreOpsFunctionFnTupleHeaderPayload
-      mavlink_example.Payload.Insts.RusthammerParser_traitsGrammarInputPairHeaderSharedInputSliceU8
+      mavlink_example.Payload.Insts.RusthammerParser_traitsParserInputPairHeaderSharedInputSliceU8
       m c
   let m1 ← mavlink_example.checksum_reader
   let s ←
@@ -3699,35 +3119,35 @@ def mavlink_example.frame_grammar
       mavlink_example.header.closure) mavlink_example.payload_factory.closure))
       m1
   let c1 ←
-    mavlink_example.checksum_predicate coreopsfunctionFnT2TupleU32OptionU8Inst
+    mavlink_example.checksum_predicate coreopsfunctionFnT1TupleU32OptionU8Inst
       crc_extra
   let checked ←
     grammar.transform.verify
-      (grammar.sequence.Seq.Insts.RusthammerParser_traitsGrammarInputPair
-      (grammar.span.WithSpan.Insts.RusthammerParser_traitsGrammarInputPairClause0_OutputBitSpan
-      (grammar.sequence.Bind.Insts.RusthammerParser_traitsGrammar
-      (grammar.transform.Map.Insts.RusthammerParser_traitsGrammar
-      (grammar.sequence.Seq.Insts.RusthammerParser_traitsGrammarInputPair
-      (grammar.sequence.Seq.Insts.RusthammerParser_traitsGrammarInputPair
-      grammar.numeric.Byte.Insts.RusthammerParser_traitsGrammarInputU8
-      (grammar.sequence.Seq.Insts.RusthammerParser_traitsGrammarInputPair
-      grammar.bytes.ByteIn.Insts.RusthammerParser_traitsGrammarInputU8
-      grammar.numeric.Byte.Insts.RusthammerParser_traitsGrammarInputU8))
-      (grammar.sequence.Seq.Insts.RusthammerParser_traitsGrammarInputPair
-      (grammar.sequence.Seq.Insts.RusthammerParser_traitsGrammarInputPair
-      grammar.numeric.Byte.Insts.RusthammerParser_traitsGrammarInputU8
-      (grammar.sequence.Seq.Insts.RusthammerParser_traitsGrammarInputPair
-      grammar.bytes.ByteNotIn.Insts.RusthammerParser_traitsGrammarInputU8
-      grammar.bytes.ByteNotIn.Insts.RusthammerParser_traitsGrammarInputU8))
-      grammar.numeric.Bits.Insts.RusthammerParser_traitsGrammarInputU64))
+      (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+      (grammar.span.WithSpan.Insts.RusthammerParser_traitsParserInputPairClause0_OutputBitSpan
+      (grammar.sequence.Bind.Insts.RusthammerParser_traitsParser
+      (grammar.transform.Map.Insts.RusthammerParser_traitsParser
+      (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+      (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+      grammar.numeric.Byte.Insts.RusthammerParser_traitsParserInputU8
+      (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+      grammar.bytes.ByteIn.Insts.RusthammerParser_traitsParserInputU8
+      grammar.numeric.Byte.Insts.RusthammerParser_traitsParserInputU8))
+      (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+      (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+      grammar.numeric.Byte.Insts.RusthammerParser_traitsParserInputU8
+      (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+      grammar.bytes.ByteNotIn.Insts.RusthammerParser_traitsParserInputU8
+      grammar.bytes.ByteNotIn.Insts.RusthammerParser_traitsParserInputU8))
+      grammar.numeric.Bits.Insts.RusthammerParser_traitsParserInputU64))
       mavlink_example.header.closure.Insts.CoreOpsFunctionFnTuplePairPairU8PairU8U8PairPairU8PairU8U8U64Header)
       mavlink_example.payload_factory.closure.Insts.CoreOpsFunctionFnTupleHeaderPayload
-      mavlink_example.Payload.Insts.RusthammerParser_traitsGrammarInputPairHeaderSharedInputSliceU8))
-      (grammar.transform.Map.Insts.RusthammerParser_traitsGrammar
-      grammar.numeric.Bits.Insts.RusthammerParser_traitsGrammarInputU64
+      mavlink_example.Payload.Insts.RusthammerParser_traitsParserInputPairHeaderSharedInputSliceU8))
+      (grammar.transform.Map.Insts.RusthammerParser_traitsParser
+      grammar.numeric.Bits.Insts.RusthammerParser_traitsParserInputU64
       mavlink_example.checksum_reader.closure.Insts.CoreOpsFunctionFnTupleU64U16))
       (mavlink_example.checksum_predicate.closure.Insts.CoreOpsFunctionFnTupleShared0PairPairPairHeaderShared1SliceU8BitSpanU16Bool
-      coreopsfunctionFnT2TupleU32OptionU8Inst) s c1
+      coreopsfunctionFnT1TupleU32OptionU8Inst) s c1
   let s1 ← lift (Array.to_slice (Array.make 1#usize [ 253#u8 ]))
   let bi ← grammar.bytes.ByteIn.new s1
   let s2 ←
@@ -3735,94 +3155,81 @@ def mavlink_example.frame_grammar
   ok
     {
       parser := { first := s2, second := { parser := checked } },
-      order :=
-        {
-          bit := input_types.BitOrder.HighFirst,
-          byte := input_types.ByteOrder.Little
-        }
+      byte_order := input_types.ByteOrder.Little
     }
 
-/-- [rusthammer::mavlink_example::{impl rusthammer::parser_traits::Eval<'a, Backend, rusthammer::mavlink_example::Packet<'_>> for rusthammer::mavlink_example::MavlinkV2<F>}::eval]:
-    Source: 'src/../examples/support/mavlink.rs', lines 95:4-103:5
+/-- [rusthammer::mavlink_example::{impl rusthammer::parser_traits::Parser<'a, rusthammer::mavlink_example::Packet<'a>> for rusthammer::mavlink_example::MavlinkV2<F>}::parse_with]:
+    Source: 'src/../examples/support/mavlink.rs', lines 89:4-96:5
     Visibility: public -/
 def
-  mavlink_example.MavlinkV2.Insts.RusthammerParser_traitsEvalABackendPacket.eval
-  {Backend : Type} {F : Type} (coreopsfunctionFnFTupleU32OptionU8Inst :
-  core.ops.function.Fn F Std.U32 (Option Std.U8))
-  (self : mavlink_example.MavlinkV2 F) (backend : Backend)
+  mavlink_example.MavlinkV2.Insts.RusthammerParser_traitsParserAPacket.parse_with
+  {F : Type} (coreopsfunctionFnFTupleU32OptionU8Inst : core.ops.function.Fn F
+  Std.U32 (Option Std.U8)) (self : mavlink_example.MavlinkV2 F)
   (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome mavlink_example.Packet) × Backend)
+  (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × mavlink_example.Packet)
+    input_types.ParseError)
   := do
-  let wo ←
-    mavlink_example.frame_grammar Backend (Shared0F.Insts.CoreOpsFunctionFn
+  let wbo ←
+    mavlink_example.frame_grammar (Shared0F.Insts.CoreOpsFunctionFn
       coreopsfunctionFnFTupleU32OptionU8Inst) self.crc_extra
-  grammar.order.WithOrder.Insts.RusthammerParser_traitsEval.eval
-    (grammar.sequence.Right.Insts.RusthammerParser_traitsEval
-    (grammar.sequence.Seq.Insts.RusthammerParser_traitsEvalInputBackendPair
-    (grammar.bytes.TakeAligned.Insts.RusthammerParser_traitsEvalInputBackendSharedSliceU8
-    Backend)
-    (grammar.bytes.ByteIn.Insts.RusthammerParser_traitsEvalInputBackendU8
-    Backend))
-    (mavlink_example.PacketFields.Insts.RusthammerParser_traitsEvalInputBackendPacket
-    (grammar.transform.Verify.Insts.RusthammerParser_traitsEval
-    (grammar.sequence.Seq.Insts.RusthammerParser_traitsEvalInputBackendPair
-    (grammar.span.WithSpan.Insts.RusthammerParser_traitsEvalInputBackendPairClause0_Clause0_OutputBitSpan
-    (grammar.sequence.Bind.Insts.RusthammerParser_traitsEval
-    (grammar.transform.Map.Insts.RusthammerParser_traitsEval
-    (grammar.sequence.Seq.Insts.RusthammerParser_traitsEvalInputBackendPair
-    (grammar.sequence.Seq.Insts.RusthammerParser_traitsEvalInputBackendPair
-    (grammar.numeric.Byte.Insts.RusthammerParser_traitsEvalInputBackendU8
-    Backend)
-    (grammar.sequence.Seq.Insts.RusthammerParser_traitsEvalInputBackendPair
-    (grammar.bytes.ByteIn.Insts.RusthammerParser_traitsEvalInputBackendU8
-    Backend)
-    (grammar.numeric.Byte.Insts.RusthammerParser_traitsEvalInputBackendU8
-    Backend)))
-    (grammar.sequence.Seq.Insts.RusthammerParser_traitsEvalInputBackendPair
-    (grammar.sequence.Seq.Insts.RusthammerParser_traitsEvalInputBackendPair
-    (grammar.numeric.Byte.Insts.RusthammerParser_traitsEvalInputBackendU8
-    Backend)
-    (grammar.sequence.Seq.Insts.RusthammerParser_traitsEvalInputBackendPair
-    (grammar.bytes.ByteNotIn.Insts.RusthammerParser_traitsEvalInputBackendU8
-    Backend)
-    (grammar.bytes.ByteNotIn.Insts.RusthammerParser_traitsEvalInputBackendU8
-    Backend)))
-    (grammar.numeric.Bits.Insts.RusthammerParser_traitsEvalInputBackendU64
-    Backend)))
+  grammar.order.WithByteOrder.Insts.RusthammerParser_traitsParser.parse_with
+    (grammar.sequence.Right.Insts.RusthammerParser_traitsParser
+    (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+    grammar.bytes.TakeAligned.Insts.RusthammerParser_traitsParserInputSharedInputSliceU8
+    grammar.bytes.ByteIn.Insts.RusthammerParser_traitsParserInputU8)
+    (mavlink_example.PacketFields.Insts.RusthammerParser_traitsParserInputPacket
+    (grammar.transform.Verify.Insts.RusthammerParser_traitsParser
+    (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+    (grammar.span.WithSpan.Insts.RusthammerParser_traitsParserInputPairClause0_OutputBitSpan
+    (grammar.sequence.Bind.Insts.RusthammerParser_traitsParser
+    (grammar.transform.Map.Insts.RusthammerParser_traitsParser
+    (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+    (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+    grammar.numeric.Byte.Insts.RusthammerParser_traitsParserInputU8
+    (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+    grammar.bytes.ByteIn.Insts.RusthammerParser_traitsParserInputU8
+    grammar.numeric.Byte.Insts.RusthammerParser_traitsParserInputU8))
+    (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+    (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+    grammar.numeric.Byte.Insts.RusthammerParser_traitsParserInputU8
+    (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+    grammar.bytes.ByteNotIn.Insts.RusthammerParser_traitsParserInputU8
+    grammar.bytes.ByteNotIn.Insts.RusthammerParser_traitsParserInputU8))
+    grammar.numeric.Bits.Insts.RusthammerParser_traitsParserInputU64))
     mavlink_example.header.closure.Insts.CoreOpsFunctionFnTuplePairPairU8PairU8U8PairPairU8PairU8U8U64Header)
     mavlink_example.payload_factory.closure.Insts.CoreOpsFunctionFnTupleHeaderPayload
-    (mavlink_example.Payload.Insts.RusthammerParser_traitsEvalInputBackendPairHeaderSharedSliceU8
-    Backend))) (grammar.transform.Map.Insts.RusthammerParser_traitsEval
-    (grammar.numeric.Bits.Insts.RusthammerParser_traitsEvalInputBackendU64
-    Backend)
+    mavlink_example.Payload.Insts.RusthammerParser_traitsParserInputPairHeaderSharedInputSliceU8))
+    (grammar.transform.Map.Insts.RusthammerParser_traitsParser
+    grammar.numeric.Bits.Insts.RusthammerParser_traitsParserInputU64
     mavlink_example.checksum_reader.closure.Insts.CoreOpsFunctionFnTupleU64U16))
     (mavlink_example.checksum_predicate.closure.Insts.CoreOpsFunctionFnTupleShared0PairPairPairHeaderShared1SliceU8BitSpanU16Bool
     (Shared0F.Insts.CoreOpsFunctionFn
     coreopsfunctionFnFTupleU32OptionU8Inst)))))
     {
-      wo
+      wbo
         with
         parser :=
-          { wo.parser with second := { parser := wo.parser.second.parser } }
-    } backend input cursor context
+          { wbo.parser with second := { parser := wbo.parser.second.parser } }
+    } input cursor byte_order
 
-/-- Trait implementation: [rusthammer::mavlink_example::{impl rusthammer::parser_traits::Eval<'a, Backend, rusthammer::mavlink_example::Packet<'_>> for rusthammer::mavlink_example::MavlinkV2<F>}]
-    Source: 'src/../examples/support/mavlink.rs', lines 94:0-104:1 -/
+/-- Trait implementation: [rusthammer::mavlink_example::{impl rusthammer::parser_traits::Parser<'a, rusthammer::mavlink_example::Packet<'a>> for rusthammer::mavlink_example::MavlinkV2<F>}]
+    Source: 'src/../examples/support/mavlink.rs', lines 87:0-97:1 -/
 @[reducible]
-def mavlink_example.MavlinkV2.Insts.RusthammerParser_traitsEvalABackendPacket
-  (Backend : Type) {F : Type} (coreopsfunctionFnFTupleU32OptionU8Inst :
-  core.ops.function.Fn F Std.U32 (Option Std.U8)) : parser_traits.Eval
-  (mavlink_example.MavlinkV2 F) Backend mavlink_example.Packet := {
-  GrammarInst :=
-    mavlink_example.MavlinkV2.Insts.RusthammerParser_traitsGrammarInputPacket F
-  eval :=
-    mavlink_example.MavlinkV2.Insts.RusthammerParser_traitsEvalABackendPacket.eval
+impl_def mavlink_example.MavlinkV2.Insts.RusthammerParser_traitsParserAPacket
+  {F : Type} (coreopsfunctionFnFTupleU32OptionU8Inst : core.ops.function.Fn F
+  Std.U32 (Option Std.U8)) : parser_traits.Parser (mavlink_example.MavlinkV2 F)
+  mavlink_example.Packet := {
+  parse_with :=
+    mavlink_example.MavlinkV2.Insts.RusthammerParser_traitsParserAPacket.parse_with
     coreopsfunctionFnFTupleU32OptionU8Inst
+  parse := parser_traits.Parser.parse.default
+    (mavlink_example.MavlinkV2.Insts.RusthammerParser_traitsParserAPacket
+    coreopsfunctionFnFTupleU32OptionU8Inst)
 }
 
 /-- [rusthammer::mavlink_example::heartbeat_crc_extra]:
-    Source: 'src/../examples/support/mavlink.rs', lines 250:0-255:1
+    Source: 'src/../examples/support/mavlink.rs', lines 234:0-239:1
     Visibility: public -/
 def mavlink_example.heartbeat_crc_extra
   (message_id : Std.U32) : Result (Option Std.U8) := do
@@ -3830,8 +3237,1581 @@ def mavlink_example.heartbeat_crc_extra
   | 0#uscalar => ok (some 50#u8)
   | _ => ok none
 
+/-- [rusthammer::record_example::MAX_RECORD_PAYLOAD]
+    Source: 'src/../examples/support/record.rs', lines 9:0-9:41
+    Visibility: public -/
+@[global_simps, irreducible]
+def record_example.MAX_RECORD_PAYLOAD : Std.U64 := 1024#u64
+
+/-- [rusthammer::record_example::Record]
+    Source: 'src/../examples/support/record.rs', lines 13:0-17:1
+    Visibility: public -/
+structure record_example.Record where
+  version : Std.U64
+  flags : Std.U64
+  payload : Slice Std.U8
+
+/-- [rusthammer::record_example::RecordParser]
+    Source: 'src/../examples/support/record.rs', lines 26:0-30:1
+    Visibility: public -/
+structure record_example.RecordParser where
+  version : grammar.numeric.Bits
+  flags : grammar.numeric.Bits
+  length : grammar.numeric.Bits
+
+/-- [rusthammer::record_example::{impl core::clone::Clone for rusthammer::record_example::RecordParser}::clone]:
+    Source: 'src/../examples/support/record.rs', lines 25:9-25:14
+    Visibility: public -/
+def record_example.RecordParser.Insts.CoreCloneClone.clone
+  (self : record_example.RecordParser) :
+  Result record_example.RecordParser
+  := do
+  ok self
+
+/-- Trait implementation: [rusthammer::record_example::{impl core::clone::Clone for rusthammer::record_example::RecordParser}]
+    Source: 'src/../examples/support/record.rs', lines 25:9-25:14 -/
+@[reducible]
+def record_example.RecordParser.Insts.CoreCloneClone : core.clone.Clone
+  record_example.RecordParser := {
+  clone := record_example.RecordParser.Insts.CoreCloneClone.clone
+}
+
+/-- [rusthammer::record_example::{rusthammer::record_example::RecordParser}::new]:
+    Source: 'src/../examples/support/record.rs', lines 34:4-52:5
+    Visibility: public -/
+def record_example.RecordParser.new
+  :
+  Result (core.result.Result record_example.RecordParser
+    input_types.ConfigError)
+  := do
+  let r ← grammar.numeric.Bits.new 3#u8
+  match r with
+  | core.result.Result.Ok parser =>
+    let r1 ← grammar.numeric.Bits.new 5#u8
+    match r1 with
+    | core.result.Result.Ok parser1 =>
+      let r2 ← grammar.numeric.Bits.new 16#u8
+      match r2 with
+      | core.result.Result.Ok parser2 =>
+        ok (core.result.Result.Ok
+          { version := parser, flags := parser1, length := parser2 })
+      | core.result.Result.Err error => ok (core.result.Result.Err error)
+    | core.result.Result.Err error => ok (core.result.Result.Err error)
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
+
+/-- [rusthammer::record_example::record_header::{closure}]
+    Source: 'src/../examples/support/record.rs', lines 69:19-69:98 -/
+@[reducible]
+def record_example.record_header.closure := Unit
+
+/-- [rusthammer::record_example::record_header]:
+    Source: 'src/../examples/support/record.rs', lines 56:0-71:1 -/
+def record_example.record_header
+  (version : grammar.numeric.Bits) (flags : grammar.numeric.Bits)
+  (length : grammar.numeric.Bits) :
+  Result (grammar.transform.Verify (grammar.sequence.Seq grammar.numeric.Bits
+    (grammar.sequence.Seq grammar.numeric.Bits grammar.numeric.Bits))
+    record_example.record_header.closure)
+  := do
+  ok
+    {
+      parser :=
+        { first := version, second := { first := flags, second := length } },
+      predicate := ()
+    }
+
+/-- [rusthammer::record_example::record_header::{impl core::ops::function::Fn<(&'_0 (u64, (u64, u64)),), bool> for rusthammer::record_example::record_header::{closure}}::call]:
+    Source: 'src/../examples/support/record.rs', lines 69:19-69:98 -/
+def
+  record_example.record_header.closure.Insts.CoreOpsFunctionFnTupleShared0PairU64PairU64U64Bool.call
+  (c : record_example.record_header.closure)
+  (tupled_args : (Std.U64 × (Std.U64 × Std.U64))) :
+  Result Bool
+  := do
+  let (i, p) := tupled_args
+  if i = 1#u64
+  then let (_, i1) := p
+       ok (i1 <= record_example.MAX_RECORD_PAYLOAD)
+  else ok false
+
+/-- [rusthammer::record_example::record_header::{impl core::ops::function::FnMut<(&'_0 (u64, (u64, u64)),), bool> for rusthammer::record_example::record_header::{closure}}::call_mut]:
+    Source: 'src/../examples/support/record.rs', lines 69:19-69:98 -/
+def
+  record_example.record_header.closure.Insts.CoreOpsFunctionFnMutTupleShared0PairU64PairU64U64Bool.call_mut
+  (state : record_example.record_header.closure)
+  (args : (Std.U64 × (Std.U64 × Std.U64))) :
+  Result (Bool × record_example.record_header.closure)
+  := do
+  let b ←
+    record_example.record_header.closure.Insts.CoreOpsFunctionFnTupleShared0PairU64PairU64U64Bool.call
+      state args
+  ok (b, state)
+
+/-- [rusthammer::record_example::record_header::{impl core::ops::function::FnOnce<(&'_0 (u64, (u64, u64)),), bool> for rusthammer::record_example::record_header::{closure}}::call_once]:
+    Source: 'src/../examples/support/record.rs', lines 69:19-69:98 -/
+def
+  record_example.record_header.closure.Insts.CoreOpsFunctionFnOnceTupleShared0PairU64PairU64U64Bool.call_once
+  (c : record_example.record_header.closure)
+  (p : (Std.U64 × (Std.U64 × Std.U64))) :
+  Result Bool
+  := do
+  let (b, _) ←
+    record_example.record_header.closure.Insts.CoreOpsFunctionFnMutTupleShared0PairU64PairU64U64Bool.call_mut
+      c p
+  ok b
+
+/-- Trait implementation: [rusthammer::record_example::record_header::{impl core::ops::function::FnOnce<(&'_0 (u64, (u64, u64)),), bool> for rusthammer::record_example::record_header::{closure}}]
+    Source: 'src/../examples/support/record.rs', lines 69:19-69:98 -/
+@[reducible]
+def
+  record_example.record_header.closure.Insts.CoreOpsFunctionFnOnceTupleShared0PairU64PairU64U64Bool
+  : core.ops.function.FnOnce record_example.record_header.closure (Std.U64 ×
+  (Std.U64 × Std.U64)) Bool := {
+  call_once :=
+    record_example.record_header.closure.Insts.CoreOpsFunctionFnOnceTupleShared0PairU64PairU64U64Bool.call_once
+}
+
+/-- Trait implementation: [rusthammer::record_example::record_header::{impl core::ops::function::FnMut<(&'_0 (u64, (u64, u64)),), bool> for rusthammer::record_example::record_header::{closure}}]
+    Source: 'src/../examples/support/record.rs', lines 69:19-69:98 -/
+@[reducible]
+def
+  record_example.record_header.closure.Insts.CoreOpsFunctionFnMutTupleShared0PairU64PairU64U64Bool
+  : core.ops.function.FnMut record_example.record_header.closure (Std.U64 ×
+  (Std.U64 × Std.U64)) Bool := {
+  FnOnceInst :=
+    record_example.record_header.closure.Insts.CoreOpsFunctionFnOnceTupleShared0PairU64PairU64U64Bool
+  call_mut :=
+    record_example.record_header.closure.Insts.CoreOpsFunctionFnMutTupleShared0PairU64PairU64U64Bool.call_mut
+}
+
+/-- Trait implementation: [rusthammer::record_example::record_header::{impl core::ops::function::Fn<(&'_0 (u64, (u64, u64)),), bool> for rusthammer::record_example::record_header::{closure}}]
+    Source: 'src/../examples/support/record.rs', lines 69:19-69:98 -/
+@[reducible]
+def
+  record_example.record_header.closure.Insts.CoreOpsFunctionFnTupleShared0PairU64PairU64U64Bool
+  : core.ops.function.Fn record_example.record_header.closure (Std.U64 ×
+  (Std.U64 × Std.U64)) Bool := {
+  FnMutInst :=
+    record_example.record_header.closure.Insts.CoreOpsFunctionFnMutTupleShared0PairU64PairU64U64Bool
+  call :=
+    record_example.record_header.closure.Insts.CoreOpsFunctionFnTupleShared0PairU64PairU64U64Bool.call
+}
+
+/-- [rusthammer::record_example::parse_record_body]:
+    Source: 'src/../examples/support/record.rs', lines 101:0-127:1 -/
+def record_example.parse_record_body
+  (input : Slice Std.U8) (cursor : input_types.Cursor) (version : Std.U64)
+  (flags : Std.U64) (count : Std.Usize) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × record_example.Record)
+    input_types.ParseError)
+  := do
+  let r ←
+    grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair.parse_with
+      grammar.bytes.TakeAligned.Insts.RusthammerParser_traitsParserInputSharedInputSliceU8
+      grammar.position.End.Insts.RusthammerParser_traitsParserInputTuple
+      { first := { count }, second := () } input cursor byte_order
+  match r with
+  | core.result.Result.Ok p =>
+    let («end», (payload, _)) := p
+    ok (core.result.Result.Ok («end», { version, flags, payload }))
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
+
+/-- [rusthammer::record_example::{impl rusthammer::parser_traits::Parser<'input, rusthammer::record_example::Record<'input>> for rusthammer::record_example::RecordParser}::parse_with]:
+    Source: 'src/../examples/support/record.rs', lines 76:4-98:5
+    Visibility: public -/
+def
+  record_example.RecordParser.Insts.RusthammerParser_traitsParserInputRecord.parse_with
+  (self : record_example.RecordParser) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × record_example.Record)
+    input_types.ParseError)
+  := do
+  let r ←
+    grammar.bytes.TakeAligned.Insts.RusthammerParser_traitsParserInputSharedInputSliceU8.parse_with
+      { count := 0#usize } input cursor byte_order
+  match r with
+  | core.result.Result.Ok _ =>
+    let header ←
+      record_example.record_header self.version self.flags self.length
+    let r1 ←
+      grammar.transform.Verify.Insts.RusthammerParser_traitsParser.parse_with
+        (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+        grammar.numeric.Bits.Insts.RusthammerParser_traitsParserInputU64
+        (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+        grammar.numeric.Bits.Insts.RusthammerParser_traitsParserInputU64
+        grammar.numeric.Bits.Insts.RusthammerParser_traitsParserInputU64))
+        record_example.record_header.closure.Insts.CoreOpsFunctionFnTupleShared0PairU64PairU64U64Bool
+        header input cursor byte_order
+    match r1 with
+    | core.result.Result.Ok parsed =>
+      let (next, (version, (flags, length))) := parsed
+      let i ← lift (UScalar.cast .Usize length)
+      record_example.parse_record_body input next version flags i byte_order
+    | core.result.Result.Err error => ok (core.result.Result.Err error)
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
+
+/-- Trait implementation: [rusthammer::record_example::{impl rusthammer::parser_traits::Parser<'input, rusthammer::record_example::Record<'input>> for rusthammer::record_example::RecordParser}]
+    Source: 'src/../examples/support/record.rs', lines 73:0-99:1 -/
+@[reducible]
+impl_def
+  record_example.RecordParser.Insts.RusthammerParser_traitsParserInputRecord :
+  parser_traits.Parser record_example.RecordParser record_example.Record := {
+  parse_with :=
+    record_example.RecordParser.Insts.RusthammerParser_traitsParserInputRecord.parse_with
+  parse := parser_traits.Parser.parse.default
+    record_example.RecordParser.Insts.RusthammerParser_traitsParserInputRecord
+}
+
+/-- [rusthammer::record_example::parse_record]:
+    Source: 'src/../examples/support/record.rs', lines 130:0-136:1
+    Visibility: public -/
+def record_example.parse_record
+  (input : Slice Std.U8) (cursor : input_types.Cursor)
+  (parser : record_example.RecordParser) :
+  Result (core.result.Result (input_types.Cursor × record_example.Record)
+    input_types.ParseError)
+  := do
+  parser_traits.Parser.parse.default
+    record_example.RecordParser.Insts.RusthammerParser_traitsParserInputRecord
+    parser input cursor
+
+/-- [rusthammer::grammar::bytes::{impl core::clone::Clone for rusthammer::grammar::bytes::ByteSet}::clone]:
+    Source: 'src/grammar/bytes.rs', lines 4:9-4:14
+    Visibility: public -/
+def grammar.bytes.ByteSet.Insts.CoreCloneClone.clone
+  (self : grammar.bytes.ByteSet) : Result grammar.bytes.ByteSet := do
+  ok self
+
+/-- Trait implementation: [rusthammer::grammar::bytes::{impl core::clone::Clone for rusthammer::grammar::bytes::ByteSet}]
+    Source: 'src/grammar/bytes.rs', lines 4:9-4:14 -/
+@[reducible]
+def grammar.bytes.ByteSet.Insts.CoreCloneClone : core.clone.Clone
+  grammar.bytes.ByteSet := {
+  clone := grammar.bytes.ByteSet.Insts.CoreCloneClone.clone
+}
+
+/-- [rusthammer::grammar::bytes::{impl core::clone::Clone for rusthammer::grammar::bytes::ByteIn}::clone]:
+    Source: 'src/grammar/bytes.rs', lines 52:9-52:14
+    Visibility: public -/
+def grammar.bytes.ByteIn.Insts.CoreCloneClone.clone
+  (self : grammar.bytes.ByteIn) : Result grammar.bytes.ByteIn := do
+  ok self
+
+/-- Trait implementation: [rusthammer::grammar::bytes::{impl core::clone::Clone for rusthammer::grammar::bytes::ByteIn}]
+    Source: 'src/grammar/bytes.rs', lines 52:9-52:14 -/
+@[reducible]
+def grammar.bytes.ByteIn.Insts.CoreCloneClone : core.clone.Clone
+  grammar.bytes.ByteIn := {
+  clone := grammar.bytes.ByteIn.Insts.CoreCloneClone.clone
+}
+
+/-- [rusthammer::grammar::bytes::{impl core::clone::Clone for rusthammer::grammar::bytes::ByteNotIn}::clone]:
+    Source: 'src/grammar/bytes.rs', lines 110:9-110:14
+    Visibility: public -/
+def grammar.bytes.ByteNotIn.Insts.CoreCloneClone.clone
+  (self : grammar.bytes.ByteNotIn) : Result grammar.bytes.ByteNotIn := do
+  ok self
+
+/-- Trait implementation: [rusthammer::grammar::bytes::{impl core::clone::Clone for rusthammer::grammar::bytes::ByteNotIn}]
+    Source: 'src/grammar/bytes.rs', lines 110:9-110:14 -/
+@[reducible]
+def grammar.bytes.ByteNotIn.Insts.CoreCloneClone : core.clone.Clone
+  grammar.bytes.ByteNotIn := {
+  clone := grammar.bytes.ByteNotIn.Insts.CoreCloneClone.clone
+}
+
+/-- [rusthammer::grammar::bytes::BytePattern]
+    Source: 'src/grammar/bytes.rs', lines 167:0-169:1
+    Visibility: public -/
+structure grammar.bytes.BytePattern where
+  pattern : Slice Std.U8
+
+/-- [rusthammer::grammar::bytes::{impl core::clone::Clone for rusthammer::grammar::bytes::BytePattern<'pattern>}::clone]:
+    Source: 'src/grammar/bytes.rs', lines 166:9-166:14
+    Visibility: public -/
+def grammar.bytes.BytePattern.Insts.CoreCloneClone.clone
+  (self : grammar.bytes.BytePattern) : Result grammar.bytes.BytePattern := do
+  ok self
+
+/-- Trait implementation: [rusthammer::grammar::bytes::{impl core::clone::Clone for rusthammer::grammar::bytes::BytePattern<'pattern>}]
+    Source: 'src/grammar/bytes.rs', lines 166:9-166:14 -/
+@[reducible]
+def grammar.bytes.BytePattern.Insts.CoreCloneClone : core.clone.Clone
+  grammar.bytes.BytePattern := {
+  clone := grammar.bytes.BytePattern.Insts.CoreCloneClone.clone
+}
+
+/-- [rusthammer::grammar::bytes::{rusthammer::grammar::bytes::BytePattern<'pattern>}::new]:
+    Source: 'src/grammar/bytes.rs', lines 173:4-175:5
+    Visibility: public -/
+def grammar.bytes.BytePattern.new
+  (pattern : Slice Std.U8) : Result grammar.bytes.BytePattern := do
+  ok { pattern }
+
+/-- [rusthammer::grammar::bytes::{rusthammer::grammar::bytes::BytePattern<'pattern>}::pattern]:
+    Source: 'src/grammar/bytes.rs', lines 178:4-180:5
+    Visibility: public -/
+def grammar.bytes.BytePattern.impl.pattern
+  (self : grammar.bytes.BytePattern) : Result (Slice Std.U8) := do
+  ok self.pattern
+
+/-- [rusthammer::grammar::bytes::match_byte_pattern]: loop body 0:
+    Source: 'src/grammar/bytes.rs', lines 213:4-227:1 -/
+@[rust_loop_body]
+def grammar.bytes.match_byte_pattern_loop.body
+  (pattern : Slice Std.U8) (input : Slice Std.U8)
+  (byte_order : input_types.ByteOrder) (next : input_types.Cursor)
+  (index : Std.Usize) :
+  Result (ControlFlow (input_types.Cursor × Std.Usize) (core.result.Result
+    (input_types.Cursor × Unit) input_types.ParseError))
+  := do
+  let i := Slice.len pattern
+  if index < i
+  then
+    let r ←
+      grammar.numeric.Byte.Insts.RusthammerParser_traitsParserInputU8.parse_with
+        () input next byte_order
+    match r with
+    | core.result.Result.Ok parsed =>
+      let (after, value) := parsed
+      let i1 ← Slice.index_usize pattern index
+      if value != i1
+      then ok (done (core.result.Result.Err input_types.ParseError.Mismatch))
+      else let index1 ← index + 1#usize
+           ok (cont (after, index1))
+    | core.result.Result.Err error => ok (done (core.result.Result.Err error))
+  else ok (done (core.result.Result.Ok (next, ())))
+
+/-- [rusthammer::grammar::bytes::match_byte_pattern]: loop 0:
+    Source: 'src/grammar/bytes.rs', lines 213:4-227:1 -/
+@[rust_loop]
+def grammar.bytes.match_byte_pattern_loop
+  (pattern : Slice Std.U8) (input : Slice Std.U8)
+  (byte_order : input_types.ByteOrder) (next : input_types.Cursor)
+  (index : Std.Usize) :
+  Result (core.result.Result (input_types.Cursor × Unit)
+    input_types.ParseError)
+  := do
+  loop
+    (fun (next1, index1) => grammar.bytes.match_byte_pattern_loop.body pattern
+      input byte_order next1 index1)
+    (next, index)
+
+/-- [rusthammer::grammar::bytes::match_byte_pattern]:
+    Source: 'src/grammar/bytes.rs', lines 205:0-227:1 -/
+@[reducible]
+def grammar.bytes.match_byte_pattern
+  (pattern : Slice Std.U8) (input : Slice Std.U8) (cursor : input_types.Cursor)
+  (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Unit)
+    input_types.ParseError)
+  := do
+  grammar.bytes.match_byte_pattern_loop pattern input byte_order cursor 0#usize
+
+/-- [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, &'pattern [u8]> for rusthammer::grammar::bytes::BytePattern<'pattern>}::parse_with]:
+    Source: 'src/grammar/bytes.rs', lines 186:4-202:5
+    Visibility: public -/
+def
+  grammar.bytes.BytePattern.Insts.RusthammerParser_traitsParserInputSharedPatternSliceU8.parse_with
+  (self : grammar.bytes.BytePattern) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × (Slice Std.U8))
+    input_types.ParseError)
+  := do
+  let r ← grammar.bytes.match_byte_pattern self.pattern input cursor byte_order
+  match r with
+  | core.result.Result.Ok parsed =>
+    let (next, _) := parsed
+    ok (core.result.Result.Ok (next, self.pattern))
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
+
+/-- Trait implementation: [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Parser<'input, &'pattern [u8]> for rusthammer::grammar::bytes::BytePattern<'pattern>}]
+    Source: 'src/grammar/bytes.rs', lines 183:0-203:1 -/
+@[reducible]
+impl_def
+  grammar.bytes.BytePattern.Insts.RusthammerParser_traitsParserInputSharedPatternSliceU8
+  : parser_traits.Parser grammar.bytes.BytePattern (Slice Std.U8) := {
+  parse_with :=
+    grammar.bytes.BytePattern.Insts.RusthammerParser_traitsParserInputSharedPatternSliceU8.parse_with
+  parse := parser_traits.Parser.parse.default
+    grammar.bytes.BytePattern.Insts.RusthammerParser_traitsParserInputSharedPatternSliceU8
+}
+
+/-- [rusthammer::grammar::bytes::{impl core::clone::Clone for rusthammer::grammar::bytes::TakeAligned}::clone]:
+    Source: 'src/grammar/bytes.rs', lines 233:9-233:14
+    Visibility: public -/
+def grammar.bytes.TakeAligned.Insts.CoreCloneClone.clone
+  (self : grammar.bytes.TakeAligned) : Result grammar.bytes.TakeAligned := do
+  ok self
+
+/-- Trait implementation: [rusthammer::grammar::bytes::{impl core::clone::Clone for rusthammer::grammar::bytes::TakeAligned}]
+    Source: 'src/grammar/bytes.rs', lines 233:9-233:14 -/
+@[reducible]
+def grammar.bytes.TakeAligned.Insts.CoreCloneClone : core.clone.Clone
+  grammar.bytes.TakeAligned := {
+  clone := grammar.bytes.TakeAligned.Insts.CoreCloneClone.clone
+}
+
+/-- [rusthammer::grammar::control::Epsilon]
+    Source: 'src/grammar/control.rs', lines 9:0-9:19
+    Visibility: public -/
+@[reducible]
+def grammar.control.Epsilon := Unit
+
+/-- [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Epsilon}::clone]:
+    Source: 'src/grammar/control.rs', lines 8:9-8:14
+    Visibility: public -/
+def grammar.control.Epsilon.Insts.CoreCloneClone.clone
+  (self : grammar.control.Epsilon) : Result grammar.control.Epsilon := do
+  ok self
+
+/-- Trait implementation: [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Epsilon}]
+    Source: 'src/grammar/control.rs', lines 8:9-8:14 -/
+@[reducible]
+def grammar.control.Epsilon.Insts.CoreCloneClone : core.clone.Clone
+  grammar.control.Epsilon := {
+  clone := grammar.control.Epsilon.Insts.CoreCloneClone.clone
+}
+
+/-- [rusthammer::grammar::control::{impl rusthammer::parser_traits::Parser<'input, ()> for rusthammer::grammar::control::Epsilon}::parse_with]:
+    Source: 'src/grammar/control.rs', lines 14:4-21:5
+    Visibility: public -/
+def
+  grammar.control.Epsilon.Insts.RusthammerParser_traitsParserInputTuple.parse_with
+  (self : grammar.control.Epsilon) (s : Slice Std.U8)
+  (cursor : input_types.Cursor) (bo : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Unit)
+    input_types.ParseError)
+  := do
+  ok (core.result.Result.Ok (cursor, ()))
+
+/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Parser<'input, ()> for rusthammer::grammar::control::Epsilon}]
+    Source: 'src/grammar/control.rs', lines 11:0-22:1 -/
+@[reducible]
+impl_def grammar.control.Epsilon.Insts.RusthammerParser_traitsParserInputTuple
+  : parser_traits.Parser grammar.control.Epsilon Unit := {
+  parse_with :=
+    grammar.control.Epsilon.Insts.RusthammerParser_traitsParserInputTuple.parse_with
+  parse := parser_traits.Parser.parse.default
+    grammar.control.Epsilon.Insts.RusthammerParser_traitsParserInputTuple
+}
+
+/-- [rusthammer::grammar::control::Fail]
+    Source: 'src/grammar/control.rs', lines 27:0-29:1
+    Visibility: public -/
+structure grammar.control.Fail (T : Type) where
+  output : core.marker.PhantomData T
+
+/-- [rusthammer::grammar::control::{rusthammer::grammar::control::Fail<T>}::new]:
+    Source: 'src/grammar/control.rs', lines 33:4-37:5
+    Visibility: public -/
+def grammar.control.Fail.new (T : Type) : Result (grammar.control.Fail T) := do
+  ok { output := () }
+
+/-- [rusthammer::grammar::control::{impl core::default::Default for rusthammer::grammar::control::Fail<T>}::default]:
+    Source: 'src/grammar/control.rs', lines 41:4-43:5
+    Visibility: public -/
+def grammar.control.Fail.Insts.CoreDefaultDefault.default
+  (T : Type) : Result (grammar.control.Fail T) := do
+  grammar.control.Fail.new T
+
+/-- Trait implementation: [rusthammer::grammar::control::{impl core::default::Default for rusthammer::grammar::control::Fail<T>}]
+    Source: 'src/grammar/control.rs', lines 40:0-44:1 -/
+@[reducible]
+def grammar.control.Fail.Insts.CoreDefaultDefault (T : Type) :
+  core.default.Default (grammar.control.Fail T) := {
+  default := grammar.control.Fail.Insts.CoreDefaultDefault.default T
+}
+
+/-- [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Fail<T>}::clone]:
+    Source: 'src/grammar/control.rs', lines 49:4-51:5
+    Visibility: public -/
+def grammar.control.Fail.Insts.CoreCloneClone.clone
+  {T : Type} (self : grammar.control.Fail T) :
+  Result (grammar.control.Fail T)
+  := do
+  ok self
+
+/-- Trait implementation: [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Fail<T>}]
+    Source: 'src/grammar/control.rs', lines 48:0-52:1 -/
+@[reducible]
+def grammar.control.Fail.Insts.CoreCloneClone (T : Type) : core.clone.Clone
+  (grammar.control.Fail T) := {
+  clone := grammar.control.Fail.Insts.CoreCloneClone.clone
+}
+
+/-- [rusthammer::grammar::control::{impl rusthammer::parser_traits::Parser<'input, T> for rusthammer::grammar::control::Fail<T>}::parse_with]:
+    Source: 'src/grammar/control.rs', lines 57:4-64:5
+    Visibility: public -/
+def grammar.control.Fail.Insts.RusthammerParser_traitsParser.parse_with
+  {T : Type} (self : grammar.control.Fail T) (s : Slice Std.U8)
+  (c : input_types.Cursor) (bo : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × T) input_types.ParseError)
+  := do
+  ok (core.result.Result.Err input_types.ParseError.Mismatch)
+
+/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Parser<'input, T> for rusthammer::grammar::control::Fail<T>}]
+    Source: 'src/grammar/control.rs', lines 54:0-65:1 -/
+@[reducible]
+impl_def grammar.control.Fail.Insts.RusthammerParser_traitsParser (T : Type) :
+  parser_traits.Parser (grammar.control.Fail T) T := {
+  parse_with :=
+    grammar.control.Fail.Insts.RusthammerParser_traitsParser.parse_with
+  parse := parser_traits.Parser.parse.default
+    (grammar.control.Fail.Insts.RusthammerParser_traitsParser T)
+}
+
+/-- [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Choice<P, Q>}::clone]:
+    Source: 'src/grammar/control.rs', lines 73:9-73:14
+    Visibility: public -/
+def grammar.control.Choice.Insts.CoreCloneClone.clone
+  {P : Type} {Q : Type} (corecloneCloneInst : core.clone.Clone P)
+  (corecloneCloneInst1 : core.clone.Clone Q)
+  (self : grammar.control.Choice P Q) :
+  Result (grammar.control.Choice P Q)
+  := do
+  let t ← corecloneCloneInst.clone self.first
+  let t1 ← corecloneCloneInst1.clone self.second
+  ok { first := t, second := t1 }
+
+/-- Trait implementation: [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Choice<P, Q>}]
+    Source: 'src/grammar/control.rs', lines 73:9-73:14 -/
+@[reducible]
+def grammar.control.Choice.Insts.CoreCloneClone {P : Type} {Q : Type}
+  (corecloneCloneInst : core.clone.Clone P) (corecloneCloneInst1 :
+  core.clone.Clone Q) : core.clone.Clone (grammar.control.Choice P Q) := {
+  clone := grammar.control.Choice.Insts.CoreCloneClone.clone corecloneCloneInst
+    corecloneCloneInst1
+}
+
+/-- [rusthammer::grammar::control::choice]:
+    Source: 'src/grammar/control.rs', lines 95:0-101:1
+    Visibility: public -/
+def grammar.control.choice
+  {P : Type} {Q : Type} {Clause0_Output : Type} (parser_traitsParserInst :
+  parser_traits.Parser P Clause0_Output) (parser_traitsParserInst1 :
+  parser_traits.Parser Q Clause0_Output) (first : P) (second : Q) :
+  Result (grammar.control.Choice P Q)
+  := do
+  ok { first, second }
+
+/-- [rusthammer::grammar::control::match_length_allows]:
+    Source: 'src/grammar/control.rs', lines 135:0-139:1 -/
+def grammar.control.match_length_allows
+  (first : input_types.Cursor) (second : input_types.Cursor)
+  (allow_equal : Bool) :
+  Result Bool
+  := do
+  if first.byte > second.byte
+  then ok true
+  else
+    if first.byte = second.byte
+    then
+      if first.bit > second.bit
+      then ok true
+      else if allow_equal
+           then ok (first.bit = second.bit)
+           else ok false
+    else ok false
+
+/-- [rusthammer::grammar::control::restrict_match]:
+    Source: 'src/grammar/control.rs', lines 141:0-176:1 -/
+def grammar.control.restrict_match
+  {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+  (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
+  (parser_traitsParserInst1 : parser_traits.Parser Q Clause1_Output)
+  (first : P) (second : Q) (input : Slice Std.U8) (cursor : input_types.Cursor)
+  (byte_order : input_types.ByteOrder) (allow_equal : Bool) :
+  Result (core.result.Result (input_types.Cursor × Clause0_Output)
+    input_types.ParseError)
+  := do
+  let r ← parser_traitsParserInst.parse_with first input cursor byte_order
+  match r with
+  | core.result.Result.Ok parsed =>
+    let (next, _) := parsed
+    let r1 ← parser_traitsParserInst1.parse_with second input cursor byte_order
+    match r1 with
+    | core.result.Result.Ok parsed1 =>
+      let (other, _) := parsed1
+      let b ← grammar.control.match_length_allows next other allow_equal
+      if b
+      then ok r
+      else ok (core.result.Result.Err input_types.ParseError.Mismatch)
+    | core.result.Result.Err error =>
+      let b ← input_types.ParseError.is_recoverable error
+      if b
+      then ok r
+      else ok (core.result.Result.Err error)
+  | core.result.Result.Err _ => ok r
+
+/-- [rusthammer::grammar::control::ButNot]
+    Source: 'src/grammar/control.rs', lines 203:0-206:1
+    Visibility: public -/
+structure grammar.control.ButNot (P : Type) (Q : Type) where
+  first : P
+  second : Q
+
+/-- [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::ButNot<P, Q>}::clone]:
+    Source: 'src/grammar/control.rs', lines 202:9-202:14
+    Visibility: public -/
+def grammar.control.ButNot.Insts.CoreCloneClone.clone
+  {P : Type} {Q : Type} (corecloneCloneInst : core.clone.Clone P)
+  (corecloneCloneInst1 : core.clone.Clone Q)
+  (self : grammar.control.ButNot P Q) :
+  Result (grammar.control.ButNot P Q)
+  := do
+  let t ← corecloneCloneInst.clone self.first
+  let t1 ← corecloneCloneInst1.clone self.second
+  ok { first := t, second := t1 }
+
+/-- Trait implementation: [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::ButNot<P, Q>}]
+    Source: 'src/grammar/control.rs', lines 202:9-202:14 -/
+@[reducible]
+def grammar.control.ButNot.Insts.CoreCloneClone {P : Type} {Q : Type}
+  (corecloneCloneInst : core.clone.Clone P) (corecloneCloneInst1 :
+  core.clone.Clone Q) : core.clone.Clone (grammar.control.ButNot P Q) := {
+  clone := grammar.control.ButNot.Insts.CoreCloneClone.clone corecloneCloneInst
+    corecloneCloneInst1
+}
+
+/-- [rusthammer::grammar::control::{impl rusthammer::parser_traits::Parser<'input, Clause0_Output> for rusthammer::grammar::control::ButNot<P, Q>}::parse_with]:
+    Source: 'src/grammar/control.rs', lines 215:4-222:5
+    Visibility: public -/
+def grammar.control.ButNot.Insts.RusthammerParser_traitsParser.parse_with
+  {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+  (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
+  (parser_traitsParserInst1 : parser_traits.Parser Q Clause1_Output)
+  (self : grammar.control.ButNot P Q) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Clause0_Output)
+    input_types.ParseError)
+  := do
+  grammar.control.restrict_match parser_traitsParserInst
+    parser_traitsParserInst1 self.first self.second input cursor byte_order
+    false
+
+/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Parser<'input, Clause0_Output> for rusthammer::grammar::control::ButNot<P, Q>}]
+    Source: 'src/grammar/control.rs', lines 208:0-223:1 -/
+@[reducible]
+impl_def grammar.control.ButNot.Insts.RusthammerParser_traitsParser {P : Type}
+  {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+  (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
+  (parser_traitsParserInst1 : parser_traits.Parser Q Clause1_Output) :
+  parser_traits.Parser (grammar.control.ButNot P Q) Clause0_Output := {
+  parse_with :=
+    grammar.control.ButNot.Insts.RusthammerParser_traitsParser.parse_with
+    parser_traitsParserInst parser_traitsParserInst1
+  parse := parser_traits.Parser.parse.default
+    (grammar.control.ButNot.Insts.RusthammerParser_traitsParser
+    parser_traitsParserInst parser_traitsParserInst1)
+}
+
+/-- [rusthammer::grammar::control::Difference]
+    Source: 'src/grammar/control.rs', lines 232:0-235:1
+    Visibility: public -/
+structure grammar.control.Difference (P : Type) (Q : Type) where
+  first : P
+  second : Q
+
+/-- [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Difference<P, Q>}::clone]:
+    Source: 'src/grammar/control.rs', lines 231:9-231:14
+    Visibility: public -/
+def grammar.control.Difference.Insts.CoreCloneClone.clone
+  {P : Type} {Q : Type} (corecloneCloneInst : core.clone.Clone P)
+  (corecloneCloneInst1 : core.clone.Clone Q)
+  (self : grammar.control.Difference P Q) :
+  Result (grammar.control.Difference P Q)
+  := do
+  let t ← corecloneCloneInst.clone self.first
+  let t1 ← corecloneCloneInst1.clone self.second
+  ok { first := t, second := t1 }
+
+/-- Trait implementation: [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Difference<P, Q>}]
+    Source: 'src/grammar/control.rs', lines 231:9-231:14 -/
+@[reducible]
+def grammar.control.Difference.Insts.CoreCloneClone {P : Type} {Q : Type}
+  (corecloneCloneInst : core.clone.Clone P) (corecloneCloneInst1 :
+  core.clone.Clone Q) : core.clone.Clone (grammar.control.Difference P Q) := {
+  clone := grammar.control.Difference.Insts.CoreCloneClone.clone
+    corecloneCloneInst corecloneCloneInst1
+}
+
+/-- [rusthammer::grammar::control::{impl rusthammer::parser_traits::Parser<'input, Clause0_Output> for rusthammer::grammar::control::Difference<P, Q>}::parse_with]:
+    Source: 'src/grammar/control.rs', lines 244:4-251:5
+    Visibility: public -/
+def grammar.control.Difference.Insts.RusthammerParser_traitsParser.parse_with
+  {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+  (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
+  (parser_traitsParserInst1 : parser_traits.Parser Q Clause1_Output)
+  (self : grammar.control.Difference P Q) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Clause0_Output)
+    input_types.ParseError)
+  := do
+  grammar.control.restrict_match parser_traitsParserInst
+    parser_traitsParserInst1 self.first self.second input cursor byte_order
+    true
+
+/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Parser<'input, Clause0_Output> for rusthammer::grammar::control::Difference<P, Q>}]
+    Source: 'src/grammar/control.rs', lines 237:0-252:1 -/
+@[reducible]
+impl_def grammar.control.Difference.Insts.RusthammerParser_traitsParser {P :
+  Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+  (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
+  (parser_traitsParserInst1 : parser_traits.Parser Q Clause1_Output) :
+  parser_traits.Parser (grammar.control.Difference P Q) Clause0_Output := {
+  parse_with :=
+    grammar.control.Difference.Insts.RusthammerParser_traitsParser.parse_with
+    parser_traitsParserInst parser_traitsParserInst1
+  parse := parser_traits.Parser.parse.default
+    (grammar.control.Difference.Insts.RusthammerParser_traitsParser
+    parser_traitsParserInst parser_traitsParserInst1)
+}
+
+/-- [rusthammer::grammar::control::Xor]
+    Source: 'src/grammar/control.rs', lines 273:0-276:1
+    Visibility: public -/
+structure grammar.control.Xor (P : Type) (Q : Type) where
+  first : P
+  second : Q
+
+/-- [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Xor<P, Q>}::clone]:
+    Source: 'src/grammar/control.rs', lines 272:9-272:14
+    Visibility: public -/
+def grammar.control.Xor.Insts.CoreCloneClone.clone
+  {P : Type} {Q : Type} (corecloneCloneInst : core.clone.Clone P)
+  (corecloneCloneInst1 : core.clone.Clone Q) (self : grammar.control.Xor P Q) :
+  Result (grammar.control.Xor P Q)
+  := do
+  let t ← corecloneCloneInst.clone self.first
+  let t1 ← corecloneCloneInst1.clone self.second
+  ok { first := t, second := t1 }
+
+/-- Trait implementation: [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Xor<P, Q>}]
+    Source: 'src/grammar/control.rs', lines 272:9-272:14 -/
+@[reducible]
+def grammar.control.Xor.Insts.CoreCloneClone {P : Type} {Q : Type}
+  (corecloneCloneInst : core.clone.Clone P) (corecloneCloneInst1 :
+  core.clone.Clone Q) : core.clone.Clone (grammar.control.Xor P Q) := {
+  clone := grammar.control.Xor.Insts.CoreCloneClone.clone corecloneCloneInst
+    corecloneCloneInst1
+}
+
+/-- [rusthammer::grammar::control::{impl rusthammer::parser_traits::Parser<'input, Clause0_Output> for rusthammer::grammar::control::Xor<P, Q>}::parse_with]:
+    Source: 'src/grammar/control.rs', lines 285:4-316:5
+    Visibility: public -/
+def grammar.control.Xor.Insts.RusthammerParser_traitsParser.parse_with
+  {P : Type} {Q : Type} {Clause0_Output : Type} (parser_traitsParserInst :
+  parser_traits.Parser P Clause0_Output) (parser_traitsParserInst1 :
+  parser_traits.Parser Q Clause0_Output) (self : grammar.control.Xor P Q)
+  (input : Slice Std.U8) (cursor : input_types.Cursor)
+  (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Clause0_Output)
+    input_types.ParseError)
+  := do
+  let r ← parser_traitsParserInst.parse_with self.first input cursor byte_order
+  match r with
+  | core.result.Result.Ok _ =>
+    let r1 ←
+      parser_traitsParserInst1.parse_with self.second input cursor byte_order
+    match r1 with
+    | core.result.Result.Ok _ =>
+      ok (core.result.Result.Err input_types.ParseError.Mismatch)
+    | core.result.Result.Err error =>
+      let b ← input_types.ParseError.is_recoverable error
+      if b
+      then ok r
+      else ok r1
+  | core.result.Result.Err error =>
+    let b ← input_types.ParseError.is_recoverable error
+    if b
+    then
+      parser_traitsParserInst1.parse_with self.second input cursor byte_order
+    else ok r
+
+/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Parser<'input, Clause0_Output> for rusthammer::grammar::control::Xor<P, Q>}]
+    Source: 'src/grammar/control.rs', lines 278:0-317:1 -/
+@[reducible]
+impl_def grammar.control.Xor.Insts.RusthammerParser_traitsParser {P : Type} {Q
+  : Type} {Clause0_Output : Type} (parser_traitsParserInst :
+  parser_traits.Parser P Clause0_Output) (parser_traitsParserInst1 :
+  parser_traits.Parser Q Clause0_Output) : parser_traits.Parser
+  (grammar.control.Xor P Q) Clause0_Output := {
+  parse_with :=
+    grammar.control.Xor.Insts.RusthammerParser_traitsParser.parse_with
+    parser_traitsParserInst parser_traitsParserInst1
+  parse := parser_traits.Parser.parse.default
+    (grammar.control.Xor.Insts.RusthammerParser_traitsParser
+    parser_traitsParserInst parser_traitsParserInst1)
+}
+
+/-- [rusthammer::grammar::control::Optional]
+    Source: 'src/grammar/control.rs', lines 326:0-328:1
+    Visibility: public -/
+structure grammar.control.Optional (P : Type) where
+  parser : P
+
+/-- [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Optional<P>}::clone]:
+    Source: 'src/grammar/control.rs', lines 325:9-325:14
+    Visibility: public -/
+def grammar.control.Optional.Insts.CoreCloneClone.clone
+  {P : Type} (corecloneCloneInst : core.clone.Clone P)
+  (self : grammar.control.Optional P) :
+  Result (grammar.control.Optional P)
+  := do
+  let t ← corecloneCloneInst.clone self.parser
+  ok { parser := t }
+
+/-- Trait implementation: [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Optional<P>}]
+    Source: 'src/grammar/control.rs', lines 325:9-325:14 -/
+@[reducible]
+def grammar.control.Optional.Insts.CoreCloneClone {P : Type}
+  (corecloneCloneInst : core.clone.Clone P) : core.clone.Clone
+  (grammar.control.Optional P) := {
+  clone := grammar.control.Optional.Insts.CoreCloneClone.clone
+    corecloneCloneInst
+}
+
+/-- [rusthammer::grammar::control::optional]:
+    Source: 'src/grammar/control.rs', lines 338:0-340:1
+    Visibility: public -/
+def grammar.control.optional
+  {P : Type} (parser : P) : Result (grammar.control.Optional P) := do
+  ok { parser }
+
+/-- [rusthammer::grammar::control::{impl rusthammer::parser_traits::Parser<'input, core::option::Option<Clause0_Output>> for rusthammer::grammar::control::Optional<P>}::parse_with]:
+    Source: 'src/grammar/control.rs', lines 345:4-364:5
+    Visibility: public -/
+def
+  grammar.control.Optional.Insts.RusthammerParser_traitsParserInputOption.parse_with
+  {P : Type} {Clause0_Output : Type} (parser_traitsParserInst :
+  parser_traits.Parser P Clause0_Output) (self : grammar.control.Optional P)
+  (input : Slice Std.U8) (cursor : input_types.Cursor)
+  (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × (Option Clause0_Output))
+    input_types.ParseError)
+  := do
+  let r ←
+    parser_traitsParserInst.parse_with self.parser input cursor byte_order
+  match r with
+  | core.result.Result.Ok parsed =>
+    let (next, value) := parsed
+    ok (core.result.Result.Ok (next, some value))
+  | core.result.Result.Err error =>
+    let b ← input_types.ParseError.is_recoverable error
+    if b
+    then ok (core.result.Result.Ok (cursor, none))
+    else ok (core.result.Result.Err error)
+
+/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Parser<'input, core::option::Option<Clause0_Output>> for rusthammer::grammar::control::Optional<P>}]
+    Source: 'src/grammar/control.rs', lines 342:0-365:1 -/
+@[reducible]
+impl_def
+  grammar.control.Optional.Insts.RusthammerParser_traitsParserInputOption {P :
+  Type} {Clause0_Output : Type} (parser_traitsParserInst : parser_traits.Parser
+  P Clause0_Output) : parser_traits.Parser (grammar.control.Optional P) (Option
+  Clause0_Output) := {
+  parse_with :=
+    grammar.control.Optional.Insts.RusthammerParser_traitsParserInputOption.parse_with
+    parser_traitsParserInst
+  parse := parser_traits.Parser.parse.default
+    (grammar.control.Optional.Insts.RusthammerParser_traitsParserInputOption
+    parser_traitsParserInst)
+}
+
+/-- [rusthammer::grammar::control::And]
+    Source: 'src/grammar/control.rs', lines 373:0-375:1
+    Visibility: public -/
+structure grammar.control.And (P : Type) where
+  parser : P
+
+/-- [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::And<P>}::clone]:
+    Source: 'src/grammar/control.rs', lines 372:9-372:14
+    Visibility: public -/
+def grammar.control.And.Insts.CoreCloneClone.clone
+  {P : Type} (corecloneCloneInst : core.clone.Clone P)
+  (self : grammar.control.And P) :
+  Result (grammar.control.And P)
+  := do
+  let t ← corecloneCloneInst.clone self.parser
+  ok { parser := t }
+
+/-- Trait implementation: [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::And<P>}]
+    Source: 'src/grammar/control.rs', lines 372:9-372:14 -/
+@[reducible]
+def grammar.control.And.Insts.CoreCloneClone {P : Type} (corecloneCloneInst :
+  core.clone.Clone P) : core.clone.Clone (grammar.control.And P) := {
+  clone := grammar.control.And.Insts.CoreCloneClone.clone corecloneCloneInst
+}
+
+/-- [rusthammer::grammar::control::{impl rusthammer::parser_traits::Parser<'input, ()> for rusthammer::grammar::control::And<P>}::parse_with]:
+    Source: 'src/grammar/control.rs', lines 380:4-393:5
+    Visibility: public -/
+def
+  grammar.control.And.Insts.RusthammerParser_traitsParserInputTuple.parse_with
+  {P : Type} {Clause0_Output : Type} (parser_traitsParserInst :
+  parser_traits.Parser P Clause0_Output) (self : grammar.control.And P)
+  (input : Slice Std.U8) (cursor : input_types.Cursor)
+  (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Unit)
+    input_types.ParseError)
+  := do
+  let r ←
+    parser_traitsParserInst.parse_with self.parser input cursor byte_order
+  match r with
+  | core.result.Result.Ok _ => ok (core.result.Result.Ok (cursor, ()))
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
+
+/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Parser<'input, ()> for rusthammer::grammar::control::And<P>}]
+    Source: 'src/grammar/control.rs', lines 377:0-394:1 -/
+@[reducible]
+impl_def grammar.control.And.Insts.RusthammerParser_traitsParserInputTuple {P :
+  Type} {Clause0_Output : Type} (parser_traitsParserInst : parser_traits.Parser
+  P Clause0_Output) : parser_traits.Parser (grammar.control.And P) Unit := {
+  parse_with :=
+    grammar.control.And.Insts.RusthammerParser_traitsParserInputTuple.parse_with
+    parser_traitsParserInst
+  parse := parser_traits.Parser.parse.default
+    (grammar.control.And.Insts.RusthammerParser_traitsParserInputTuple
+    parser_traitsParserInst)
+}
+
+/-- [rusthammer::grammar::control::Not]
+    Source: 'src/grammar/control.rs', lines 402:0-404:1
+    Visibility: public -/
+structure grammar.control.Not (P : Type) where
+  parser : P
+
+/-- [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Not<P>}::clone]:
+    Source: 'src/grammar/control.rs', lines 401:9-401:14
+    Visibility: public -/
+def grammar.control.Not.Insts.CoreCloneClone.clone
+  {P : Type} (corecloneCloneInst : core.clone.Clone P)
+  (self : grammar.control.Not P) :
+  Result (grammar.control.Not P)
+  := do
+  let t ← corecloneCloneInst.clone self.parser
+  ok { parser := t }
+
+/-- Trait implementation: [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Not<P>}]
+    Source: 'src/grammar/control.rs', lines 401:9-401:14 -/
+@[reducible]
+def grammar.control.Not.Insts.CoreCloneClone {P : Type} (corecloneCloneInst :
+  core.clone.Clone P) : core.clone.Clone (grammar.control.Not P) := {
+  clone := grammar.control.Not.Insts.CoreCloneClone.clone corecloneCloneInst
+}
+
+/-- [rusthammer::grammar::control::{impl rusthammer::parser_traits::Parser<'input, ()> for rusthammer::grammar::control::Not<P>}::parse_with]:
+    Source: 'src/grammar/control.rs', lines 409:4-428:5
+    Visibility: public -/
+def
+  grammar.control.Not.Insts.RusthammerParser_traitsParserInputTuple.parse_with
+  {P : Type} {Clause0_Output : Type} (parser_traitsParserInst :
+  parser_traits.Parser P Clause0_Output) (self : grammar.control.Not P)
+  (input : Slice Std.U8) (cursor : input_types.Cursor)
+  (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Unit)
+    input_types.ParseError)
+  := do
+  let r ←
+    parser_traitsParserInst.parse_with self.parser input cursor byte_order
+  match r with
+  | core.result.Result.Ok _ =>
+    ok (core.result.Result.Err input_types.ParseError.Mismatch)
+  | core.result.Result.Err error =>
+    let b ← input_types.ParseError.is_recoverable error
+    if b
+    then ok (core.result.Result.Ok (cursor, ()))
+    else ok (core.result.Result.Err error)
+
+/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Parser<'input, ()> for rusthammer::grammar::control::Not<P>}]
+    Source: 'src/grammar/control.rs', lines 406:0-429:1 -/
+@[reducible]
+impl_def grammar.control.Not.Insts.RusthammerParser_traitsParserInputTuple {P :
+  Type} {Clause0_Output : Type} (parser_traitsParserInst : parser_traits.Parser
+  P Clause0_Output) : parser_traits.Parser (grammar.control.Not P) Unit := {
+  parse_with :=
+    grammar.control.Not.Insts.RusthammerParser_traitsParserInputTuple.parse_with
+    parser_traitsParserInst
+  parse := parser_traits.Parser.parse.default
+    (grammar.control.Not.Insts.RusthammerParser_traitsParserInputTuple
+    parser_traitsParserInst)
+}
+
+/-- [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::Bit}::clone]:
+    Source: 'src/grammar/numeric.rs', lines 33:9-33:14
+    Visibility: public -/
+def grammar.numeric.Bit.Insts.CoreCloneClone.clone
+  (self : grammar.numeric.Bit) : Result grammar.numeric.Bit := do
+  ok self
+
+/-- Trait implementation: [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::Bit}]
+    Source: 'src/grammar/numeric.rs', lines 33:9-33:14 -/
+@[reducible]
+def grammar.numeric.Bit.Insts.CoreCloneClone : core.clone.Clone
+  grammar.numeric.Bit := {
+  clone := grammar.numeric.Bit.Insts.CoreCloneClone.clone
+}
+
+/-- [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::Bits}::clone]:
+    Source: 'src/grammar/numeric.rs', lines 59:9-59:14
+    Visibility: public -/
+def grammar.numeric.Bits.Insts.CoreCloneClone.clone
+  (self : grammar.numeric.Bits) : Result grammar.numeric.Bits := do
+  ok self
+
+/-- Trait implementation: [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::Bits}]
+    Source: 'src/grammar/numeric.rs', lines 59:9-59:14 -/
+@[reducible]
+def grammar.numeric.Bits.Insts.CoreCloneClone : core.clone.Clone
+  grammar.numeric.Bits := {
+  clone := grammar.numeric.Bits.Insts.CoreCloneClone.clone
+}
+
+/-- [rusthammer::grammar::numeric::{rusthammer::grammar::numeric::Bits}::width]:
+    Source: 'src/grammar/numeric.rs', lines 75:4-77:5
+    Visibility: public -/
+def grammar.numeric.Bits.impl.width
+  (self : grammar.numeric.Bits) : Result Std.U8 := do
+  ok self.width
+
+/-- [rusthammer::grammar::numeric::SignedBits]
+    Source: 'src/grammar/numeric.rs', lines 217:0-219:1
+    Visibility: public -/
+structure grammar.numeric.SignedBits where
+  bits : grammar.numeric.Bits
+
+/-- [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::SignedBits}::clone]:
+    Source: 'src/grammar/numeric.rs', lines 216:9-216:14
+    Visibility: public -/
+def grammar.numeric.SignedBits.Insts.CoreCloneClone.clone
+  (self : grammar.numeric.SignedBits) : Result grammar.numeric.SignedBits := do
+  ok self
+
+/-- Trait implementation: [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::SignedBits}]
+    Source: 'src/grammar/numeric.rs', lines 216:9-216:14 -/
+@[reducible]
+def grammar.numeric.SignedBits.Insts.CoreCloneClone : core.clone.Clone
+  grammar.numeric.SignedBits := {
+  clone := grammar.numeric.SignedBits.Insts.CoreCloneClone.clone
+}
+
+/-- [rusthammer::grammar::numeric::{rusthammer::grammar::numeric::SignedBits}::new]:
+    Source: 'src/grammar/numeric.rs', lines 223:4-229:5
+    Visibility: public -/
+def grammar.numeric.SignedBits.new
+  (width : Std.U8) :
+  Result (core.result.Result grammar.numeric.SignedBits
+    input_types.ConfigError)
+  := do
+  let r ← grammar.numeric.Bits.new width
+  match r with
+  | core.result.Result.Ok bits => ok (core.result.Result.Ok { bits })
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
+
+/-- [rusthammer::grammar::numeric::{rusthammer::grammar::numeric::SignedBits}::width]:
+    Source: 'src/grammar/numeric.rs', lines 232:4-234:5
+    Visibility: public -/
+def grammar.numeric.SignedBits.width
+  (self : grammar.numeric.SignedBits) : Result Std.U8 := do
+  grammar.numeric.Bits.impl.width self.bits
+
+/-- [rusthammer::grammar::numeric::sign_extend]:
+    Source: 'src/grammar/numeric.rs', lines 257:0-271:1 -/
+def grammar.numeric.sign_extend
+  (value : Std.U64) (width : Std.U8) : Result Std.I64 := do
+  if width = 0#u8
+  then ok 0#i64
+  else
+    let i ← width - 1#u8
+    let sign ← 1#u64 <<< i
+    if value < sign
+    then ok (UScalar.hcast .I64 value)
+    else
+      let i1 ← sign - 1#u64
+      let i2 ← value - sign
+      let complement ← i1 - i2
+      let i3 ← lift (UScalar.hcast .I64 complement)
+      (-1)#i64 - i3
+
+/-- [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Parser<'input, i64> for rusthammer::grammar::numeric::SignedBits}::parse_with]:
+    Source: 'src/grammar/numeric.rs', lines 240:4-253:5
+    Visibility: public -/
+def
+  grammar.numeric.SignedBits.Insts.RusthammerParser_traitsParserInputI64.parse_with
+  (self : grammar.numeric.SignedBits) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Std.I64)
+    input_types.ParseError)
+  := do
+  let r ←
+    grammar.numeric.Bits.Insts.RusthammerParser_traitsParserInputU64.parse_with
+      self.bits input cursor byte_order
+  match r with
+  | core.result.Result.Ok parsed =>
+    let (next, value) := parsed
+    let i ← grammar.numeric.sign_extend value self.bits.width
+    ok (core.result.Result.Ok (next, i))
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
+
+/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Parser<'input, i64> for rusthammer::grammar::numeric::SignedBits}]
+    Source: 'src/grammar/numeric.rs', lines 237:0-254:1 -/
+@[reducible]
+impl_def grammar.numeric.SignedBits.Insts.RusthammerParser_traitsParserInputI64
+  : parser_traits.Parser grammar.numeric.SignedBits Std.I64 := {
+  parse_with :=
+    grammar.numeric.SignedBits.Insts.RusthammerParser_traitsParserInputI64.parse_with
+  parse := parser_traits.Parser.parse.default
+    grammar.numeric.SignedBits.Insts.RusthammerParser_traitsParserInputI64
+}
+
+/-- [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::Byte}::clone]:
+    Source: 'src/grammar/numeric.rs', lines 274:9-274:14
+    Visibility: public -/
+def grammar.numeric.Byte.Insts.CoreCloneClone.clone
+  (self : grammar.numeric.Byte) : Result grammar.numeric.Byte := do
+  ok self
+
+/-- Trait implementation: [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::Byte}]
+    Source: 'src/grammar/numeric.rs', lines 274:9-274:14 -/
+@[reducible]
+def grammar.numeric.Byte.Insts.CoreCloneClone : core.clone.Clone
+  grammar.numeric.Byte := {
+  clone := grammar.numeric.Byte.Insts.CoreCloneClone.clone
+}
+
+/-- [rusthammer::grammar::numeric::BeU16]
+    Source: 'src/grammar/numeric.rs', lines 304:8-304:25
+    Visibility: public -/
+@[reducible]
+def grammar.numeric.BeU16 := Unit
+
+/-- [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::BeU16}::clone]:
+    Source: 'src/grammar/numeric.rs', lines 303:17-303:22
+    Visibility: public -/
+def grammar.numeric.BeU16.Insts.CoreCloneClone.clone
+  (self : grammar.numeric.BeU16) : Result grammar.numeric.BeU16 := do
+  ok self
+
+/-- Trait implementation: [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::BeU16}]
+    Source: 'src/grammar/numeric.rs', lines 303:17-303:22 -/
+@[reducible]
+def grammar.numeric.BeU16.Insts.CoreCloneClone : core.clone.Clone
+  grammar.numeric.BeU16 := {
+  clone := grammar.numeric.BeU16.Insts.CoreCloneClone.clone
+}
+
+/-- [rusthammer::grammar::numeric::BeU32]
+    Source: 'src/grammar/numeric.rs', lines 304:8-304:25
+    Visibility: public -/
+@[reducible]
+def grammar.numeric.BeU32 := Unit
+
+/-- [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::BeU32}::clone]:
+    Source: 'src/grammar/numeric.rs', lines 303:17-303:22
+    Visibility: public -/
+def grammar.numeric.BeU32.Insts.CoreCloneClone.clone
+  (self : grammar.numeric.BeU32) : Result grammar.numeric.BeU32 := do
+  ok self
+
+/-- Trait implementation: [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::BeU32}]
+    Source: 'src/grammar/numeric.rs', lines 303:17-303:22 -/
+@[reducible]
+def grammar.numeric.BeU32.Insts.CoreCloneClone : core.clone.Clone
+  grammar.numeric.BeU32 := {
+  clone := grammar.numeric.BeU32.Insts.CoreCloneClone.clone
+}
+
+/-- [rusthammer::grammar::numeric::BeU64]
+    Source: 'src/grammar/numeric.rs', lines 304:8-304:25
+    Visibility: public -/
+@[reducible]
+def grammar.numeric.BeU64 := Unit
+
+/-- [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::BeU64}::clone]:
+    Source: 'src/grammar/numeric.rs', lines 303:17-303:22
+    Visibility: public -/
+def grammar.numeric.BeU64.Insts.CoreCloneClone.clone
+  (self : grammar.numeric.BeU64) : Result grammar.numeric.BeU64 := do
+  ok self
+
+/-- Trait implementation: [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::BeU64}]
+    Source: 'src/grammar/numeric.rs', lines 303:17-303:22 -/
+@[reducible]
+def grammar.numeric.BeU64.Insts.CoreCloneClone : core.clone.Clone
+  grammar.numeric.BeU64 := {
+  clone := grammar.numeric.BeU64.Insts.CoreCloneClone.clone
+}
+
+/-- [rusthammer::grammar::numeric::I8]
+    Source: 'src/grammar/numeric.rs', lines 304:8-304:25
+    Visibility: public -/
+@[reducible]
+def grammar.numeric.I8 := Unit
+
+/-- [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::I8}::clone]:
+    Source: 'src/grammar/numeric.rs', lines 303:17-303:22
+    Visibility: public -/
+def grammar.numeric.I8.Insts.CoreCloneClone.clone
+  (self : grammar.numeric.I8) : Result grammar.numeric.I8 := do
+  ok self
+
+/-- Trait implementation: [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::I8}]
+    Source: 'src/grammar/numeric.rs', lines 303:17-303:22 -/
+@[reducible]
+def grammar.numeric.I8.Insts.CoreCloneClone : core.clone.Clone
+  grammar.numeric.I8 := {
+  clone := grammar.numeric.I8.Insts.CoreCloneClone.clone
+}
+
+/-- [rusthammer::grammar::numeric::BeI16]
+    Source: 'src/grammar/numeric.rs', lines 304:8-304:25
+    Visibility: public -/
+@[reducible]
+def grammar.numeric.BeI16 := Unit
+
+/-- [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::BeI16}::clone]:
+    Source: 'src/grammar/numeric.rs', lines 303:17-303:22
+    Visibility: public -/
+def grammar.numeric.BeI16.Insts.CoreCloneClone.clone
+  (self : grammar.numeric.BeI16) : Result grammar.numeric.BeI16 := do
+  ok self
+
+/-- Trait implementation: [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::BeI16}]
+    Source: 'src/grammar/numeric.rs', lines 303:17-303:22 -/
+@[reducible]
+def grammar.numeric.BeI16.Insts.CoreCloneClone : core.clone.Clone
+  grammar.numeric.BeI16 := {
+  clone := grammar.numeric.BeI16.Insts.CoreCloneClone.clone
+}
+
+/-- [rusthammer::grammar::numeric::BeI32]
+    Source: 'src/grammar/numeric.rs', lines 304:8-304:25
+    Visibility: public -/
+@[reducible]
+def grammar.numeric.BeI32 := Unit
+
+/-- [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::BeI32}::clone]:
+    Source: 'src/grammar/numeric.rs', lines 303:17-303:22
+    Visibility: public -/
+def grammar.numeric.BeI32.Insts.CoreCloneClone.clone
+  (self : grammar.numeric.BeI32) : Result grammar.numeric.BeI32 := do
+  ok self
+
+/-- Trait implementation: [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::BeI32}]
+    Source: 'src/grammar/numeric.rs', lines 303:17-303:22 -/
+@[reducible]
+def grammar.numeric.BeI32.Insts.CoreCloneClone : core.clone.Clone
+  grammar.numeric.BeI32 := {
+  clone := grammar.numeric.BeI32.Insts.CoreCloneClone.clone
+}
+
+/-- [rusthammer::grammar::numeric::BeI64]
+    Source: 'src/grammar/numeric.rs', lines 304:8-304:25
+    Visibility: public -/
+@[reducible]
+def grammar.numeric.BeI64 := Unit
+
+/-- [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::BeI64}::clone]:
+    Source: 'src/grammar/numeric.rs', lines 303:17-303:22
+    Visibility: public -/
+def grammar.numeric.BeI64.Insts.CoreCloneClone.clone
+  (self : grammar.numeric.BeI64) : Result grammar.numeric.BeI64 := do
+  ok self
+
+/-- Trait implementation: [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::BeI64}]
+    Source: 'src/grammar/numeric.rs', lines 303:17-303:22 -/
+@[reducible]
+def grammar.numeric.BeI64.Insts.CoreCloneClone : core.clone.Clone
+  grammar.numeric.BeI64 := {
+  clone := grammar.numeric.BeI64.Insts.CoreCloneClone.clone
+}
+
+/-- [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Parser<'input, u16> for rusthammer::grammar::numeric::BeU16}::parse_with]:
+    Source: 'src/grammar/numeric.rs', lines 311:12-325:13
+    Visibility: public -/
+def
+  grammar.numeric.BeU16.Insts.RusthammerParser_traitsParserInputU16.parse_with
+  (self : grammar.numeric.BeU16) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Std.U16)
+    input_types.ParseError)
+  := do
+  let r ←
+    grammar.numeric.Bits.Insts.RusthammerParser_traitsParserInputU64.parse_with
+      { width := 16#u8 } input cursor input_types.ByteOrder.Big
+  match r with
+  | core.result.Result.Ok parsed =>
+    let (next, value) := parsed
+    let i ← lift (UScalar.cast .U16 value)
+    ok (core.result.Result.Ok (next, i))
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
+
+/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Parser<'input, u16> for rusthammer::grammar::numeric::BeU16}]
+    Source: 'src/grammar/numeric.rs', lines 308:8-326:9 -/
+@[reducible]
+impl_def grammar.numeric.BeU16.Insts.RusthammerParser_traitsParserInputU16 :
+  parser_traits.Parser grammar.numeric.BeU16 Std.U16 := {
+  parse_with :=
+    grammar.numeric.BeU16.Insts.RusthammerParser_traitsParserInputU16.parse_with
+  parse := parser_traits.Parser.parse.default
+    grammar.numeric.BeU16.Insts.RusthammerParser_traitsParserInputU16
+}
+
+/-- [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Parser<'input, u32> for rusthammer::grammar::numeric::BeU32}::parse_with]:
+    Source: 'src/grammar/numeric.rs', lines 311:12-325:13
+    Visibility: public -/
+def
+  grammar.numeric.BeU32.Insts.RusthammerParser_traitsParserInputU32.parse_with
+  (self : grammar.numeric.BeU32) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Std.U32)
+    input_types.ParseError)
+  := do
+  let r ←
+    grammar.numeric.Bits.Insts.RusthammerParser_traitsParserInputU64.parse_with
+      { width := 32#u8 } input cursor input_types.ByteOrder.Big
+  match r with
+  | core.result.Result.Ok parsed =>
+    let (next, value) := parsed
+    let i ← lift (UScalar.cast .U32 value)
+    ok (core.result.Result.Ok (next, i))
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
+
+/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Parser<'input, u32> for rusthammer::grammar::numeric::BeU32}]
+    Source: 'src/grammar/numeric.rs', lines 308:8-326:9 -/
+@[reducible]
+impl_def grammar.numeric.BeU32.Insts.RusthammerParser_traitsParserInputU32 :
+  parser_traits.Parser grammar.numeric.BeU32 Std.U32 := {
+  parse_with :=
+    grammar.numeric.BeU32.Insts.RusthammerParser_traitsParserInputU32.parse_with
+  parse := parser_traits.Parser.parse.default
+    grammar.numeric.BeU32.Insts.RusthammerParser_traitsParserInputU32
+}
+
+/-- [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Parser<'input, u64> for rusthammer::grammar::numeric::BeU64}::parse_with]:
+    Source: 'src/grammar/numeric.rs', lines 311:12-325:13
+    Visibility: public -/
+def
+  grammar.numeric.BeU64.Insts.RusthammerParser_traitsParserInputU64.parse_with
+  (self : grammar.numeric.BeU64) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Std.U64)
+    input_types.ParseError)
+  := do
+  let r ←
+    grammar.numeric.Bits.Insts.RusthammerParser_traitsParserInputU64.parse_with
+      { width := 64#u8 } input cursor input_types.ByteOrder.Big
+  match r with
+  | core.result.Result.Ok _ => ok r
+  | core.result.Result.Err _ => ok r
+
+/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Parser<'input, u64> for rusthammer::grammar::numeric::BeU64}]
+    Source: 'src/grammar/numeric.rs', lines 308:8-326:9 -/
+@[reducible]
+impl_def grammar.numeric.BeU64.Insts.RusthammerParser_traitsParserInputU64 :
+  parser_traits.Parser grammar.numeric.BeU64 Std.U64 := {
+  parse_with :=
+    grammar.numeric.BeU64.Insts.RusthammerParser_traitsParserInputU64.parse_with
+  parse := parser_traits.Parser.parse.default
+    grammar.numeric.BeU64.Insts.RusthammerParser_traitsParserInputU64
+}
+
+/-- [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Parser<'input, i8> for rusthammer::grammar::numeric::I8}::parse_with]:
+    Source: 'src/grammar/numeric.rs', lines 311:12-325:13
+    Visibility: public -/
+def grammar.numeric.I8.Insts.RusthammerParser_traitsParserInputI8.parse_with
+  (self : grammar.numeric.I8) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Std.I8)
+    input_types.ParseError)
+  := do
+  let r ←
+    grammar.numeric.SignedBits.Insts.RusthammerParser_traitsParserInputI64.parse_with
+      { bits := { width := 8#u8 } } input cursor byte_order
+  match r with
+  | core.result.Result.Ok parsed =>
+    let (next, value) := parsed
+    let i ← lift (IScalar.cast .I8 value)
+    ok (core.result.Result.Ok (next, i))
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
+
+/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Parser<'input, i8> for rusthammer::grammar::numeric::I8}]
+    Source: 'src/grammar/numeric.rs', lines 308:8-326:9 -/
+@[reducible]
+impl_def grammar.numeric.I8.Insts.RusthammerParser_traitsParserInputI8 :
+  parser_traits.Parser grammar.numeric.I8 Std.I8 := {
+  parse_with :=
+    grammar.numeric.I8.Insts.RusthammerParser_traitsParserInputI8.parse_with
+  parse := parser_traits.Parser.parse.default
+    grammar.numeric.I8.Insts.RusthammerParser_traitsParserInputI8
+}
+
+/-- [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Parser<'input, i16> for rusthammer::grammar::numeric::BeI16}::parse_with]:
+    Source: 'src/grammar/numeric.rs', lines 311:12-325:13
+    Visibility: public -/
+def
+  grammar.numeric.BeI16.Insts.RusthammerParser_traitsParserInputI16.parse_with
+  (self : grammar.numeric.BeI16) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Std.I16)
+    input_types.ParseError)
+  := do
+  let r ←
+    grammar.numeric.SignedBits.Insts.RusthammerParser_traitsParserInputI64.parse_with
+      { bits := { width := 16#u8 } } input cursor input_types.ByteOrder.Big
+  match r with
+  | core.result.Result.Ok parsed =>
+    let (next, value) := parsed
+    let i ← lift (IScalar.cast .I16 value)
+    ok (core.result.Result.Ok (next, i))
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
+
+/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Parser<'input, i16> for rusthammer::grammar::numeric::BeI16}]
+    Source: 'src/grammar/numeric.rs', lines 308:8-326:9 -/
+@[reducible]
+impl_def grammar.numeric.BeI16.Insts.RusthammerParser_traitsParserInputI16 :
+  parser_traits.Parser grammar.numeric.BeI16 Std.I16 := {
+  parse_with :=
+    grammar.numeric.BeI16.Insts.RusthammerParser_traitsParserInputI16.parse_with
+  parse := parser_traits.Parser.parse.default
+    grammar.numeric.BeI16.Insts.RusthammerParser_traitsParserInputI16
+}
+
+/-- [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Parser<'input, i32> for rusthammer::grammar::numeric::BeI32}::parse_with]:
+    Source: 'src/grammar/numeric.rs', lines 311:12-325:13
+    Visibility: public -/
+def
+  grammar.numeric.BeI32.Insts.RusthammerParser_traitsParserInputI32.parse_with
+  (self : grammar.numeric.BeI32) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Std.I32)
+    input_types.ParseError)
+  := do
+  let r ←
+    grammar.numeric.SignedBits.Insts.RusthammerParser_traitsParserInputI64.parse_with
+      { bits := { width := 32#u8 } } input cursor input_types.ByteOrder.Big
+  match r with
+  | core.result.Result.Ok parsed =>
+    let (next, value) := parsed
+    let i ← lift (IScalar.cast .I32 value)
+    ok (core.result.Result.Ok (next, i))
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
+
+/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Parser<'input, i32> for rusthammer::grammar::numeric::BeI32}]
+    Source: 'src/grammar/numeric.rs', lines 308:8-326:9 -/
+@[reducible]
+impl_def grammar.numeric.BeI32.Insts.RusthammerParser_traitsParserInputI32 :
+  parser_traits.Parser grammar.numeric.BeI32 Std.I32 := {
+  parse_with :=
+    grammar.numeric.BeI32.Insts.RusthammerParser_traitsParserInputI32.parse_with
+  parse := parser_traits.Parser.parse.default
+    grammar.numeric.BeI32.Insts.RusthammerParser_traitsParserInputI32
+}
+
+/-- [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Parser<'input, i64> for rusthammer::grammar::numeric::BeI64}::parse_with]:
+    Source: 'src/grammar/numeric.rs', lines 311:12-325:13
+    Visibility: public -/
+def
+  grammar.numeric.BeI64.Insts.RusthammerParser_traitsParserInputI64.parse_with
+  (self : grammar.numeric.BeI64) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Std.I64)
+    input_types.ParseError)
+  := do
+  let r ←
+    grammar.numeric.SignedBits.Insts.RusthammerParser_traitsParserInputI64.parse_with
+      { bits := { width := 64#u8 } } input cursor input_types.ByteOrder.Big
+  match r with
+  | core.result.Result.Ok _ => ok r
+  | core.result.Result.Err _ => ok r
+
+/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Parser<'input, i64> for rusthammer::grammar::numeric::BeI64}]
+    Source: 'src/grammar/numeric.rs', lines 308:8-326:9 -/
+@[reducible]
+impl_def grammar.numeric.BeI64.Insts.RusthammerParser_traitsParserInputI64 :
+  parser_traits.Parser grammar.numeric.BeI64 Std.I64 := {
+  parse_with :=
+    grammar.numeric.BeI64.Insts.RusthammerParser_traitsParserInputI64.parse_with
+  parse := parser_traits.Parser.parse.default
+    grammar.numeric.BeI64.Insts.RusthammerParser_traitsParserInputI64
+}
+
+/-- [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::Literal}::clone]:
+    Source: 'src/grammar/numeric.rs', lines 435:9-435:14
+    Visibility: public -/
+def grammar.numeric.Literal.Insts.CoreCloneClone.clone
+  (self : grammar.numeric.Literal) : Result grammar.numeric.Literal := do
+  ok self
+
+/-- Trait implementation: [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::Literal}]
+    Source: 'src/grammar/numeric.rs', lines 435:9-435:14 -/
+@[reducible]
+def grammar.numeric.Literal.Insts.CoreCloneClone : core.clone.Clone
+  grammar.numeric.Literal := {
+  clone := grammar.numeric.Literal.Insts.CoreCloneClone.clone
+}
+
+/-- [rusthammer::grammar::numeric::{rusthammer::grammar::numeric::Literal}::width]:
+    Source: 'src/grammar/numeric.rs', lines 457:4-459:5
+    Visibility: public -/
+def grammar.numeric.Literal.width
+  (self : grammar.numeric.Literal) : Result Std.U8 := do
+  grammar.numeric.Bits.impl.width self.bits
+
+/-- [rusthammer::grammar::numeric::{rusthammer::grammar::numeric::Literal}::value]:
+    Source: 'src/grammar/numeric.rs', lines 462:4-464:5
+    Visibility: public -/
+def grammar.numeric.Literal.impl.value
+  (self : grammar.numeric.Literal) : Result Std.U64 := do
+  ok self.value
+
+/-- [rusthammer::input_types::{impl core::clone::Clone for rusthammer::input_types::ByteOrder}::clone]:
+    Source: 'src/input_types.rs', lines 59:9-59:14
+    Visibility: public -/
+def input_types.ByteOrder.Insts.CoreCloneClone.clone
+  (self : input_types.ByteOrder) : Result input_types.ByteOrder := do
+  ok self
+
+/-- [rusthammer::grammar::order::{impl core::clone::Clone for rusthammer::grammar::order::WithByteOrder<P>}::clone]:
+    Source: 'src/grammar/order.rs', lines 5:9-5:14
+    Visibility: public -/
+def grammar.order.WithByteOrder.Insts.CoreCloneClone.clone
+  {P : Type} (corecloneCloneInst : core.clone.Clone P)
+  (self : grammar.order.WithByteOrder P) :
+  Result (grammar.order.WithByteOrder P)
+  := do
+  let t ← corecloneCloneInst.clone self.parser
+  let bo ← input_types.ByteOrder.Insts.CoreCloneClone.clone self.byte_order
+  ok { parser := t, byte_order := bo }
+
+/-- Trait implementation: [rusthammer::grammar::order::{impl core::clone::Clone for rusthammer::grammar::order::WithByteOrder<P>}]
+    Source: 'src/grammar/order.rs', lines 5:9-5:14 -/
+@[reducible]
+def grammar.order.WithByteOrder.Insts.CoreCloneClone {P : Type}
+  (corecloneCloneInst : core.clone.Clone P) : core.clone.Clone
+  (grammar.order.WithByteOrder P) := {
+  clone := grammar.order.WithByteOrder.Insts.CoreCloneClone.clone
+    corecloneCloneInst
+}
+
+/-- Trait implementation: [rusthammer::grammar::order::{impl rusthammer::parser_traits::Parser<'input, Clause0_Output> for rusthammer::grammar::order::WithByteOrder<P>}]
+    Source: 'src/grammar/order.rs', lines 11:0-22:1 -/
+@[reducible]
+impl_def grammar.order.WithByteOrder.Insts.RusthammerParser_traitsParser {P :
+  Type} {Clause0_Output : Type} (parser_traitsParserInst : parser_traits.Parser
+  P Clause0_Output) : parser_traits.Parser (grammar.order.WithByteOrder P)
+  Clause0_Output := {
+  parse_with :=
+    grammar.order.WithByteOrder.Insts.RusthammerParser_traitsParser.parse_with
+    parser_traitsParserInst
+  parse := parser_traits.Parser.parse.default
+    (grammar.order.WithByteOrder.Insts.RusthammerParser_traitsParser
+    parser_traitsParserInst)
+}
+
 /-- [rusthammer::grammar::position::advance_cursor]:
-    Source: 'src/grammar/position.rs', lines 9:0-24:1 -/
+    Source: 'src/grammar/position.rs', lines 7:0-22:1 -/
 def grammar.position.advance_cursor
   (length : Std.Usize) (cursor : input_types.Cursor) (bits : Std.Usize) :
   Result (core.result.Result input_types.Cursor input_types.ParseError)
@@ -3890,6891 +4870,21 @@ def grammar.position.advance_cursor
             else ok (core.result.Result.Ok { byte, bit })
           else ok (core.result.Result.Ok { byte, bit })
 
-/-- [rusthammer::grammar::position::retreat_cursor]:
-    Source: 'src/grammar/position.rs', lines 228:0-244:1 -/
-def grammar.position.retreat_cursor
-  (length : Std.Usize) (cursor : input_types.Cursor) (bits : Std.Usize) :
-  Result (core.result.Result input_types.Cursor input_types.ParseError)
-  := do
-  let r ← grammar.position.advance_cursor length cursor 0#usize
-  let cf ← core.result.Result.Insts.CoreOpsTry.branch r
-  match cf with
-  | core.ops.control_flow.ControlFlow.Continue val =>
-    let whole ← bits / 8#usize
-    let i ← bits % 8#usize
-    let tail ← lift (UScalar.cast .U8 i)
-    let (bytes, bit) ←
-      if tail > val.bit
-      then
-        do
-        let i1 ← whole + 1#usize
-        let i2 ← val.bit + 8#u8
-        let i3 ← i2 - tail
-        ok (i1, i3)
-      else do
-           let i1 ← val.bit - tail
-           ok (whole, i1)
-    if bytes > val.byte
-    then ok (core.result.Result.Err input_types.ParseError.Mismatch)
-    else
-      let i1 ← val.byte - bytes
-      ok (core.result.Result.Ok { byte := i1, bit })
-  | core.ops.control_flow.ControlFlow.Break residual =>
-    core.result.Result.Insts.CoreOpsTry_traitFromResidualResult.from_residual
-      input_types.Cursor (core.convert.FromSame input_types.ParseError)
-      residual
-
-/-- [rusthammer::grammar::position::offset_cursor]:
-    Source: 'src/grammar/position.rs', lines 246:0-254:1 -/
-def grammar.position.offset_cursor
-  (length : Std.Usize) (cursor : input_types.Cursor) (offset : Std.Isize) :
-  Result (core.result.Result input_types.Cursor input_types.ParseError)
-  := do
-  if offset < 0#isize
-  then
-    let i ← offset + 1#isize
-    let i1 ← -. i
-    let i2 ← lift (IScalar.hcast .Usize i1)
-    let magnitude ← i2 + 1#usize
-    grammar.position.retreat_cursor length cursor magnitude
-  else
-    let i ← lift (IScalar.hcast .Usize offset)
-    grammar.position.advance_cursor length cursor i
-
-/-- [rusthammer::grammar::position::SeekTarget]
-    Source: 'src/grammar/position.rs', lines 154:0-158:1 -/
-@[discriminant isize]
-inductive grammar.position.SeekTarget where
-| Absolute : input_types.Cursor → grammar.position.SeekTarget
-| Relative : Std.Isize → grammar.position.SeekTarget
-| End : Std.Isize → grammar.position.SeekTarget
-
-/-- [rusthammer::grammar::position::Seek]
-    Source: 'src/grammar/position.rs', lines 191:0-193:1
-    Visibility: public -/
-structure grammar.position.Seek where
-  target : grammar.position.SeekTarget
-
-/-- [rusthammer::grammar::position::seek_position]:
-    Source: 'src/grammar/position.rs', lines 256:0-288:1 -/
-def grammar.position.seek_position
-  (parser : grammar.position.Seek) (length : Std.Usize)
-  (cursor : input_types.Cursor) (status : input_types.InputStatus) :
-  Result (input_types.ParseOutcome input_types.Cursor)
-  := do
-  let r ← grammar.position.advance_cursor length cursor 0#usize
-  match r with
-  | core.result.Result.Ok _ =>
-    match parser.target with
-    | grammar.position.SeekTarget.Absolute target =>
-      let r1 ← grammar.position.advance_cursor length target 0#usize
-      let result ←
-        match r1 with
-        | core.result.Result.Ok _ => ok r1
-        | core.result.Result.Err _ =>
-          ok (core.result.Result.Err input_types.ParseError.UnexpectedEnd)
-      let result1 ←
-        match result with
-        | core.result.Result.Ok next => ok (core.result.Result.Ok (next, next))
-        | core.result.Result.Err error => ok (core.result.Result.Err error)
-      input_types.InputStatus.classify status result1
-    | grammar.position.SeekTarget.Relative offset =>
-      let result ← grammar.position.offset_cursor length cursor offset
-      let result1 ←
-        match result with
-        | core.result.Result.Ok next => ok (core.result.Result.Ok (next, next))
-        | core.result.Result.Err error => ok (core.result.Result.Err error)
-      input_types.InputStatus.classify status result1
-    | grammar.position.SeekTarget.End offset =>
-      match status with
-      | input_types.InputStatus.Partial => ok input_types.ParseOutcome.NeedMore
-      | input_types.InputStatus.Final =>
-        let result ←
-          grammar.position.offset_cursor length { byte := length, bit := 0#u8 }
-            offset
-        let result1 ←
-          match result with
-          | core.result.Result.Ok next =>
-            ok (core.result.Result.Ok (next, next))
-          | core.result.Result.Err error => ok (core.result.Result.Err error)
-        input_types.InputStatus.classify input_types.InputStatus.Final result1
-  | core.result.Result.Err error => ok (input_types.ParseOutcome.Error error)
-
-/-- [rusthammer::grammar::position::{impl rusthammer::parser_traits::Eval<'input, Backend, rusthammer::input_types::Cursor> for rusthammer::grammar::position::Seek}::eval]:
-    Source: 'src/grammar/position.rs', lines 299:4-307:5
-    Visibility: public -/
-def
-  grammar.position.Seek.Insts.RusthammerParser_traitsEvalInputBackendCursor.eval
-  {Backend : Type} (self : grammar.position.Seek) (t : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome input_types.Cursor) × Backend)
-  := do
-  let i := Slice.len input
-  let po ← grammar.position.seek_position self i cursor context.status
-  ok (po, t)
-
-/-- Trait implementation: [rusthammer::grammar::position::{impl rusthammer::parser_traits::Grammar<'input, rusthammer::input_types::Cursor> for rusthammer::grammar::position::Seek}]
-    Source: 'src/grammar/position.rs', lines 294:0-296:1 -/
-@[reducible]
-def grammar.position.Seek.Insts.RusthammerParser_traitsGrammarInputCursor :
-  parser_traits.Grammar grammar.position.Seek input_types.Cursor := {
-}
-
-/-- Trait implementation: [rusthammer::grammar::position::{impl rusthammer::parser_traits::Eval<'input, Backend, rusthammer::input_types::Cursor> for rusthammer::grammar::position::Seek}]
-    Source: 'src/grammar/position.rs', lines 298:0-308:1 -/
-@[reducible]
-def grammar.position.Seek.Insts.RusthammerParser_traitsEvalInputBackendCursor
-  (Backend : Type) : parser_traits.Eval grammar.position.Seek Backend
-  input_types.Cursor := {
-  GrammarInst :=
-    grammar.position.Seek.Insts.RusthammerParser_traitsGrammarInputCursor
-  eval :=
-    grammar.position.Seek.Insts.RusthammerParser_traitsEvalInputBackendCursor.eval
-}
-
-/-- [rusthammer::grammar::position::{rusthammer::grammar::position::Seek}::relative]:
-    Source: 'src/grammar/position.rs', lines 211:4-215:5
-    Visibility: public -/
-def grammar.position.Seek.relative
-  (offset_bits : Std.Isize) : Result grammar.position.Seek := do
-  ok { target := (grammar.position.SeekTarget.Relative offset_bits) }
-
-/-- [rusthammer::offset_example::payload::{closure}]
-    Source: 'src/../examples/support/offset.rs', lines 12:15-16:5 -/
-@[reducible]
-def offset_example.payload.closure := Unit
-
-/-- [rusthammer::offset_example::payload::{impl core::ops::function::Fn<(u8,), rusthammer::grammar::sequence::Right<rusthammer::grammar::position::Seek, rusthammer::grammar::bytes::TakeAligned>> for rusthammer::offset_example::payload::{closure}}::call]:
-    Source: 'src/../examples/support/offset.rs', lines 12:15-16:5 -/
-def
-  offset_example.payload.closure.Insts.CoreOpsFunctionFnTupleU8RightSeekTakeAligned.call
-  (c : offset_example.payload.closure) (tupled_args : Std.U8) :
-  Result (grammar.sequence.Right grammar.position.Seek
-    grammar.bytes.TakeAligned)
-  := do
-  let i ← lift (UScalar.hcast .Isize tupled_args)
-  let i1 ← i * 8#isize
-  let s ← grammar.position.Seek.relative i1
-  ok { first := s, second := { count := 2#usize } }
-
-/-- [rusthammer::offset_example::payload::{impl core::ops::function::FnMut<(u8,), rusthammer::grammar::sequence::Right<rusthammer::grammar::position::Seek, rusthammer::grammar::bytes::TakeAligned>> for rusthammer::offset_example::payload::{closure}}::call_mut]:
-    Source: 'src/../examples/support/offset.rs', lines 12:15-16:5 -/
-def
-  offset_example.payload.closure.Insts.CoreOpsFunctionFnMutTupleU8RightSeekTakeAligned.call_mut
-  (state : offset_example.payload.closure) (args : Std.U8) :
-  Result ((grammar.sequence.Right grammar.position.Seek
-    grammar.bytes.TakeAligned) × offset_example.payload.closure)
-  := do
-  let r ←
-    offset_example.payload.closure.Insts.CoreOpsFunctionFnTupleU8RightSeekTakeAligned.call
-      state args
-  ok (r, state)
-
-/-- [rusthammer::offset_example::payload::{impl core::ops::function::FnOnce<(u8,), rusthammer::grammar::sequence::Right<rusthammer::grammar::position::Seek, rusthammer::grammar::bytes::TakeAligned>> for rusthammer::offset_example::payload::{closure}}::call_once]:
-    Source: 'src/../examples/support/offset.rs', lines 12:15-16:5 -/
-def
-  offset_example.payload.closure.Insts.CoreOpsFunctionFnOnceTupleU8RightSeekTakeAligned.call_once
-  (c : offset_example.payload.closure) (i : Std.U8) :
-  Result (grammar.sequence.Right grammar.position.Seek
-    grammar.bytes.TakeAligned)
-  := do
-  let (r, _) ←
-    offset_example.payload.closure.Insts.CoreOpsFunctionFnMutTupleU8RightSeekTakeAligned.call_mut
-      c i
-  ok r
-
-/-- Trait implementation: [rusthammer::offset_example::payload::{impl core::ops::function::FnOnce<(u8,), rusthammer::grammar::sequence::Right<rusthammer::grammar::position::Seek, rusthammer::grammar::bytes::TakeAligned>> for rusthammer::offset_example::payload::{closure}}]
-    Source: 'src/../examples/support/offset.rs', lines 12:15-16:5 -/
-@[reducible]
-def
-  offset_example.payload.closure.Insts.CoreOpsFunctionFnOnceTupleU8RightSeekTakeAligned
-  : core.ops.function.FnOnce offset_example.payload.closure Std.U8
-  (grammar.sequence.Right grammar.position.Seek grammar.bytes.TakeAligned) := {
-  call_once :=
-    offset_example.payload.closure.Insts.CoreOpsFunctionFnOnceTupleU8RightSeekTakeAligned.call_once
-}
-
-/-- Trait implementation: [rusthammer::offset_example::payload::{impl core::ops::function::FnMut<(u8,), rusthammer::grammar::sequence::Right<rusthammer::grammar::position::Seek, rusthammer::grammar::bytes::TakeAligned>> for rusthammer::offset_example::payload::{closure}}]
-    Source: 'src/../examples/support/offset.rs', lines 12:15-16:5 -/
-@[reducible]
-def
-  offset_example.payload.closure.Insts.CoreOpsFunctionFnMutTupleU8RightSeekTakeAligned
-  : core.ops.function.FnMut offset_example.payload.closure Std.U8
-  (grammar.sequence.Right grammar.position.Seek grammar.bytes.TakeAligned) := {
-  FnOnceInst :=
-    offset_example.payload.closure.Insts.CoreOpsFunctionFnOnceTupleU8RightSeekTakeAligned
-  call_mut :=
-    offset_example.payload.closure.Insts.CoreOpsFunctionFnMutTupleU8RightSeekTakeAligned.call_mut
-}
-
-/-- Trait implementation: [rusthammer::offset_example::payload::{impl core::ops::function::Fn<(u8,), rusthammer::grammar::sequence::Right<rusthammer::grammar::position::Seek, rusthammer::grammar::bytes::TakeAligned>> for rusthammer::offset_example::payload::{closure}}]
-    Source: 'src/../examples/support/offset.rs', lines 12:15-16:5 -/
-@[reducible]
-def
-  offset_example.payload.closure.Insts.CoreOpsFunctionFnTupleU8RightSeekTakeAligned
-  : core.ops.function.Fn offset_example.payload.closure Std.U8
-  (grammar.sequence.Right grammar.position.Seek grammar.bytes.TakeAligned) := {
-  FnMutInst :=
-    offset_example.payload.closure.Insts.CoreOpsFunctionFnMutTupleU8RightSeekTakeAligned
-  call :=
-    offset_example.payload.closure.Insts.CoreOpsFunctionFnTupleU8RightSeekTakeAligned.call
-}
-
-/-- [rusthammer::offset_example::payload]:
-    Source: 'src/../examples/support/offset.rs', lines 11:0-18:1
-    Visibility: public -/
-def offset_example.payload
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result (input_types.ParseOutcome (Slice Std.U8))
-  := do
-  let b ←
-    grammar.sequence.bind
-      grammar.numeric.Byte.Insts.RusthammerParser_traitsGrammarInputU8
-      offset_example.payload.closure.Insts.CoreOpsFunctionFnTupleU8RightSeekTakeAligned
-      (grammar.sequence.Right.Insts.RusthammerParser_traitsGrammar
-      grammar.position.Seek.Insts.RusthammerParser_traitsGrammarInputCursor
-      grammar.bytes.TakeAligned.Insts.RusthammerParser_traitsGrammarInputSharedInputSliceU8)
-      () ()
-  parser_traits.Parser.parse_with.default (parser_traits.Parser.Blanket
-    (grammar.sequence.Bind.Insts.RusthammerParser_traitsEval
-    (grammar.numeric.Byte.Insts.RusthammerParser_traitsEvalInputBackendU8
-    parser_traits.Direct)
-    offset_example.payload.closure.Insts.CoreOpsFunctionFnTupleU8RightSeekTakeAligned
-    (grammar.sequence.Right.Insts.RusthammerParser_traitsEval
-    (grammar.position.Seek.Insts.RusthammerParser_traitsEvalInputBackendCursor
-    parser_traits.Direct)
-    (grammar.bytes.TakeAligned.Insts.RusthammerParser_traitsEvalInputBackendSharedSliceU8
-    parser_traits.Direct)))) b input cursor context
-
-/-- [rusthammer::record_example::MAX_RECORD_PAYLOAD]
-    Source: 'src/../examples/support/record.rs', lines 10:0-10:41
-    Visibility: public -/
-@[global_simps, irreducible]
-def record_example.MAX_RECORD_PAYLOAD : Std.U64 := 1024#u64
-
-/-- [rusthammer::record_example::Record]
-    Source: 'src/../examples/support/record.rs', lines 14:0-18:1
-    Visibility: public -/
-structure record_example.Record where
-  version : Std.U64
-  flags : Std.U64
-  payload : Slice Std.U8
-
-/-- [rusthammer::record_example::RecordParser]
-    Source: 'src/../examples/support/record.rs', lines 29:0-33:1
-    Visibility: public -/
-structure record_example.RecordParser where
-  version : grammar.numeric.Bits
-  flags : grammar.numeric.Bits
-  length : grammar.numeric.Bits
-
-/-- [rusthammer::record_example::{impl core::clone::Clone for rusthammer::record_example::RecordParser}::clone]:
-    Source: 'src/../examples/support/record.rs', lines 28:9-28:14
-    Visibility: public -/
-def record_example.RecordParser.Insts.CoreCloneClone.clone
-  (self : record_example.RecordParser) :
-  Result record_example.RecordParser
-  := do
-  ok self
-
-/-- Trait implementation: [rusthammer::record_example::{impl core::clone::Clone for rusthammer::record_example::RecordParser}]
-    Source: 'src/../examples/support/record.rs', lines 28:9-28:14 -/
-@[reducible]
-def record_example.RecordParser.Insts.CoreCloneClone : core.clone.Clone
-  record_example.RecordParser := {
-  clone := record_example.RecordParser.Insts.CoreCloneClone.clone
-}
-
-/-- [rusthammer::record_example::{rusthammer::record_example::RecordParser}::new]:
-    Source: 'src/../examples/support/record.rs', lines 37:4-55:5
-    Visibility: public -/
-def record_example.RecordParser.new
-  :
-  Result (core.result.Result record_example.RecordParser
-    input_types.ConfigError)
-  := do
-  let r ← grammar.numeric.Bits.new 3#u8
-  match r with
-  | core.result.Result.Ok parser =>
-    let r1 ← grammar.numeric.Bits.new 5#u8
-    match r1 with
-    | core.result.Result.Ok parser1 =>
-      let r2 ← grammar.numeric.Bits.new 16#u8
-      match r2 with
-      | core.result.Result.Ok parser2 =>
-        ok (core.result.Result.Ok
-          { version := parser, flags := parser1, length := parser2 })
-      | core.result.Result.Err error => ok (core.result.Result.Err error)
-    | core.result.Result.Err error => ok (core.result.Result.Err error)
-  | core.result.Result.Err error => ok (core.result.Result.Err error)
-
-/-- Trait implementation: [rusthammer::record_example::{impl rusthammer::parser_traits::Grammar<'input, rusthammer::record_example::Record<'input>> for rusthammer::record_example::RecordParser}]
-    Source: 'src/../examples/support/record.rs', lines 58:0-60:1 -/
-@[reducible]
-def record_example.RecordParser.Insts.RusthammerParser_traitsGrammarInputRecord
-  : parser_traits.Grammar record_example.RecordParser record_example.Record
-  := {
-}
-
-/-- [rusthammer::record_example::record_header::{closure}]
-    Source: 'src/../examples/support/record.rs', lines 77:19-77:98 -/
-@[reducible]
-def record_example.record_header.closure := Unit
-
-/-- [rusthammer::record_example::record_header]:
-    Source: 'src/../examples/support/record.rs', lines 64:0-79:1 -/
-def record_example.record_header
-  (version : grammar.numeric.Bits) (flags : grammar.numeric.Bits)
-  (length : grammar.numeric.Bits) :
-  Result (grammar.transform.Verify (grammar.sequence.Seq grammar.numeric.Bits
-    (grammar.sequence.Seq grammar.numeric.Bits grammar.numeric.Bits))
-    record_example.record_header.closure)
-  := do
-  ok
-    {
-      parser :=
-        { first := version, second := { first := flags, second := length } },
-      predicate := ()
-    }
-
-/-- [rusthammer::record_example::record_header::{impl core::ops::function::Fn<(&'_0 (u64, (u64, u64)),), bool> for rusthammer::record_example::record_header::{closure}}::call]:
-    Source: 'src/../examples/support/record.rs', lines 77:19-77:98 -/
-def
-  record_example.record_header.closure.Insts.CoreOpsFunctionFnTupleShared0PairU64PairU64U64Bool.call
-  (c : record_example.record_header.closure)
-  (tupled_args : (Std.U64 × (Std.U64 × Std.U64))) :
-  Result Bool
-  := do
-  let (i, p) := tupled_args
-  if i = 1#u64
-  then let (_, i1) := p
-       ok (i1 <= record_example.MAX_RECORD_PAYLOAD)
-  else ok false
-
-/-- [rusthammer::record_example::record_header::{impl core::ops::function::FnMut<(&'_0 (u64, (u64, u64)),), bool> for rusthammer::record_example::record_header::{closure}}::call_mut]:
-    Source: 'src/../examples/support/record.rs', lines 77:19-77:98 -/
-def
-  record_example.record_header.closure.Insts.CoreOpsFunctionFnMutTupleShared0PairU64PairU64U64Bool.call_mut
-  (state : record_example.record_header.closure)
-  (args : (Std.U64 × (Std.U64 × Std.U64))) :
-  Result (Bool × record_example.record_header.closure)
-  := do
-  let b ←
-    record_example.record_header.closure.Insts.CoreOpsFunctionFnTupleShared0PairU64PairU64U64Bool.call
-      state args
-  ok (b, state)
-
-/-- [rusthammer::record_example::record_header::{impl core::ops::function::FnOnce<(&'_0 (u64, (u64, u64)),), bool> for rusthammer::record_example::record_header::{closure}}::call_once]:
-    Source: 'src/../examples/support/record.rs', lines 77:19-77:98 -/
-def
-  record_example.record_header.closure.Insts.CoreOpsFunctionFnOnceTupleShared0PairU64PairU64U64Bool.call_once
-  (c : record_example.record_header.closure)
-  (p : (Std.U64 × (Std.U64 × Std.U64))) :
-  Result Bool
-  := do
-  let (b, _) ←
-    record_example.record_header.closure.Insts.CoreOpsFunctionFnMutTupleShared0PairU64PairU64U64Bool.call_mut
-      c p
-  ok b
-
-/-- Trait implementation: [rusthammer::record_example::record_header::{impl core::ops::function::FnOnce<(&'_0 (u64, (u64, u64)),), bool> for rusthammer::record_example::record_header::{closure}}]
-    Source: 'src/../examples/support/record.rs', lines 77:19-77:98 -/
-@[reducible]
-def
-  record_example.record_header.closure.Insts.CoreOpsFunctionFnOnceTupleShared0PairU64PairU64U64Bool
-  : core.ops.function.FnOnce record_example.record_header.closure (Std.U64 ×
-  (Std.U64 × Std.U64)) Bool := {
-  call_once :=
-    record_example.record_header.closure.Insts.CoreOpsFunctionFnOnceTupleShared0PairU64PairU64U64Bool.call_once
-}
-
-/-- Trait implementation: [rusthammer::record_example::record_header::{impl core::ops::function::FnMut<(&'_0 (u64, (u64, u64)),), bool> for rusthammer::record_example::record_header::{closure}}]
-    Source: 'src/../examples/support/record.rs', lines 77:19-77:98 -/
-@[reducible]
-def
-  record_example.record_header.closure.Insts.CoreOpsFunctionFnMutTupleShared0PairU64PairU64U64Bool
-  : core.ops.function.FnMut record_example.record_header.closure (Std.U64 ×
-  (Std.U64 × Std.U64)) Bool := {
-  FnOnceInst :=
-    record_example.record_header.closure.Insts.CoreOpsFunctionFnOnceTupleShared0PairU64PairU64U64Bool
-  call_mut :=
-    record_example.record_header.closure.Insts.CoreOpsFunctionFnMutTupleShared0PairU64PairU64U64Bool.call_mut
-}
-
-/-- Trait implementation: [rusthammer::record_example::record_header::{impl core::ops::function::Fn<(&'_0 (u64, (u64, u64)),), bool> for rusthammer::record_example::record_header::{closure}}]
-    Source: 'src/../examples/support/record.rs', lines 77:19-77:98 -/
-@[reducible]
-def
-  record_example.record_header.closure.Insts.CoreOpsFunctionFnTupleShared0PairU64PairU64U64Bool
-  : core.ops.function.Fn record_example.record_header.closure (Std.U64 ×
-  (Std.U64 × Std.U64)) Bool := {
-  FnMutInst :=
-    record_example.record_header.closure.Insts.CoreOpsFunctionFnMutTupleShared0PairU64PairU64U64Bool
-  call :=
-    record_example.record_header.closure.Insts.CoreOpsFunctionFnTupleShared0PairU64PairU64U64Bool.call
-}
-
-/-- [rusthammer::record_example::parse_record_body]:
-    Source: 'src/../examples/support/record.rs', lines 115:0-140:1 -/
-def record_example.parse_record_body
-  {Backend : Type} (backend : Backend) (input : Slice Std.U8)
-  (cursor : input_types.Cursor) (version : Std.U64) (flags : Std.U64)
-  (count : Std.Usize) (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome record_example.Record) × Backend)
-  := do
-  let (po, backend1) ←
-    grammar.sequence.Seq.Insts.RusthammerParser_traitsEvalInputBackendPair.eval
-      (grammar.bytes.TakeAligned.Insts.RusthammerParser_traitsEvalInputBackendSharedSliceU8
-      Backend)
-      (grammar.position.End.Insts.RusthammerParser_traitsEvalInputBackendTuple
-      Backend) { first := { count }, second := () } backend input cursor
-      context
-  match po with
-  | input_types.ParseOutcome.Success «end» p =>
-    let (payload, _) := p
-    ok (input_types.ParseOutcome.Success «end» { version, flags, payload },
-      backend1)
-  | input_types.ParseOutcome.Error error =>
-    ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
-
-/-- [rusthammer::record_example::{impl rusthammer::parser_traits::Eval<'input, Backend, rusthammer::record_example::Record<'_>> for rusthammer::record_example::RecordParser}::eval]:
-    Source: 'src/../examples/support/record.rs', lines 82:4-112:5
-    Visibility: public -/
-def
-  record_example.RecordParser.Insts.RusthammerParser_traitsEvalInputBackendRecord.eval
-  {Backend : Type} (self : record_example.RecordParser) (backend : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome record_example.Record) × Backend)
-  := do
-  let (po, backend1) ←
-    grammar.bytes.TakeAligned.Insts.RusthammerParser_traitsEvalInputBackendSharedSliceU8.eval
-      { count := 0#usize } backend input cursor context
-  match po with
-  | input_types.ParseOutcome.Success _ _ =>
-    let header ←
-      record_example.record_header self.version self.flags self.length
-    let (po1, backend2) ←
-      grammar.transform.Verify.Insts.RusthammerParser_traitsEval.eval
-        (grammar.sequence.Seq.Insts.RusthammerParser_traitsEvalInputBackendPair
-        (grammar.numeric.Bits.Insts.RusthammerParser_traitsEvalInputBackendU64
-        Backend)
-        (grammar.sequence.Seq.Insts.RusthammerParser_traitsEvalInputBackendPair
-        (grammar.numeric.Bits.Insts.RusthammerParser_traitsEvalInputBackendU64
-        Backend)
-        (grammar.numeric.Bits.Insts.RusthammerParser_traitsEvalInputBackendU64
-        Backend)))
-        record_example.record_header.closure.Insts.CoreOpsFunctionFnTupleShared0PairU64PairU64U64Bool
-        header backend1 input cursor context
-    match po1 with
-    | input_types.ParseOutcome.Success next p =>
-      let (version, (flags, length)) := p
-      let i ← lift (UScalar.cast .Usize length)
-      record_example.parse_record_body backend2 input next version flags i
-        context
-    | input_types.ParseOutcome.Error error =>
-      ok (input_types.ParseOutcome.Error error, backend2)
-    | input_types.ParseOutcome.NeedMore =>
-      ok (input_types.ParseOutcome.NeedMore, backend2)
-  | input_types.ParseOutcome.Error error =>
-    ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
-
-/-- Trait implementation: [rusthammer::record_example::{impl rusthammer::parser_traits::Eval<'input, Backend, rusthammer::record_example::Record<'_>> for rusthammer::record_example::RecordParser}]
-    Source: 'src/../examples/support/record.rs', lines 81:0-113:1 -/
-@[reducible]
-def
-  record_example.RecordParser.Insts.RusthammerParser_traitsEvalInputBackendRecord
-  (Backend : Type) : parser_traits.Eval record_example.RecordParser Backend
-  record_example.Record := {
-  GrammarInst :=
-    record_example.RecordParser.Insts.RusthammerParser_traitsGrammarInputRecord
-  eval :=
-    record_example.RecordParser.Insts.RusthammerParser_traitsEvalInputBackendRecord.eval
-}
-
-/-- [rusthammer::record_example::parse_record]:
-    Source: 'src/../examples/support/record.rs', lines 143:0-149:1
-    Visibility: public -/
-def record_example.parse_record
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (parser : record_example.RecordParser) :
-  Result (core.result.Result (input_types.Cursor × record_example.Record)
-    input_types.ParseError)
-  := do
-  parser_traits.Parser.parse.default (parser_traits.Parser.Blanket
-    (record_example.RecordParser.Insts.RusthammerParser_traitsEvalInputBackendRecord
-    parser_traits.Direct)) parser input cursor
-
-/-- [rusthammer::grammar::bytes::{impl core::clone::Clone for rusthammer::grammar::bytes::ByteSet}::clone]:
-    Source: 'src/grammar/bytes.rs', lines 4:9-4:14
-    Visibility: public -/
-def grammar.bytes.ByteSet.Insts.CoreCloneClone.clone
-  (self : grammar.bytes.ByteSet) : Result grammar.bytes.ByteSet := do
-  ok self
-
-/-- Trait implementation: [rusthammer::grammar::bytes::{impl core::clone::Clone for rusthammer::grammar::bytes::ByteSet}]
-    Source: 'src/grammar/bytes.rs', lines 4:9-4:14 -/
-@[reducible]
-def grammar.bytes.ByteSet.Insts.CoreCloneClone : core.clone.Clone
-  grammar.bytes.ByteSet := {
-  clone := grammar.bytes.ByteSet.Insts.CoreCloneClone.clone
-}
-
-/-- [rusthammer::grammar::bytes::{impl core::clone::Clone for rusthammer::grammar::bytes::ByteIn}::clone]:
-    Source: 'src/grammar/bytes.rs', lines 52:9-52:14
-    Visibility: public -/
-def grammar.bytes.ByteIn.Insts.CoreCloneClone.clone
-  (self : grammar.bytes.ByteIn) : Result grammar.bytes.ByteIn := do
-  ok self
-
-/-- Trait implementation: [rusthammer::grammar::bytes::{impl core::clone::Clone for rusthammer::grammar::bytes::ByteIn}]
-    Source: 'src/grammar/bytes.rs', lines 52:9-52:14 -/
-@[reducible]
-def grammar.bytes.ByteIn.Insts.CoreCloneClone : core.clone.Clone
-  grammar.bytes.ByteIn := {
-  clone := grammar.bytes.ByteIn.Insts.CoreCloneClone.clone
-}
-
-/-- [rusthammer::grammar::bytes::{impl core::clone::Clone for rusthammer::grammar::bytes::ByteNotIn}::clone]:
-    Source: 'src/grammar/bytes.rs', lines 114:9-114:14
-    Visibility: public -/
-def grammar.bytes.ByteNotIn.Insts.CoreCloneClone.clone
-  (self : grammar.bytes.ByteNotIn) : Result grammar.bytes.ByteNotIn := do
-  ok self
-
-/-- Trait implementation: [rusthammer::grammar::bytes::{impl core::clone::Clone for rusthammer::grammar::bytes::ByteNotIn}]
-    Source: 'src/grammar/bytes.rs', lines 114:9-114:14 -/
-@[reducible]
-def grammar.bytes.ByteNotIn.Insts.CoreCloneClone : core.clone.Clone
-  grammar.bytes.ByteNotIn := {
-  clone := grammar.bytes.ByteNotIn.Insts.CoreCloneClone.clone
-}
-
-/-- [rusthammer::grammar::bytes::BytePattern]
-    Source: 'src/grammar/bytes.rs', lines 175:0-177:1
-    Visibility: public -/
-structure grammar.bytes.BytePattern where
-  pattern : Slice Std.U8
-
-/-- [rusthammer::grammar::bytes::{impl core::clone::Clone for rusthammer::grammar::bytes::BytePattern<'pattern>}::clone]:
-    Source: 'src/grammar/bytes.rs', lines 174:9-174:14
-    Visibility: public -/
-def grammar.bytes.BytePattern.Insts.CoreCloneClone.clone
-  (self : grammar.bytes.BytePattern) : Result grammar.bytes.BytePattern := do
-  ok self
-
-/-- Trait implementation: [rusthammer::grammar::bytes::{impl core::clone::Clone for rusthammer::grammar::bytes::BytePattern<'pattern>}]
-    Source: 'src/grammar/bytes.rs', lines 174:9-174:14 -/
-@[reducible]
-def grammar.bytes.BytePattern.Insts.CoreCloneClone : core.clone.Clone
-  grammar.bytes.BytePattern := {
-  clone := grammar.bytes.BytePattern.Insts.CoreCloneClone.clone
-}
-
-/-- [rusthammer::grammar::bytes::{rusthammer::grammar::bytes::BytePattern<'pattern>}::new]:
-    Source: 'src/grammar/bytes.rs', lines 181:4-183:5
-    Visibility: public -/
-def grammar.bytes.BytePattern.new
-  (pattern : Slice Std.U8) : Result grammar.bytes.BytePattern := do
-  ok { pattern }
-
-/-- [rusthammer::grammar::bytes::{rusthammer::grammar::bytes::BytePattern<'pattern>}::pattern]:
-    Source: 'src/grammar/bytes.rs', lines 186:4-188:5
-    Visibility: public -/
-def grammar.bytes.BytePattern.impl.pattern
-  (self : grammar.bytes.BytePattern) : Result (Slice Std.U8) := do
-  ok self.pattern
-
-/-- Trait implementation: [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Grammar<'input, &'pattern [u8]> for rusthammer::grammar::bytes::BytePattern<'pattern>}]
-    Source: 'src/grammar/bytes.rs', lines 191:0-193:1 -/
-@[reducible]
-def
-  grammar.bytes.BytePattern.Insts.RusthammerParser_traitsGrammarInputSharedPatternSliceU8
-  : parser_traits.Grammar grammar.bytes.BytePattern (Slice Std.U8) := {
-}
-
-/-- [rusthammer::grammar::bytes::match_byte_pattern]: loop body 0:
-    Source: 'src/grammar/bytes.rs', lines 223:4-237:1 -/
-@[rust_loop_body]
-def grammar.bytes.match_byte_pattern_loop.body
-  {Backend : Type} (pattern : Slice Std.U8) (input : Slice Std.U8)
-  (context : input_types.ParseContext) (backend : Backend)
-  (next : input_types.Cursor) (index : Std.Usize) :
-  Result (ControlFlow (Backend × input_types.Cursor × Std.Usize)
-    ((input_types.ParseOutcome Unit) × Backend))
-  := do
-  let i := Slice.len pattern
-  if index < i
-  then
-    let (po, backend1) ←
-      grammar.numeric.Byte.Insts.RusthammerParser_traitsEvalInputBackendU8.eval
-        () backend input next context
-    match po with
-    | input_types.ParseOutcome.Success after value =>
-      let i1 ← Slice.index_usize pattern index
-      if value != i1
-      then
-        ok (done (input_types.ParseOutcome.Error
-          input_types.ParseError.Mismatch, backend1))
-      else let index1 ← index + 1#usize
-           ok (cont (backend1, after, index1))
-    | input_types.ParseOutcome.Error error =>
-      ok (done (input_types.ParseOutcome.Error error, backend1))
-    | input_types.ParseOutcome.NeedMore =>
-      ok (done (input_types.ParseOutcome.NeedMore, backend1))
-  else ok (done (input_types.ParseOutcome.Success next (), backend))
-
-/-- [rusthammer::grammar::bytes::match_byte_pattern]: loop 0:
-    Source: 'src/grammar/bytes.rs', lines 223:4-237:1 -/
-@[rust_loop]
-def grammar.bytes.match_byte_pattern_loop
-  {Backend : Type} (backend : Backend) (pattern : Slice Std.U8)
-  (input : Slice Std.U8) (context : input_types.ParseContext)
-  (next : input_types.Cursor) (index : Std.Usize) :
-  Result ((input_types.ParseOutcome Unit) × Backend)
-  := do
-  loop
-    (fun (backend1, next1, index1) =>
-      grammar.bytes.match_byte_pattern_loop.body pattern input context backend1
-      next1 index1)
-    (backend, next, index)
-
-/-- [rusthammer::grammar::bytes::match_byte_pattern]:
-    Source: 'src/grammar/bytes.rs', lines 214:0-237:1 -/
-@[reducible]
-def grammar.bytes.match_byte_pattern
-  {Backend : Type} (backend : Backend) (pattern : Slice Std.U8)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Unit) × Backend)
-  := do
-  grammar.bytes.match_byte_pattern_loop backend pattern input context cursor
-    0#usize
-
-/-- [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, &'_ [u8]> for rusthammer::grammar::bytes::BytePattern<'pattern>}::eval]:
-    Source: 'src/grammar/bytes.rs', lines 196:4-211:5
-    Visibility: public -/
-def
-  grammar.bytes.BytePattern.Insts.RusthammerParser_traitsEvalInputBackendSharedSliceU8.eval
-  {Backend : Type} (self : grammar.bytes.BytePattern) (backend : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome (Slice Std.U8)) × Backend)
-  := do
-  let (po, backend1) ←
-    grammar.bytes.match_byte_pattern backend self.pattern input cursor context
-  match po with
-  | input_types.ParseOutcome.Success next _ =>
-    ok (input_types.ParseOutcome.Success next self.pattern, backend1)
-  | input_types.ParseOutcome.Error error =>
-    ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
-
-/-- Trait implementation: [rusthammer::grammar::bytes::{impl rusthammer::parser_traits::Eval<'input, Backend, &'_ [u8]> for rusthammer::grammar::bytes::BytePattern<'pattern>}]
-    Source: 'src/grammar/bytes.rs', lines 195:0-212:1 -/
-@[reducible]
-def
-  grammar.bytes.BytePattern.Insts.RusthammerParser_traitsEvalInputBackendSharedSliceU8
-  (Backend : Type) : parser_traits.Eval grammar.bytes.BytePattern Backend
-  (Slice Std.U8) := {
-  GrammarInst :=
-    grammar.bytes.BytePattern.Insts.RusthammerParser_traitsGrammarInputSharedPatternSliceU8
-  eval :=
-    grammar.bytes.BytePattern.Insts.RusthammerParser_traitsEvalInputBackendSharedSliceU8.eval
-}
-
-/-- [rusthammer::grammar::bytes::{impl core::clone::Clone for rusthammer::grammar::bytes::TakeAligned}::clone]:
-    Source: 'src/grammar/bytes.rs', lines 243:9-243:14
-    Visibility: public -/
-def grammar.bytes.TakeAligned.Insts.CoreCloneClone.clone
-  (self : grammar.bytes.TakeAligned) : Result grammar.bytes.TakeAligned := do
-  ok self
-
-/-- Trait implementation: [rusthammer::grammar::bytes::{impl core::clone::Clone for rusthammer::grammar::bytes::TakeAligned}]
-    Source: 'src/grammar/bytes.rs', lines 243:9-243:14 -/
-@[reducible]
-def grammar.bytes.TakeAligned.Insts.CoreCloneClone : core.clone.Clone
-  grammar.bytes.TakeAligned := {
-  clone := grammar.bytes.TakeAligned.Insts.CoreCloneClone.clone
-}
-
-/-- [rusthammer::grammar::control::Epsilon]
-    Source: 'src/grammar/control.rs', lines 9:0-9:19
-    Visibility: public -/
-@[reducible]
-def grammar.control.Epsilon := Unit
-
-/-- [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Epsilon}::clone]:
-    Source: 'src/grammar/control.rs', lines 8:9-8:14
-    Visibility: public -/
-def grammar.control.Epsilon.Insts.CoreCloneClone.clone
-  (self : grammar.control.Epsilon) : Result grammar.control.Epsilon := do
-  ok self
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Epsilon}]
-    Source: 'src/grammar/control.rs', lines 8:9-8:14 -/
-@[reducible]
-def grammar.control.Epsilon.Insts.CoreCloneClone : core.clone.Clone
-  grammar.control.Epsilon := {
-  clone := grammar.control.Epsilon.Insts.CoreCloneClone.clone
-}
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Grammar<'input, ()> for rusthammer::grammar::control::Epsilon}]
-    Source: 'src/grammar/control.rs', lines 11:0-13:1 -/
-@[reducible]
-def grammar.control.Epsilon.Insts.RusthammerParser_traitsGrammarInputTuple :
-  parser_traits.Grammar grammar.control.Epsilon Unit := {
-}
-
-/-- [rusthammer::grammar::control::{impl rusthammer::parser_traits::Eval<'input, Backend, ()> for rusthammer::grammar::control::Epsilon}::eval]:
-    Source: 'src/grammar/control.rs', lines 16:4-24:5
-    Visibility: public -/
-def
-  grammar.control.Epsilon.Insts.RusthammerParser_traitsEvalInputBackendTuple.eval
-  {Backend : Type} (self : grammar.control.Epsilon) (t : Backend)
-  (s : Slice Std.U8) (cursor : input_types.Cursor)
-  (pc : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Unit) × Backend)
-  := do
-  ok (input_types.ParseOutcome.Success cursor (), t)
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Eval<'input, Backend, ()> for rusthammer::grammar::control::Epsilon}]
-    Source: 'src/grammar/control.rs', lines 15:0-25:1 -/
-@[reducible]
-def grammar.control.Epsilon.Insts.RusthammerParser_traitsEvalInputBackendTuple
-  (Backend : Type) : parser_traits.Eval grammar.control.Epsilon Backend Unit
-  := {
-  GrammarInst :=
-    grammar.control.Epsilon.Insts.RusthammerParser_traitsGrammarInputTuple
-  eval :=
-    grammar.control.Epsilon.Insts.RusthammerParser_traitsEvalInputBackendTuple.eval
-}
-
-/-- [rusthammer::grammar::control::Fail]
-    Source: 'src/grammar/control.rs', lines 30:0-32:1
-    Visibility: public -/
-structure grammar.control.Fail (T : Type) where
-  output : core.marker.PhantomData T
-
-/-- [rusthammer::grammar::control::{rusthammer::grammar::control::Fail<T>}::new]:
-    Source: 'src/grammar/control.rs', lines 36:4-40:5
-    Visibility: public -/
-def grammar.control.Fail.new (T : Type) : Result (grammar.control.Fail T) := do
-  ok { output := () }
-
-/-- [rusthammer::grammar::control::{impl core::default::Default for rusthammer::grammar::control::Fail<T>}::default]:
-    Source: 'src/grammar/control.rs', lines 44:4-46:5
-    Visibility: public -/
-def grammar.control.Fail.Insts.CoreDefaultDefault.default
-  (T : Type) : Result (grammar.control.Fail T) := do
-  grammar.control.Fail.new T
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl core::default::Default for rusthammer::grammar::control::Fail<T>}]
-    Source: 'src/grammar/control.rs', lines 43:0-47:1 -/
-@[reducible]
-def grammar.control.Fail.Insts.CoreDefaultDefault (T : Type) :
-  core.default.Default (grammar.control.Fail T) := {
-  default := grammar.control.Fail.Insts.CoreDefaultDefault.default T
-}
-
-/-- [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Fail<T>}::clone]:
-    Source: 'src/grammar/control.rs', lines 52:4-54:5
-    Visibility: public -/
-def grammar.control.Fail.Insts.CoreCloneClone.clone
-  {T : Type} (self : grammar.control.Fail T) :
-  Result (grammar.control.Fail T)
-  := do
-  ok self
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Fail<T>}]
-    Source: 'src/grammar/control.rs', lines 51:0-55:1 -/
-@[reducible]
-def grammar.control.Fail.Insts.CoreCloneClone (T : Type) : core.clone.Clone
-  (grammar.control.Fail T) := {
-  clone := grammar.control.Fail.Insts.CoreCloneClone.clone
-}
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Grammar<'input, T> for rusthammer::grammar::control::Fail<T>}]
-    Source: 'src/grammar/control.rs', lines 57:0-59:1 -/
-@[reducible]
-def grammar.control.Fail.Insts.RusthammerParser_traitsGrammar (T : Type) :
-  parser_traits.Grammar (grammar.control.Fail T) T := {
-}
-
-/-- [rusthammer::grammar::control::{impl rusthammer::parser_traits::Eval<'input, Backend, T> for rusthammer::grammar::control::Fail<T>}::eval]:
-    Source: 'src/grammar/control.rs', lines 62:4-70:5
-    Visibility: public -/
-def grammar.control.Fail.Insts.RusthammerParser_traitsEval.eval
-  {Backend : Type} {T : Type} (self : grammar.control.Fail T) (t : Backend)
-  (s : Slice Std.U8) (c : input_types.Cursor) (pc : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome T) × Backend)
-  := do
-  ok (input_types.ParseOutcome.Error input_types.ParseError.Mismatch, t)
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Eval<'input, Backend, T> for rusthammer::grammar::control::Fail<T>}]
-    Source: 'src/grammar/control.rs', lines 61:0-71:1 -/
-@[reducible]
-def grammar.control.Fail.Insts.RusthammerParser_traitsEval (Backend : Type) (T
-  : Type) : parser_traits.Eval (grammar.control.Fail T) Backend T := {
-  GrammarInst := grammar.control.Fail.Insts.RusthammerParser_traitsGrammar T
-  eval := grammar.control.Fail.Insts.RusthammerParser_traitsEval.eval
-}
-
-/-- [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Choice<P, Q>}::clone]:
-    Source: 'src/grammar/control.rs', lines 80:9-80:14
-    Visibility: public -/
-def grammar.control.Choice.Insts.CoreCloneClone.clone
-  {P : Type} {Q : Type} (corecloneCloneInst : core.clone.Clone P)
-  (corecloneCloneInst1 : core.clone.Clone Q)
-  (self : grammar.control.Choice P Q) :
-  Result (grammar.control.Choice P Q)
-  := do
-  let t ← corecloneCloneInst.clone self.first
-  let t1 ← corecloneCloneInst1.clone self.second
-  ok { first := t, second := t1 }
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Choice<P, Q>}]
-    Source: 'src/grammar/control.rs', lines 80:9-80:14 -/
-@[reducible]
-def grammar.control.Choice.Insts.CoreCloneClone {P : Type} {Q : Type}
-  (corecloneCloneInst : core.clone.Clone P) (corecloneCloneInst1 :
-  core.clone.Clone Q) : core.clone.Clone (grammar.control.Choice P Q) := {
-  clone := grammar.control.Choice.Insts.CoreCloneClone.clone corecloneCloneInst
-    corecloneCloneInst1
-}
-
-/-- [rusthammer::grammar::control::choice]:
-    Source: 'src/grammar/control.rs', lines 102:0-108:1
-    Visibility: public -/
-def grammar.control.choice
-  {P : Type} {Q : Type} {Clause0_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause0_Output) (first : P) (second : Q) :
-  Result (grammar.control.Choice P Q)
-  := do
-  ok { first, second }
-
-/-- [rusthammer::grammar::control::match_length_allows]:
-    Source: 'src/grammar/control.rs', lines 147:0-151:1 -/
-def grammar.control.match_length_allows
-  (first : input_types.Cursor) (second : input_types.Cursor)
-  (allow_equal : Bool) :
-  Result Bool
-  := do
-  if first.byte > second.byte
-  then ok true
-  else
-    if first.byte = second.byte
-    then
-      if first.bit > second.bit
-      then ok true
-      else if allow_equal
-           then ok (first.bit = second.bit)
-           else ok false
-    else ok false
-
-/-- [rusthammer::grammar::control::restrict_match]:
-    Source: 'src/grammar/control.rs', lines 153:0-187:1 -/
-def grammar.control.restrict_match
-  {Backend : Type} {P : Type} {Q : Type} {Clause0_Clause0_Output : Type}
-  {Clause1_Clause0_Output : Type} (parser_traitsEvalInst : parser_traits.Eval P
-  Backend Clause0_Clause0_Output) (parser_traitsEvalInst1 : parser_traits.Eval
-  Q Backend Clause1_Clause0_Output) (backend : Backend) (first : P)
-  (second : Q) (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) (allow_equal : Bool) :
-  Result ((input_types.ParseOutcome Clause0_Clause0_Output) × Backend)
-  := do
-  let (po, backend1) ←
-    parser_traitsEvalInst.eval first backend input cursor context
-  match po with
-  | input_types.ParseOutcome.Success next _ =>
-    let (po1, backend2) ←
-      parser_traitsEvalInst1.eval second backend1 input cursor context
-    match po1 with
-    | input_types.ParseOutcome.Success other _ =>
-      let b ← grammar.control.match_length_allows next other allow_equal
-      if b
-      then ok (po, backend2)
-      else
-        ok (input_types.ParseOutcome.Error input_types.ParseError.Mismatch,
-          backend2)
-    | input_types.ParseOutcome.Error error =>
-      let b ← input_types.ParseError.is_recoverable error
-      if b
-      then ok (po, backend2)
-      else ok (input_types.ParseOutcome.Error error, backend2)
-    | input_types.ParseOutcome.NeedMore =>
-      ok (input_types.ParseOutcome.NeedMore, backend2)
-  | input_types.ParseOutcome.Error _ => ok (po, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
-
-/-- [rusthammer::grammar::control::ButNot]
-    Source: 'src/grammar/control.rs', lines 216:0-219:1
-    Visibility: public -/
-structure grammar.control.ButNot (P : Type) (Q : Type) where
-  first : P
-  second : Q
-
-/-- [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::ButNot<P, Q>}::clone]:
-    Source: 'src/grammar/control.rs', lines 215:9-215:14
-    Visibility: public -/
-def grammar.control.ButNot.Insts.CoreCloneClone.clone
-  {P : Type} {Q : Type} (corecloneCloneInst : core.clone.Clone P)
-  (corecloneCloneInst1 : core.clone.Clone Q)
-  (self : grammar.control.ButNot P Q) :
-  Result (grammar.control.ButNot P Q)
-  := do
-  let t ← corecloneCloneInst.clone self.first
-  let t1 ← corecloneCloneInst1.clone self.second
-  ok { first := t, second := t1 }
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::ButNot<P, Q>}]
-    Source: 'src/grammar/control.rs', lines 215:9-215:14 -/
-@[reducible]
-def grammar.control.ButNot.Insts.CoreCloneClone {P : Type} {Q : Type}
-  (corecloneCloneInst : core.clone.Clone P) (corecloneCloneInst1 :
-  core.clone.Clone Q) : core.clone.Clone (grammar.control.ButNot P Q) := {
-  clone := grammar.control.ButNot.Insts.CoreCloneClone.clone corecloneCloneInst
-    corecloneCloneInst1
-}
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Grammar<'input, Clause0_Output> for rusthammer::grammar::control::ButNot<P, Q>}]
-    Source: 'src/grammar/control.rs', lines 221:0-227:1 -/
-@[reducible]
-def grammar.control.ButNot.Insts.RusthammerParser_traitsGrammar {P : Type} {Q :
-  Type} {Clause0_Output : Type} {Clause1_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
-  (parser_traitsGrammarInst1 : parser_traits.Grammar Q Clause1_Output) :
-  parser_traits.Grammar (grammar.control.ButNot P Q) Clause0_Output := {
-}
-
-/-- [rusthammer::grammar::control::{impl rusthammer::parser_traits::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::grammar::control::ButNot<P, Q>}::eval]:
-    Source: 'src/grammar/control.rs', lines 234:4-250:5
-    Visibility: public -/
-def grammar.control.ButNot.Insts.RusthammerParser_traitsEval.eval
-  {Backend : Type} {P : Type} {Q : Type} {Clause0_Clause0_Output : Type}
-  {Clause1_Clause0_Output : Type} (parser_traitsEvalInst : parser_traits.Eval P
-  Backend Clause0_Clause0_Output) (parser_traitsEvalInst1 : parser_traits.Eval
-  Q Backend Clause1_Clause0_Output) (self : grammar.control.ButNot P Q)
-  (backend : Backend) (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Clause0_Clause0_Output) × Backend)
-  := do
-  grammar.control.restrict_match parser_traitsEvalInst parser_traitsEvalInst1
-    backend self.first self.second input cursor context false
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::grammar::control::ButNot<P, Q>}]
-    Source: 'src/grammar/control.rs', lines 229:0-251:1 -/
-@[reducible]
-def grammar.control.ButNot.Insts.RusthammerParser_traitsEval {Backend : Type}
-  {P : Type} {Q : Type} {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output
-  : Type} (parser_traitsEvalInst : parser_traits.Eval P Backend
-  Clause0_Clause0_Output) (parser_traitsEvalInst1 : parser_traits.Eval Q
-  Backend Clause1_Clause0_Output) : parser_traits.Eval (grammar.control.ButNot
-  P Q) Backend Clause0_Clause0_Output := {
-  GrammarInst := grammar.control.ButNot.Insts.RusthammerParser_traitsGrammar
-    parser_traitsEvalInst.GrammarInst parser_traitsEvalInst1.GrammarInst
-  eval := grammar.control.ButNot.Insts.RusthammerParser_traitsEval.eval
-    parser_traitsEvalInst parser_traitsEvalInst1
-}
-
-/-- [rusthammer::grammar::control::Difference]
-    Source: 'src/grammar/control.rs', lines 260:0-263:1
-    Visibility: public -/
-structure grammar.control.Difference (P : Type) (Q : Type) where
-  first : P
-  second : Q
-
-/-- [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Difference<P, Q>}::clone]:
-    Source: 'src/grammar/control.rs', lines 259:9-259:14
-    Visibility: public -/
-def grammar.control.Difference.Insts.CoreCloneClone.clone
-  {P : Type} {Q : Type} (corecloneCloneInst : core.clone.Clone P)
-  (corecloneCloneInst1 : core.clone.Clone Q)
-  (self : grammar.control.Difference P Q) :
-  Result (grammar.control.Difference P Q)
-  := do
-  let t ← corecloneCloneInst.clone self.first
-  let t1 ← corecloneCloneInst1.clone self.second
-  ok { first := t, second := t1 }
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Difference<P, Q>}]
-    Source: 'src/grammar/control.rs', lines 259:9-259:14 -/
-@[reducible]
-def grammar.control.Difference.Insts.CoreCloneClone {P : Type} {Q : Type}
-  (corecloneCloneInst : core.clone.Clone P) (corecloneCloneInst1 :
-  core.clone.Clone Q) : core.clone.Clone (grammar.control.Difference P Q) := {
-  clone := grammar.control.Difference.Insts.CoreCloneClone.clone
-    corecloneCloneInst corecloneCloneInst1
-}
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Grammar<'input, Clause0_Output> for rusthammer::grammar::control::Difference<P, Q>}]
-    Source: 'src/grammar/control.rs', lines 265:0-271:1 -/
-@[reducible]
-def grammar.control.Difference.Insts.RusthammerParser_traitsGrammar {P : Type}
-  {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
-  (parser_traitsGrammarInst1 : parser_traits.Grammar Q Clause1_Output) :
-  parser_traits.Grammar (grammar.control.Difference P Q) Clause0_Output := {
-}
-
-/-- [rusthammer::grammar::control::{impl rusthammer::parser_traits::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::grammar::control::Difference<P, Q>}::eval]:
-    Source: 'src/grammar/control.rs', lines 278:4-294:5
-    Visibility: public -/
-def grammar.control.Difference.Insts.RusthammerParser_traitsEval.eval
-  {Backend : Type} {P : Type} {Q : Type} {Clause0_Clause0_Output : Type}
-  {Clause1_Clause0_Output : Type} (parser_traitsEvalInst : parser_traits.Eval P
-  Backend Clause0_Clause0_Output) (parser_traitsEvalInst1 : parser_traits.Eval
-  Q Backend Clause1_Clause0_Output) (self : grammar.control.Difference P Q)
-  (backend : Backend) (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Clause0_Clause0_Output) × Backend)
-  := do
-  grammar.control.restrict_match parser_traitsEvalInst parser_traitsEvalInst1
-    backend self.first self.second input cursor context true
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::grammar::control::Difference<P, Q>}]
-    Source: 'src/grammar/control.rs', lines 273:0-295:1 -/
-@[reducible]
-def grammar.control.Difference.Insts.RusthammerParser_traitsEval {Backend :
-  Type} {P : Type} {Q : Type} {Clause0_Clause0_Output : Type}
-  {Clause1_Clause0_Output : Type} (parser_traitsEvalInst : parser_traits.Eval P
-  Backend Clause0_Clause0_Output) (parser_traitsEvalInst1 : parser_traits.Eval
-  Q Backend Clause1_Clause0_Output) : parser_traits.Eval
-  (grammar.control.Difference P Q) Backend Clause0_Clause0_Output := {
-  GrammarInst :=
-    grammar.control.Difference.Insts.RusthammerParser_traitsGrammar
-    parser_traitsEvalInst.GrammarInst parser_traitsEvalInst1.GrammarInst
-  eval := grammar.control.Difference.Insts.RusthammerParser_traitsEval.eval
-    parser_traitsEvalInst parser_traitsEvalInst1
-}
-
-/-- [rusthammer::grammar::control::Xor]
-    Source: 'src/grammar/control.rs', lines 316:0-319:1
-    Visibility: public -/
-structure grammar.control.Xor (P : Type) (Q : Type) where
-  first : P
-  second : Q
-
-/-- [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Xor<P, Q>}::clone]:
-    Source: 'src/grammar/control.rs', lines 315:9-315:14
-    Visibility: public -/
-def grammar.control.Xor.Insts.CoreCloneClone.clone
-  {P : Type} {Q : Type} (corecloneCloneInst : core.clone.Clone P)
-  (corecloneCloneInst1 : core.clone.Clone Q) (self : grammar.control.Xor P Q) :
-  Result (grammar.control.Xor P Q)
-  := do
-  let t ← corecloneCloneInst.clone self.first
-  let t1 ← corecloneCloneInst1.clone self.second
-  ok { first := t, second := t1 }
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Xor<P, Q>}]
-    Source: 'src/grammar/control.rs', lines 315:9-315:14 -/
-@[reducible]
-def grammar.control.Xor.Insts.CoreCloneClone {P : Type} {Q : Type}
-  (corecloneCloneInst : core.clone.Clone P) (corecloneCloneInst1 :
-  core.clone.Clone Q) : core.clone.Clone (grammar.control.Xor P Q) := {
-  clone := grammar.control.Xor.Insts.CoreCloneClone.clone corecloneCloneInst
-    corecloneCloneInst1
-}
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Grammar<'input, Clause0_Output> for rusthammer::grammar::control::Xor<P, Q>}]
-    Source: 'src/grammar/control.rs', lines 321:0-327:1 -/
-@[reducible]
-def grammar.control.Xor.Insts.RusthammerParser_traitsGrammar {P : Type} {Q :
-  Type} {Clause0_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause0_Output) : parser_traits.Grammar
-  (grammar.control.Xor P Q) Clause0_Output := {
-}
-
-/-- [rusthammer::grammar::control::{impl rusthammer::parser_traits::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::grammar::control::Xor<P, Q>}::eval]:
-    Source: 'src/grammar/control.rs', lines 334:4-366:5
-    Visibility: public -/
-def grammar.control.Xor.Insts.RusthammerParser_traitsEval.eval
-  {Backend : Type} {P : Type} {Q : Type} {Clause0_Clause0_Output : Type}
-  (parser_traitsEvalInst : parser_traits.Eval P Backend Clause0_Clause0_Output)
-  (parser_traitsEvalInst1 : parser_traits.Eval Q Backend
-  Clause0_Clause0_Output) (self : grammar.control.Xor P Q) (backend : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Clause0_Clause0_Output) × Backend)
-  := do
-  let (po, backend1) ←
-    parser_traitsEvalInst.eval self.first backend input cursor context
-  match po with
-  | input_types.ParseOutcome.Success _ _ =>
-    let (po1, backend2) ←
-      parser_traitsEvalInst1.eval self.second backend1 input cursor context
-    match po1 with
-    | input_types.ParseOutcome.Success _ _ =>
-      ok (input_types.ParseOutcome.Error input_types.ParseError.Mismatch,
-        backend2)
-    | input_types.ParseOutcome.Error error =>
-      let b ← input_types.ParseError.is_recoverable error
-      if b
-      then ok (po, backend2)
-      else ok (po1, backend2)
-    | input_types.ParseOutcome.NeedMore =>
-      ok (input_types.ParseOutcome.NeedMore, backend2)
-  | input_types.ParseOutcome.Error error =>
-    let b ← input_types.ParseError.is_recoverable error
-    if b
-    then parser_traitsEvalInst1.eval self.second backend1 input cursor context
-    else ok (po, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::grammar::control::Xor<P, Q>}]
-    Source: 'src/grammar/control.rs', lines 329:0-367:1 -/
-@[reducible]
-def grammar.control.Xor.Insts.RusthammerParser_traitsEval {Backend : Type} {P :
-  Type} {Q : Type} {Clause0_Clause0_Output : Type} (parser_traitsEvalInst :
-  parser_traits.Eval P Backend Clause0_Clause0_Output) (parser_traitsEvalInst1
-  : parser_traits.Eval Q Backend Clause0_Clause0_Output) : parser_traits.Eval
-  (grammar.control.Xor P Q) Backend Clause0_Clause0_Output := {
-  GrammarInst := grammar.control.Xor.Insts.RusthammerParser_traitsGrammar
-    parser_traitsEvalInst.GrammarInst parser_traitsEvalInst1.GrammarInst
-  eval := grammar.control.Xor.Insts.RusthammerParser_traitsEval.eval
-    parser_traitsEvalInst parser_traitsEvalInst1
-}
-
-/-- [rusthammer::grammar::control::Optional]
-    Source: 'src/grammar/control.rs', lines 376:0-378:1
-    Visibility: public -/
-structure grammar.control.Optional (P : Type) where
-  parser : P
-
-/-- [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Optional<P>}::clone]:
-    Source: 'src/grammar/control.rs', lines 375:9-375:14
-    Visibility: public -/
-def grammar.control.Optional.Insts.CoreCloneClone.clone
-  {P : Type} (corecloneCloneInst : core.clone.Clone P)
-  (self : grammar.control.Optional P) :
-  Result (grammar.control.Optional P)
-  := do
-  let t ← corecloneCloneInst.clone self.parser
-  ok { parser := t }
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Optional<P>}]
-    Source: 'src/grammar/control.rs', lines 375:9-375:14 -/
-@[reducible]
-def grammar.control.Optional.Insts.CoreCloneClone {P : Type}
-  (corecloneCloneInst : core.clone.Clone P) : core.clone.Clone
-  (grammar.control.Optional P) := {
-  clone := grammar.control.Optional.Insts.CoreCloneClone.clone
-    corecloneCloneInst
-}
-
-/-- [rusthammer::grammar::control::optional]:
-    Source: 'src/grammar/control.rs', lines 388:0-390:1
-    Visibility: public -/
-def grammar.control.optional
-  {P : Type} (parser : P) : Result (grammar.control.Optional P) := do
-  ok { parser }
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Grammar<'input, core::option::Option<Clause0_Output>> for rusthammer::grammar::control::Optional<P>}]
-    Source: 'src/grammar/control.rs', lines 392:0-394:1 -/
-@[reducible]
-def grammar.control.Optional.Insts.RusthammerParser_traitsGrammarInputOption {P
-  : Type} {Clause0_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) : parser_traits.Grammar
-  (grammar.control.Optional P) (Option Clause0_Output) := {
-}
-
-/-- [rusthammer::grammar::control::{impl rusthammer::parser_traits::Eval<'input, Backend, core::option::Option<Clause0_Clause0_Output>> for rusthammer::grammar::control::Optional<P>}::eval]:
-    Source: 'src/grammar/control.rs', lines 397:4-415:5
-    Visibility: public -/
-def
-  grammar.control.Optional.Insts.RusthammerParser_traitsEvalInputBackendOption.eval
-  {Backend : Type} {P : Type} {Clause0_Clause0_Output : Type}
-  (parser_traitsEvalInst : parser_traits.Eval P Backend Clause0_Clause0_Output)
-  (self : grammar.control.Optional P) (backend : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome (Option Clause0_Clause0_Output)) × Backend)
-  := do
-  let (po, backend1) ←
-    parser_traitsEvalInst.eval self.parser backend input cursor context
-  match po with
-  | input_types.ParseOutcome.Success next value =>
-    ok (input_types.ParseOutcome.Success next (some value), backend1)
-  | input_types.ParseOutcome.Error error =>
-    let b ← input_types.ParseError.is_recoverable error
-    if b
-    then ok (input_types.ParseOutcome.Success cursor none, backend1)
-    else ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Eval<'input, Backend, core::option::Option<Clause0_Clause0_Output>> for rusthammer::grammar::control::Optional<P>}]
-    Source: 'src/grammar/control.rs', lines 396:0-416:1 -/
-@[reducible]
-def
-  grammar.control.Optional.Insts.RusthammerParser_traitsEvalInputBackendOption
-  {Backend : Type} {P : Type} {Clause0_Clause0_Output : Type}
-  (parser_traitsEvalInst : parser_traits.Eval P Backend Clause0_Clause0_Output)
-  : parser_traits.Eval (grammar.control.Optional P) Backend (Option
-  Clause0_Clause0_Output) := {
-  GrammarInst :=
-    grammar.control.Optional.Insts.RusthammerParser_traitsGrammarInputOption
-    parser_traitsEvalInst.GrammarInst
-  eval :=
-    grammar.control.Optional.Insts.RusthammerParser_traitsEvalInputBackendOption.eval
-    parser_traitsEvalInst
-}
-
-/-- [rusthammer::grammar::control::And]
-    Source: 'src/grammar/control.rs', lines 424:0-426:1
-    Visibility: public -/
-structure grammar.control.And (P : Type) where
-  parser : P
-
-/-- [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::And<P>}::clone]:
-    Source: 'src/grammar/control.rs', lines 423:9-423:14
-    Visibility: public -/
-def grammar.control.And.Insts.CoreCloneClone.clone
-  {P : Type} (corecloneCloneInst : core.clone.Clone P)
-  (self : grammar.control.And P) :
-  Result (grammar.control.And P)
-  := do
-  let t ← corecloneCloneInst.clone self.parser
-  ok { parser := t }
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::And<P>}]
-    Source: 'src/grammar/control.rs', lines 423:9-423:14 -/
-@[reducible]
-def grammar.control.And.Insts.CoreCloneClone {P : Type} (corecloneCloneInst :
-  core.clone.Clone P) : core.clone.Clone (grammar.control.And P) := {
-  clone := grammar.control.And.Insts.CoreCloneClone.clone corecloneCloneInst
-}
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Grammar<'input, ()> for rusthammer::grammar::control::And<P>}]
-    Source: 'src/grammar/control.rs', lines 428:0-430:1 -/
-@[reducible]
-def grammar.control.And.Insts.RusthammerParser_traitsGrammarInputTuple {P :
-  Type} {Clause0_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) : parser_traits.Grammar
-  (grammar.control.And P) Unit := {
-}
-
-/-- [rusthammer::grammar::control::{impl rusthammer::parser_traits::Eval<'input, Backend, ()> for rusthammer::grammar::control::And<P>}::eval]:
-    Source: 'src/grammar/control.rs', lines 433:4-445:5
-    Visibility: public -/
-def grammar.control.And.Insts.RusthammerParser_traitsEvalInputBackendTuple.eval
-  {Backend : Type} {P : Type} {Clause0_Clause0_Output : Type}
-  (parser_traitsEvalInst : parser_traits.Eval P Backend Clause0_Clause0_Output)
-  (self : grammar.control.And P) (backend : Backend) (input : Slice Std.U8)
-  (cursor : input_types.Cursor) (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Unit) × Backend)
-  := do
-  let (po, backend1) ←
-    parser_traitsEvalInst.eval self.parser backend input cursor context
-  match po with
-  | input_types.ParseOutcome.Success _ _ =>
-    ok (input_types.ParseOutcome.Success cursor (), backend1)
-  | input_types.ParseOutcome.Error error =>
-    ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Eval<'input, Backend, ()> for rusthammer::grammar::control::And<P>}]
-    Source: 'src/grammar/control.rs', lines 432:0-446:1 -/
-@[reducible]
-def grammar.control.And.Insts.RusthammerParser_traitsEvalInputBackendTuple
-  {Backend : Type} {P : Type} {Clause0_Clause0_Output : Type}
-  (parser_traitsEvalInst : parser_traits.Eval P Backend Clause0_Clause0_Output)
-  : parser_traits.Eval (grammar.control.And P) Backend Unit := {
-  GrammarInst :=
-    grammar.control.And.Insts.RusthammerParser_traitsGrammarInputTuple
-    parser_traitsEvalInst.GrammarInst
-  eval :=
-    grammar.control.And.Insts.RusthammerParser_traitsEvalInputBackendTuple.eval
-    parser_traitsEvalInst
-}
-
-/-- [rusthammer::grammar::control::Not]
-    Source: 'src/grammar/control.rs', lines 454:0-456:1
-    Visibility: public -/
-structure grammar.control.Not (P : Type) where
-  parser : P
-
-/-- [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Not<P>}::clone]:
-    Source: 'src/grammar/control.rs', lines 453:9-453:14
-    Visibility: public -/
-def grammar.control.Not.Insts.CoreCloneClone.clone
-  {P : Type} (corecloneCloneInst : core.clone.Clone P)
-  (self : grammar.control.Not P) :
-  Result (grammar.control.Not P)
-  := do
-  let t ← corecloneCloneInst.clone self.parser
-  ok { parser := t }
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl core::clone::Clone for rusthammer::grammar::control::Not<P>}]
-    Source: 'src/grammar/control.rs', lines 453:9-453:14 -/
-@[reducible]
-def grammar.control.Not.Insts.CoreCloneClone {P : Type} (corecloneCloneInst :
-  core.clone.Clone P) : core.clone.Clone (grammar.control.Not P) := {
-  clone := grammar.control.Not.Insts.CoreCloneClone.clone corecloneCloneInst
-}
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Grammar<'input, ()> for rusthammer::grammar::control::Not<P>}]
-    Source: 'src/grammar/control.rs', lines 458:0-460:1 -/
-@[reducible]
-def grammar.control.Not.Insts.RusthammerParser_traitsGrammarInputTuple {P :
-  Type} {Clause0_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) : parser_traits.Grammar
-  (grammar.control.Not P) Unit := {
-}
-
-/-- [rusthammer::grammar::control::{impl rusthammer::parser_traits::Eval<'input, Backend, ()> for rusthammer::grammar::control::Not<P>}::eval]:
-    Source: 'src/grammar/control.rs', lines 463:4-481:5
-    Visibility: public -/
-def grammar.control.Not.Insts.RusthammerParser_traitsEvalInputBackendTuple.eval
-  {Backend : Type} {P : Type} {Clause0_Clause0_Output : Type}
-  (parser_traitsEvalInst : parser_traits.Eval P Backend Clause0_Clause0_Output)
-  (self : grammar.control.Not P) (backend : Backend) (input : Slice Std.U8)
-  (cursor : input_types.Cursor) (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Unit) × Backend)
-  := do
-  let (po, backend1) ←
-    parser_traitsEvalInst.eval self.parser backend input cursor context
-  match po with
-  | input_types.ParseOutcome.Success _ _ =>
-    ok (input_types.ParseOutcome.Error input_types.ParseError.Mismatch,
-      backend1)
-  | input_types.ParseOutcome.Error error =>
-    let b ← input_types.ParseError.is_recoverable error
-    if b
-    then ok (input_types.ParseOutcome.Success cursor (), backend1)
-    else ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
-
-/-- Trait implementation: [rusthammer::grammar::control::{impl rusthammer::parser_traits::Eval<'input, Backend, ()> for rusthammer::grammar::control::Not<P>}]
-    Source: 'src/grammar/control.rs', lines 462:0-482:1 -/
-@[reducible]
-def grammar.control.Not.Insts.RusthammerParser_traitsEvalInputBackendTuple
-  {Backend : Type} {P : Type} {Clause0_Clause0_Output : Type}
-  (parser_traitsEvalInst : parser_traits.Eval P Backend Clause0_Clause0_Output)
-  : parser_traits.Eval (grammar.control.Not P) Backend Unit := {
-  GrammarInst :=
-    grammar.control.Not.Insts.RusthammerParser_traitsGrammarInputTuple
-    parser_traitsEvalInst.GrammarInst
-  eval :=
-    grammar.control.Not.Insts.RusthammerParser_traitsEvalInputBackendTuple.eval
-    parser_traitsEvalInst
-}
-
-/-- [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::Bit}::clone]:
-    Source: 'src/grammar/numeric.rs', lines 47:9-47:14
-    Visibility: public -/
-def grammar.numeric.Bit.Insts.CoreCloneClone.clone
-  (self : grammar.numeric.Bit) : Result grammar.numeric.Bit := do
-  ok self
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::Bit}]
-    Source: 'src/grammar/numeric.rs', lines 47:9-47:14 -/
-@[reducible]
-def grammar.numeric.Bit.Insts.CoreCloneClone : core.clone.Clone
-  grammar.numeric.Bit := {
-  clone := grammar.numeric.Bit.Insts.CoreCloneClone.clone
-}
-
-/-- [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::Bits}::clone]:
-    Source: 'src/grammar/numeric.rs', lines 78:9-78:14
-    Visibility: public -/
-def grammar.numeric.Bits.Insts.CoreCloneClone.clone
-  (self : grammar.numeric.Bits) : Result grammar.numeric.Bits := do
-  ok self
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::Bits}]
-    Source: 'src/grammar/numeric.rs', lines 78:9-78:14 -/
-@[reducible]
-def grammar.numeric.Bits.Insts.CoreCloneClone : core.clone.Clone
-  grammar.numeric.Bits := {
-  clone := grammar.numeric.Bits.Insts.CoreCloneClone.clone
-}
-
-/-- [rusthammer::grammar::numeric::{rusthammer::grammar::numeric::Bits}::width]:
-    Source: 'src/grammar/numeric.rs', lines 94:4-96:5
-    Visibility: public -/
-def grammar.numeric.Bits.impl.width
-  (self : grammar.numeric.Bits) : Result Std.U8 := do
-  ok self.width
-
-/-- [rusthammer::grammar::numeric::SignedBits]
-    Source: 'src/grammar/numeric.rs', lines 252:0-254:1
-    Visibility: public -/
-structure grammar.numeric.SignedBits where
-  bits : grammar.numeric.Bits
-
-/-- [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::SignedBits}::clone]:
-    Source: 'src/grammar/numeric.rs', lines 251:9-251:14
-    Visibility: public -/
-def grammar.numeric.SignedBits.Insts.CoreCloneClone.clone
-  (self : grammar.numeric.SignedBits) : Result grammar.numeric.SignedBits := do
-  ok self
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::SignedBits}]
-    Source: 'src/grammar/numeric.rs', lines 251:9-251:14 -/
-@[reducible]
-def grammar.numeric.SignedBits.Insts.CoreCloneClone : core.clone.Clone
-  grammar.numeric.SignedBits := {
-  clone := grammar.numeric.SignedBits.Insts.CoreCloneClone.clone
-}
-
-/-- [rusthammer::grammar::numeric::{rusthammer::grammar::numeric::SignedBits}::new]:
-    Source: 'src/grammar/numeric.rs', lines 258:4-264:5
-    Visibility: public -/
-def grammar.numeric.SignedBits.new
-  (width : Std.U8) :
-  Result (core.result.Result grammar.numeric.SignedBits
-    input_types.ConfigError)
-  := do
-  let r ← grammar.numeric.Bits.new width
-  match r with
-  | core.result.Result.Ok bits => ok (core.result.Result.Ok { bits })
-  | core.result.Result.Err error => ok (core.result.Result.Err error)
-
-/-- [rusthammer::grammar::numeric::{rusthammer::grammar::numeric::SignedBits}::width]:
-    Source: 'src/grammar/numeric.rs', lines 267:4-269:5
-    Visibility: public -/
-def grammar.numeric.SignedBits.width
-  (self : grammar.numeric.SignedBits) : Result Std.U8 := do
-  grammar.numeric.Bits.impl.width self.bits
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Grammar<'input, i64> for rusthammer::grammar::numeric::SignedBits}]
-    Source: 'src/grammar/numeric.rs', lines 272:0-274:1 -/
-@[reducible]
-def grammar.numeric.SignedBits.Insts.RusthammerParser_traitsGrammarInputI64 :
-  parser_traits.Grammar grammar.numeric.SignedBits Std.I64 := {
-}
-
-/-- [rusthammer::grammar::numeric::sign_extend]:
-    Source: 'src/grammar/numeric.rs', lines 295:0-309:1 -/
-def grammar.numeric.sign_extend
-  (value : Std.U64) (width : Std.U8) : Result Std.I64 := do
-  if width = 0#u8
-  then ok 0#i64
-  else
-    let i ← width - 1#u8
-    let sign ← 1#u64 <<< i
-    if value < sign
-    then ok (UScalar.hcast .I64 value)
-    else
-      let i1 ← sign - 1#u64
-      let i2 ← value - sign
-      let complement ← i1 - i2
-      let i3 ← lift (UScalar.hcast .I64 complement)
-      (-1)#i64 - i3
-
-/-- [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Eval<'input, Backend, i64> for rusthammer::grammar::numeric::SignedBits}::eval]:
-    Source: 'src/grammar/numeric.rs', lines 277:4-291:5
-    Visibility: public -/
-def
-  grammar.numeric.SignedBits.Insts.RusthammerParser_traitsEvalInputBackendI64.eval
-  {Backend : Type} (self : grammar.numeric.SignedBits) (backend : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Std.I64) × Backend)
-  := do
-  let (po, backend1) ←
-    grammar.numeric.Bits.Insts.RusthammerParser_traitsEvalInputBackendU64.eval
-      self.bits backend input cursor context
-  match po with
-  | input_types.ParseOutcome.Success next value =>
-    let i ← grammar.numeric.sign_extend value self.bits.width
-    ok (input_types.ParseOutcome.Success next i, backend1)
-  | input_types.ParseOutcome.Error error =>
-    ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Eval<'input, Backend, i64> for rusthammer::grammar::numeric::SignedBits}]
-    Source: 'src/grammar/numeric.rs', lines 276:0-292:1 -/
-@[reducible]
-def grammar.numeric.SignedBits.Insts.RusthammerParser_traitsEvalInputBackendI64
-  (Backend : Type) : parser_traits.Eval grammar.numeric.SignedBits Backend
-  Std.I64 := {
-  GrammarInst :=
-    grammar.numeric.SignedBits.Insts.RusthammerParser_traitsGrammarInputI64
-  eval :=
-    grammar.numeric.SignedBits.Insts.RusthammerParser_traitsEvalInputBackendI64.eval
-}
-
-/-- [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::Byte}::clone]:
-    Source: 'src/grammar/numeric.rs', lines 312:9-312:14
-    Visibility: public -/
-def grammar.numeric.Byte.Insts.CoreCloneClone.clone
-  (self : grammar.numeric.Byte) : Result grammar.numeric.Byte := do
-  ok self
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::Byte}]
-    Source: 'src/grammar/numeric.rs', lines 312:9-312:14 -/
-@[reducible]
-def grammar.numeric.Byte.Insts.CoreCloneClone : core.clone.Clone
-  grammar.numeric.Byte := {
-  clone := grammar.numeric.Byte.Insts.CoreCloneClone.clone
-}
-
-/-- [rusthammer::grammar::numeric::BeU16]
-    Source: 'src/grammar/numeric.rs', lines 343:8-343:25
-    Visibility: public -/
-@[reducible]
-def grammar.numeric.BeU16 := Unit
-
-/-- [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::BeU16}::clone]:
-    Source: 'src/grammar/numeric.rs', lines 342:17-342:22
-    Visibility: public -/
-def grammar.numeric.BeU16.Insts.CoreCloneClone.clone
-  (self : grammar.numeric.BeU16) : Result grammar.numeric.BeU16 := do
-  ok self
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::BeU16}]
-    Source: 'src/grammar/numeric.rs', lines 342:17-342:22 -/
-@[reducible]
-def grammar.numeric.BeU16.Insts.CoreCloneClone : core.clone.Clone
-  grammar.numeric.BeU16 := {
-  clone := grammar.numeric.BeU16.Insts.CoreCloneClone.clone
-}
-
-/-- [rusthammer::grammar::numeric::BeU32]
-    Source: 'src/grammar/numeric.rs', lines 343:8-343:25
-    Visibility: public -/
-@[reducible]
-def grammar.numeric.BeU32 := Unit
-
-/-- [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::BeU32}::clone]:
-    Source: 'src/grammar/numeric.rs', lines 342:17-342:22
-    Visibility: public -/
-def grammar.numeric.BeU32.Insts.CoreCloneClone.clone
-  (self : grammar.numeric.BeU32) : Result grammar.numeric.BeU32 := do
-  ok self
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::BeU32}]
-    Source: 'src/grammar/numeric.rs', lines 342:17-342:22 -/
-@[reducible]
-def grammar.numeric.BeU32.Insts.CoreCloneClone : core.clone.Clone
-  grammar.numeric.BeU32 := {
-  clone := grammar.numeric.BeU32.Insts.CoreCloneClone.clone
-}
-
-/-- [rusthammer::grammar::numeric::BeU64]
-    Source: 'src/grammar/numeric.rs', lines 343:8-343:25
-    Visibility: public -/
-@[reducible]
-def grammar.numeric.BeU64 := Unit
-
-/-- [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::BeU64}::clone]:
-    Source: 'src/grammar/numeric.rs', lines 342:17-342:22
-    Visibility: public -/
-def grammar.numeric.BeU64.Insts.CoreCloneClone.clone
-  (self : grammar.numeric.BeU64) : Result grammar.numeric.BeU64 := do
-  ok self
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::BeU64}]
-    Source: 'src/grammar/numeric.rs', lines 342:17-342:22 -/
-@[reducible]
-def grammar.numeric.BeU64.Insts.CoreCloneClone : core.clone.Clone
-  grammar.numeric.BeU64 := {
-  clone := grammar.numeric.BeU64.Insts.CoreCloneClone.clone
-}
-
-/-- [rusthammer::grammar::numeric::I8]
-    Source: 'src/grammar/numeric.rs', lines 343:8-343:25
-    Visibility: public -/
-@[reducible]
-def grammar.numeric.I8 := Unit
-
-/-- [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::I8}::clone]:
-    Source: 'src/grammar/numeric.rs', lines 342:17-342:22
-    Visibility: public -/
-def grammar.numeric.I8.Insts.CoreCloneClone.clone
-  (self : grammar.numeric.I8) : Result grammar.numeric.I8 := do
-  ok self
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::I8}]
-    Source: 'src/grammar/numeric.rs', lines 342:17-342:22 -/
-@[reducible]
-def grammar.numeric.I8.Insts.CoreCloneClone : core.clone.Clone
-  grammar.numeric.I8 := {
-  clone := grammar.numeric.I8.Insts.CoreCloneClone.clone
-}
-
-/-- [rusthammer::grammar::numeric::BeI16]
-    Source: 'src/grammar/numeric.rs', lines 343:8-343:25
-    Visibility: public -/
-@[reducible]
-def grammar.numeric.BeI16 := Unit
-
-/-- [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::BeI16}::clone]:
-    Source: 'src/grammar/numeric.rs', lines 342:17-342:22
-    Visibility: public -/
-def grammar.numeric.BeI16.Insts.CoreCloneClone.clone
-  (self : grammar.numeric.BeI16) : Result grammar.numeric.BeI16 := do
-  ok self
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::BeI16}]
-    Source: 'src/grammar/numeric.rs', lines 342:17-342:22 -/
-@[reducible]
-def grammar.numeric.BeI16.Insts.CoreCloneClone : core.clone.Clone
-  grammar.numeric.BeI16 := {
-  clone := grammar.numeric.BeI16.Insts.CoreCloneClone.clone
-}
-
-/-- [rusthammer::grammar::numeric::BeI32]
-    Source: 'src/grammar/numeric.rs', lines 343:8-343:25
-    Visibility: public -/
-@[reducible]
-def grammar.numeric.BeI32 := Unit
-
-/-- [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::BeI32}::clone]:
-    Source: 'src/grammar/numeric.rs', lines 342:17-342:22
-    Visibility: public -/
-def grammar.numeric.BeI32.Insts.CoreCloneClone.clone
-  (self : grammar.numeric.BeI32) : Result grammar.numeric.BeI32 := do
-  ok self
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::BeI32}]
-    Source: 'src/grammar/numeric.rs', lines 342:17-342:22 -/
-@[reducible]
-def grammar.numeric.BeI32.Insts.CoreCloneClone : core.clone.Clone
-  grammar.numeric.BeI32 := {
-  clone := grammar.numeric.BeI32.Insts.CoreCloneClone.clone
-}
-
-/-- [rusthammer::grammar::numeric::BeI64]
-    Source: 'src/grammar/numeric.rs', lines 343:8-343:25
-    Visibility: public -/
-@[reducible]
-def grammar.numeric.BeI64 := Unit
-
-/-- [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::BeI64}::clone]:
-    Source: 'src/grammar/numeric.rs', lines 342:17-342:22
-    Visibility: public -/
-def grammar.numeric.BeI64.Insts.CoreCloneClone.clone
-  (self : grammar.numeric.BeI64) : Result grammar.numeric.BeI64 := do
-  ok self
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::BeI64}]
-    Source: 'src/grammar/numeric.rs', lines 342:17-342:22 -/
-@[reducible]
-def grammar.numeric.BeI64.Insts.CoreCloneClone : core.clone.Clone
-  grammar.numeric.BeI64 := {
-  clone := grammar.numeric.BeI64.Insts.CoreCloneClone.clone
-}
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Grammar<'input, u16> for rusthammer::grammar::numeric::BeU16}]
-    Source: 'src/grammar/numeric.rs', lines 345:8-347:9 -/
-@[reducible]
-def grammar.numeric.BeU16.Insts.RusthammerParser_traitsGrammarInputU16 :
-  parser_traits.Grammar grammar.numeric.BeU16 Std.U16 := {
-}
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Grammar<'input, u32> for rusthammer::grammar::numeric::BeU32}]
-    Source: 'src/grammar/numeric.rs', lines 345:8-347:9 -/
-@[reducible]
-def grammar.numeric.BeU32.Insts.RusthammerParser_traitsGrammarInputU32 :
-  parser_traits.Grammar grammar.numeric.BeU32 Std.U32 := {
-}
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Grammar<'input, u64> for rusthammer::grammar::numeric::BeU64}]
-    Source: 'src/grammar/numeric.rs', lines 345:8-347:9 -/
-@[reducible]
-def grammar.numeric.BeU64.Insts.RusthammerParser_traitsGrammarInputU64 :
-  parser_traits.Grammar grammar.numeric.BeU64 Std.U64 := {
-}
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Grammar<'input, i8> for rusthammer::grammar::numeric::I8}]
-    Source: 'src/grammar/numeric.rs', lines 345:8-347:9 -/
-@[reducible]
-def grammar.numeric.I8.Insts.RusthammerParser_traitsGrammarInputI8 :
-  parser_traits.Grammar grammar.numeric.I8 Std.I8 := {
-}
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Grammar<'input, i16> for rusthammer::grammar::numeric::BeI16}]
-    Source: 'src/grammar/numeric.rs', lines 345:8-347:9 -/
-@[reducible]
-def grammar.numeric.BeI16.Insts.RusthammerParser_traitsGrammarInputI16 :
-  parser_traits.Grammar grammar.numeric.BeI16 Std.I16 := {
-}
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Grammar<'input, i32> for rusthammer::grammar::numeric::BeI32}]
-    Source: 'src/grammar/numeric.rs', lines 345:8-347:9 -/
-@[reducible]
-def grammar.numeric.BeI32.Insts.RusthammerParser_traitsGrammarInputI32 :
-  parser_traits.Grammar grammar.numeric.BeI32 Std.I32 := {
-}
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Grammar<'input, i64> for rusthammer::grammar::numeric::BeI64}]
-    Source: 'src/grammar/numeric.rs', lines 345:8-347:9 -/
-@[reducible]
-def grammar.numeric.BeI64.Insts.RusthammerParser_traitsGrammarInputI64 :
-  parser_traits.Grammar grammar.numeric.BeI64 Std.I64 := {
-}
-
-/-- [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Eval<'input, Backend, u16> for rusthammer::grammar::numeric::BeU16}::eval]:
-    Source: 'src/grammar/numeric.rs', lines 350:12-365:13
-    Visibility: public -/
-def grammar.numeric.BeU16.Insts.RusthammerParser_traitsEvalInputBackendU16.eval
-  {Backend : Type} (self : grammar.numeric.BeU16) (backend : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Std.U16) × Backend)
-  := do
-  let (po, backend1) ←
-    grammar.numeric.Bits.Insts.RusthammerParser_traitsEvalInputBackendU64.eval
-      { width := 16#u8 } backend input cursor
-      {
-        context
-          with
-          order := { context.order with byte := input_types.ByteOrder.Big }
-      }
-  match po with
-  | input_types.ParseOutcome.Success next value =>
-    let i ← lift (UScalar.cast .U16 value)
-    ok (input_types.ParseOutcome.Success next i, backend1)
-  | input_types.ParseOutcome.Error error =>
-    ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Eval<'input, Backend, u16> for rusthammer::grammar::numeric::BeU16}]
-    Source: 'src/grammar/numeric.rs', lines 349:8-366:9 -/
-@[reducible]
-def grammar.numeric.BeU16.Insts.RusthammerParser_traitsEvalInputBackendU16
-  (Backend : Type) : parser_traits.Eval grammar.numeric.BeU16 Backend Std.U16
-  := {
-  GrammarInst :=
-    grammar.numeric.BeU16.Insts.RusthammerParser_traitsGrammarInputU16
-  eval :=
-    grammar.numeric.BeU16.Insts.RusthammerParser_traitsEvalInputBackendU16.eval
-}
-
-/-- [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Eval<'input, Backend, u32> for rusthammer::grammar::numeric::BeU32}::eval]:
-    Source: 'src/grammar/numeric.rs', lines 350:12-365:13
-    Visibility: public -/
-def grammar.numeric.BeU32.Insts.RusthammerParser_traitsEvalInputBackendU32.eval
-  {Backend : Type} (self : grammar.numeric.BeU32) (backend : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Std.U32) × Backend)
-  := do
-  let (po, backend1) ←
-    grammar.numeric.Bits.Insts.RusthammerParser_traitsEvalInputBackendU64.eval
-      { width := 32#u8 } backend input cursor
-      {
-        context
-          with
-          order := { context.order with byte := input_types.ByteOrder.Big }
-      }
-  match po with
-  | input_types.ParseOutcome.Success next value =>
-    let i ← lift (UScalar.cast .U32 value)
-    ok (input_types.ParseOutcome.Success next i, backend1)
-  | input_types.ParseOutcome.Error error =>
-    ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Eval<'input, Backend, u32> for rusthammer::grammar::numeric::BeU32}]
-    Source: 'src/grammar/numeric.rs', lines 349:8-366:9 -/
-@[reducible]
-def grammar.numeric.BeU32.Insts.RusthammerParser_traitsEvalInputBackendU32
-  (Backend : Type) : parser_traits.Eval grammar.numeric.BeU32 Backend Std.U32
-  := {
-  GrammarInst :=
-    grammar.numeric.BeU32.Insts.RusthammerParser_traitsGrammarInputU32
-  eval :=
-    grammar.numeric.BeU32.Insts.RusthammerParser_traitsEvalInputBackendU32.eval
-}
-
-/-- [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Eval<'input, Backend, u64> for rusthammer::grammar::numeric::BeU64}::eval]:
-    Source: 'src/grammar/numeric.rs', lines 350:12-365:13
-    Visibility: public -/
-def grammar.numeric.BeU64.Insts.RusthammerParser_traitsEvalInputBackendU64.eval
-  {Backend : Type} (self : grammar.numeric.BeU64) (backend : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Std.U64) × Backend)
-  := do
-  let (po, backend1) ←
-    grammar.numeric.Bits.Insts.RusthammerParser_traitsEvalInputBackendU64.eval
-      { width := 64#u8 } backend input cursor
-      {
-        context
-          with
-          order := { context.order with byte := input_types.ByteOrder.Big }
-      }
-  match po with
-  | input_types.ParseOutcome.Success _ _ => ok (po, backend1)
-  | input_types.ParseOutcome.Error _ => ok (po, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Eval<'input, Backend, u64> for rusthammer::grammar::numeric::BeU64}]
-    Source: 'src/grammar/numeric.rs', lines 349:8-366:9 -/
-@[reducible]
-def grammar.numeric.BeU64.Insts.RusthammerParser_traitsEvalInputBackendU64
-  (Backend : Type) : parser_traits.Eval grammar.numeric.BeU64 Backend Std.U64
-  := {
-  GrammarInst :=
-    grammar.numeric.BeU64.Insts.RusthammerParser_traitsGrammarInputU64
-  eval :=
-    grammar.numeric.BeU64.Insts.RusthammerParser_traitsEvalInputBackendU64.eval
-}
-
-/-- [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Eval<'input, Backend, i8> for rusthammer::grammar::numeric::I8}::eval]:
-    Source: 'src/grammar/numeric.rs', lines 350:12-365:13
-    Visibility: public -/
-def grammar.numeric.I8.Insts.RusthammerParser_traitsEvalInputBackendI8.eval
-  {Backend : Type} (self : grammar.numeric.I8) (backend : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Std.I8) × Backend)
-  := do
-  let (po, backend1) ←
-    grammar.numeric.SignedBits.Insts.RusthammerParser_traitsEvalInputBackendI64.eval
-      { bits := { width := 8#u8 } } backend input cursor context
-  match po with
-  | input_types.ParseOutcome.Success next value =>
-    let i ← lift (IScalar.cast .I8 value)
-    ok (input_types.ParseOutcome.Success next i, backend1)
-  | input_types.ParseOutcome.Error error =>
-    ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Eval<'input, Backend, i8> for rusthammer::grammar::numeric::I8}]
-    Source: 'src/grammar/numeric.rs', lines 349:8-366:9 -/
-@[reducible]
-def grammar.numeric.I8.Insts.RusthammerParser_traitsEvalInputBackendI8 (Backend
-  : Type) : parser_traits.Eval grammar.numeric.I8 Backend Std.I8 := {
-  GrammarInst := grammar.numeric.I8.Insts.RusthammerParser_traitsGrammarInputI8
-  eval :=
-    grammar.numeric.I8.Insts.RusthammerParser_traitsEvalInputBackendI8.eval
-}
-
-/-- [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Eval<'input, Backend, i16> for rusthammer::grammar::numeric::BeI16}::eval]:
-    Source: 'src/grammar/numeric.rs', lines 350:12-365:13
-    Visibility: public -/
-def grammar.numeric.BeI16.Insts.RusthammerParser_traitsEvalInputBackendI16.eval
-  {Backend : Type} (self : grammar.numeric.BeI16) (backend : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Std.I16) × Backend)
-  := do
-  let (po, backend1) ←
-    grammar.numeric.SignedBits.Insts.RusthammerParser_traitsEvalInputBackendI64.eval
-      { bits := { width := 16#u8 } } backend input cursor
-      {
-        context
-          with
-          order := { context.order with byte := input_types.ByteOrder.Big }
-      }
-  match po with
-  | input_types.ParseOutcome.Success next value =>
-    let i ← lift (IScalar.cast .I16 value)
-    ok (input_types.ParseOutcome.Success next i, backend1)
-  | input_types.ParseOutcome.Error error =>
-    ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Eval<'input, Backend, i16> for rusthammer::grammar::numeric::BeI16}]
-    Source: 'src/grammar/numeric.rs', lines 349:8-366:9 -/
-@[reducible]
-def grammar.numeric.BeI16.Insts.RusthammerParser_traitsEvalInputBackendI16
-  (Backend : Type) : parser_traits.Eval grammar.numeric.BeI16 Backend Std.I16
-  := {
-  GrammarInst :=
-    grammar.numeric.BeI16.Insts.RusthammerParser_traitsGrammarInputI16
-  eval :=
-    grammar.numeric.BeI16.Insts.RusthammerParser_traitsEvalInputBackendI16.eval
-}
-
-/-- [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Eval<'input, Backend, i32> for rusthammer::grammar::numeric::BeI32}::eval]:
-    Source: 'src/grammar/numeric.rs', lines 350:12-365:13
-    Visibility: public -/
-def grammar.numeric.BeI32.Insts.RusthammerParser_traitsEvalInputBackendI32.eval
-  {Backend : Type} (self : grammar.numeric.BeI32) (backend : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Std.I32) × Backend)
-  := do
-  let (po, backend1) ←
-    grammar.numeric.SignedBits.Insts.RusthammerParser_traitsEvalInputBackendI64.eval
-      { bits := { width := 32#u8 } } backend input cursor
-      {
-        context
-          with
-          order := { context.order with byte := input_types.ByteOrder.Big }
-      }
-  match po with
-  | input_types.ParseOutcome.Success next value =>
-    let i ← lift (IScalar.cast .I32 value)
-    ok (input_types.ParseOutcome.Success next i, backend1)
-  | input_types.ParseOutcome.Error error =>
-    ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Eval<'input, Backend, i32> for rusthammer::grammar::numeric::BeI32}]
-    Source: 'src/grammar/numeric.rs', lines 349:8-366:9 -/
-@[reducible]
-def grammar.numeric.BeI32.Insts.RusthammerParser_traitsEvalInputBackendI32
-  (Backend : Type) : parser_traits.Eval grammar.numeric.BeI32 Backend Std.I32
-  := {
-  GrammarInst :=
-    grammar.numeric.BeI32.Insts.RusthammerParser_traitsGrammarInputI32
-  eval :=
-    grammar.numeric.BeI32.Insts.RusthammerParser_traitsEvalInputBackendI32.eval
-}
-
-/-- [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Eval<'input, Backend, i64> for rusthammer::grammar::numeric::BeI64}::eval]:
-    Source: 'src/grammar/numeric.rs', lines 350:12-365:13
-    Visibility: public -/
-def grammar.numeric.BeI64.Insts.RusthammerParser_traitsEvalInputBackendI64.eval
-  {Backend : Type} (self : grammar.numeric.BeI64) (backend : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Std.I64) × Backend)
-  := do
-  let (po, backend1) ←
-    grammar.numeric.SignedBits.Insts.RusthammerParser_traitsEvalInputBackendI64.eval
-      { bits := { width := 64#u8 } } backend input cursor
-      {
-        context
-          with
-          order := { context.order with byte := input_types.ByteOrder.Big }
-      }
-  match po with
-  | input_types.ParseOutcome.Success _ _ => ok (po, backend1)
-  | input_types.ParseOutcome.Error _ => ok (po, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl rusthammer::parser_traits::Eval<'input, Backend, i64> for rusthammer::grammar::numeric::BeI64}]
-    Source: 'src/grammar/numeric.rs', lines 349:8-366:9 -/
-@[reducible]
-def grammar.numeric.BeI64.Insts.RusthammerParser_traitsEvalInputBackendI64
-  (Backend : Type) : parser_traits.Eval grammar.numeric.BeI64 Backend Std.I64
-  := {
-  GrammarInst :=
-    grammar.numeric.BeI64.Insts.RusthammerParser_traitsGrammarInputI64
-  eval :=
-    grammar.numeric.BeI64.Insts.RusthammerParser_traitsEvalInputBackendI64.eval
-}
-
-/-- [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::Literal}::clone]:
-    Source: 'src/grammar/numeric.rs', lines 475:9-475:14
-    Visibility: public -/
-def grammar.numeric.Literal.Insts.CoreCloneClone.clone
-  (self : grammar.numeric.Literal) : Result grammar.numeric.Literal := do
-  ok self
-
-/-- Trait implementation: [rusthammer::grammar::numeric::{impl core::clone::Clone for rusthammer::grammar::numeric::Literal}]
-    Source: 'src/grammar/numeric.rs', lines 475:9-475:14 -/
-@[reducible]
-def grammar.numeric.Literal.Insts.CoreCloneClone : core.clone.Clone
-  grammar.numeric.Literal := {
-  clone := grammar.numeric.Literal.Insts.CoreCloneClone.clone
-}
-
-/-- [rusthammer::grammar::numeric::{rusthammer::grammar::numeric::Literal}::width]:
-    Source: 'src/grammar/numeric.rs', lines 497:4-499:5
-    Visibility: public -/
-def grammar.numeric.Literal.width
-  (self : grammar.numeric.Literal) : Result Std.U8 := do
-  grammar.numeric.Bits.impl.width self.bits
-
-/-- [rusthammer::grammar::numeric::{rusthammer::grammar::numeric::Literal}::value]:
-    Source: 'src/grammar/numeric.rs', lines 502:4-504:5
-    Visibility: public -/
-def grammar.numeric.Literal.impl.value
-  (self : grammar.numeric.Literal) : Result Std.U64 := do
-  ok self.value
-
-/-- [rusthammer::input_types::{impl core::clone::Clone for rusthammer::input_types::Order}::clone]:
-    Source: 'src/input_types.rs', lines 85:9-85:14
-    Visibility: public -/
-def input_types.Order.Insts.CoreCloneClone.clone
-  (self : input_types.Order) : Result input_types.Order := do
-  ok self
-
-/-- [rusthammer::grammar::order::{impl core::clone::Clone for rusthammer::grammar::order::WithOrder<P>}::clone]:
-    Source: 'src/grammar/order.rs', lines 24:9-24:14
-    Visibility: public -/
-def grammar.order.WithOrder.Insts.CoreCloneClone.clone
-  {P : Type} (corecloneCloneInst : core.clone.Clone P)
-  (self : grammar.order.WithOrder P) :
-  Result (grammar.order.WithOrder P)
-  := do
-  let t ← corecloneCloneInst.clone self.parser
-  let o ← input_types.Order.Insts.CoreCloneClone.clone self.order
-  ok { parser := t, order := o }
-
-/-- Trait implementation: [rusthammer::grammar::order::{impl core::clone::Clone for rusthammer::grammar::order::WithOrder<P>}]
-    Source: 'src/grammar/order.rs', lines 24:9-24:14 -/
-@[reducible]
-def grammar.order.WithOrder.Insts.CoreCloneClone {P : Type} (corecloneCloneInst
-  : core.clone.Clone P) : core.clone.Clone (grammar.order.WithOrder P) := {
-  clone := grammar.order.WithOrder.Insts.CoreCloneClone.clone
-    corecloneCloneInst
-}
-
-/-- Trait implementation: [rusthammer::grammar::order::{impl rusthammer::parser_traits::Grammar<'input, Clause0_Output> for rusthammer::grammar::order::WithOrder<P>}]
-    Source: 'src/grammar/order.rs', lines 54:0-56:1 -/
-@[reducible]
-def grammar.order.WithOrder.Insts.RusthammerParser_traitsGrammar {P : Type}
-  {Clause0_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) : parser_traits.Grammar (grammar.order.WithOrder P)
-  Clause0_Output := {
-}
-
-/-- Trait implementation: [rusthammer::grammar::order::{impl rusthammer::parser_traits::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::grammar::order::WithOrder<P>}]
-    Source: 'src/grammar/order.rs', lines 58:0-83:1 -/
-@[reducible]
-def grammar.order.WithOrder.Insts.RusthammerParser_traitsEval {Backend : Type}
-  {P : Type} {Clause0_Clause0_Output : Type} (parser_traitsEvalInst :
-  parser_traits.Eval P Backend Clause0_Clause0_Output) : parser_traits.Eval
-  (grammar.order.WithOrder P) Backend Clause0_Clause0_Output := {
-  GrammarInst := grammar.order.WithOrder.Insts.RusthammerParser_traitsGrammar
-    parser_traitsEvalInst.GrammarInst
-  eval := grammar.order.WithOrder.Insts.RusthammerParser_traitsEval.eval
-    parser_traitsEvalInst
-}
-
-/-- [rusthammer::grammar::permutation::Required]
-    Source: 'src/grammar/permutation.rs', lines 8:0-10:1
-    Visibility: public -/
-structure grammar.permutation.Required (P : Type) where
-  parser : P
-
-/-- [rusthammer::grammar::permutation::{impl core::clone::Clone for rusthammer::grammar::permutation::Required<P>}::clone]:
-    Source: 'src/grammar/permutation.rs', lines 7:9-7:14
-    Visibility: public -/
-def grammar.permutation.Required.Insts.CoreCloneClone.clone
-  {P : Type} (corecloneCloneInst : core.clone.Clone P)
-  (self : grammar.permutation.Required P) :
-  Result (grammar.permutation.Required P)
-  := do
-  let t ← corecloneCloneInst.clone self.parser
-  ok { parser := t }
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl core::clone::Clone for rusthammer::grammar::permutation::Required<P>}]
-    Source: 'src/grammar/permutation.rs', lines 7:9-7:14 -/
-@[reducible]
-def grammar.permutation.Required.Insts.CoreCloneClone {P : Type}
-  (corecloneCloneInst : core.clone.Clone P) : core.clone.Clone
-  (grammar.permutation.Required P) := {
-  clone := grammar.permutation.Required.Insts.CoreCloneClone.clone
-    corecloneCloneInst
-}
-
-/-- [rusthammer::grammar::permutation::required]:
-    Source: 'src/grammar/permutation.rs', lines 13:0-15:1
-    Visibility: public -/
-def grammar.permutation.required
-  {P : Type} (parser : P) : Result (grammar.permutation.Required P) := do
-  ok { parser }
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::parser_traits::Grammar<'input, Clause0_Output> for rusthammer::grammar::permutation::Required<P>}]
-    Source: 'src/grammar/permutation.rs', lines 17:0-19:1 -/
-@[reducible]
-def grammar.permutation.Required.Insts.RusthammerParser_traitsGrammar {P :
-  Type} {Clause0_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) : parser_traits.Grammar
-  (grammar.permutation.Required P) Clause0_Output := {
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::parser_traits::Eval<'input, B, Clause0_Clause0_Output> for rusthammer::grammar::permutation::Required<P>}::eval]:
-    Source: 'src/grammar/permutation.rs', lines 22:4-30:5
-    Visibility: public -/
-def grammar.permutation.Required.Insts.RusthammerParser_traitsEval.eval
-  {B : Type} {P : Type} {Clause0_Clause0_Output : Type} (parser_traitsEvalInst
-  : parser_traits.Eval P B Clause0_Clause0_Output)
-  (self : grammar.permutation.Required P) (backend : B) (input : Slice Std.U8)
-  (cursor : input_types.Cursor) (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Clause0_Clause0_Output) × B)
-  := do
-  parser_traitsEvalInst.eval self.parser backend input cursor context
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::parser_traits::Eval<'input, B, Clause0_Clause0_Output> for rusthammer::grammar::permutation::Required<P>}]
-    Source: 'src/grammar/permutation.rs', lines 21:0-31:1 -/
-@[reducible]
-def grammar.permutation.Required.Insts.RusthammerParser_traitsEval {B : Type}
-  {P : Type} {Clause0_Clause0_Output : Type} (parser_traitsEvalInst :
-  parser_traits.Eval P B Clause0_Clause0_Output) : parser_traits.Eval
-  (grammar.permutation.Required P) B Clause0_Clause0_Output := {
-  GrammarInst :=
-    grammar.permutation.Required.Insts.RusthammerParser_traitsGrammar
-    parser_traitsEvalInst.GrammarInst
-  eval := grammar.permutation.Required.Insts.RusthammerParser_traitsEval.eval
-    parser_traitsEvalInst
-}
-
-/-- [rusthammer::grammar::permutation::Permutation]
-    Source: 'src/grammar/permutation.rs', lines 72:0-74:1
-    Visibility: public -/
-structure grammar.permutation.Permutation (T : Type) where
-  items : T
-
-/-- [rusthammer::grammar::permutation::{impl core::clone::Clone for rusthammer::grammar::permutation::Permutation<T>}::clone]:
-    Source: 'src/grammar/permutation.rs', lines 71:9-71:14
-    Visibility: public -/
-def grammar.permutation.Permutation.Insts.CoreCloneClone.clone
-  {T : Type} (corecloneCloneInst : core.clone.Clone T)
-  (self : grammar.permutation.Permutation T) :
-  Result (grammar.permutation.Permutation T)
-  := do
-  let t ← corecloneCloneInst.clone self.items
-  ok { items := t }
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl core::clone::Clone for rusthammer::grammar::permutation::Permutation<T>}]
-    Source: 'src/grammar/permutation.rs', lines 71:9-71:14 -/
-@[reducible]
-def grammar.permutation.Permutation.Insts.CoreCloneClone {T : Type}
-  (corecloneCloneInst : core.clone.Clone T) : core.clone.Clone
-  (grammar.permutation.Permutation T) := {
-  clone := grammar.permutation.Permutation.Insts.CoreCloneClone.clone
-    corecloneCloneInst
-}
-
-/-- [rusthammer::grammar::permutation::permutation]:
-    Source: 'src/grammar/permutation.rs', lines 78:0-80:1
-    Visibility: public -/
-def grammar.permutation.permutation
-  {T : Type} (items : T) : Result (grammar.permutation.Permutation T) := do
-  ok { items }
-
-/-- [rusthammer::grammar::permutation::Slot]
-    Source: 'src/grammar/permutation.rs', lines 82:0-85:1
-    Visibility: public -/
-structure grammar.permutation.Slot (T : Type) where
-  matched : Bool
-  value : Option T
-
-/-- [rusthammer::grammar::permutation::empty_slot]:
-    Source: 'src/grammar/permutation.rs', lines 87:0-92:1 -/
-def grammar.permutation.empty_slot
-  (T : Type) : Result (grammar.permutation.Slot T) := do
-  ok { matched := false, value := none }
-
-/-- [rusthammer::grammar::permutation::slot_value]:
-    Source: 'src/grammar/permutation.rs', lines 94:0-99:1 -/
-def grammar.permutation.slot_value
-  {T : Type} (slot : grammar.permutation.Slot T) :
-  Result (core.result.Result T input_types.ParseError)
-  := do
-  match slot.value with
-  | none => ok (core.result.Result.Err input_types.ParseError.Mismatch)
-  | some value => ok (core.result.Result.Ok value)
-
-/-- [rusthammer::grammar::permutation::Attempt]
-    Source: 'src/grammar/permutation.rs', lines 101:0-106:1
-    Visibility: public -/
-@[discriminant isize]
-inductive grammar.permutation.Attempt where
-| Matched : input_types.Cursor → grammar.permutation.Attempt
-| Absent : grammar.permutation.Attempt
-| Error : input_types.ParseError → grammar.permutation.Attempt
-| NeedMore : grammar.permutation.Attempt
-
-/-- [rusthammer::grammar::permutation::required_slot]:
-    Source: 'src/grammar/permutation.rs', lines 108:0-120:1 -/
-def grammar.permutation.required_slot
-  {T : Type} (result : input_types.ParseOutcome T) :
-  Result (grammar.permutation.Attempt × (grammar.permutation.Slot T))
-  := do
-  match result with
-  | input_types.ParseOutcome.Success next value =>
-    ok (grammar.permutation.Attempt.Matched next,
-      { matched := true, value := (some value) })
-  | input_types.ParseOutcome.Error error =>
-    let s ← grammar.permutation.empty_slot T
-    ok (grammar.permutation.Attempt.Error error, s)
-  | input_types.ParseOutcome.NeedMore =>
-    let s ← grammar.permutation.empty_slot T
-    ok (grammar.permutation.Attempt.NeedMore, s)
-
-/-- [rusthammer::grammar::permutation::optional_slot]:
-    Source: 'src/grammar/permutation.rs', lines 122:0-146:1 -/
-def grammar.permutation.optional_slot
-  {T : Type} (result : input_types.ParseOutcome T) :
-  Result (grammar.permutation.Attempt × (grammar.permutation.Slot (Option T)))
-  := do
-  match result with
-  | input_types.ParseOutcome.Success next value =>
-    ok (grammar.permutation.Attempt.Matched next,
-      { matched := true, value := (some (some value)) })
-  | input_types.ParseOutcome.Error error =>
-    let b ← input_types.ParseError.is_recoverable error
-    if b
-    then
-      ok (grammar.permutation.Attempt.Absent,
-        { matched := false, value := (some none) })
-    else
-      let s ← grammar.permutation.empty_slot (Option T)
-      ok (grammar.permutation.Attempt.Error error, s)
-  | input_types.ParseOutcome.NeedMore =>
-    let s ← grammar.permutation.empty_slot (Option T)
-    ok (grammar.permutation.Attempt.NeedMore, s)
-
-/-- Trait declaration: [rusthammer::grammar::permutation::ItemEval]
-    Source: 'src/grammar/permutation.rs', lines 148:0-156:1
-    Visibility: public -/
-structure grammar.permutation.ItemEval (Self : Type) (B : Type)
-  (Self_Clause0_Output : Type) where
-  parser_traitsGrammarInst : parser_traits.Grammar Self Self_Clause0_Output
-  eval_slot : Self → B → Slice Std.U8 → input_types.Cursor →
-    input_types.ParseContext → Result ((grammar.permutation.Attempt ×
-    (grammar.permutation.Slot Self_Clause0_Output)) × B)
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::ItemEval<'input, B, Clause0_Clause0_Output> for rusthammer::grammar::permutation::Required<P>}::eval_slot]:
-    Source: 'src/grammar/permutation.rs', lines 159:4-167:5
-    Visibility: public -/
-def
-  grammar.permutation.Required.Insts.RusthammerGrammarPermutationItemEval.eval_slot
-  {B : Type} {P : Type} {Clause0_Clause0_Output : Type} (parser_traitsEvalInst
-  : parser_traits.Eval P B Clause0_Clause0_Output)
-  (self : grammar.permutation.Required P) (backend : B) (input : Slice Std.U8)
-  (cursor : input_types.Cursor) (context : input_types.ParseContext) :
-  Result ((grammar.permutation.Attempt × (grammar.permutation.Slot
-    Clause0_Clause0_Output)) × B)
-  := do
-  let (po, backend1) ←
-    parser_traitsEvalInst.eval self.parser backend input cursor context
-  let p ← grammar.permutation.required_slot po
-  ok (p, backend1)
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::ItemEval<'input, B, Clause0_Clause0_Output> for rusthammer::grammar::permutation::Required<P>}]
-    Source: 'src/grammar/permutation.rs', lines 158:0-168:1 -/
-@[reducible]
-def grammar.permutation.Required.Insts.RusthammerGrammarPermutationItemEval {B
-  : Type} {P : Type} {Clause0_Clause0_Output : Type} (parser_traitsEvalInst :
-  parser_traits.Eval P B Clause0_Clause0_Output) : grammar.permutation.ItemEval
-  (grammar.permutation.Required P) B Clause0_Clause0_Output := {
-  parser_traitsGrammarInst :=
-    grammar.permutation.Required.Insts.RusthammerParser_traitsGrammar
-    parser_traitsEvalInst.GrammarInst
-  eval_slot :=
-    grammar.permutation.Required.Insts.RusthammerGrammarPermutationItemEval.eval_slot
-    parser_traitsEvalInst
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::ItemEval<'input, B, core::option::Option<Clause0_Clause0_Output>> for rusthammer::grammar::control::Optional<P>}::eval_slot]:
-    Source: 'src/grammar/permutation.rs', lines 171:4-179:5
-    Visibility: public -/
-def
-  grammar.control.Optional.Insts.RusthammerGrammarPermutationItemEvalInputBOption.eval_slot
-  {B : Type} {P : Type} {Clause0_Clause0_Output : Type} (parser_traitsEvalInst
-  : parser_traits.Eval P B Clause0_Clause0_Output)
-  (self : grammar.control.Optional P) (backend : B) (input : Slice Std.U8)
-  (cursor : input_types.Cursor) (context : input_types.ParseContext) :
-  Result ((grammar.permutation.Attempt × (grammar.permutation.Slot (Option
-    Clause0_Clause0_Output))) × B)
-  := do
-  let (po, backend1) ←
-    parser_traitsEvalInst.eval self.parser backend input cursor context
-  let p ← grammar.permutation.optional_slot po
-  ok (p, backend1)
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::ItemEval<'input, B, core::option::Option<Clause0_Clause0_Output>> for rusthammer::grammar::control::Optional<P>}]
-    Source: 'src/grammar/permutation.rs', lines 170:0-180:1 -/
-@[reducible]
-def
-  grammar.control.Optional.Insts.RusthammerGrammarPermutationItemEvalInputBOption
-  {B : Type} {P : Type} {Clause0_Clause0_Output : Type} (parser_traitsEvalInst
-  : parser_traits.Eval P B Clause0_Clause0_Output) :
-  grammar.permutation.ItemEval (grammar.control.Optional P) B (Option
-  Clause0_Clause0_Output) := {
-  parser_traitsGrammarInst :=
-    grammar.control.Optional.Insts.RusthammerParser_traitsGrammarInputOption
-    parser_traitsEvalInst.GrammarInst
-  eval_slot :=
-    grammar.control.Optional.Insts.RusthammerGrammarPermutationItemEvalInputBOption.eval_slot
-    parser_traitsEvalInst
-}
-
-/-- Trait declaration: [rusthammer::grammar::permutation::Layout]
-    Source: 'src/grammar/permutation.rs', lines 182:0-190:1
-    Visibility: public -/
-structure grammar.permutation.Layout (Self : Type) (Self_State : Type)
-  (Self_Output : Type) where
-  count : Self → Result Std.Usize
-  empty : Self → Result Self_State
-  matched : Self → Self_State → Std.Usize → Result Bool
-  clear : Self → Self_State → Std.Usize → Result Self_State
-  finish : Self → Self_State → Result (core.result.Result Self_Output
-    input_types.ParseError)
-
-/-- Trait declaration: [rusthammer::grammar::permutation::Items]
-    Source: 'src/grammar/permutation.rs', lines 192:0-202:1
-    Visibility: public -/
-structure grammar.permutation.Items (Self : Type) (B : Type)
-  (Self_Clause0_State : Type) (Self_Clause0_Output : Type) where
-  LayoutInst : grammar.permutation.Layout Self Self_Clause0_State
-    Self_Clause0_Output
-  attempt : Self → Self_Clause0_State → Std.Usize → B → Slice Std.U8 →
-    input_types.Cursor → input_types.ParseContext → Result
-    ((grammar.permutation.Attempt × Self_Clause0_State) × B)
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'_0, (), ()> for ()}::finish]:
-    Source: 'src/grammar/permutation.rs', lines 215:4-217:5
-    Visibility: public -/
-def Tuple.Insts.RusthammerGrammarPermutationLayout0TupleTuple.finish
-  (_ : Unit) (_ : Unit) :
-  Result (core.result.Result Unit input_types.ParseError)
-  := do
-  ok (core.result.Result.Ok ())
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'_0, (), ()> for ()}::clear]:
-    Source: 'src/grammar/permutation.rs', lines 214:4-214:39
-    Visibility: public -/
-def Tuple.Insts.RusthammerGrammarPermutationLayout0TupleTuple.clear
-  (_ : Unit) (_ : Unit) (i : Std.Usize) : Result Unit := do
-  ok ()
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'_0, (), ()> for ()}::matched]:
-    Source: 'src/grammar/permutation.rs', lines 211:4-213:5
-    Visibility: public -/
-def Tuple.Insts.RusthammerGrammarPermutationLayout0TupleTuple.matched
-  (_ : Unit) (_ : Unit) (i : Std.Usize) : Result Bool := do
-  ok false
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'_0, (), ()> for ()}::empty]:
-    Source: 'src/grammar/permutation.rs', lines 210:4-210:22
-    Visibility: public -/
-def Tuple.Insts.RusthammerGrammarPermutationLayout0TupleTuple.empty
-  (_ : Unit) : Result Unit := do
-  ok ()
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'_0, (), ()> for ()}::count]:
-    Source: 'src/grammar/permutation.rs', lines 207:4-209:5
-    Visibility: public -/
-def Tuple.Insts.RusthammerGrammarPermutationLayout0TupleTuple.count
-  (_ : Unit) : Result Std.Usize := do
-  ok 0#usize
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'_0, (), ()> for ()}]
-    Source: 'src/grammar/permutation.rs', lines 204:0-218:1 -/
-@[reducible]
-def Tuple.Insts.RusthammerGrammarPermutationLayout0TupleTuple :
-  grammar.permutation.Layout Unit Unit Unit := {
-  count := Tuple.Insts.RusthammerGrammarPermutationLayout0TupleTuple.count
-  empty := Tuple.Insts.RusthammerGrammarPermutationLayout0TupleTuple.empty
-  matched := Tuple.Insts.RusthammerGrammarPermutationLayout0TupleTuple.matched
-  clear := Tuple.Insts.RusthammerGrammarPermutationLayout0TupleTuple.clear
-  finish := Tuple.Insts.RusthammerGrammarPermutationLayout0TupleTuple.finish
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'_0, B, (), ()> for ()}::attempt]:
-    Source: 'src/grammar/permutation.rs', lines 221:4-231:5
-    Visibility: public -/
-def Tuple.Insts.RusthammerGrammarPermutationItems0BTupleTuple.attempt
-  {B : Type} (_ : Unit) (_ : Unit) (i : Std.Usize) (t : B) (s : Slice Std.U8)
-  (c : input_types.Cursor) (pc : input_types.ParseContext) :
-  Result ((grammar.permutation.Attempt × Unit) × B)
-  := do
-  ok ((grammar.permutation.Attempt.Error input_types.ParseError.Mismatch, ()),
-    t)
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'_0, B, (), ()> for ()}]
-    Source: 'src/grammar/permutation.rs', lines 220:0-232:1 -/
-@[reducible]
-def Tuple.Insts.RusthammerGrammarPermutationItems0BTupleTuple (B : Type) :
-  grammar.permutation.Items Unit B Unit Unit := {
-  LayoutInst := Tuple.Insts.RusthammerGrammarPermutationLayout0TupleTuple
-  attempt := Tuple.Insts.RusthammerGrammarPermutationItems0BTupleTuple.attempt
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>,), (Clause0_Output,)> for (P,)}::finish]:
-    Source: 'src/grammar/permutation.rs', lines 248:12-255:13
-    Visibility: public -/
-def
-  TupleP.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotTupleClause0_Output.finish
-  {P : Type} {Clause0_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (self : P)
-  (state : grammar.permutation.Slot Clause0_Output) :
-  Result (core.result.Result Clause0_Output input_types.ParseError)
-  := do
-  let r ← grammar.permutation.slot_value state
-  match r with
-  | core.result.Result.Ok _ => ok r
-  | core.result.Result.Err _ => ok r
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>,), (Clause0_Output,)> for (P,)}::clear]:
-    Source: 'src/grammar/permutation.rs', lines 244:12-247:13
-    Visibility: public -/
-def
-  TupleP.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotTupleClause0_Output.clear
-  {P : Type} {Clause0_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (self : P)
-  (state : grammar.permutation.Slot Clause0_Output) (index : Std.Usize) :
-  Result (grammar.permutation.Slot Clause0_Output)
-  := do
-  match index.val with
-  | 0 => grammar.permutation.empty_slot Clause0_Output
-  | _ => ok state
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>,), (Clause0_Output,)> for (P,)}::matched]:
-    Source: 'src/grammar/permutation.rs', lines 241:12-243:13
-    Visibility: public -/
-def
-  TupleP.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotTupleClause0_Output.matched
-  {P : Type} {Clause0_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (self : P)
-  (state : grammar.permutation.Slot Clause0_Output) (index : Std.Usize) :
-  Result Bool
-  := do
-  match index.val with
-  | 0 => ok state.matched
-  | _ => ok false
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>,), (Clause0_Output,)> for (P,)}::empty]:
-    Source: 'src/grammar/permutation.rs', lines 240:12-240:80
-    Visibility: public -/
-def
-  TupleP.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotTupleClause0_Output.empty
-  {P : Type} {Clause0_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (self : P) :
-  Result (grammar.permutation.Slot Clause0_Output)
-  := do
-  grammar.permutation.empty_slot Clause0_Output
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>,), (Clause0_Output,)> for (P,)}::count]:
-    Source: 'src/grammar/permutation.rs', lines 239:12-239:47
-    Visibility: public -/
-def
-  TupleP.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotTupleClause0_Output.count
-  {P : Type} {Clause0_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (self : P) :
-  Result Std.Usize
-  := do
-  ok 1#usize
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>,), (Clause0_Output,)> for (P,)}]
-    Source: 'src/grammar/permutation.rs', lines 236:8-256:9 -/
-@[reducible]
-def
-  TupleP.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotTupleClause0_Output
-  {P : Type} {Clause0_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) : grammar.permutation.Layout P
-  (grammar.permutation.Slot Clause0_Output) Clause0_Output := {
-  count :=
-    TupleP.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotTupleClause0_Output.count
-    parser_traitsGrammarInst
-  empty :=
-    TupleP.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotTupleClause0_Output.empty
-    parser_traitsGrammarInst
-  matched :=
-    TupleP.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotTupleClause0_Output.matched
-    parser_traitsGrammarInst
-  clear :=
-    TupleP.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotTupleClause0_Output.clear
-    parser_traitsGrammarInst
-  finish :=
-    TupleP.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotTupleClause0_Output.finish
-    parser_traitsGrammarInst
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>), (Clause0_Output, Clause1_Output)> for (P, Q)}::finish]:
-    Source: 'src/grammar/permutation.rs', lines 248:12-255:13
-    Visibility: public -/
-def Pair.Insts.RusthammerGrammarPermutationLayoutInputPairSlotSlotPair.finish
-  {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
-  (parser_traitsGrammarInst1 : parser_traits.Grammar Q Clause1_Output)
-  (self : (P × Q))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output))) :
-  Result (core.result.Result (Clause0_Output × Clause1_Output)
-    input_types.ParseError)
-  := do
-  let (p, q) := state
-  let r ← grammar.permutation.slot_value p
-  match r with
-  | core.result.Result.Ok value =>
-    let r1 ← grammar.permutation.slot_value q
-    match r1 with
-    | core.result.Result.Ok value1 =>
-      ok (core.result.Result.Ok (value, value1))
-    | core.result.Result.Err error => ok (core.result.Result.Err error)
-  | core.result.Result.Err error => ok (core.result.Result.Err error)
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>), (Clause0_Output, Clause1_Output)> for (P, Q)}::clear]:
-    Source: 'src/grammar/permutation.rs', lines 244:12-247:13
-    Visibility: public -/
-def Pair.Insts.RusthammerGrammarPermutationLayoutInputPairSlotSlotPair.clear
-  {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
-  (parser_traitsGrammarInst1 : parser_traits.Grammar Q Clause1_Output)
-  (self : (P × Q))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output))) (index : Std.Usize) :
-  Result ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-    Clause1_Output))
-  := do
-  match index.val with
-  | 0 =>
-    let s ← grammar.permutation.empty_slot Clause0_Output
-    let (_, s1) := state
-    ok (s, s1)
-  | 1 =>
-    let s ← grammar.permutation.empty_slot Clause1_Output
-    let (s1, _) := state
-    ok (s1, s)
-  | _ => ok state
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>), (Clause0_Output, Clause1_Output)> for (P, Q)}::matched]:
-    Source: 'src/grammar/permutation.rs', lines 241:12-243:13
-    Visibility: public -/
-def Pair.Insts.RusthammerGrammarPermutationLayoutInputPairSlotSlotPair.matched
-  {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
-  (parser_traitsGrammarInst1 : parser_traits.Grammar Q Clause1_Output)
-  (self : (P × Q))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output))) (index : Std.Usize) :
-  Result Bool
-  := do
-  match index.val with
-  | 0 => let (s, _) := state
-         ok s.matched
-  | 1 => let (_, s) := state
-         ok s.matched
-  | _ => ok false
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>), (Clause0_Output, Clause1_Output)> for (P, Q)}::empty]:
-    Source: 'src/grammar/permutation.rs', lines 240:12-240:80
-    Visibility: public -/
-def Pair.Insts.RusthammerGrammarPermutationLayoutInputPairSlotSlotPair.empty
-  {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
-  (parser_traitsGrammarInst1 : parser_traits.Grammar Q Clause1_Output)
-  (self : (P × Q)) :
-  Result ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-    Clause1_Output))
-  := do
-  let s ← grammar.permutation.empty_slot Clause0_Output
-  let s1 ← grammar.permutation.empty_slot Clause1_Output
-  ok (s, s1)
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>), (Clause0_Output, Clause1_Output)> for (P, Q)}::count]:
-    Source: 'src/grammar/permutation.rs', lines 239:12-239:47
-    Visibility: public -/
-def Pair.Insts.RusthammerGrammarPermutationLayoutInputPairSlotSlotPair.count
-  {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
-  (parser_traitsGrammarInst1 : parser_traits.Grammar Q Clause1_Output)
-  (self : (P × Q)) :
-  Result Std.Usize
-  := do
-  ok 2#usize
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>), (Clause0_Output, Clause1_Output)> for (P, Q)}]
-    Source: 'src/grammar/permutation.rs', lines 236:8-256:9 -/
-@[reducible]
-def Pair.Insts.RusthammerGrammarPermutationLayoutInputPairSlotSlotPair {P :
-  Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
-  (parser_traitsGrammarInst1 : parser_traits.Grammar Q Clause1_Output) :
-  grammar.permutation.Layout (P × Q) ((grammar.permutation.Slot Clause0_Output)
-  × (grammar.permutation.Slot Clause1_Output)) (Clause0_Output ×
-  Clause1_Output) := {
-  count :=
-    Pair.Insts.RusthammerGrammarPermutationLayoutInputPairSlotSlotPair.count
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-  empty :=
-    Pair.Insts.RusthammerGrammarPermutationLayoutInputPairSlotSlotPair.empty
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-  matched :=
-    Pair.Insts.RusthammerGrammarPermutationLayoutInputPairSlotSlotPair.matched
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-  clear :=
-    Pair.Insts.RusthammerGrammarPermutationLayoutInputPairSlotSlotPair.clear
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-  finish :=
-    Pair.Insts.RusthammerGrammarPermutationLayoutInputPairSlotSlotPair.finish
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>), (Clause0_Output, Clause1_Output, Clause2_Output)> for (P, Q, R)}::finish]:
-    Source: 'src/grammar/permutation.rs', lines 248:12-255:13
-    Visibility: public -/
-def
-  TuplePQR.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.finish
-  {P : Type} {Q : Type} {R : Type} {Clause0_Output : Type} {Clause1_Output :
-  Type} {Clause2_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause1_Output) (parser_traitsGrammarInst2 :
-  parser_traits.Grammar R Clause2_Output) (self : (P × Q × R))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output))) :
-  Result (core.result.Result (Clause0_Output × Clause1_Output × Clause2_Output)
-    input_types.ParseError)
-  := do
-  let (p, q, r) := state
-  let r1 ← grammar.permutation.slot_value p
-  match r1 with
-  | core.result.Result.Ok value =>
-    let r2 ← grammar.permutation.slot_value q
-    match r2 with
-    | core.result.Result.Ok value1 =>
-      let r3 ← grammar.permutation.slot_value r
-      match r3 with
-      | core.result.Result.Ok value2 =>
-        ok (core.result.Result.Ok (value, value1, value2))
-      | core.result.Result.Err error => ok (core.result.Result.Err error)
-    | core.result.Result.Err error => ok (core.result.Result.Err error)
-  | core.result.Result.Err error => ok (core.result.Result.Err error)
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>), (Clause0_Output, Clause1_Output, Clause2_Output)> for (P, Q, R)}::clear]:
-    Source: 'src/grammar/permutation.rs', lines 244:12-247:13
-    Visibility: public -/
-def
-  TuplePQR.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.clear
-  {P : Type} {Q : Type} {R : Type} {Clause0_Output : Type} {Clause1_Output :
-  Type} {Clause2_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause1_Output) (parser_traitsGrammarInst2 :
-  parser_traits.Grammar R Clause2_Output) (self : (P × Q × R))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output))) (index : Std.Usize) :
-  Result ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-    Clause1_Output) × (grammar.permutation.Slot Clause2_Output))
-  := do
-  match index.val with
-  | 0 =>
-    let s ← grammar.permutation.empty_slot Clause0_Output
-    let (_, s1, s2) := state
-    ok (s, s1, s2)
-  | 1 =>
-    let s ← grammar.permutation.empty_slot Clause1_Output
-    let (s1, _, s2) := state
-    ok (s1, s, s2)
-  | 2 =>
-    let s ← grammar.permutation.empty_slot Clause2_Output
-    let (s1, s2, _) := state
-    ok (s1, s2, s)
-  | _ => ok state
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>), (Clause0_Output, Clause1_Output, Clause2_Output)> for (P, Q, R)}::matched]:
-    Source: 'src/grammar/permutation.rs', lines 241:12-243:13
-    Visibility: public -/
-def
-  TuplePQR.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.matched
-  {P : Type} {Q : Type} {R : Type} {Clause0_Output : Type} {Clause1_Output :
-  Type} {Clause2_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause1_Output) (parser_traitsGrammarInst2 :
-  parser_traits.Grammar R Clause2_Output) (self : (P × Q × R))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output))) (index : Std.Usize) :
-  Result Bool
-  := do
-  match index.val with
-  | 0 => let (s, _, _) := state
-         ok s.matched
-  | 1 => let (_, s, _) := state
-         ok s.matched
-  | 2 => let (_, _, s) := state
-         ok s.matched
-  | _ => ok false
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>), (Clause0_Output, Clause1_Output, Clause2_Output)> for (P, Q, R)}::empty]:
-    Source: 'src/grammar/permutation.rs', lines 240:12-240:80
-    Visibility: public -/
-def
-  TuplePQR.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.empty
-  {P : Type} {Q : Type} {R : Type} {Clause0_Output : Type} {Clause1_Output :
-  Type} {Clause2_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause1_Output) (parser_traitsGrammarInst2 :
-  parser_traits.Grammar R Clause2_Output) (self : (P × Q × R)) :
-  Result ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-    Clause1_Output) × (grammar.permutation.Slot Clause2_Output))
-  := do
-  let s ← grammar.permutation.empty_slot Clause0_Output
-  let s1 ← grammar.permutation.empty_slot Clause1_Output
-  let s2 ← grammar.permutation.empty_slot Clause2_Output
-  ok (s, s1, s2)
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>), (Clause0_Output, Clause1_Output, Clause2_Output)> for (P, Q, R)}::count]:
-    Source: 'src/grammar/permutation.rs', lines 239:12-239:47
-    Visibility: public -/
-def
-  TuplePQR.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.count
-  {P : Type} {Q : Type} {R : Type} {Clause0_Output : Type} {Clause1_Output :
-  Type} {Clause2_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause1_Output) (parser_traitsGrammarInst2 :
-  parser_traits.Grammar R Clause2_Output) (self : (P × Q × R)) :
-  Result Std.Usize
-  := do
-  ok 3#usize
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>), (Clause0_Output, Clause1_Output, Clause2_Output)> for (P, Q, R)}]
-    Source: 'src/grammar/permutation.rs', lines 236:8-256:9 -/
-@[reducible]
-def
-  TuplePQR.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output
-  {P : Type} {Q : Type} {R : Type} {Clause0_Output : Type} {Clause1_Output :
-  Type} {Clause2_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause1_Output) (parser_traitsGrammarInst2 :
-  parser_traits.Grammar R Clause2_Output) : grammar.permutation.Layout (P × Q ×
-  R) ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-  Clause1_Output) × (grammar.permutation.Slot Clause2_Output)) (Clause0_Output
-  × Clause1_Output × Clause2_Output) := {
-  count :=
-    TuplePQR.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.count
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2
-  empty :=
-    TuplePQR.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.empty
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2
-  matched :=
-    TuplePQR.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.matched
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2
-  clear :=
-    TuplePQR.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.clear
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2
-  finish :=
-    TuplePQR.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output.finish
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output)> for (P, Q, R, S)}::finish]:
-    Source: 'src/grammar/permutation.rs', lines 248:12-255:13
-    Visibility: public -/
-def
-  TuplePQRS.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.finish
-  {P : Type} {Q : Type} {R : Type} {S : Type} {Clause0_Output : Type}
-  {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
-  (parser_traitsGrammarInst1 : parser_traits.Grammar Q Clause1_Output)
-  (parser_traitsGrammarInst2 : parser_traits.Grammar R Clause2_Output)
-  (parser_traitsGrammarInst3 : parser_traits.Grammar S Clause3_Output)
-  (self : (P × Q × R × S))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output))) :
-  Result (core.result.Result (Clause0_Output × Clause1_Output × Clause2_Output
-    × Clause3_Output) input_types.ParseError)
-  := do
-  let (p, q, r, s) := state
-  let r1 ← grammar.permutation.slot_value p
-  match r1 with
-  | core.result.Result.Ok value =>
-    let r2 ← grammar.permutation.slot_value q
-    match r2 with
-    | core.result.Result.Ok value1 =>
-      let r3 ← grammar.permutation.slot_value r
-      match r3 with
-      | core.result.Result.Ok value2 =>
-        let r4 ← grammar.permutation.slot_value s
-        match r4 with
-        | core.result.Result.Ok value3 =>
-          ok (core.result.Result.Ok (value, value1, value2, value3))
-        | core.result.Result.Err error => ok (core.result.Result.Err error)
-      | core.result.Result.Err error => ok (core.result.Result.Err error)
-    | core.result.Result.Err error => ok (core.result.Result.Err error)
-  | core.result.Result.Err error => ok (core.result.Result.Err error)
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output)> for (P, Q, R, S)}::clear]:
-    Source: 'src/grammar/permutation.rs', lines 244:12-247:13
-    Visibility: public -/
-def
-  TuplePQRS.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.clear
-  {P : Type} {Q : Type} {R : Type} {S : Type} {Clause0_Output : Type}
-  {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
-  (parser_traitsGrammarInst1 : parser_traits.Grammar Q Clause1_Output)
-  (parser_traitsGrammarInst2 : parser_traits.Grammar R Clause2_Output)
-  (parser_traitsGrammarInst3 : parser_traits.Grammar S Clause3_Output)
-  (self : (P × Q × R × S))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output)))
-  (index : Std.Usize) :
-  Result ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-    Clause1_Output) × (grammar.permutation.Slot Clause2_Output) ×
-    (grammar.permutation.Slot Clause3_Output))
-  := do
-  match index.val with
-  | 0 =>
-    let s ← grammar.permutation.empty_slot Clause0_Output
-    let (_, s1, s2, s3) := state
-    ok (s, s1, s2, s3)
-  | 1 =>
-    let s ← grammar.permutation.empty_slot Clause1_Output
-    let (s1, _, s2, s3) := state
-    ok (s1, s, s2, s3)
-  | 2 =>
-    let s ← grammar.permutation.empty_slot Clause2_Output
-    let (s1, s2, _, s3) := state
-    ok (s1, s2, s, s3)
-  | 3 =>
-    let s ← grammar.permutation.empty_slot Clause3_Output
-    let (s1, s2, s3, _) := state
-    ok (s1, s2, s3, s)
-  | _ => ok state
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output)> for (P, Q, R, S)}::matched]:
-    Source: 'src/grammar/permutation.rs', lines 241:12-243:13
-    Visibility: public -/
-def
-  TuplePQRS.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.matched
-  {P : Type} {Q : Type} {R : Type} {S : Type} {Clause0_Output : Type}
-  {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
-  (parser_traitsGrammarInst1 : parser_traits.Grammar Q Clause1_Output)
-  (parser_traitsGrammarInst2 : parser_traits.Grammar R Clause2_Output)
-  (parser_traitsGrammarInst3 : parser_traits.Grammar S Clause3_Output)
-  (self : (P × Q × R × S))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output)))
-  (index : Std.Usize) :
-  Result Bool
-  := do
-  match index.val with
-  | 0 => let (s, _, _, _) := state
-         ok s.matched
-  | 1 => let (_, s, _, _) := state
-         ok s.matched
-  | 2 => let (_, _, s, _) := state
-         ok s.matched
-  | 3 => let (_, _, _, s) := state
-         ok s.matched
-  | _ => ok false
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output)> for (P, Q, R, S)}::empty]:
-    Source: 'src/grammar/permutation.rs', lines 240:12-240:80
-    Visibility: public -/
-def
-  TuplePQRS.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.empty
-  {P : Type} {Q : Type} {R : Type} {S : Type} {Clause0_Output : Type}
-  {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
-  (parser_traitsGrammarInst1 : parser_traits.Grammar Q Clause1_Output)
-  (parser_traitsGrammarInst2 : parser_traits.Grammar R Clause2_Output)
-  (parser_traitsGrammarInst3 : parser_traits.Grammar S Clause3_Output)
-  (self : (P × Q × R × S)) :
-  Result ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-    Clause1_Output) × (grammar.permutation.Slot Clause2_Output) ×
-    (grammar.permutation.Slot Clause3_Output))
-  := do
-  let s ← grammar.permutation.empty_slot Clause0_Output
-  let s1 ← grammar.permutation.empty_slot Clause1_Output
-  let s2 ← grammar.permutation.empty_slot Clause2_Output
-  let s3 ← grammar.permutation.empty_slot Clause3_Output
-  ok (s, s1, s2, s3)
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output)> for (P, Q, R, S)}::count]:
-    Source: 'src/grammar/permutation.rs', lines 239:12-239:47
-    Visibility: public -/
-def
-  TuplePQRS.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.count
-  {P : Type} {Q : Type} {R : Type} {S : Type} {Clause0_Output : Type}
-  {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
-  (parser_traitsGrammarInst1 : parser_traits.Grammar Q Clause1_Output)
-  (parser_traitsGrammarInst2 : parser_traits.Grammar R Clause2_Output)
-  (parser_traitsGrammarInst3 : parser_traits.Grammar S Clause3_Output)
-  (self : (P × Q × R × S)) :
-  Result Std.Usize
-  := do
-  ok 4#usize
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output)> for (P, Q, R, S)}]
-    Source: 'src/grammar/permutation.rs', lines 236:8-256:9 -/
-@[reducible]
-def
-  TuplePQRS.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output
-  {P : Type} {Q : Type} {R : Type} {S : Type} {Clause0_Output : Type}
-  {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
-  (parser_traitsGrammarInst1 : parser_traits.Grammar Q Clause1_Output)
-  (parser_traitsGrammarInst2 : parser_traits.Grammar R Clause2_Output)
-  (parser_traitsGrammarInst3 : parser_traits.Grammar S Clause3_Output) :
-  grammar.permutation.Layout (P × Q × R × S) ((grammar.permutation.Slot
-  Clause0_Output) × (grammar.permutation.Slot Clause1_Output) ×
-  (grammar.permutation.Slot Clause2_Output) × (grammar.permutation.Slot
-  Clause3_Output)) (Clause0_Output × Clause1_Output × Clause2_Output ×
-  Clause3_Output) := {
-  count :=
-    TuplePQRS.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.count
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-  empty :=
-    TuplePQRS.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.empty
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-  matched :=
-    TuplePQRS.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.matched
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-  clear :=
-    TuplePQRS.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.clear
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-  finish :=
-    TuplePQRS.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output.finish
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output)> for (P, Q, R, S, T)}::finish]:
-    Source: 'src/grammar/permutation.rs', lines 248:12-255:13
-    Visibility: public -/
-def
-  TuplePQRST.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.finish
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {Clause0_Output :
-  Type} {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
-  {Clause4_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
-  Clause1_Output) (parser_traitsGrammarInst2 : parser_traits.Grammar R
-  Clause2_Output) (parser_traitsGrammarInst3 : parser_traits.Grammar S
-  Clause3_Output) (parser_traitsGrammarInst4 : parser_traits.Grammar T
-  Clause4_Output) (self : (P × Q × R × S × T))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output))) :
-  Result (core.result.Result (Clause0_Output × Clause1_Output × Clause2_Output
-    × Clause3_Output × Clause4_Output) input_types.ParseError)
-  := do
-  let (p, q, r, s, t) := state
-  let r1 ← grammar.permutation.slot_value p
-  match r1 with
-  | core.result.Result.Ok value =>
-    let r2 ← grammar.permutation.slot_value q
-    match r2 with
-    | core.result.Result.Ok value1 =>
-      let r3 ← grammar.permutation.slot_value r
-      match r3 with
-      | core.result.Result.Ok value2 =>
-        let r4 ← grammar.permutation.slot_value s
-        match r4 with
-        | core.result.Result.Ok value3 =>
-          let r5 ← grammar.permutation.slot_value t
-          match r5 with
-          | core.result.Result.Ok value4 =>
-            ok (core.result.Result.Ok (value, value1, value2, value3, value4))
-          | core.result.Result.Err error => ok (core.result.Result.Err error)
-        | core.result.Result.Err error => ok (core.result.Result.Err error)
-      | core.result.Result.Err error => ok (core.result.Result.Err error)
-    | core.result.Result.Err error => ok (core.result.Result.Err error)
-  | core.result.Result.Err error => ok (core.result.Result.Err error)
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output)> for (P, Q, R, S, T)}::clear]:
-    Source: 'src/grammar/permutation.rs', lines 244:12-247:13
-    Visibility: public -/
-def
-  TuplePQRST.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.clear
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {Clause0_Output :
-  Type} {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
-  {Clause4_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
-  Clause1_Output) (parser_traitsGrammarInst2 : parser_traits.Grammar R
-  Clause2_Output) (parser_traitsGrammarInst3 : parser_traits.Grammar S
-  Clause3_Output) (parser_traitsGrammarInst4 : parser_traits.Grammar T
-  Clause4_Output) (self : (P × Q × R × S × T))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output))) (index : Std.Usize) :
-  Result ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-    Clause1_Output) × (grammar.permutation.Slot Clause2_Output) ×
-    (grammar.permutation.Slot Clause3_Output) × (grammar.permutation.Slot
-    Clause4_Output))
-  := do
-  match index.val with
-  | 0 =>
-    let s ← grammar.permutation.empty_slot Clause0_Output
-    let (_, s1, s2, s3, s4) := state
-    ok (s, s1, s2, s3, s4)
-  | 1 =>
-    let s ← grammar.permutation.empty_slot Clause1_Output
-    let (s1, _, s2, s3, s4) := state
-    ok (s1, s, s2, s3, s4)
-  | 2 =>
-    let s ← grammar.permutation.empty_slot Clause2_Output
-    let (s1, s2, _, s3, s4) := state
-    ok (s1, s2, s, s3, s4)
-  | 3 =>
-    let s ← grammar.permutation.empty_slot Clause3_Output
-    let (s1, s2, s3, _, s4) := state
-    ok (s1, s2, s3, s, s4)
-  | 4 =>
-    let s ← grammar.permutation.empty_slot Clause4_Output
-    let (s1, s2, s3, s4, _) := state
-    ok (s1, s2, s3, s4, s)
-  | _ => ok state
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output)> for (P, Q, R, S, T)}::matched]:
-    Source: 'src/grammar/permutation.rs', lines 241:12-243:13
-    Visibility: public -/
-def
-  TuplePQRST.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.matched
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {Clause0_Output :
-  Type} {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
-  {Clause4_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
-  Clause1_Output) (parser_traitsGrammarInst2 : parser_traits.Grammar R
-  Clause2_Output) (parser_traitsGrammarInst3 : parser_traits.Grammar S
-  Clause3_Output) (parser_traitsGrammarInst4 : parser_traits.Grammar T
-  Clause4_Output) (self : (P × Q × R × S × T))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output))) (index : Std.Usize) :
-  Result Bool
-  := do
-  match index.val with
-  | 0 => let (s, _, _, _, _) := state
-         ok s.matched
-  | 1 => let (_, s, _, _, _) := state
-         ok s.matched
-  | 2 => let (_, _, s, _, _) := state
-         ok s.matched
-  | 3 => let (_, _, _, s, _) := state
-         ok s.matched
-  | 4 => let (_, _, _, _, s) := state
-         ok s.matched
-  | _ => ok false
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output)> for (P, Q, R, S, T)}::empty]:
-    Source: 'src/grammar/permutation.rs', lines 240:12-240:80
-    Visibility: public -/
-def
-  TuplePQRST.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.empty
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {Clause0_Output :
-  Type} {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
-  {Clause4_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
-  Clause1_Output) (parser_traitsGrammarInst2 : parser_traits.Grammar R
-  Clause2_Output) (parser_traitsGrammarInst3 : parser_traits.Grammar S
-  Clause3_Output) (parser_traitsGrammarInst4 : parser_traits.Grammar T
-  Clause4_Output) (self : (P × Q × R × S × T)) :
-  Result ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-    Clause1_Output) × (grammar.permutation.Slot Clause2_Output) ×
-    (grammar.permutation.Slot Clause3_Output) × (grammar.permutation.Slot
-    Clause4_Output))
-  := do
-  let s ← grammar.permutation.empty_slot Clause0_Output
-  let s1 ← grammar.permutation.empty_slot Clause1_Output
-  let s2 ← grammar.permutation.empty_slot Clause2_Output
-  let s3 ← grammar.permutation.empty_slot Clause3_Output
-  let s4 ← grammar.permutation.empty_slot Clause4_Output
-  ok (s, s1, s2, s3, s4)
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output)> for (P, Q, R, S, T)}::count]:
-    Source: 'src/grammar/permutation.rs', lines 239:12-239:47
-    Visibility: public -/
-def
-  TuplePQRST.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.count
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {Clause0_Output :
-  Type} {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
-  {Clause4_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
-  Clause1_Output) (parser_traitsGrammarInst2 : parser_traits.Grammar R
-  Clause2_Output) (parser_traitsGrammarInst3 : parser_traits.Grammar S
-  Clause3_Output) (parser_traitsGrammarInst4 : parser_traits.Grammar T
-  Clause4_Output) (self : (P × Q × R × S × T)) :
-  Result Std.Usize
-  := do
-  ok 5#usize
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output)> for (P, Q, R, S, T)}]
-    Source: 'src/grammar/permutation.rs', lines 236:8-256:9 -/
-@[reducible]
-def
-  TuplePQRST.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {Clause0_Output :
-  Type} {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
-  {Clause4_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
-  Clause1_Output) (parser_traitsGrammarInst2 : parser_traits.Grammar R
-  Clause2_Output) (parser_traitsGrammarInst3 : parser_traits.Grammar S
-  Clause3_Output) (parser_traitsGrammarInst4 : parser_traits.Grammar T
-  Clause4_Output) : grammar.permutation.Layout (P × Q × R × S × T)
-  ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-  Clause1_Output) × (grammar.permutation.Slot Clause2_Output) ×
-  (grammar.permutation.Slot Clause3_Output) × (grammar.permutation.Slot
-  Clause4_Output)) (Clause0_Output × Clause1_Output × Clause2_Output ×
-  Clause3_Output × Clause4_Output) := {
-  count :=
-    TuplePQRST.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.count
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4
-  empty :=
-    TuplePQRST.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.empty
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4
-  matched :=
-    TuplePQRST.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.matched
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4
-  clear :=
-    TuplePQRST.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.clear
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4
-  finish :=
-    TuplePQRST.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output.finish
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output)> for (P, Q, R, S, T, U)}::finish]:
-    Source: 'src/grammar/permutation.rs', lines 248:12-255:13
-    Visibility: public -/
-def
-  TuplePQRSTU.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.finish
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
-  {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output : Type}
-  {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
-  (parser_traitsGrammarInst1 : parser_traits.Grammar Q Clause1_Output)
-  (parser_traitsGrammarInst2 : parser_traits.Grammar R Clause2_Output)
-  (parser_traitsGrammarInst3 : parser_traits.Grammar S Clause3_Output)
-  (parser_traitsGrammarInst4 : parser_traits.Grammar T Clause4_Output)
-  (parser_traitsGrammarInst5 : parser_traits.Grammar U Clause5_Output)
-  (self : (P × Q × R × S × T × U))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output) × (grammar.permutation.Slot
-  Clause5_Output))) :
-  Result (core.result.Result (Clause0_Output × Clause1_Output × Clause2_Output
-    × Clause3_Output × Clause4_Output × Clause5_Output) input_types.ParseError)
-  := do
-  let (p, q, r, s, t, u) := state
-  let r1 ← grammar.permutation.slot_value p
-  match r1 with
-  | core.result.Result.Ok value =>
-    let r2 ← grammar.permutation.slot_value q
-    match r2 with
-    | core.result.Result.Ok value1 =>
-      let r3 ← grammar.permutation.slot_value r
-      match r3 with
-      | core.result.Result.Ok value2 =>
-        let r4 ← grammar.permutation.slot_value s
-        match r4 with
-        | core.result.Result.Ok value3 =>
-          let r5 ← grammar.permutation.slot_value t
-          match r5 with
-          | core.result.Result.Ok value4 =>
-            let r6 ← grammar.permutation.slot_value u
-            match r6 with
-            | core.result.Result.Ok value5 =>
-              ok (core.result.Result.Ok (value, value1, value2, value3, value4,
-                value5))
-            | core.result.Result.Err error => ok (core.result.Result.Err error)
-          | core.result.Result.Err error => ok (core.result.Result.Err error)
-        | core.result.Result.Err error => ok (core.result.Result.Err error)
-      | core.result.Result.Err error => ok (core.result.Result.Err error)
-    | core.result.Result.Err error => ok (core.result.Result.Err error)
-  | core.result.Result.Err error => ok (core.result.Result.Err error)
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output)> for (P, Q, R, S, T, U)}::clear]:
-    Source: 'src/grammar/permutation.rs', lines 244:12-247:13
-    Visibility: public -/
-def
-  TuplePQRSTU.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.clear
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
-  {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output : Type}
-  {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
-  (parser_traitsGrammarInst1 : parser_traits.Grammar Q Clause1_Output)
-  (parser_traitsGrammarInst2 : parser_traits.Grammar R Clause2_Output)
-  (parser_traitsGrammarInst3 : parser_traits.Grammar S Clause3_Output)
-  (parser_traitsGrammarInst4 : parser_traits.Grammar T Clause4_Output)
-  (parser_traitsGrammarInst5 : parser_traits.Grammar U Clause5_Output)
-  (self : (P × Q × R × S × T × U))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output) × (grammar.permutation.Slot
-  Clause5_Output))) (index : Std.Usize) :
-  Result ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-    Clause1_Output) × (grammar.permutation.Slot Clause2_Output) ×
-    (grammar.permutation.Slot Clause3_Output) × (grammar.permutation.Slot
-    Clause4_Output) × (grammar.permutation.Slot Clause5_Output))
-  := do
-  match index.val with
-  | 0 =>
-    let s ← grammar.permutation.empty_slot Clause0_Output
-    let (_, s1, s2, s3, s4, s5) := state
-    ok (s, s1, s2, s3, s4, s5)
-  | 1 =>
-    let s ← grammar.permutation.empty_slot Clause1_Output
-    let (s1, _, s2, s3, s4, s5) := state
-    ok (s1, s, s2, s3, s4, s5)
-  | 2 =>
-    let s ← grammar.permutation.empty_slot Clause2_Output
-    let (s1, s2, _, s3, s4, s5) := state
-    ok (s1, s2, s, s3, s4, s5)
-  | 3 =>
-    let s ← grammar.permutation.empty_slot Clause3_Output
-    let (s1, s2, s3, _, s4, s5) := state
-    ok (s1, s2, s3, s, s4, s5)
-  | 4 =>
-    let s ← grammar.permutation.empty_slot Clause4_Output
-    let (s1, s2, s3, s4, _, s5) := state
-    ok (s1, s2, s3, s4, s, s5)
-  | 5 =>
-    let s ← grammar.permutation.empty_slot Clause5_Output
-    let (s1, s2, s3, s4, s5, _) := state
-    ok (s1, s2, s3, s4, s5, s)
-  | _ => ok state
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output)> for (P, Q, R, S, T, U)}::matched]:
-    Source: 'src/grammar/permutation.rs', lines 241:12-243:13
-    Visibility: public -/
-def
-  TuplePQRSTU.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.matched
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
-  {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output : Type}
-  {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
-  (parser_traitsGrammarInst1 : parser_traits.Grammar Q Clause1_Output)
-  (parser_traitsGrammarInst2 : parser_traits.Grammar R Clause2_Output)
-  (parser_traitsGrammarInst3 : parser_traits.Grammar S Clause3_Output)
-  (parser_traitsGrammarInst4 : parser_traits.Grammar T Clause4_Output)
-  (parser_traitsGrammarInst5 : parser_traits.Grammar U Clause5_Output)
-  (self : (P × Q × R × S × T × U))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output) × (grammar.permutation.Slot
-  Clause5_Output))) (index : Std.Usize) :
-  Result Bool
-  := do
-  match index.val with
-  | 0 => let (s, _, _, _, _, _) := state
-         ok s.matched
-  | 1 => let (_, s, _, _, _, _) := state
-         ok s.matched
-  | 2 => let (_, _, s, _, _, _) := state
-         ok s.matched
-  | 3 => let (_, _, _, s, _, _) := state
-         ok s.matched
-  | 4 => let (_, _, _, _, s, _) := state
-         ok s.matched
-  | 5 => let (_, _, _, _, _, s) := state
-         ok s.matched
-  | _ => ok false
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output)> for (P, Q, R, S, T, U)}::empty]:
-    Source: 'src/grammar/permutation.rs', lines 240:12-240:80
-    Visibility: public -/
-def
-  TuplePQRSTU.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.empty
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
-  {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output : Type}
-  {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
-  (parser_traitsGrammarInst1 : parser_traits.Grammar Q Clause1_Output)
-  (parser_traitsGrammarInst2 : parser_traits.Grammar R Clause2_Output)
-  (parser_traitsGrammarInst3 : parser_traits.Grammar S Clause3_Output)
-  (parser_traitsGrammarInst4 : parser_traits.Grammar T Clause4_Output)
-  (parser_traitsGrammarInst5 : parser_traits.Grammar U Clause5_Output)
-  (self : (P × Q × R × S × T × U)) :
-  Result ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-    Clause1_Output) × (grammar.permutation.Slot Clause2_Output) ×
-    (grammar.permutation.Slot Clause3_Output) × (grammar.permutation.Slot
-    Clause4_Output) × (grammar.permutation.Slot Clause5_Output))
-  := do
-  let s ← grammar.permutation.empty_slot Clause0_Output
-  let s1 ← grammar.permutation.empty_slot Clause1_Output
-  let s2 ← grammar.permutation.empty_slot Clause2_Output
-  let s3 ← grammar.permutation.empty_slot Clause3_Output
-  let s4 ← grammar.permutation.empty_slot Clause4_Output
-  let s5 ← grammar.permutation.empty_slot Clause5_Output
-  ok (s, s1, s2, s3, s4, s5)
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output)> for (P, Q, R, S, T, U)}::count]:
-    Source: 'src/grammar/permutation.rs', lines 239:12-239:47
-    Visibility: public -/
-def
-  TuplePQRSTU.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.count
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
-  {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output : Type}
-  {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
-  (parser_traitsGrammarInst1 : parser_traits.Grammar Q Clause1_Output)
-  (parser_traitsGrammarInst2 : parser_traits.Grammar R Clause2_Output)
-  (parser_traitsGrammarInst3 : parser_traits.Grammar S Clause3_Output)
-  (parser_traitsGrammarInst4 : parser_traits.Grammar T Clause4_Output)
-  (parser_traitsGrammarInst5 : parser_traits.Grammar U Clause5_Output)
-  (self : (P × Q × R × S × T × U)) :
-  Result Std.Usize
-  := do
-  ok 6#usize
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output)> for (P, Q, R, S, T, U)}]
-    Source: 'src/grammar/permutation.rs', lines 236:8-256:9 -/
-@[reducible]
-def
-  TuplePQRSTU.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
-  {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output : Type}
-  {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
-  (parser_traitsGrammarInst1 : parser_traits.Grammar Q Clause1_Output)
-  (parser_traitsGrammarInst2 : parser_traits.Grammar R Clause2_Output)
-  (parser_traitsGrammarInst3 : parser_traits.Grammar S Clause3_Output)
-  (parser_traitsGrammarInst4 : parser_traits.Grammar T Clause4_Output)
-  (parser_traitsGrammarInst5 : parser_traits.Grammar U Clause5_Output) :
-  grammar.permutation.Layout (P × Q × R × S × T × U) ((grammar.permutation.Slot
-  Clause0_Output) × (grammar.permutation.Slot Clause1_Output) ×
-  (grammar.permutation.Slot Clause2_Output) × (grammar.permutation.Slot
-  Clause3_Output) × (grammar.permutation.Slot Clause4_Output) ×
-  (grammar.permutation.Slot Clause5_Output)) (Clause0_Output × Clause1_Output ×
-  Clause2_Output × Clause3_Output × Clause4_Output × Clause5_Output) := {
-  count :=
-    TuplePQRSTU.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.count
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-  empty :=
-    TuplePQRSTU.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.empty
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-  matched :=
-    TuplePQRSTU.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.matched
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-  clear :=
-    TuplePQRSTU.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.clear
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-  finish :=
-    TuplePQRSTU.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output.finish
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output)> for (P, Q, R, S, T, U, V)}::finish]:
-    Source: 'src/grammar/permutation.rs', lines 248:12-255:13
-    Visibility: public -/
-def
-  TuplePQRSTUV.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.finish
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output : Type}
-  {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
-  {Clause6_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
-  Clause1_Output) (parser_traitsGrammarInst2 : parser_traits.Grammar R
-  Clause2_Output) (parser_traitsGrammarInst3 : parser_traits.Grammar S
-  Clause3_Output) (parser_traitsGrammarInst4 : parser_traits.Grammar T
-  Clause4_Output) (parser_traitsGrammarInst5 : parser_traits.Grammar U
-  Clause5_Output) (parser_traitsGrammarInst6 : parser_traits.Grammar V
-  Clause6_Output) (self : (P × Q × R × S × T × U × V))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output) × (grammar.permutation.Slot
-  Clause5_Output) × (grammar.permutation.Slot Clause6_Output))) :
-  Result (core.result.Result (Clause0_Output × Clause1_Output × Clause2_Output
-    × Clause3_Output × Clause4_Output × Clause5_Output × Clause6_Output)
-    input_types.ParseError)
-  := do
-  let (p, q, r, s, t, u, v) := state
-  let r1 ← grammar.permutation.slot_value p
-  match r1 with
-  | core.result.Result.Ok value =>
-    let r2 ← grammar.permutation.slot_value q
-    match r2 with
-    | core.result.Result.Ok value1 =>
-      let r3 ← grammar.permutation.slot_value r
-      match r3 with
-      | core.result.Result.Ok value2 =>
-        let r4 ← grammar.permutation.slot_value s
-        match r4 with
-        | core.result.Result.Ok value3 =>
-          let r5 ← grammar.permutation.slot_value t
-          match r5 with
-          | core.result.Result.Ok value4 =>
-            let r6 ← grammar.permutation.slot_value u
-            match r6 with
-            | core.result.Result.Ok value5 =>
-              let r7 ← grammar.permutation.slot_value v
-              match r7 with
-              | core.result.Result.Ok value6 =>
-                ok (core.result.Result.Ok (value, value1, value2, value3,
-                  value4, value5, value6))
-              | core.result.Result.Err error =>
-                ok (core.result.Result.Err error)
-            | core.result.Result.Err error => ok (core.result.Result.Err error)
-          | core.result.Result.Err error => ok (core.result.Result.Err error)
-        | core.result.Result.Err error => ok (core.result.Result.Err error)
-      | core.result.Result.Err error => ok (core.result.Result.Err error)
-    | core.result.Result.Err error => ok (core.result.Result.Err error)
-  | core.result.Result.Err error => ok (core.result.Result.Err error)
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output)> for (P, Q, R, S, T, U, V)}::clear]:
-    Source: 'src/grammar/permutation.rs', lines 244:12-247:13
-    Visibility: public -/
-def
-  TuplePQRSTUV.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.clear
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output : Type}
-  {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
-  {Clause6_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
-  Clause1_Output) (parser_traitsGrammarInst2 : parser_traits.Grammar R
-  Clause2_Output) (parser_traitsGrammarInst3 : parser_traits.Grammar S
-  Clause3_Output) (parser_traitsGrammarInst4 : parser_traits.Grammar T
-  Clause4_Output) (parser_traitsGrammarInst5 : parser_traits.Grammar U
-  Clause5_Output) (parser_traitsGrammarInst6 : parser_traits.Grammar V
-  Clause6_Output) (self : (P × Q × R × S × T × U × V))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output) × (grammar.permutation.Slot
-  Clause5_Output) × (grammar.permutation.Slot Clause6_Output)))
-  (index : Std.Usize) :
-  Result ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-    Clause1_Output) × (grammar.permutation.Slot Clause2_Output) ×
-    (grammar.permutation.Slot Clause3_Output) × (grammar.permutation.Slot
-    Clause4_Output) × (grammar.permutation.Slot Clause5_Output) ×
-    (grammar.permutation.Slot Clause6_Output))
-  := do
-  match index.val with
-  | 0 =>
-    let s ← grammar.permutation.empty_slot Clause0_Output
-    let (_, s1, s2, s3, s4, s5, s6) := state
-    ok (s, s1, s2, s3, s4, s5, s6)
-  | 1 =>
-    let s ← grammar.permutation.empty_slot Clause1_Output
-    let (s1, _, s2, s3, s4, s5, s6) := state
-    ok (s1, s, s2, s3, s4, s5, s6)
-  | 2 =>
-    let s ← grammar.permutation.empty_slot Clause2_Output
-    let (s1, s2, _, s3, s4, s5, s6) := state
-    ok (s1, s2, s, s3, s4, s5, s6)
-  | 3 =>
-    let s ← grammar.permutation.empty_slot Clause3_Output
-    let (s1, s2, s3, _, s4, s5, s6) := state
-    ok (s1, s2, s3, s, s4, s5, s6)
-  | 4 =>
-    let s ← grammar.permutation.empty_slot Clause4_Output
-    let (s1, s2, s3, s4, _, s5, s6) := state
-    ok (s1, s2, s3, s4, s, s5, s6)
-  | 5 =>
-    let s ← grammar.permutation.empty_slot Clause5_Output
-    let (s1, s2, s3, s4, s5, _, s6) := state
-    ok (s1, s2, s3, s4, s5, s, s6)
-  | 6 =>
-    let s ← grammar.permutation.empty_slot Clause6_Output
-    let (s1, s2, s3, s4, s5, s6, _) := state
-    ok (s1, s2, s3, s4, s5, s6, s)
-  | _ => ok state
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output)> for (P, Q, R, S, T, U, V)}::matched]:
-    Source: 'src/grammar/permutation.rs', lines 241:12-243:13
-    Visibility: public -/
-def
-  TuplePQRSTUV.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.matched
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output : Type}
-  {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
-  {Clause6_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
-  Clause1_Output) (parser_traitsGrammarInst2 : parser_traits.Grammar R
-  Clause2_Output) (parser_traitsGrammarInst3 : parser_traits.Grammar S
-  Clause3_Output) (parser_traitsGrammarInst4 : parser_traits.Grammar T
-  Clause4_Output) (parser_traitsGrammarInst5 : parser_traits.Grammar U
-  Clause5_Output) (parser_traitsGrammarInst6 : parser_traits.Grammar V
-  Clause6_Output) (self : (P × Q × R × S × T × U × V))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output) × (grammar.permutation.Slot
-  Clause5_Output) × (grammar.permutation.Slot Clause6_Output)))
-  (index : Std.Usize) :
-  Result Bool
-  := do
-  match index.val with
-  | 0 => let (s, _, _, _, _, _, _) := state
-         ok s.matched
-  | 1 => let (_, s, _, _, _, _, _) := state
-         ok s.matched
-  | 2 => let (_, _, s, _, _, _, _) := state
-         ok s.matched
-  | 3 => let (_, _, _, s, _, _, _) := state
-         ok s.matched
-  | 4 => let (_, _, _, _, s, _, _) := state
-         ok s.matched
-  | 5 => let (_, _, _, _, _, s, _) := state
-         ok s.matched
-  | 6 => let (_, _, _, _, _, _, s) := state
-         ok s.matched
-  | _ => ok false
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output)> for (P, Q, R, S, T, U, V)}::empty]:
-    Source: 'src/grammar/permutation.rs', lines 240:12-240:80
-    Visibility: public -/
-def
-  TuplePQRSTUV.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.empty
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output : Type}
-  {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
-  {Clause6_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
-  Clause1_Output) (parser_traitsGrammarInst2 : parser_traits.Grammar R
-  Clause2_Output) (parser_traitsGrammarInst3 : parser_traits.Grammar S
-  Clause3_Output) (parser_traitsGrammarInst4 : parser_traits.Grammar T
-  Clause4_Output) (parser_traitsGrammarInst5 : parser_traits.Grammar U
-  Clause5_Output) (parser_traitsGrammarInst6 : parser_traits.Grammar V
-  Clause6_Output) (self : (P × Q × R × S × T × U × V)) :
-  Result ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-    Clause1_Output) × (grammar.permutation.Slot Clause2_Output) ×
-    (grammar.permutation.Slot Clause3_Output) × (grammar.permutation.Slot
-    Clause4_Output) × (grammar.permutation.Slot Clause5_Output) ×
-    (grammar.permutation.Slot Clause6_Output))
-  := do
-  let s ← grammar.permutation.empty_slot Clause0_Output
-  let s1 ← grammar.permutation.empty_slot Clause1_Output
-  let s2 ← grammar.permutation.empty_slot Clause2_Output
-  let s3 ← grammar.permutation.empty_slot Clause3_Output
-  let s4 ← grammar.permutation.empty_slot Clause4_Output
-  let s5 ← grammar.permutation.empty_slot Clause5_Output
-  let s6 ← grammar.permutation.empty_slot Clause6_Output
-  ok (s, s1, s2, s3, s4, s5, s6)
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output)> for (P, Q, R, S, T, U, V)}::count]:
-    Source: 'src/grammar/permutation.rs', lines 239:12-239:47
-    Visibility: public -/
-def
-  TuplePQRSTUV.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.count
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output : Type}
-  {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
-  {Clause6_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
-  Clause1_Output) (parser_traitsGrammarInst2 : parser_traits.Grammar R
-  Clause2_Output) (parser_traitsGrammarInst3 : parser_traits.Grammar S
-  Clause3_Output) (parser_traitsGrammarInst4 : parser_traits.Grammar T
-  Clause4_Output) (parser_traitsGrammarInst5 : parser_traits.Grammar U
-  Clause5_Output) (parser_traitsGrammarInst6 : parser_traits.Grammar V
-  Clause6_Output) (self : (P × Q × R × S × T × U × V)) :
-  Result Std.Usize
-  := do
-  ok 7#usize
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output)> for (P, Q, R, S, T, U, V)}]
-    Source: 'src/grammar/permutation.rs', lines 236:8-256:9 -/
-@[reducible]
-def
-  TuplePQRSTUV.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output : Type}
-  {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
-  {Clause6_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
-  Clause1_Output) (parser_traitsGrammarInst2 : parser_traits.Grammar R
-  Clause2_Output) (parser_traitsGrammarInst3 : parser_traits.Grammar S
-  Clause3_Output) (parser_traitsGrammarInst4 : parser_traits.Grammar T
-  Clause4_Output) (parser_traitsGrammarInst5 : parser_traits.Grammar U
-  Clause5_Output) (parser_traitsGrammarInst6 : parser_traits.Grammar V
-  Clause6_Output) : grammar.permutation.Layout (P × Q × R × S × T × U × V)
-  ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-  Clause1_Output) × (grammar.permutation.Slot Clause2_Output) ×
-  (grammar.permutation.Slot Clause3_Output) × (grammar.permutation.Slot
-  Clause4_Output) × (grammar.permutation.Slot Clause5_Output) ×
-  (grammar.permutation.Slot Clause6_Output)) (Clause0_Output × Clause1_Output ×
-  Clause2_Output × Clause3_Output × Clause4_Output × Clause5_Output ×
-  Clause6_Output) := {
-  count :=
-    TuplePQRSTUV.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.count
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6
-  empty :=
-    TuplePQRSTUV.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.empty
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6
-  matched :=
-    TuplePQRSTUV.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.matched
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6
-  clear :=
-    TuplePQRSTUV.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.clear
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6
-  finish :=
-    TuplePQRSTUV.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output.finish
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output)> for (P, Q, R, S, T, U, V, W)}::finish]:
-    Source: 'src/grammar/permutation.rs', lines 248:12-255:13
-    Visibility: public -/
-def
-  TuplePQRSTUVW.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.finish
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output :
-  Type} {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
-  {Clause6_Output : Type} {Clause7_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause1_Output) (parser_traitsGrammarInst2 :
-  parser_traits.Grammar R Clause2_Output) (parser_traitsGrammarInst3 :
-  parser_traits.Grammar S Clause3_Output) (parser_traitsGrammarInst4 :
-  parser_traits.Grammar T Clause4_Output) (parser_traitsGrammarInst5 :
-  parser_traits.Grammar U Clause5_Output) (parser_traitsGrammarInst6 :
-  parser_traits.Grammar V Clause6_Output) (parser_traitsGrammarInst7 :
-  parser_traits.Grammar W Clause7_Output)
-  (self : (P × Q × R × S × T × U × V × W))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output) × (grammar.permutation.Slot
-  Clause5_Output) × (grammar.permutation.Slot Clause6_Output) ×
-  (grammar.permutation.Slot Clause7_Output))) :
-  Result (core.result.Result (Clause0_Output × Clause1_Output × Clause2_Output
-    × Clause3_Output × Clause4_Output × Clause5_Output × Clause6_Output ×
-    Clause7_Output) input_types.ParseError)
-  := do
-  let (p, q, r, s, t, u, v, w) := state
-  let r1 ← grammar.permutation.slot_value p
-  match r1 with
-  | core.result.Result.Ok value =>
-    let r2 ← grammar.permutation.slot_value q
-    match r2 with
-    | core.result.Result.Ok value1 =>
-      let r3 ← grammar.permutation.slot_value r
-      match r3 with
-      | core.result.Result.Ok value2 =>
-        let r4 ← grammar.permutation.slot_value s
-        match r4 with
-        | core.result.Result.Ok value3 =>
-          let r5 ← grammar.permutation.slot_value t
-          match r5 with
-          | core.result.Result.Ok value4 =>
-            let r6 ← grammar.permutation.slot_value u
-            match r6 with
-            | core.result.Result.Ok value5 =>
-              let r7 ← grammar.permutation.slot_value v
-              match r7 with
-              | core.result.Result.Ok value6 =>
-                let r8 ← grammar.permutation.slot_value w
-                match r8 with
-                | core.result.Result.Ok value7 =>
-                  ok (core.result.Result.Ok (value, value1, value2, value3,
-                    value4, value5, value6, value7))
-                | core.result.Result.Err error =>
-                  ok (core.result.Result.Err error)
-              | core.result.Result.Err error =>
-                ok (core.result.Result.Err error)
-            | core.result.Result.Err error => ok (core.result.Result.Err error)
-          | core.result.Result.Err error => ok (core.result.Result.Err error)
-        | core.result.Result.Err error => ok (core.result.Result.Err error)
-      | core.result.Result.Err error => ok (core.result.Result.Err error)
-    | core.result.Result.Err error => ok (core.result.Result.Err error)
-  | core.result.Result.Err error => ok (core.result.Result.Err error)
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output)> for (P, Q, R, S, T, U, V, W)}::clear]:
-    Source: 'src/grammar/permutation.rs', lines 244:12-247:13
-    Visibility: public -/
-def
-  TuplePQRSTUVW.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.clear
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output :
-  Type} {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
-  {Clause6_Output : Type} {Clause7_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause1_Output) (parser_traitsGrammarInst2 :
-  parser_traits.Grammar R Clause2_Output) (parser_traitsGrammarInst3 :
-  parser_traits.Grammar S Clause3_Output) (parser_traitsGrammarInst4 :
-  parser_traits.Grammar T Clause4_Output) (parser_traitsGrammarInst5 :
-  parser_traits.Grammar U Clause5_Output) (parser_traitsGrammarInst6 :
-  parser_traits.Grammar V Clause6_Output) (parser_traitsGrammarInst7 :
-  parser_traits.Grammar W Clause7_Output)
-  (self : (P × Q × R × S × T × U × V × W))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output) × (grammar.permutation.Slot
-  Clause5_Output) × (grammar.permutation.Slot Clause6_Output) ×
-  (grammar.permutation.Slot Clause7_Output))) (index : Std.Usize) :
-  Result ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-    Clause1_Output) × (grammar.permutation.Slot Clause2_Output) ×
-    (grammar.permutation.Slot Clause3_Output) × (grammar.permutation.Slot
-    Clause4_Output) × (grammar.permutation.Slot Clause5_Output) ×
-    (grammar.permutation.Slot Clause6_Output) × (grammar.permutation.Slot
-    Clause7_Output))
-  := do
-  match index.val with
-  | 0 =>
-    let s ← grammar.permutation.empty_slot Clause0_Output
-    let (_, s1, s2, s3, s4, s5, s6, s7) := state
-    ok (s, s1, s2, s3, s4, s5, s6, s7)
-  | 1 =>
-    let s ← grammar.permutation.empty_slot Clause1_Output
-    let (s1, _, s2, s3, s4, s5, s6, s7) := state
-    ok (s1, s, s2, s3, s4, s5, s6, s7)
-  | 2 =>
-    let s ← grammar.permutation.empty_slot Clause2_Output
-    let (s1, s2, _, s3, s4, s5, s6, s7) := state
-    ok (s1, s2, s, s3, s4, s5, s6, s7)
-  | 3 =>
-    let s ← grammar.permutation.empty_slot Clause3_Output
-    let (s1, s2, s3, _, s4, s5, s6, s7) := state
-    ok (s1, s2, s3, s, s4, s5, s6, s7)
-  | 4 =>
-    let s ← grammar.permutation.empty_slot Clause4_Output
-    let (s1, s2, s3, s4, _, s5, s6, s7) := state
-    ok (s1, s2, s3, s4, s, s5, s6, s7)
-  | 5 =>
-    let s ← grammar.permutation.empty_slot Clause5_Output
-    let (s1, s2, s3, s4, s5, _, s6, s7) := state
-    ok (s1, s2, s3, s4, s5, s, s6, s7)
-  | 6 =>
-    let s ← grammar.permutation.empty_slot Clause6_Output
-    let (s1, s2, s3, s4, s5, s6, _, s7) := state
-    ok (s1, s2, s3, s4, s5, s6, s, s7)
-  | 7 =>
-    let s ← grammar.permutation.empty_slot Clause7_Output
-    let (s1, s2, s3, s4, s5, s6, s7, _) := state
-    ok (s1, s2, s3, s4, s5, s6, s7, s)
-  | _ => ok state
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output)> for (P, Q, R, S, T, U, V, W)}::matched]:
-    Source: 'src/grammar/permutation.rs', lines 241:12-243:13
-    Visibility: public -/
-def
-  TuplePQRSTUVW.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.matched
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output :
-  Type} {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
-  {Clause6_Output : Type} {Clause7_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause1_Output) (parser_traitsGrammarInst2 :
-  parser_traits.Grammar R Clause2_Output) (parser_traitsGrammarInst3 :
-  parser_traits.Grammar S Clause3_Output) (parser_traitsGrammarInst4 :
-  parser_traits.Grammar T Clause4_Output) (parser_traitsGrammarInst5 :
-  parser_traits.Grammar U Clause5_Output) (parser_traitsGrammarInst6 :
-  parser_traits.Grammar V Clause6_Output) (parser_traitsGrammarInst7 :
-  parser_traits.Grammar W Clause7_Output)
-  (self : (P × Q × R × S × T × U × V × W))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output) × (grammar.permutation.Slot
-  Clause5_Output) × (grammar.permutation.Slot Clause6_Output) ×
-  (grammar.permutation.Slot Clause7_Output))) (index : Std.Usize) :
-  Result Bool
-  := do
-  match index.val with
-  | 0 => let (s, _, _, _, _, _, _, _) := state
-         ok s.matched
-  | 1 => let (_, s, _, _, _, _, _, _) := state
-         ok s.matched
-  | 2 => let (_, _, s, _, _, _, _, _) := state
-         ok s.matched
-  | 3 => let (_, _, _, s, _, _, _, _) := state
-         ok s.matched
-  | 4 => let (_, _, _, _, s, _, _, _) := state
-         ok s.matched
-  | 5 => let (_, _, _, _, _, s, _, _) := state
-         ok s.matched
-  | 6 => let (_, _, _, _, _, _, s, _) := state
-         ok s.matched
-  | 7 => let (_, _, _, _, _, _, _, s) := state
-         ok s.matched
-  | _ => ok false
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output)> for (P, Q, R, S, T, U, V, W)}::empty]:
-    Source: 'src/grammar/permutation.rs', lines 240:12-240:80
-    Visibility: public -/
-def
-  TuplePQRSTUVW.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.empty
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output :
-  Type} {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
-  {Clause6_Output : Type} {Clause7_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause1_Output) (parser_traitsGrammarInst2 :
-  parser_traits.Grammar R Clause2_Output) (parser_traitsGrammarInst3 :
-  parser_traits.Grammar S Clause3_Output) (parser_traitsGrammarInst4 :
-  parser_traits.Grammar T Clause4_Output) (parser_traitsGrammarInst5 :
-  parser_traits.Grammar U Clause5_Output) (parser_traitsGrammarInst6 :
-  parser_traits.Grammar V Clause6_Output) (parser_traitsGrammarInst7 :
-  parser_traits.Grammar W Clause7_Output)
-  (self : (P × Q × R × S × T × U × V × W)) :
-  Result ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-    Clause1_Output) × (grammar.permutation.Slot Clause2_Output) ×
-    (grammar.permutation.Slot Clause3_Output) × (grammar.permutation.Slot
-    Clause4_Output) × (grammar.permutation.Slot Clause5_Output) ×
-    (grammar.permutation.Slot Clause6_Output) × (grammar.permutation.Slot
-    Clause7_Output))
-  := do
-  let s ← grammar.permutation.empty_slot Clause0_Output
-  let s1 ← grammar.permutation.empty_slot Clause1_Output
-  let s2 ← grammar.permutation.empty_slot Clause2_Output
-  let s3 ← grammar.permutation.empty_slot Clause3_Output
-  let s4 ← grammar.permutation.empty_slot Clause4_Output
-  let s5 ← grammar.permutation.empty_slot Clause5_Output
-  let s6 ← grammar.permutation.empty_slot Clause6_Output
-  let s7 ← grammar.permutation.empty_slot Clause7_Output
-  ok (s, s1, s2, s3, s4, s5, s6, s7)
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output)> for (P, Q, R, S, T, U, V, W)}::count]:
-    Source: 'src/grammar/permutation.rs', lines 239:12-239:47
-    Visibility: public -/
-def
-  TuplePQRSTUVW.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.count
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output :
-  Type} {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
-  {Clause6_Output : Type} {Clause7_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause1_Output) (parser_traitsGrammarInst2 :
-  parser_traits.Grammar R Clause2_Output) (parser_traitsGrammarInst3 :
-  parser_traits.Grammar S Clause3_Output) (parser_traitsGrammarInst4 :
-  parser_traits.Grammar T Clause4_Output) (parser_traitsGrammarInst5 :
-  parser_traits.Grammar U Clause5_Output) (parser_traitsGrammarInst6 :
-  parser_traits.Grammar V Clause6_Output) (parser_traitsGrammarInst7 :
-  parser_traits.Grammar W Clause7_Output)
-  (self : (P × Q × R × S × T × U × V × W)) :
-  Result Std.Usize
-  := do
-  ok 8#usize
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output)> for (P, Q, R, S, T, U, V, W)}]
-    Source: 'src/grammar/permutation.rs', lines 236:8-256:9 -/
-@[reducible]
-def
-  TuplePQRSTUVW.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {Clause0_Output : Type} {Clause1_Output : Type} {Clause2_Output :
-  Type} {Clause3_Output : Type} {Clause4_Output : Type} {Clause5_Output : Type}
-  {Clause6_Output : Type} {Clause7_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause1_Output) (parser_traitsGrammarInst2 :
-  parser_traits.Grammar R Clause2_Output) (parser_traitsGrammarInst3 :
-  parser_traits.Grammar S Clause3_Output) (parser_traitsGrammarInst4 :
-  parser_traits.Grammar T Clause4_Output) (parser_traitsGrammarInst5 :
-  parser_traits.Grammar U Clause5_Output) (parser_traitsGrammarInst6 :
-  parser_traits.Grammar V Clause6_Output) (parser_traitsGrammarInst7 :
-  parser_traits.Grammar W Clause7_Output) : grammar.permutation.Layout (P × Q ×
-  R × S × T × U × V × W) ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output) × (grammar.permutation.Slot
-  Clause5_Output) × (grammar.permutation.Slot Clause6_Output) ×
-  (grammar.permutation.Slot Clause7_Output)) (Clause0_Output × Clause1_Output ×
-  Clause2_Output × Clause3_Output × Clause4_Output × Clause5_Output ×
-  Clause6_Output × Clause7_Output) := {
-  count :=
-    TuplePQRSTUVW.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.count
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6 parser_traitsGrammarInst7
-  empty :=
-    TuplePQRSTUVW.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.empty
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6 parser_traitsGrammarInst7
-  matched :=
-    TuplePQRSTUVW.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.matched
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6 parser_traitsGrammarInst7
-  clear :=
-    TuplePQRSTUVW.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.clear
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6 parser_traitsGrammarInst7
-  finish :=
-    TuplePQRSTUVW.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output.finish
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6 parser_traitsGrammarInst7
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>, rusthammer::grammar::permutation::Slot<Clause8_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output)> for (P, Q, R, S, T, U, V, W, X)}::finish]:
-    Source: 'src/grammar/permutation.rs', lines 248:12-255:13
-    Visibility: public -/
-def
-  TuplePQRSTUVWX.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.finish
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {X : Type} {Clause0_Output : Type} {Clause1_Output : Type}
-  {Clause2_Output : Type} {Clause3_Output : Type} {Clause4_Output : Type}
-  {Clause5_Output : Type} {Clause6_Output : Type} {Clause7_Output : Type}
-  {Clause8_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
-  Clause1_Output) (parser_traitsGrammarInst2 : parser_traits.Grammar R
-  Clause2_Output) (parser_traitsGrammarInst3 : parser_traits.Grammar S
-  Clause3_Output) (parser_traitsGrammarInst4 : parser_traits.Grammar T
-  Clause4_Output) (parser_traitsGrammarInst5 : parser_traits.Grammar U
-  Clause5_Output) (parser_traitsGrammarInst6 : parser_traits.Grammar V
-  Clause6_Output) (parser_traitsGrammarInst7 : parser_traits.Grammar W
-  Clause7_Output) (parser_traitsGrammarInst8 : parser_traits.Grammar X
-  Clause8_Output) (self : (P × Q × R × S × T × U × V × W × X))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output) × (grammar.permutation.Slot
-  Clause5_Output) × (grammar.permutation.Slot Clause6_Output) ×
-  (grammar.permutation.Slot Clause7_Output) × (grammar.permutation.Slot
-  Clause8_Output))) :
-  Result (core.result.Result (Clause0_Output × Clause1_Output × Clause2_Output
-    × Clause3_Output × Clause4_Output × Clause5_Output × Clause6_Output ×
-    Clause7_Output × Clause8_Output) input_types.ParseError)
-  := do
-  let (p, q, r, s, t, u, v, w, x) := state
-  let r1 ← grammar.permutation.slot_value p
-  match r1 with
-  | core.result.Result.Ok value =>
-    let r2 ← grammar.permutation.slot_value q
-    match r2 with
-    | core.result.Result.Ok value1 =>
-      let r3 ← grammar.permutation.slot_value r
-      match r3 with
-      | core.result.Result.Ok value2 =>
-        let r4 ← grammar.permutation.slot_value s
-        match r4 with
-        | core.result.Result.Ok value3 =>
-          let r5 ← grammar.permutation.slot_value t
-          match r5 with
-          | core.result.Result.Ok value4 =>
-            let r6 ← grammar.permutation.slot_value u
-            match r6 with
-            | core.result.Result.Ok value5 =>
-              let r7 ← grammar.permutation.slot_value v
-              match r7 with
-              | core.result.Result.Ok value6 =>
-                let r8 ← grammar.permutation.slot_value w
-                match r8 with
-                | core.result.Result.Ok value7 =>
-                  let r9 ← grammar.permutation.slot_value x
-                  match r9 with
-                  | core.result.Result.Ok value8 =>
-                    ok (core.result.Result.Ok (value, value1, value2, value3,
-                      value4, value5, value6, value7, value8))
-                  | core.result.Result.Err error =>
-                    ok (core.result.Result.Err error)
-                | core.result.Result.Err error =>
-                  ok (core.result.Result.Err error)
-              | core.result.Result.Err error =>
-                ok (core.result.Result.Err error)
-            | core.result.Result.Err error => ok (core.result.Result.Err error)
-          | core.result.Result.Err error => ok (core.result.Result.Err error)
-        | core.result.Result.Err error => ok (core.result.Result.Err error)
-      | core.result.Result.Err error => ok (core.result.Result.Err error)
-    | core.result.Result.Err error => ok (core.result.Result.Err error)
-  | core.result.Result.Err error => ok (core.result.Result.Err error)
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>, rusthammer::grammar::permutation::Slot<Clause8_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output)> for (P, Q, R, S, T, U, V, W, X)}::clear]:
-    Source: 'src/grammar/permutation.rs', lines 244:12-247:13
-    Visibility: public -/
-def
-  TuplePQRSTUVWX.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.clear
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {X : Type} {Clause0_Output : Type} {Clause1_Output : Type}
-  {Clause2_Output : Type} {Clause3_Output : Type} {Clause4_Output : Type}
-  {Clause5_Output : Type} {Clause6_Output : Type} {Clause7_Output : Type}
-  {Clause8_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
-  Clause1_Output) (parser_traitsGrammarInst2 : parser_traits.Grammar R
-  Clause2_Output) (parser_traitsGrammarInst3 : parser_traits.Grammar S
-  Clause3_Output) (parser_traitsGrammarInst4 : parser_traits.Grammar T
-  Clause4_Output) (parser_traitsGrammarInst5 : parser_traits.Grammar U
-  Clause5_Output) (parser_traitsGrammarInst6 : parser_traits.Grammar V
-  Clause6_Output) (parser_traitsGrammarInst7 : parser_traits.Grammar W
-  Clause7_Output) (parser_traitsGrammarInst8 : parser_traits.Grammar X
-  Clause8_Output) (self : (P × Q × R × S × T × U × V × W × X))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output) × (grammar.permutation.Slot
-  Clause5_Output) × (grammar.permutation.Slot Clause6_Output) ×
-  (grammar.permutation.Slot Clause7_Output) × (grammar.permutation.Slot
-  Clause8_Output))) (index : Std.Usize) :
-  Result ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-    Clause1_Output) × (grammar.permutation.Slot Clause2_Output) ×
-    (grammar.permutation.Slot Clause3_Output) × (grammar.permutation.Slot
-    Clause4_Output) × (grammar.permutation.Slot Clause5_Output) ×
-    (grammar.permutation.Slot Clause6_Output) × (grammar.permutation.Slot
-    Clause7_Output) × (grammar.permutation.Slot Clause8_Output))
-  := do
-  match index.val with
-  | 0 =>
-    let s ← grammar.permutation.empty_slot Clause0_Output
-    let (_, s1, s2, s3, s4, s5, s6, s7, s8) := state
-    ok (s, s1, s2, s3, s4, s5, s6, s7, s8)
-  | 1 =>
-    let s ← grammar.permutation.empty_slot Clause1_Output
-    let (s1, _, s2, s3, s4, s5, s6, s7, s8) := state
-    ok (s1, s, s2, s3, s4, s5, s6, s7, s8)
-  | 2 =>
-    let s ← grammar.permutation.empty_slot Clause2_Output
-    let (s1, s2, _, s3, s4, s5, s6, s7, s8) := state
-    ok (s1, s2, s, s3, s4, s5, s6, s7, s8)
-  | 3 =>
-    let s ← grammar.permutation.empty_slot Clause3_Output
-    let (s1, s2, s3, _, s4, s5, s6, s7, s8) := state
-    ok (s1, s2, s3, s, s4, s5, s6, s7, s8)
-  | 4 =>
-    let s ← grammar.permutation.empty_slot Clause4_Output
-    let (s1, s2, s3, s4, _, s5, s6, s7, s8) := state
-    ok (s1, s2, s3, s4, s, s5, s6, s7, s8)
-  | 5 =>
-    let s ← grammar.permutation.empty_slot Clause5_Output
-    let (s1, s2, s3, s4, s5, _, s6, s7, s8) := state
-    ok (s1, s2, s3, s4, s5, s, s6, s7, s8)
-  | 6 =>
-    let s ← grammar.permutation.empty_slot Clause6_Output
-    let (s1, s2, s3, s4, s5, s6, _, s7, s8) := state
-    ok (s1, s2, s3, s4, s5, s6, s, s7, s8)
-  | 7 =>
-    let s ← grammar.permutation.empty_slot Clause7_Output
-    let (s1, s2, s3, s4, s5, s6, s7, _, s8) := state
-    ok (s1, s2, s3, s4, s5, s6, s7, s, s8)
-  | 8 =>
-    let s ← grammar.permutation.empty_slot Clause8_Output
-    let (s1, s2, s3, s4, s5, s6, s7, s8, _) := state
-    ok (s1, s2, s3, s4, s5, s6, s7, s8, s)
-  | _ => ok state
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>, rusthammer::grammar::permutation::Slot<Clause8_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output)> for (P, Q, R, S, T, U, V, W, X)}::matched]:
-    Source: 'src/grammar/permutation.rs', lines 241:12-243:13
-    Visibility: public -/
-def
-  TuplePQRSTUVWX.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.matched
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {X : Type} {Clause0_Output : Type} {Clause1_Output : Type}
-  {Clause2_Output : Type} {Clause3_Output : Type} {Clause4_Output : Type}
-  {Clause5_Output : Type} {Clause6_Output : Type} {Clause7_Output : Type}
-  {Clause8_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
-  Clause1_Output) (parser_traitsGrammarInst2 : parser_traits.Grammar R
-  Clause2_Output) (parser_traitsGrammarInst3 : parser_traits.Grammar S
-  Clause3_Output) (parser_traitsGrammarInst4 : parser_traits.Grammar T
-  Clause4_Output) (parser_traitsGrammarInst5 : parser_traits.Grammar U
-  Clause5_Output) (parser_traitsGrammarInst6 : parser_traits.Grammar V
-  Clause6_Output) (parser_traitsGrammarInst7 : parser_traits.Grammar W
-  Clause7_Output) (parser_traitsGrammarInst8 : parser_traits.Grammar X
-  Clause8_Output) (self : (P × Q × R × S × T × U × V × W × X))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output) × (grammar.permutation.Slot
-  Clause5_Output) × (grammar.permutation.Slot Clause6_Output) ×
-  (grammar.permutation.Slot Clause7_Output) × (grammar.permutation.Slot
-  Clause8_Output))) (index : Std.Usize) :
-  Result Bool
-  := do
-  match index.val with
-  | 0 => let (s, _, _, _, _, _, _, _, _) := state
-         ok s.matched
-  | 1 => let (_, s, _, _, _, _, _, _, _) := state
-         ok s.matched
-  | 2 => let (_, _, s, _, _, _, _, _, _) := state
-         ok s.matched
-  | 3 => let (_, _, _, s, _, _, _, _, _) := state
-         ok s.matched
-  | 4 => let (_, _, _, _, s, _, _, _, _) := state
-         ok s.matched
-  | 5 => let (_, _, _, _, _, s, _, _, _) := state
-         ok s.matched
-  | 6 => let (_, _, _, _, _, _, s, _, _) := state
-         ok s.matched
-  | 7 => let (_, _, _, _, _, _, _, s, _) := state
-         ok s.matched
-  | 8 => let (_, _, _, _, _, _, _, _, s) := state
-         ok s.matched
-  | _ => ok false
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>, rusthammer::grammar::permutation::Slot<Clause8_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output)> for (P, Q, R, S, T, U, V, W, X)}::empty]:
-    Source: 'src/grammar/permutation.rs', lines 240:12-240:80
-    Visibility: public -/
-def
-  TuplePQRSTUVWX.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.empty
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {X : Type} {Clause0_Output : Type} {Clause1_Output : Type}
-  {Clause2_Output : Type} {Clause3_Output : Type} {Clause4_Output : Type}
-  {Clause5_Output : Type} {Clause6_Output : Type} {Clause7_Output : Type}
-  {Clause8_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
-  Clause1_Output) (parser_traitsGrammarInst2 : parser_traits.Grammar R
-  Clause2_Output) (parser_traitsGrammarInst3 : parser_traits.Grammar S
-  Clause3_Output) (parser_traitsGrammarInst4 : parser_traits.Grammar T
-  Clause4_Output) (parser_traitsGrammarInst5 : parser_traits.Grammar U
-  Clause5_Output) (parser_traitsGrammarInst6 : parser_traits.Grammar V
-  Clause6_Output) (parser_traitsGrammarInst7 : parser_traits.Grammar W
-  Clause7_Output) (parser_traitsGrammarInst8 : parser_traits.Grammar X
-  Clause8_Output) (self : (P × Q × R × S × T × U × V × W × X)) :
-  Result ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-    Clause1_Output) × (grammar.permutation.Slot Clause2_Output) ×
-    (grammar.permutation.Slot Clause3_Output) × (grammar.permutation.Slot
-    Clause4_Output) × (grammar.permutation.Slot Clause5_Output) ×
-    (grammar.permutation.Slot Clause6_Output) × (grammar.permutation.Slot
-    Clause7_Output) × (grammar.permutation.Slot Clause8_Output))
-  := do
-  let s ← grammar.permutation.empty_slot Clause0_Output
-  let s1 ← grammar.permutation.empty_slot Clause1_Output
-  let s2 ← grammar.permutation.empty_slot Clause2_Output
-  let s3 ← grammar.permutation.empty_slot Clause3_Output
-  let s4 ← grammar.permutation.empty_slot Clause4_Output
-  let s5 ← grammar.permutation.empty_slot Clause5_Output
-  let s6 ← grammar.permutation.empty_slot Clause6_Output
-  let s7 ← grammar.permutation.empty_slot Clause7_Output
-  let s8 ← grammar.permutation.empty_slot Clause8_Output
-  ok (s, s1, s2, s3, s4, s5, s6, s7, s8)
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>, rusthammer::grammar::permutation::Slot<Clause8_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output)> for (P, Q, R, S, T, U, V, W, X)}::count]:
-    Source: 'src/grammar/permutation.rs', lines 239:12-239:47
-    Visibility: public -/
-def
-  TuplePQRSTUVWX.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.count
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {X : Type} {Clause0_Output : Type} {Clause1_Output : Type}
-  {Clause2_Output : Type} {Clause3_Output : Type} {Clause4_Output : Type}
-  {Clause5_Output : Type} {Clause6_Output : Type} {Clause7_Output : Type}
-  {Clause8_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
-  Clause1_Output) (parser_traitsGrammarInst2 : parser_traits.Grammar R
-  Clause2_Output) (parser_traitsGrammarInst3 : parser_traits.Grammar S
-  Clause3_Output) (parser_traitsGrammarInst4 : parser_traits.Grammar T
-  Clause4_Output) (parser_traitsGrammarInst5 : parser_traits.Grammar U
-  Clause5_Output) (parser_traitsGrammarInst6 : parser_traits.Grammar V
-  Clause6_Output) (parser_traitsGrammarInst7 : parser_traits.Grammar W
-  Clause7_Output) (parser_traitsGrammarInst8 : parser_traits.Grammar X
-  Clause8_Output) (self : (P × Q × R × S × T × U × V × W × X)) :
-  Result Std.Usize
-  := do
-  ok 9#usize
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>, rusthammer::grammar::permutation::Slot<Clause8_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output)> for (P, Q, R, S, T, U, V, W, X)}]
-    Source: 'src/grammar/permutation.rs', lines 236:8-256:9 -/
-@[reducible]
-def
-  TuplePQRSTUVWX.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {X : Type} {Clause0_Output : Type} {Clause1_Output : Type}
-  {Clause2_Output : Type} {Clause3_Output : Type} {Clause4_Output : Type}
-  {Clause5_Output : Type} {Clause6_Output : Type} {Clause7_Output : Type}
-  {Clause8_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
-  Clause1_Output) (parser_traitsGrammarInst2 : parser_traits.Grammar R
-  Clause2_Output) (parser_traitsGrammarInst3 : parser_traits.Grammar S
-  Clause3_Output) (parser_traitsGrammarInst4 : parser_traits.Grammar T
-  Clause4_Output) (parser_traitsGrammarInst5 : parser_traits.Grammar U
-  Clause5_Output) (parser_traitsGrammarInst6 : parser_traits.Grammar V
-  Clause6_Output) (parser_traitsGrammarInst7 : parser_traits.Grammar W
-  Clause7_Output) (parser_traitsGrammarInst8 : parser_traits.Grammar X
-  Clause8_Output) : grammar.permutation.Layout (P × Q × R × S × T × U × V × W ×
-  X) ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-  Clause1_Output) × (grammar.permutation.Slot Clause2_Output) ×
-  (grammar.permutation.Slot Clause3_Output) × (grammar.permutation.Slot
-  Clause4_Output) × (grammar.permutation.Slot Clause5_Output) ×
-  (grammar.permutation.Slot Clause6_Output) × (grammar.permutation.Slot
-  Clause7_Output) × (grammar.permutation.Slot Clause8_Output)) (Clause0_Output
-  × Clause1_Output × Clause2_Output × Clause3_Output × Clause4_Output ×
-  Clause5_Output × Clause6_Output × Clause7_Output × Clause8_Output) := {
-  count :=
-    TuplePQRSTUVWX.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.count
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6 parser_traitsGrammarInst7
-    parser_traitsGrammarInst8
-  empty :=
-    TuplePQRSTUVWX.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.empty
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6 parser_traitsGrammarInst7
-    parser_traitsGrammarInst8
-  matched :=
-    TuplePQRSTUVWX.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.matched
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6 parser_traitsGrammarInst7
-    parser_traitsGrammarInst8
-  clear :=
-    TuplePQRSTUVWX.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.clear
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6 parser_traitsGrammarInst7
-    parser_traitsGrammarInst8
-  finish :=
-    TuplePQRSTUVWX.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output.finish
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6 parser_traitsGrammarInst7
-    parser_traitsGrammarInst8
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>, rusthammer::grammar::permutation::Slot<Clause8_Output>, rusthammer::grammar::permutation::Slot<Clause9_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output)> for (P, Q, R, S, T, U, V, W, X, Y)}::finish]:
-    Source: 'src/grammar/permutation.rs', lines 248:12-255:13
-    Visibility: public -/
-def
-  TuplePQRSTUVWXY.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.finish
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {X : Type} {Y : Type} {Clause0_Output : Type} {Clause1_Output :
-  Type} {Clause2_Output : Type} {Clause3_Output : Type} {Clause4_Output : Type}
-  {Clause5_Output : Type} {Clause6_Output : Type} {Clause7_Output : Type}
-  {Clause8_Output : Type} {Clause9_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause1_Output) (parser_traitsGrammarInst2 :
-  parser_traits.Grammar R Clause2_Output) (parser_traitsGrammarInst3 :
-  parser_traits.Grammar S Clause3_Output) (parser_traitsGrammarInst4 :
-  parser_traits.Grammar T Clause4_Output) (parser_traitsGrammarInst5 :
-  parser_traits.Grammar U Clause5_Output) (parser_traitsGrammarInst6 :
-  parser_traits.Grammar V Clause6_Output) (parser_traitsGrammarInst7 :
-  parser_traits.Grammar W Clause7_Output) (parser_traitsGrammarInst8 :
-  parser_traits.Grammar X Clause8_Output) (parser_traitsGrammarInst9 :
-  parser_traits.Grammar Y Clause9_Output)
-  (self : (P × Q × R × S × T × U × V × W × X × Y))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output) × (grammar.permutation.Slot
-  Clause5_Output) × (grammar.permutation.Slot Clause6_Output) ×
-  (grammar.permutation.Slot Clause7_Output) × (grammar.permutation.Slot
-  Clause8_Output) × (grammar.permutation.Slot Clause9_Output))) :
-  Result (core.result.Result (Clause0_Output × Clause1_Output × Clause2_Output
-    × Clause3_Output × Clause4_Output × Clause5_Output × Clause6_Output ×
-    Clause7_Output × Clause8_Output × Clause9_Output) input_types.ParseError)
-  := do
-  let (p, q, r, s, t, u, v, w, x, y) := state
-  let r1 ← grammar.permutation.slot_value p
-  match r1 with
-  | core.result.Result.Ok value =>
-    let r2 ← grammar.permutation.slot_value q
-    match r2 with
-    | core.result.Result.Ok value1 =>
-      let r3 ← grammar.permutation.slot_value r
-      match r3 with
-      | core.result.Result.Ok value2 =>
-        let r4 ← grammar.permutation.slot_value s
-        match r4 with
-        | core.result.Result.Ok value3 =>
-          let r5 ← grammar.permutation.slot_value t
-          match r5 with
-          | core.result.Result.Ok value4 =>
-            let r6 ← grammar.permutation.slot_value u
-            match r6 with
-            | core.result.Result.Ok value5 =>
-              let r7 ← grammar.permutation.slot_value v
-              match r7 with
-              | core.result.Result.Ok value6 =>
-                let r8 ← grammar.permutation.slot_value w
-                match r8 with
-                | core.result.Result.Ok value7 =>
-                  let r9 ← grammar.permutation.slot_value x
-                  match r9 with
-                  | core.result.Result.Ok value8 =>
-                    let r10 ← grammar.permutation.slot_value y
-                    match r10 with
-                    | core.result.Result.Ok value9 =>
-                      ok (core.result.Result.Ok (value, value1, value2, value3,
-                        value4, value5, value6, value7, value8, value9))
-                    | core.result.Result.Err error =>
-                      ok (core.result.Result.Err error)
-                  | core.result.Result.Err error =>
-                    ok (core.result.Result.Err error)
-                | core.result.Result.Err error =>
-                  ok (core.result.Result.Err error)
-              | core.result.Result.Err error =>
-                ok (core.result.Result.Err error)
-            | core.result.Result.Err error => ok (core.result.Result.Err error)
-          | core.result.Result.Err error => ok (core.result.Result.Err error)
-        | core.result.Result.Err error => ok (core.result.Result.Err error)
-      | core.result.Result.Err error => ok (core.result.Result.Err error)
-    | core.result.Result.Err error => ok (core.result.Result.Err error)
-  | core.result.Result.Err error => ok (core.result.Result.Err error)
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>, rusthammer::grammar::permutation::Slot<Clause8_Output>, rusthammer::grammar::permutation::Slot<Clause9_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output)> for (P, Q, R, S, T, U, V, W, X, Y)}::clear]:
-    Source: 'src/grammar/permutation.rs', lines 244:12-247:13
-    Visibility: public -/
-def
-  TuplePQRSTUVWXY.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.clear
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {X : Type} {Y : Type} {Clause0_Output : Type} {Clause1_Output :
-  Type} {Clause2_Output : Type} {Clause3_Output : Type} {Clause4_Output : Type}
-  {Clause5_Output : Type} {Clause6_Output : Type} {Clause7_Output : Type}
-  {Clause8_Output : Type} {Clause9_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause1_Output) (parser_traitsGrammarInst2 :
-  parser_traits.Grammar R Clause2_Output) (parser_traitsGrammarInst3 :
-  parser_traits.Grammar S Clause3_Output) (parser_traitsGrammarInst4 :
-  parser_traits.Grammar T Clause4_Output) (parser_traitsGrammarInst5 :
-  parser_traits.Grammar U Clause5_Output) (parser_traitsGrammarInst6 :
-  parser_traits.Grammar V Clause6_Output) (parser_traitsGrammarInst7 :
-  parser_traits.Grammar W Clause7_Output) (parser_traitsGrammarInst8 :
-  parser_traits.Grammar X Clause8_Output) (parser_traitsGrammarInst9 :
-  parser_traits.Grammar Y Clause9_Output)
-  (self : (P × Q × R × S × T × U × V × W × X × Y))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output) × (grammar.permutation.Slot
-  Clause5_Output) × (grammar.permutation.Slot Clause6_Output) ×
-  (grammar.permutation.Slot Clause7_Output) × (grammar.permutation.Slot
-  Clause8_Output) × (grammar.permutation.Slot Clause9_Output)))
-  (index : Std.Usize) :
-  Result ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-    Clause1_Output) × (grammar.permutation.Slot Clause2_Output) ×
-    (grammar.permutation.Slot Clause3_Output) × (grammar.permutation.Slot
-    Clause4_Output) × (grammar.permutation.Slot Clause5_Output) ×
-    (grammar.permutation.Slot Clause6_Output) × (grammar.permutation.Slot
-    Clause7_Output) × (grammar.permutation.Slot Clause8_Output) ×
-    (grammar.permutation.Slot Clause9_Output))
-  := do
-  match index.val with
-  | 0 =>
-    let s ← grammar.permutation.empty_slot Clause0_Output
-    let (_, s1, s2, s3, s4, s5, s6, s7, s8, s9) := state
-    ok (s, s1, s2, s3, s4, s5, s6, s7, s8, s9)
-  | 1 =>
-    let s ← grammar.permutation.empty_slot Clause1_Output
-    let (s1, _, s2, s3, s4, s5, s6, s7, s8, s9) := state
-    ok (s1, s, s2, s3, s4, s5, s6, s7, s8, s9)
-  | 2 =>
-    let s ← grammar.permutation.empty_slot Clause2_Output
-    let (s1, s2, _, s3, s4, s5, s6, s7, s8, s9) := state
-    ok (s1, s2, s, s3, s4, s5, s6, s7, s8, s9)
-  | 3 =>
-    let s ← grammar.permutation.empty_slot Clause3_Output
-    let (s1, s2, s3, _, s4, s5, s6, s7, s8, s9) := state
-    ok (s1, s2, s3, s, s4, s5, s6, s7, s8, s9)
-  | 4 =>
-    let s ← grammar.permutation.empty_slot Clause4_Output
-    let (s1, s2, s3, s4, _, s5, s6, s7, s8, s9) := state
-    ok (s1, s2, s3, s4, s, s5, s6, s7, s8, s9)
-  | 5 =>
-    let s ← grammar.permutation.empty_slot Clause5_Output
-    let (s1, s2, s3, s4, s5, _, s6, s7, s8, s9) := state
-    ok (s1, s2, s3, s4, s5, s, s6, s7, s8, s9)
-  | 6 =>
-    let s ← grammar.permutation.empty_slot Clause6_Output
-    let (s1, s2, s3, s4, s5, s6, _, s7, s8, s9) := state
-    ok (s1, s2, s3, s4, s5, s6, s, s7, s8, s9)
-  | 7 =>
-    let s ← grammar.permutation.empty_slot Clause7_Output
-    let (s1, s2, s3, s4, s5, s6, s7, _, s8, s9) := state
-    ok (s1, s2, s3, s4, s5, s6, s7, s, s8, s9)
-  | 8 =>
-    let s ← grammar.permutation.empty_slot Clause8_Output
-    let (s1, s2, s3, s4, s5, s6, s7, s8, _, s9) := state
-    ok (s1, s2, s3, s4, s5, s6, s7, s8, s, s9)
-  | 9 =>
-    let s ← grammar.permutation.empty_slot Clause9_Output
-    let (s1, s2, s3, s4, s5, s6, s7, s8, s9, _) := state
-    ok (s1, s2, s3, s4, s5, s6, s7, s8, s9, s)
-  | _ => ok state
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>, rusthammer::grammar::permutation::Slot<Clause8_Output>, rusthammer::grammar::permutation::Slot<Clause9_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output)> for (P, Q, R, S, T, U, V, W, X, Y)}::matched]:
-    Source: 'src/grammar/permutation.rs', lines 241:12-243:13
-    Visibility: public -/
-def
-  TuplePQRSTUVWXY.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.matched
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {X : Type} {Y : Type} {Clause0_Output : Type} {Clause1_Output :
-  Type} {Clause2_Output : Type} {Clause3_Output : Type} {Clause4_Output : Type}
-  {Clause5_Output : Type} {Clause6_Output : Type} {Clause7_Output : Type}
-  {Clause8_Output : Type} {Clause9_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause1_Output) (parser_traitsGrammarInst2 :
-  parser_traits.Grammar R Clause2_Output) (parser_traitsGrammarInst3 :
-  parser_traits.Grammar S Clause3_Output) (parser_traitsGrammarInst4 :
-  parser_traits.Grammar T Clause4_Output) (parser_traitsGrammarInst5 :
-  parser_traits.Grammar U Clause5_Output) (parser_traitsGrammarInst6 :
-  parser_traits.Grammar V Clause6_Output) (parser_traitsGrammarInst7 :
-  parser_traits.Grammar W Clause7_Output) (parser_traitsGrammarInst8 :
-  parser_traits.Grammar X Clause8_Output) (parser_traitsGrammarInst9 :
-  parser_traits.Grammar Y Clause9_Output)
-  (self : (P × Q × R × S × T × U × V × W × X × Y))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output) × (grammar.permutation.Slot
-  Clause5_Output) × (grammar.permutation.Slot Clause6_Output) ×
-  (grammar.permutation.Slot Clause7_Output) × (grammar.permutation.Slot
-  Clause8_Output) × (grammar.permutation.Slot Clause9_Output)))
-  (index : Std.Usize) :
-  Result Bool
-  := do
-  match index.val with
-  | 0 => let (s, _, _, _, _, _, _, _, _, _) := state
-         ok s.matched
-  | 1 => let (_, s, _, _, _, _, _, _, _, _) := state
-         ok s.matched
-  | 2 => let (_, _, s, _, _, _, _, _, _, _) := state
-         ok s.matched
-  | 3 => let (_, _, _, s, _, _, _, _, _, _) := state
-         ok s.matched
-  | 4 => let (_, _, _, _, s, _, _, _, _, _) := state
-         ok s.matched
-  | 5 => let (_, _, _, _, _, s, _, _, _, _) := state
-         ok s.matched
-  | 6 => let (_, _, _, _, _, _, s, _, _, _) := state
-         ok s.matched
-  | 7 => let (_, _, _, _, _, _, _, s, _, _) := state
-         ok s.matched
-  | 8 => let (_, _, _, _, _, _, _, _, s, _) := state
-         ok s.matched
-  | 9 => let (_, _, _, _, _, _, _, _, _, s) := state
-         ok s.matched
-  | _ => ok false
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>, rusthammer::grammar::permutation::Slot<Clause8_Output>, rusthammer::grammar::permutation::Slot<Clause9_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output)> for (P, Q, R, S, T, U, V, W, X, Y)}::empty]:
-    Source: 'src/grammar/permutation.rs', lines 240:12-240:80
-    Visibility: public -/
-def
-  TuplePQRSTUVWXY.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.empty
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {X : Type} {Y : Type} {Clause0_Output : Type} {Clause1_Output :
-  Type} {Clause2_Output : Type} {Clause3_Output : Type} {Clause4_Output : Type}
-  {Clause5_Output : Type} {Clause6_Output : Type} {Clause7_Output : Type}
-  {Clause8_Output : Type} {Clause9_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause1_Output) (parser_traitsGrammarInst2 :
-  parser_traits.Grammar R Clause2_Output) (parser_traitsGrammarInst3 :
-  parser_traits.Grammar S Clause3_Output) (parser_traitsGrammarInst4 :
-  parser_traits.Grammar T Clause4_Output) (parser_traitsGrammarInst5 :
-  parser_traits.Grammar U Clause5_Output) (parser_traitsGrammarInst6 :
-  parser_traits.Grammar V Clause6_Output) (parser_traitsGrammarInst7 :
-  parser_traits.Grammar W Clause7_Output) (parser_traitsGrammarInst8 :
-  parser_traits.Grammar X Clause8_Output) (parser_traitsGrammarInst9 :
-  parser_traits.Grammar Y Clause9_Output)
-  (self : (P × Q × R × S × T × U × V × W × X × Y)) :
-  Result ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-    Clause1_Output) × (grammar.permutation.Slot Clause2_Output) ×
-    (grammar.permutation.Slot Clause3_Output) × (grammar.permutation.Slot
-    Clause4_Output) × (grammar.permutation.Slot Clause5_Output) ×
-    (grammar.permutation.Slot Clause6_Output) × (grammar.permutation.Slot
-    Clause7_Output) × (grammar.permutation.Slot Clause8_Output) ×
-    (grammar.permutation.Slot Clause9_Output))
-  := do
-  let s ← grammar.permutation.empty_slot Clause0_Output
-  let s1 ← grammar.permutation.empty_slot Clause1_Output
-  let s2 ← grammar.permutation.empty_slot Clause2_Output
-  let s3 ← grammar.permutation.empty_slot Clause3_Output
-  let s4 ← grammar.permutation.empty_slot Clause4_Output
-  let s5 ← grammar.permutation.empty_slot Clause5_Output
-  let s6 ← grammar.permutation.empty_slot Clause6_Output
-  let s7 ← grammar.permutation.empty_slot Clause7_Output
-  let s8 ← grammar.permutation.empty_slot Clause8_Output
-  let s9 ← grammar.permutation.empty_slot Clause9_Output
-  ok (s, s1, s2, s3, s4, s5, s6, s7, s8, s9)
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>, rusthammer::grammar::permutation::Slot<Clause8_Output>, rusthammer::grammar::permutation::Slot<Clause9_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output)> for (P, Q, R, S, T, U, V, W, X, Y)}::count]:
-    Source: 'src/grammar/permutation.rs', lines 239:12-239:47
-    Visibility: public -/
-def
-  TuplePQRSTUVWXY.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.count
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {X : Type} {Y : Type} {Clause0_Output : Type} {Clause1_Output :
-  Type} {Clause2_Output : Type} {Clause3_Output : Type} {Clause4_Output : Type}
-  {Clause5_Output : Type} {Clause6_Output : Type} {Clause7_Output : Type}
-  {Clause8_Output : Type} {Clause9_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause1_Output) (parser_traitsGrammarInst2 :
-  parser_traits.Grammar R Clause2_Output) (parser_traitsGrammarInst3 :
-  parser_traits.Grammar S Clause3_Output) (parser_traitsGrammarInst4 :
-  parser_traits.Grammar T Clause4_Output) (parser_traitsGrammarInst5 :
-  parser_traits.Grammar U Clause5_Output) (parser_traitsGrammarInst6 :
-  parser_traits.Grammar V Clause6_Output) (parser_traitsGrammarInst7 :
-  parser_traits.Grammar W Clause7_Output) (parser_traitsGrammarInst8 :
-  parser_traits.Grammar X Clause8_Output) (parser_traitsGrammarInst9 :
-  parser_traits.Grammar Y Clause9_Output)
-  (self : (P × Q × R × S × T × U × V × W × X × Y)) :
-  Result Std.Usize
-  := do
-  ok 10#usize
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>, rusthammer::grammar::permutation::Slot<Clause8_Output>, rusthammer::grammar::permutation::Slot<Clause9_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output)> for (P, Q, R, S, T, U, V, W, X, Y)}]
-    Source: 'src/grammar/permutation.rs', lines 236:8-256:9 -/
-@[reducible]
-def
-  TuplePQRSTUVWXY.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {X : Type} {Y : Type} {Clause0_Output : Type} {Clause1_Output :
-  Type} {Clause2_Output : Type} {Clause3_Output : Type} {Clause4_Output : Type}
-  {Clause5_Output : Type} {Clause6_Output : Type} {Clause7_Output : Type}
-  {Clause8_Output : Type} {Clause9_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause1_Output) (parser_traitsGrammarInst2 :
-  parser_traits.Grammar R Clause2_Output) (parser_traitsGrammarInst3 :
-  parser_traits.Grammar S Clause3_Output) (parser_traitsGrammarInst4 :
-  parser_traits.Grammar T Clause4_Output) (parser_traitsGrammarInst5 :
-  parser_traits.Grammar U Clause5_Output) (parser_traitsGrammarInst6 :
-  parser_traits.Grammar V Clause6_Output) (parser_traitsGrammarInst7 :
-  parser_traits.Grammar W Clause7_Output) (parser_traitsGrammarInst8 :
-  parser_traits.Grammar X Clause8_Output) (parser_traitsGrammarInst9 :
-  parser_traits.Grammar Y Clause9_Output) : grammar.permutation.Layout (P × Q ×
-  R × S × T × U × V × W × X × Y) ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output) × (grammar.permutation.Slot
-  Clause5_Output) × (grammar.permutation.Slot Clause6_Output) ×
-  (grammar.permutation.Slot Clause7_Output) × (grammar.permutation.Slot
-  Clause8_Output) × (grammar.permutation.Slot Clause9_Output)) (Clause0_Output
-  × Clause1_Output × Clause2_Output × Clause3_Output × Clause4_Output ×
-  Clause5_Output × Clause6_Output × Clause7_Output × Clause8_Output ×
-  Clause9_Output) := {
-  count :=
-    TuplePQRSTUVWXY.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.count
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6 parser_traitsGrammarInst7
-    parser_traitsGrammarInst8 parser_traitsGrammarInst9
-  empty :=
-    TuplePQRSTUVWXY.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.empty
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6 parser_traitsGrammarInst7
-    parser_traitsGrammarInst8 parser_traitsGrammarInst9
-  matched :=
-    TuplePQRSTUVWXY.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.matched
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6 parser_traitsGrammarInst7
-    parser_traitsGrammarInst8 parser_traitsGrammarInst9
-  clear :=
-    TuplePQRSTUVWXY.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.clear
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6 parser_traitsGrammarInst7
-    parser_traitsGrammarInst8 parser_traitsGrammarInst9
-  finish :=
-    TuplePQRSTUVWXY.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output.finish
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6 parser_traitsGrammarInst7
-    parser_traitsGrammarInst8 parser_traitsGrammarInst9
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>, rusthammer::grammar::permutation::Slot<Clause8_Output>, rusthammer::grammar::permutation::Slot<Clause9_Output>, rusthammer::grammar::permutation::Slot<Clause10_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output, Clause10_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z)}::finish]:
-    Source: 'src/grammar/permutation.rs', lines 248:12-255:13
-    Visibility: public -/
-def
-  TuplePQRSTUVWXYZ.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.finish
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {X : Type} {Y : Type} {Z : Type} {Clause0_Output : Type}
-  {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
-  {Clause4_Output : Type} {Clause5_Output : Type} {Clause6_Output : Type}
-  {Clause7_Output : Type} {Clause8_Output : Type} {Clause9_Output : Type}
-  {Clause10_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
-  Clause1_Output) (parser_traitsGrammarInst2 : parser_traits.Grammar R
-  Clause2_Output) (parser_traitsGrammarInst3 : parser_traits.Grammar S
-  Clause3_Output) (parser_traitsGrammarInst4 : parser_traits.Grammar T
-  Clause4_Output) (parser_traitsGrammarInst5 : parser_traits.Grammar U
-  Clause5_Output) (parser_traitsGrammarInst6 : parser_traits.Grammar V
-  Clause6_Output) (parser_traitsGrammarInst7 : parser_traits.Grammar W
-  Clause7_Output) (parser_traitsGrammarInst8 : parser_traits.Grammar X
-  Clause8_Output) (parser_traitsGrammarInst9 : parser_traits.Grammar Y
-  Clause9_Output) (parser_traitsGrammarInst10 : parser_traits.Grammar Z
-  Clause10_Output) (self : (P × Q × R × S × T × U × V × W × X × Y × Z))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output) × (grammar.permutation.Slot
-  Clause5_Output) × (grammar.permutation.Slot Clause6_Output) ×
-  (grammar.permutation.Slot Clause7_Output) × (grammar.permutation.Slot
-  Clause8_Output) × (grammar.permutation.Slot Clause9_Output) ×
-  (grammar.permutation.Slot Clause10_Output))) :
-  Result (core.result.Result (Clause0_Output × Clause1_Output × Clause2_Output
-    × Clause3_Output × Clause4_Output × Clause5_Output × Clause6_Output ×
-    Clause7_Output × Clause8_Output × Clause9_Output × Clause10_Output)
-    input_types.ParseError)
-  := do
-  let (p, q, r, s, t, u, v, w, x, y, z) := state
-  let r1 ← grammar.permutation.slot_value p
-  match r1 with
-  | core.result.Result.Ok value =>
-    let r2 ← grammar.permutation.slot_value q
-    match r2 with
-    | core.result.Result.Ok value1 =>
-      let r3 ← grammar.permutation.slot_value r
-      match r3 with
-      | core.result.Result.Ok value2 =>
-        let r4 ← grammar.permutation.slot_value s
-        match r4 with
-        | core.result.Result.Ok value3 =>
-          let r5 ← grammar.permutation.slot_value t
-          match r5 with
-          | core.result.Result.Ok value4 =>
-            let r6 ← grammar.permutation.slot_value u
-            match r6 with
-            | core.result.Result.Ok value5 =>
-              let r7 ← grammar.permutation.slot_value v
-              match r7 with
-              | core.result.Result.Ok value6 =>
-                let r8 ← grammar.permutation.slot_value w
-                match r8 with
-                | core.result.Result.Ok value7 =>
-                  let r9 ← grammar.permutation.slot_value x
-                  match r9 with
-                  | core.result.Result.Ok value8 =>
-                    let r10 ← grammar.permutation.slot_value y
-                    match r10 with
-                    | core.result.Result.Ok value9 =>
-                      let r11 ← grammar.permutation.slot_value z
-                      match r11 with
-                      | core.result.Result.Ok value10 =>
-                        ok (core.result.Result.Ok (value, value1, value2,
-                          value3, value4, value5, value6, value7, value8,
-                          value9, value10))
-                      | core.result.Result.Err error =>
-                        ok (core.result.Result.Err error)
-                    | core.result.Result.Err error =>
-                      ok (core.result.Result.Err error)
-                  | core.result.Result.Err error =>
-                    ok (core.result.Result.Err error)
-                | core.result.Result.Err error =>
-                  ok (core.result.Result.Err error)
-              | core.result.Result.Err error =>
-                ok (core.result.Result.Err error)
-            | core.result.Result.Err error => ok (core.result.Result.Err error)
-          | core.result.Result.Err error => ok (core.result.Result.Err error)
-        | core.result.Result.Err error => ok (core.result.Result.Err error)
-      | core.result.Result.Err error => ok (core.result.Result.Err error)
-    | core.result.Result.Err error => ok (core.result.Result.Err error)
-  | core.result.Result.Err error => ok (core.result.Result.Err error)
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>, rusthammer::grammar::permutation::Slot<Clause8_Output>, rusthammer::grammar::permutation::Slot<Clause9_Output>, rusthammer::grammar::permutation::Slot<Clause10_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output, Clause10_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z)}::clear]:
-    Source: 'src/grammar/permutation.rs', lines 244:12-247:13
-    Visibility: public -/
-def
-  TuplePQRSTUVWXYZ.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.clear
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {X : Type} {Y : Type} {Z : Type} {Clause0_Output : Type}
-  {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
-  {Clause4_Output : Type} {Clause5_Output : Type} {Clause6_Output : Type}
-  {Clause7_Output : Type} {Clause8_Output : Type} {Clause9_Output : Type}
-  {Clause10_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
-  Clause1_Output) (parser_traitsGrammarInst2 : parser_traits.Grammar R
-  Clause2_Output) (parser_traitsGrammarInst3 : parser_traits.Grammar S
-  Clause3_Output) (parser_traitsGrammarInst4 : parser_traits.Grammar T
-  Clause4_Output) (parser_traitsGrammarInst5 : parser_traits.Grammar U
-  Clause5_Output) (parser_traitsGrammarInst6 : parser_traits.Grammar V
-  Clause6_Output) (parser_traitsGrammarInst7 : parser_traits.Grammar W
-  Clause7_Output) (parser_traitsGrammarInst8 : parser_traits.Grammar X
-  Clause8_Output) (parser_traitsGrammarInst9 : parser_traits.Grammar Y
-  Clause9_Output) (parser_traitsGrammarInst10 : parser_traits.Grammar Z
-  Clause10_Output) (self : (P × Q × R × S × T × U × V × W × X × Y × Z))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output) × (grammar.permutation.Slot
-  Clause5_Output) × (grammar.permutation.Slot Clause6_Output) ×
-  (grammar.permutation.Slot Clause7_Output) × (grammar.permutation.Slot
-  Clause8_Output) × (grammar.permutation.Slot Clause9_Output) ×
-  (grammar.permutation.Slot Clause10_Output))) (index : Std.Usize) :
-  Result ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-    Clause1_Output) × (grammar.permutation.Slot Clause2_Output) ×
-    (grammar.permutation.Slot Clause3_Output) × (grammar.permutation.Slot
-    Clause4_Output) × (grammar.permutation.Slot Clause5_Output) ×
-    (grammar.permutation.Slot Clause6_Output) × (grammar.permutation.Slot
-    Clause7_Output) × (grammar.permutation.Slot Clause8_Output) ×
-    (grammar.permutation.Slot Clause9_Output) × (grammar.permutation.Slot
-    Clause10_Output))
-  := do
-  match index.val with
-  | 0 =>
-    let s ← grammar.permutation.empty_slot Clause0_Output
-    let (_, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10) := state
-    ok (s, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10)
-  | 1 =>
-    let s ← grammar.permutation.empty_slot Clause1_Output
-    let (s1, _, s2, s3, s4, s5, s6, s7, s8, s9, s10) := state
-    ok (s1, s, s2, s3, s4, s5, s6, s7, s8, s9, s10)
-  | 2 =>
-    let s ← grammar.permutation.empty_slot Clause2_Output
-    let (s1, s2, _, s3, s4, s5, s6, s7, s8, s9, s10) := state
-    ok (s1, s2, s, s3, s4, s5, s6, s7, s8, s9, s10)
-  | 3 =>
-    let s ← grammar.permutation.empty_slot Clause3_Output
-    let (s1, s2, s3, _, s4, s5, s6, s7, s8, s9, s10) := state
-    ok (s1, s2, s3, s, s4, s5, s6, s7, s8, s9, s10)
-  | 4 =>
-    let s ← grammar.permutation.empty_slot Clause4_Output
-    let (s1, s2, s3, s4, _, s5, s6, s7, s8, s9, s10) := state
-    ok (s1, s2, s3, s4, s, s5, s6, s7, s8, s9, s10)
-  | 5 =>
-    let s ← grammar.permutation.empty_slot Clause5_Output
-    let (s1, s2, s3, s4, s5, _, s6, s7, s8, s9, s10) := state
-    ok (s1, s2, s3, s4, s5, s, s6, s7, s8, s9, s10)
-  | 6 =>
-    let s ← grammar.permutation.empty_slot Clause6_Output
-    let (s1, s2, s3, s4, s5, s6, _, s7, s8, s9, s10) := state
-    ok (s1, s2, s3, s4, s5, s6, s, s7, s8, s9, s10)
-  | 7 =>
-    let s ← grammar.permutation.empty_slot Clause7_Output
-    let (s1, s2, s3, s4, s5, s6, s7, _, s8, s9, s10) := state
-    ok (s1, s2, s3, s4, s5, s6, s7, s, s8, s9, s10)
-  | 8 =>
-    let s ← grammar.permutation.empty_slot Clause8_Output
-    let (s1, s2, s3, s4, s5, s6, s7, s8, _, s9, s10) := state
-    ok (s1, s2, s3, s4, s5, s6, s7, s8, s, s9, s10)
-  | 9 =>
-    let s ← grammar.permutation.empty_slot Clause9_Output
-    let (s1, s2, s3, s4, s5, s6, s7, s8, s9, _, s10) := state
-    ok (s1, s2, s3, s4, s5, s6, s7, s8, s9, s, s10)
-  | 10 =>
-    let s ← grammar.permutation.empty_slot Clause10_Output
-    let (s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, _) := state
-    ok (s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s)
-  | _ => ok state
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>, rusthammer::grammar::permutation::Slot<Clause8_Output>, rusthammer::grammar::permutation::Slot<Clause9_Output>, rusthammer::grammar::permutation::Slot<Clause10_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output, Clause10_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z)}::matched]:
-    Source: 'src/grammar/permutation.rs', lines 241:12-243:13
-    Visibility: public -/
-def
-  TuplePQRSTUVWXYZ.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.matched
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {X : Type} {Y : Type} {Z : Type} {Clause0_Output : Type}
-  {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
-  {Clause4_Output : Type} {Clause5_Output : Type} {Clause6_Output : Type}
-  {Clause7_Output : Type} {Clause8_Output : Type} {Clause9_Output : Type}
-  {Clause10_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
-  Clause1_Output) (parser_traitsGrammarInst2 : parser_traits.Grammar R
-  Clause2_Output) (parser_traitsGrammarInst3 : parser_traits.Grammar S
-  Clause3_Output) (parser_traitsGrammarInst4 : parser_traits.Grammar T
-  Clause4_Output) (parser_traitsGrammarInst5 : parser_traits.Grammar U
-  Clause5_Output) (parser_traitsGrammarInst6 : parser_traits.Grammar V
-  Clause6_Output) (parser_traitsGrammarInst7 : parser_traits.Grammar W
-  Clause7_Output) (parser_traitsGrammarInst8 : parser_traits.Grammar X
-  Clause8_Output) (parser_traitsGrammarInst9 : parser_traits.Grammar Y
-  Clause9_Output) (parser_traitsGrammarInst10 : parser_traits.Grammar Z
-  Clause10_Output) (self : (P × Q × R × S × T × U × V × W × X × Y × Z))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output) × (grammar.permutation.Slot
-  Clause5_Output) × (grammar.permutation.Slot Clause6_Output) ×
-  (grammar.permutation.Slot Clause7_Output) × (grammar.permutation.Slot
-  Clause8_Output) × (grammar.permutation.Slot Clause9_Output) ×
-  (grammar.permutation.Slot Clause10_Output))) (index : Std.Usize) :
-  Result Bool
-  := do
-  match index.val with
-  | 0 => let (s, _, _, _, _, _, _, _, _, _, _) := state
-         ok s.matched
-  | 1 => let (_, s, _, _, _, _, _, _, _, _, _) := state
-         ok s.matched
-  | 2 => let (_, _, s, _, _, _, _, _, _, _, _) := state
-         ok s.matched
-  | 3 => let (_, _, _, s, _, _, _, _, _, _, _) := state
-         ok s.matched
-  | 4 => let (_, _, _, _, s, _, _, _, _, _, _) := state
-         ok s.matched
-  | 5 => let (_, _, _, _, _, s, _, _, _, _, _) := state
-         ok s.matched
-  | 6 => let (_, _, _, _, _, _, s, _, _, _, _) := state
-         ok s.matched
-  | 7 => let (_, _, _, _, _, _, _, s, _, _, _) := state
-         ok s.matched
-  | 8 => let (_, _, _, _, _, _, _, _, s, _, _) := state
-         ok s.matched
-  | 9 => let (_, _, _, _, _, _, _, _, _, s, _) := state
-         ok s.matched
-  | 10 => let (_, _, _, _, _, _, _, _, _, _, s) := state
-          ok s.matched
-  | _ => ok false
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>, rusthammer::grammar::permutation::Slot<Clause8_Output>, rusthammer::grammar::permutation::Slot<Clause9_Output>, rusthammer::grammar::permutation::Slot<Clause10_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output, Clause10_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z)}::empty]:
-    Source: 'src/grammar/permutation.rs', lines 240:12-240:80
-    Visibility: public -/
-def
-  TuplePQRSTUVWXYZ.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.empty
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {X : Type} {Y : Type} {Z : Type} {Clause0_Output : Type}
-  {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
-  {Clause4_Output : Type} {Clause5_Output : Type} {Clause6_Output : Type}
-  {Clause7_Output : Type} {Clause8_Output : Type} {Clause9_Output : Type}
-  {Clause10_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
-  Clause1_Output) (parser_traitsGrammarInst2 : parser_traits.Grammar R
-  Clause2_Output) (parser_traitsGrammarInst3 : parser_traits.Grammar S
-  Clause3_Output) (parser_traitsGrammarInst4 : parser_traits.Grammar T
-  Clause4_Output) (parser_traitsGrammarInst5 : parser_traits.Grammar U
-  Clause5_Output) (parser_traitsGrammarInst6 : parser_traits.Grammar V
-  Clause6_Output) (parser_traitsGrammarInst7 : parser_traits.Grammar W
-  Clause7_Output) (parser_traitsGrammarInst8 : parser_traits.Grammar X
-  Clause8_Output) (parser_traitsGrammarInst9 : parser_traits.Grammar Y
-  Clause9_Output) (parser_traitsGrammarInst10 : parser_traits.Grammar Z
-  Clause10_Output) (self : (P × Q × R × S × T × U × V × W × X × Y × Z)) :
-  Result ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-    Clause1_Output) × (grammar.permutation.Slot Clause2_Output) ×
-    (grammar.permutation.Slot Clause3_Output) × (grammar.permutation.Slot
-    Clause4_Output) × (grammar.permutation.Slot Clause5_Output) ×
-    (grammar.permutation.Slot Clause6_Output) × (grammar.permutation.Slot
-    Clause7_Output) × (grammar.permutation.Slot Clause8_Output) ×
-    (grammar.permutation.Slot Clause9_Output) × (grammar.permutation.Slot
-    Clause10_Output))
-  := do
-  let s ← grammar.permutation.empty_slot Clause0_Output
-  let s1 ← grammar.permutation.empty_slot Clause1_Output
-  let s2 ← grammar.permutation.empty_slot Clause2_Output
-  let s3 ← grammar.permutation.empty_slot Clause3_Output
-  let s4 ← grammar.permutation.empty_slot Clause4_Output
-  let s5 ← grammar.permutation.empty_slot Clause5_Output
-  let s6 ← grammar.permutation.empty_slot Clause6_Output
-  let s7 ← grammar.permutation.empty_slot Clause7_Output
-  let s8 ← grammar.permutation.empty_slot Clause8_Output
-  let s9 ← grammar.permutation.empty_slot Clause9_Output
-  let s10 ← grammar.permutation.empty_slot Clause10_Output
-  ok (s, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10)
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>, rusthammer::grammar::permutation::Slot<Clause8_Output>, rusthammer::grammar::permutation::Slot<Clause9_Output>, rusthammer::grammar::permutation::Slot<Clause10_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output, Clause10_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z)}::count]:
-    Source: 'src/grammar/permutation.rs', lines 239:12-239:47
-    Visibility: public -/
-def
-  TuplePQRSTUVWXYZ.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.count
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {X : Type} {Y : Type} {Z : Type} {Clause0_Output : Type}
-  {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
-  {Clause4_Output : Type} {Clause5_Output : Type} {Clause6_Output : Type}
-  {Clause7_Output : Type} {Clause8_Output : Type} {Clause9_Output : Type}
-  {Clause10_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
-  Clause1_Output) (parser_traitsGrammarInst2 : parser_traits.Grammar R
-  Clause2_Output) (parser_traitsGrammarInst3 : parser_traits.Grammar S
-  Clause3_Output) (parser_traitsGrammarInst4 : parser_traits.Grammar T
-  Clause4_Output) (parser_traitsGrammarInst5 : parser_traits.Grammar U
-  Clause5_Output) (parser_traitsGrammarInst6 : parser_traits.Grammar V
-  Clause6_Output) (parser_traitsGrammarInst7 : parser_traits.Grammar W
-  Clause7_Output) (parser_traitsGrammarInst8 : parser_traits.Grammar X
-  Clause8_Output) (parser_traitsGrammarInst9 : parser_traits.Grammar Y
-  Clause9_Output) (parser_traitsGrammarInst10 : parser_traits.Grammar Z
-  Clause10_Output) (self : (P × Q × R × S × T × U × V × W × X × Y × Z)) :
-  Result Std.Usize
-  := do
-  ok 11#usize
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>, rusthammer::grammar::permutation::Slot<Clause8_Output>, rusthammer::grammar::permutation::Slot<Clause9_Output>, rusthammer::grammar::permutation::Slot<Clause10_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output, Clause10_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z)}]
-    Source: 'src/grammar/permutation.rs', lines 236:8-256:9 -/
-@[reducible]
-def
-  TuplePQRSTUVWXYZ.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {X : Type} {Y : Type} {Z : Type} {Clause0_Output : Type}
-  {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
-  {Clause4_Output : Type} {Clause5_Output : Type} {Clause6_Output : Type}
-  {Clause7_Output : Type} {Clause8_Output : Type} {Clause9_Output : Type}
-  {Clause10_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar Q
-  Clause1_Output) (parser_traitsGrammarInst2 : parser_traits.Grammar R
-  Clause2_Output) (parser_traitsGrammarInst3 : parser_traits.Grammar S
-  Clause3_Output) (parser_traitsGrammarInst4 : parser_traits.Grammar T
-  Clause4_Output) (parser_traitsGrammarInst5 : parser_traits.Grammar U
-  Clause5_Output) (parser_traitsGrammarInst6 : parser_traits.Grammar V
-  Clause6_Output) (parser_traitsGrammarInst7 : parser_traits.Grammar W
-  Clause7_Output) (parser_traitsGrammarInst8 : parser_traits.Grammar X
-  Clause8_Output) (parser_traitsGrammarInst9 : parser_traits.Grammar Y
-  Clause9_Output) (parser_traitsGrammarInst10 : parser_traits.Grammar Z
-  Clause10_Output) : grammar.permutation.Layout (P × Q × R × S × T × U × V × W
-  × X × Y × Z) ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output) × (grammar.permutation.Slot
-  Clause5_Output) × (grammar.permutation.Slot Clause6_Output) ×
-  (grammar.permutation.Slot Clause7_Output) × (grammar.permutation.Slot
-  Clause8_Output) × (grammar.permutation.Slot Clause9_Output) ×
-  (grammar.permutation.Slot Clause10_Output)) (Clause0_Output × Clause1_Output
-  × Clause2_Output × Clause3_Output × Clause4_Output × Clause5_Output ×
-  Clause6_Output × Clause7_Output × Clause8_Output × Clause9_Output ×
-  Clause10_Output) := {
-  count :=
-    TuplePQRSTUVWXYZ.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.count
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6 parser_traitsGrammarInst7
-    parser_traitsGrammarInst8 parser_traitsGrammarInst9
-    parser_traitsGrammarInst10
-  empty :=
-    TuplePQRSTUVWXYZ.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.empty
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6 parser_traitsGrammarInst7
-    parser_traitsGrammarInst8 parser_traitsGrammarInst9
-    parser_traitsGrammarInst10
-  matched :=
-    TuplePQRSTUVWXYZ.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.matched
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6 parser_traitsGrammarInst7
-    parser_traitsGrammarInst8 parser_traitsGrammarInst9
-    parser_traitsGrammarInst10
-  clear :=
-    TuplePQRSTUVWXYZ.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.clear
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6 parser_traitsGrammarInst7
-    parser_traitsGrammarInst8 parser_traitsGrammarInst9
-    parser_traitsGrammarInst10
-  finish :=
-    TuplePQRSTUVWXYZ.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output.finish
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6 parser_traitsGrammarInst7
-    parser_traitsGrammarInst8 parser_traitsGrammarInst9
-    parser_traitsGrammarInst10
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>, rusthammer::grammar::permutation::Slot<Clause8_Output>, rusthammer::grammar::permutation::Slot<Clause9_Output>, rusthammer::grammar::permutation::Slot<Clause10_Output>, rusthammer::grammar::permutation::Slot<Clause11_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output, Clause10_Output, Clause11_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z, A)}::finish]:
-    Source: 'src/grammar/permutation.rs', lines 248:12-255:13
-    Visibility: public -/
-def
-  TuplePQRSTUVWXYZA.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.finish
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {X : Type} {Y : Type} {Z : Type} {A : Type} {Clause0_Output :
-  Type} {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
-  {Clause4_Output : Type} {Clause5_Output : Type} {Clause6_Output : Type}
-  {Clause7_Output : Type} {Clause8_Output : Type} {Clause9_Output : Type}
-  {Clause10_Output : Type} {Clause11_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause1_Output) (parser_traitsGrammarInst2 :
-  parser_traits.Grammar R Clause2_Output) (parser_traitsGrammarInst3 :
-  parser_traits.Grammar S Clause3_Output) (parser_traitsGrammarInst4 :
-  parser_traits.Grammar T Clause4_Output) (parser_traitsGrammarInst5 :
-  parser_traits.Grammar U Clause5_Output) (parser_traitsGrammarInst6 :
-  parser_traits.Grammar V Clause6_Output) (parser_traitsGrammarInst7 :
-  parser_traits.Grammar W Clause7_Output) (parser_traitsGrammarInst8 :
-  parser_traits.Grammar X Clause8_Output) (parser_traitsGrammarInst9 :
-  parser_traits.Grammar Y Clause9_Output) (parser_traitsGrammarInst10 :
-  parser_traits.Grammar Z Clause10_Output) (parser_traitsGrammarInst11 :
-  parser_traits.Grammar A Clause11_Output)
-  (self : (P × Q × R × S × T × U × V × W × X × Y × Z × A))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output) × (grammar.permutation.Slot
-  Clause5_Output) × (grammar.permutation.Slot Clause6_Output) ×
-  (grammar.permutation.Slot Clause7_Output) × (grammar.permutation.Slot
-  Clause8_Output) × (grammar.permutation.Slot Clause9_Output) ×
-  (grammar.permutation.Slot Clause10_Output) × (grammar.permutation.Slot
-  Clause11_Output))) :
-  Result (core.result.Result (Clause0_Output × Clause1_Output × Clause2_Output
-    × Clause3_Output × Clause4_Output × Clause5_Output × Clause6_Output ×
-    Clause7_Output × Clause8_Output × Clause9_Output × Clause10_Output ×
-    Clause11_Output) input_types.ParseError)
-  := do
-  let (p, q, r, s, t, u, v, w, x, y, z, a) := state
-  let r1 ← grammar.permutation.slot_value p
-  match r1 with
-  | core.result.Result.Ok value =>
-    let r2 ← grammar.permutation.slot_value q
-    match r2 with
-    | core.result.Result.Ok value1 =>
-      let r3 ← grammar.permutation.slot_value r
-      match r3 with
-      | core.result.Result.Ok value2 =>
-        let r4 ← grammar.permutation.slot_value s
-        match r4 with
-        | core.result.Result.Ok value3 =>
-          let r5 ← grammar.permutation.slot_value t
-          match r5 with
-          | core.result.Result.Ok value4 =>
-            let r6 ← grammar.permutation.slot_value u
-            match r6 with
-            | core.result.Result.Ok value5 =>
-              let r7 ← grammar.permutation.slot_value v
-              match r7 with
-              | core.result.Result.Ok value6 =>
-                let r8 ← grammar.permutation.slot_value w
-                match r8 with
-                | core.result.Result.Ok value7 =>
-                  let r9 ← grammar.permutation.slot_value x
-                  match r9 with
-                  | core.result.Result.Ok value8 =>
-                    let r10 ← grammar.permutation.slot_value y
-                    match r10 with
-                    | core.result.Result.Ok value9 =>
-                      let r11 ← grammar.permutation.slot_value z
-                      match r11 with
-                      | core.result.Result.Ok value10 =>
-                        let r12 ← grammar.permutation.slot_value a
-                        match r12 with
-                        | core.result.Result.Ok value11 =>
-                          ok (core.result.Result.Ok (value, value1, value2,
-                            value3, value4, value5, value6, value7, value8,
-                            value9, value10, value11))
-                        | core.result.Result.Err error =>
-                          ok (core.result.Result.Err error)
-                      | core.result.Result.Err error =>
-                        ok (core.result.Result.Err error)
-                    | core.result.Result.Err error =>
-                      ok (core.result.Result.Err error)
-                  | core.result.Result.Err error =>
-                    ok (core.result.Result.Err error)
-                | core.result.Result.Err error =>
-                  ok (core.result.Result.Err error)
-              | core.result.Result.Err error =>
-                ok (core.result.Result.Err error)
-            | core.result.Result.Err error => ok (core.result.Result.Err error)
-          | core.result.Result.Err error => ok (core.result.Result.Err error)
-        | core.result.Result.Err error => ok (core.result.Result.Err error)
-      | core.result.Result.Err error => ok (core.result.Result.Err error)
-    | core.result.Result.Err error => ok (core.result.Result.Err error)
-  | core.result.Result.Err error => ok (core.result.Result.Err error)
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>, rusthammer::grammar::permutation::Slot<Clause8_Output>, rusthammer::grammar::permutation::Slot<Clause9_Output>, rusthammer::grammar::permutation::Slot<Clause10_Output>, rusthammer::grammar::permutation::Slot<Clause11_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output, Clause10_Output, Clause11_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z, A)}::clear]:
-    Source: 'src/grammar/permutation.rs', lines 244:12-247:13
-    Visibility: public -/
-def
-  TuplePQRSTUVWXYZA.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.clear
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {X : Type} {Y : Type} {Z : Type} {A : Type} {Clause0_Output :
-  Type} {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
-  {Clause4_Output : Type} {Clause5_Output : Type} {Clause6_Output : Type}
-  {Clause7_Output : Type} {Clause8_Output : Type} {Clause9_Output : Type}
-  {Clause10_Output : Type} {Clause11_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause1_Output) (parser_traitsGrammarInst2 :
-  parser_traits.Grammar R Clause2_Output) (parser_traitsGrammarInst3 :
-  parser_traits.Grammar S Clause3_Output) (parser_traitsGrammarInst4 :
-  parser_traits.Grammar T Clause4_Output) (parser_traitsGrammarInst5 :
-  parser_traits.Grammar U Clause5_Output) (parser_traitsGrammarInst6 :
-  parser_traits.Grammar V Clause6_Output) (parser_traitsGrammarInst7 :
-  parser_traits.Grammar W Clause7_Output) (parser_traitsGrammarInst8 :
-  parser_traits.Grammar X Clause8_Output) (parser_traitsGrammarInst9 :
-  parser_traits.Grammar Y Clause9_Output) (parser_traitsGrammarInst10 :
-  parser_traits.Grammar Z Clause10_Output) (parser_traitsGrammarInst11 :
-  parser_traits.Grammar A Clause11_Output)
-  (self : (P × Q × R × S × T × U × V × W × X × Y × Z × A))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output) × (grammar.permutation.Slot
-  Clause5_Output) × (grammar.permutation.Slot Clause6_Output) ×
-  (grammar.permutation.Slot Clause7_Output) × (grammar.permutation.Slot
-  Clause8_Output) × (grammar.permutation.Slot Clause9_Output) ×
-  (grammar.permutation.Slot Clause10_Output) × (grammar.permutation.Slot
-  Clause11_Output))) (index : Std.Usize) :
-  Result ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-    Clause1_Output) × (grammar.permutation.Slot Clause2_Output) ×
-    (grammar.permutation.Slot Clause3_Output) × (grammar.permutation.Slot
-    Clause4_Output) × (grammar.permutation.Slot Clause5_Output) ×
-    (grammar.permutation.Slot Clause6_Output) × (grammar.permutation.Slot
-    Clause7_Output) × (grammar.permutation.Slot Clause8_Output) ×
-    (grammar.permutation.Slot Clause9_Output) × (grammar.permutation.Slot
-    Clause10_Output) × (grammar.permutation.Slot Clause11_Output))
-  := do
-  match index.val with
-  | 0 =>
-    let s ← grammar.permutation.empty_slot Clause0_Output
-    let (_, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11) := state
-    ok (s, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11)
-  | 1 =>
-    let s ← grammar.permutation.empty_slot Clause1_Output
-    let (s1, _, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11) := state
-    ok (s1, s, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11)
-  | 2 =>
-    let s ← grammar.permutation.empty_slot Clause2_Output
-    let (s1, s2, _, s3, s4, s5, s6, s7, s8, s9, s10, s11) := state
-    ok (s1, s2, s, s3, s4, s5, s6, s7, s8, s9, s10, s11)
-  | 3 =>
-    let s ← grammar.permutation.empty_slot Clause3_Output
-    let (s1, s2, s3, _, s4, s5, s6, s7, s8, s9, s10, s11) := state
-    ok (s1, s2, s3, s, s4, s5, s6, s7, s8, s9, s10, s11)
-  | 4 =>
-    let s ← grammar.permutation.empty_slot Clause4_Output
-    let (s1, s2, s3, s4, _, s5, s6, s7, s8, s9, s10, s11) := state
-    ok (s1, s2, s3, s4, s, s5, s6, s7, s8, s9, s10, s11)
-  | 5 =>
-    let s ← grammar.permutation.empty_slot Clause5_Output
-    let (s1, s2, s3, s4, s5, _, s6, s7, s8, s9, s10, s11) := state
-    ok (s1, s2, s3, s4, s5, s, s6, s7, s8, s9, s10, s11)
-  | 6 =>
-    let s ← grammar.permutation.empty_slot Clause6_Output
-    let (s1, s2, s3, s4, s5, s6, _, s7, s8, s9, s10, s11) := state
-    ok (s1, s2, s3, s4, s5, s6, s, s7, s8, s9, s10, s11)
-  | 7 =>
-    let s ← grammar.permutation.empty_slot Clause7_Output
-    let (s1, s2, s3, s4, s5, s6, s7, _, s8, s9, s10, s11) := state
-    ok (s1, s2, s3, s4, s5, s6, s7, s, s8, s9, s10, s11)
-  | 8 =>
-    let s ← grammar.permutation.empty_slot Clause8_Output
-    let (s1, s2, s3, s4, s5, s6, s7, s8, _, s9, s10, s11) := state
-    ok (s1, s2, s3, s4, s5, s6, s7, s8, s, s9, s10, s11)
-  | 9 =>
-    let s ← grammar.permutation.empty_slot Clause9_Output
-    let (s1, s2, s3, s4, s5, s6, s7, s8, s9, _, s10, s11) := state
-    ok (s1, s2, s3, s4, s5, s6, s7, s8, s9, s, s10, s11)
-  | 10 =>
-    let s ← grammar.permutation.empty_slot Clause10_Output
-    let (s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, _, s11) := state
-    ok (s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s, s11)
-  | 11 =>
-    let s ← grammar.permutation.empty_slot Clause11_Output
-    let (s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, _) := state
-    ok (s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s)
-  | _ => ok state
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>, rusthammer::grammar::permutation::Slot<Clause8_Output>, rusthammer::grammar::permutation::Slot<Clause9_Output>, rusthammer::grammar::permutation::Slot<Clause10_Output>, rusthammer::grammar::permutation::Slot<Clause11_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output, Clause10_Output, Clause11_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z, A)}::matched]:
-    Source: 'src/grammar/permutation.rs', lines 241:12-243:13
-    Visibility: public -/
-def
-  TuplePQRSTUVWXYZA.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.matched
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {X : Type} {Y : Type} {Z : Type} {A : Type} {Clause0_Output :
-  Type} {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
-  {Clause4_Output : Type} {Clause5_Output : Type} {Clause6_Output : Type}
-  {Clause7_Output : Type} {Clause8_Output : Type} {Clause9_Output : Type}
-  {Clause10_Output : Type} {Clause11_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause1_Output) (parser_traitsGrammarInst2 :
-  parser_traits.Grammar R Clause2_Output) (parser_traitsGrammarInst3 :
-  parser_traits.Grammar S Clause3_Output) (parser_traitsGrammarInst4 :
-  parser_traits.Grammar T Clause4_Output) (parser_traitsGrammarInst5 :
-  parser_traits.Grammar U Clause5_Output) (parser_traitsGrammarInst6 :
-  parser_traits.Grammar V Clause6_Output) (parser_traitsGrammarInst7 :
-  parser_traits.Grammar W Clause7_Output) (parser_traitsGrammarInst8 :
-  parser_traits.Grammar X Clause8_Output) (parser_traitsGrammarInst9 :
-  parser_traits.Grammar Y Clause9_Output) (parser_traitsGrammarInst10 :
-  parser_traits.Grammar Z Clause10_Output) (parser_traitsGrammarInst11 :
-  parser_traits.Grammar A Clause11_Output)
-  (self : (P × Q × R × S × T × U × V × W × X × Y × Z × A))
-  (state : ((grammar.permutation.Slot Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Output) × (grammar.permutation.Slot
-  Clause2_Output) × (grammar.permutation.Slot Clause3_Output) ×
-  (grammar.permutation.Slot Clause4_Output) × (grammar.permutation.Slot
-  Clause5_Output) × (grammar.permutation.Slot Clause6_Output) ×
-  (grammar.permutation.Slot Clause7_Output) × (grammar.permutation.Slot
-  Clause8_Output) × (grammar.permutation.Slot Clause9_Output) ×
-  (grammar.permutation.Slot Clause10_Output) × (grammar.permutation.Slot
-  Clause11_Output))) (index : Std.Usize) :
-  Result Bool
-  := do
-  match index.val with
-  | 0 => let (s, _, _, _, _, _, _, _, _, _, _, _) := state
-         ok s.matched
-  | 1 => let (_, s, _, _, _, _, _, _, _, _, _, _) := state
-         ok s.matched
-  | 2 => let (_, _, s, _, _, _, _, _, _, _, _, _) := state
-         ok s.matched
-  | 3 => let (_, _, _, s, _, _, _, _, _, _, _, _) := state
-         ok s.matched
-  | 4 => let (_, _, _, _, s, _, _, _, _, _, _, _) := state
-         ok s.matched
-  | 5 => let (_, _, _, _, _, s, _, _, _, _, _, _) := state
-         ok s.matched
-  | 6 => let (_, _, _, _, _, _, s, _, _, _, _, _) := state
-         ok s.matched
-  | 7 => let (_, _, _, _, _, _, _, s, _, _, _, _) := state
-         ok s.matched
-  | 8 => let (_, _, _, _, _, _, _, _, s, _, _, _) := state
-         ok s.matched
-  | 9 => let (_, _, _, _, _, _, _, _, _, s, _, _) := state
-         ok s.matched
-  | 10 => let (_, _, _, _, _, _, _, _, _, _, s, _) := state
-          ok s.matched
-  | 11 => let (_, _, _, _, _, _, _, _, _, _, _, s) := state
-          ok s.matched
-  | _ => ok false
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>, rusthammer::grammar::permutation::Slot<Clause8_Output>, rusthammer::grammar::permutation::Slot<Clause9_Output>, rusthammer::grammar::permutation::Slot<Clause10_Output>, rusthammer::grammar::permutation::Slot<Clause11_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output, Clause10_Output, Clause11_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z, A)}::empty]:
-    Source: 'src/grammar/permutation.rs', lines 240:12-240:80
-    Visibility: public -/
-def
-  TuplePQRSTUVWXYZA.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.empty
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {X : Type} {Y : Type} {Z : Type} {A : Type} {Clause0_Output :
-  Type} {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
-  {Clause4_Output : Type} {Clause5_Output : Type} {Clause6_Output : Type}
-  {Clause7_Output : Type} {Clause8_Output : Type} {Clause9_Output : Type}
-  {Clause10_Output : Type} {Clause11_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause1_Output) (parser_traitsGrammarInst2 :
-  parser_traits.Grammar R Clause2_Output) (parser_traitsGrammarInst3 :
-  parser_traits.Grammar S Clause3_Output) (parser_traitsGrammarInst4 :
-  parser_traits.Grammar T Clause4_Output) (parser_traitsGrammarInst5 :
-  parser_traits.Grammar U Clause5_Output) (parser_traitsGrammarInst6 :
-  parser_traits.Grammar V Clause6_Output) (parser_traitsGrammarInst7 :
-  parser_traits.Grammar W Clause7_Output) (parser_traitsGrammarInst8 :
-  parser_traits.Grammar X Clause8_Output) (parser_traitsGrammarInst9 :
-  parser_traits.Grammar Y Clause9_Output) (parser_traitsGrammarInst10 :
-  parser_traits.Grammar Z Clause10_Output) (parser_traitsGrammarInst11 :
-  parser_traits.Grammar A Clause11_Output)
-  (self : (P × Q × R × S × T × U × V × W × X × Y × Z × A)) :
-  Result ((grammar.permutation.Slot Clause0_Output) × (grammar.permutation.Slot
-    Clause1_Output) × (grammar.permutation.Slot Clause2_Output) ×
-    (grammar.permutation.Slot Clause3_Output) × (grammar.permutation.Slot
-    Clause4_Output) × (grammar.permutation.Slot Clause5_Output) ×
-    (grammar.permutation.Slot Clause6_Output) × (grammar.permutation.Slot
-    Clause7_Output) × (grammar.permutation.Slot Clause8_Output) ×
-    (grammar.permutation.Slot Clause9_Output) × (grammar.permutation.Slot
-    Clause10_Output) × (grammar.permutation.Slot Clause11_Output))
-  := do
-  let s ← grammar.permutation.empty_slot Clause0_Output
-  let s1 ← grammar.permutation.empty_slot Clause1_Output
-  let s2 ← grammar.permutation.empty_slot Clause2_Output
-  let s3 ← grammar.permutation.empty_slot Clause3_Output
-  let s4 ← grammar.permutation.empty_slot Clause4_Output
-  let s5 ← grammar.permutation.empty_slot Clause5_Output
-  let s6 ← grammar.permutation.empty_slot Clause6_Output
-  let s7 ← grammar.permutation.empty_slot Clause7_Output
-  let s8 ← grammar.permutation.empty_slot Clause8_Output
-  let s9 ← grammar.permutation.empty_slot Clause9_Output
-  let s10 ← grammar.permutation.empty_slot Clause10_Output
-  let s11 ← grammar.permutation.empty_slot Clause11_Output
-  ok (s, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11)
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>, rusthammer::grammar::permutation::Slot<Clause8_Output>, rusthammer::grammar::permutation::Slot<Clause9_Output>, rusthammer::grammar::permutation::Slot<Clause10_Output>, rusthammer::grammar::permutation::Slot<Clause11_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output, Clause10_Output, Clause11_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z, A)}::count]:
-    Source: 'src/grammar/permutation.rs', lines 239:12-239:47
-    Visibility: public -/
-def
-  TuplePQRSTUVWXYZA.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.count
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {X : Type} {Y : Type} {Z : Type} {A : Type} {Clause0_Output :
-  Type} {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
-  {Clause4_Output : Type} {Clause5_Output : Type} {Clause6_Output : Type}
-  {Clause7_Output : Type} {Clause8_Output : Type} {Clause9_Output : Type}
-  {Clause10_Output : Type} {Clause11_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause1_Output) (parser_traitsGrammarInst2 :
-  parser_traits.Grammar R Clause2_Output) (parser_traitsGrammarInst3 :
-  parser_traits.Grammar S Clause3_Output) (parser_traitsGrammarInst4 :
-  parser_traits.Grammar T Clause4_Output) (parser_traitsGrammarInst5 :
-  parser_traits.Grammar U Clause5_Output) (parser_traitsGrammarInst6 :
-  parser_traits.Grammar V Clause6_Output) (parser_traitsGrammarInst7 :
-  parser_traits.Grammar W Clause7_Output) (parser_traitsGrammarInst8 :
-  parser_traits.Grammar X Clause8_Output) (parser_traitsGrammarInst9 :
-  parser_traits.Grammar Y Clause9_Output) (parser_traitsGrammarInst10 :
-  parser_traits.Grammar Z Clause10_Output) (parser_traitsGrammarInst11 :
-  parser_traits.Grammar A Clause11_Output)
-  (self : (P × Q × R × S × T × U × V × W × X × Y × Z × A)) :
-  Result Std.Usize
-  := do
-  ok 12#usize
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Layout<'input, (rusthammer::grammar::permutation::Slot<Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Output>, rusthammer::grammar::permutation::Slot<Clause2_Output>, rusthammer::grammar::permutation::Slot<Clause3_Output>, rusthammer::grammar::permutation::Slot<Clause4_Output>, rusthammer::grammar::permutation::Slot<Clause5_Output>, rusthammer::grammar::permutation::Slot<Clause6_Output>, rusthammer::grammar::permutation::Slot<Clause7_Output>, rusthammer::grammar::permutation::Slot<Clause8_Output>, rusthammer::grammar::permutation::Slot<Clause9_Output>, rusthammer::grammar::permutation::Slot<Clause10_Output>, rusthammer::grammar::permutation::Slot<Clause11_Output>), (Clause0_Output, Clause1_Output, Clause2_Output, Clause3_Output, Clause4_Output, Clause5_Output, Clause6_Output, Clause7_Output, Clause8_Output, Clause9_Output, Clause10_Output, Clause11_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z, A)}]
-    Source: 'src/grammar/permutation.rs', lines 236:8-256:9 -/
-@[reducible]
-def
-  TuplePQRSTUVWXYZA.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output
-  {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type} {V : Type}
-  {W : Type} {X : Type} {Y : Type} {Z : Type} {A : Type} {Clause0_Output :
-  Type} {Clause1_Output : Type} {Clause2_Output : Type} {Clause3_Output : Type}
-  {Clause4_Output : Type} {Clause5_Output : Type} {Clause6_Output : Type}
-  {Clause7_Output : Type} {Clause8_Output : Type} {Clause9_Output : Type}
-  {Clause10_Output : Type} {Clause11_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) (parser_traitsGrammarInst1 :
-  parser_traits.Grammar Q Clause1_Output) (parser_traitsGrammarInst2 :
-  parser_traits.Grammar R Clause2_Output) (parser_traitsGrammarInst3 :
-  parser_traits.Grammar S Clause3_Output) (parser_traitsGrammarInst4 :
-  parser_traits.Grammar T Clause4_Output) (parser_traitsGrammarInst5 :
-  parser_traits.Grammar U Clause5_Output) (parser_traitsGrammarInst6 :
-  parser_traits.Grammar V Clause6_Output) (parser_traitsGrammarInst7 :
-  parser_traits.Grammar W Clause7_Output) (parser_traitsGrammarInst8 :
-  parser_traits.Grammar X Clause8_Output) (parser_traitsGrammarInst9 :
-  parser_traits.Grammar Y Clause9_Output) (parser_traitsGrammarInst10 :
-  parser_traits.Grammar Z Clause10_Output) (parser_traitsGrammarInst11 :
-  parser_traits.Grammar A Clause11_Output) : grammar.permutation.Layout (P × Q
-  × R × S × T × U × V × W × X × Y × Z × A) ((grammar.permutation.Slot
-  Clause0_Output) × (grammar.permutation.Slot Clause1_Output) ×
-  (grammar.permutation.Slot Clause2_Output) × (grammar.permutation.Slot
-  Clause3_Output) × (grammar.permutation.Slot Clause4_Output) ×
-  (grammar.permutation.Slot Clause5_Output) × (grammar.permutation.Slot
-  Clause6_Output) × (grammar.permutation.Slot Clause7_Output) ×
-  (grammar.permutation.Slot Clause8_Output) × (grammar.permutation.Slot
-  Clause9_Output) × (grammar.permutation.Slot Clause10_Output) ×
-  (grammar.permutation.Slot Clause11_Output)) (Clause0_Output × Clause1_Output
-  × Clause2_Output × Clause3_Output × Clause4_Output × Clause5_Output ×
-  Clause6_Output × Clause7_Output × Clause8_Output × Clause9_Output ×
-  Clause10_Output × Clause11_Output) := {
-  count :=
-    TuplePQRSTUVWXYZA.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.count
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6 parser_traitsGrammarInst7
-    parser_traitsGrammarInst8 parser_traitsGrammarInst9
-    parser_traitsGrammarInst10 parser_traitsGrammarInst11
-  empty :=
-    TuplePQRSTUVWXYZA.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.empty
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6 parser_traitsGrammarInst7
-    parser_traitsGrammarInst8 parser_traitsGrammarInst9
-    parser_traitsGrammarInst10 parser_traitsGrammarInst11
-  matched :=
-    TuplePQRSTUVWXYZA.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.matched
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6 parser_traitsGrammarInst7
-    parser_traitsGrammarInst8 parser_traitsGrammarInst9
-    parser_traitsGrammarInst10 parser_traitsGrammarInst11
-  clear :=
-    TuplePQRSTUVWXYZA.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.clear
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6 parser_traitsGrammarInst7
-    parser_traitsGrammarInst8 parser_traitsGrammarInst9
-    parser_traitsGrammarInst10 parser_traitsGrammarInst11
-  finish :=
-    TuplePQRSTUVWXYZA.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output.finish
-    parser_traitsGrammarInst parser_traitsGrammarInst1
-    parser_traitsGrammarInst2 parser_traitsGrammarInst3
-    parser_traitsGrammarInst4 parser_traitsGrammarInst5
-    parser_traitsGrammarInst6 parser_traitsGrammarInst7
-    parser_traitsGrammarInst8 parser_traitsGrammarInst9
-    parser_traitsGrammarInst10 parser_traitsGrammarInst11
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'input, B, (rusthammer::grammar::permutation::Slot<Clause0_Clause0_Output>,), (Clause0_Clause0_Output,)> for (P,)}::attempt]:
-    Source: 'src/grammar/permutation.rs', lines 258:12-269:13
-    Visibility: public -/
-def
-  TupleP.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotTupleClause0_Clause0_Output.attempt
-  {B : Type} {P : Type} {Clause0_Clause0_Output : Type} (ItemEvalInst :
-  grammar.permutation.ItemEval P B Clause0_Clause0_Output) (self : P)
-  (state : grammar.permutation.Slot Clause0_Clause0_Output) (index : Std.Usize)
-  (backend : B) (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((grammar.permutation.Attempt × (grammar.permutation.Slot
-    Clause0_Clause0_Output)) × B)
-  := do
-  match index.val with
-  | 0 => ItemEvalInst.eval_slot self backend input cursor context
-  | _ =>
-    ok ((grammar.permutation.Attempt.Error input_types.ParseError.Mismatch,
-      state), backend)
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'input, B, (rusthammer::grammar::permutation::Slot<Clause0_Clause0_Output>,), (Clause0_Clause0_Output,)> for (P,)}]
-    Source: 'src/grammar/permutation.rs', lines 257:8-270:9 -/
-@[reducible]
-def
-  TupleP.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotTupleClause0_Clause0_Output
-  {B : Type} {P : Type} {Clause0_Clause0_Output : Type} (ItemEvalInst :
-  grammar.permutation.ItemEval P B Clause0_Clause0_Output) :
-  grammar.permutation.Items P B (grammar.permutation.Slot
-  Clause0_Clause0_Output) Clause0_Clause0_Output := {
-  LayoutInst :=
-    TupleP.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotTupleClause0_Output
-    ItemEvalInst.parser_traitsGrammarInst
-  attempt :=
-    TupleP.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotTupleClause0_Clause0_Output.attempt
-    ItemEvalInst
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'input, B, (rusthammer::grammar::permutation::Slot<Clause0_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output)> for (P, Q)}::attempt]:
-    Source: 'src/grammar/permutation.rs', lines 258:12-269:13
-    Visibility: public -/
-def Pair.Insts.RusthammerGrammarPermutationItemsInputBPairSlotSlotPair.attempt
-  {B : Type} {P : Type} {Q : Type} {Clause0_Clause0_Output : Type}
-  {Clause1_Clause0_Output : Type} (ItemEvalInst : grammar.permutation.ItemEval
-  P B Clause0_Clause0_Output) (ItemEvalInst1 : grammar.permutation.ItemEval Q B
-  Clause1_Clause0_Output) (self : (P × Q))
-  (state : ((grammar.permutation.Slot Clause0_Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Clause0_Output))) (index : Std.Usize)
-  (backend : B) (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((grammar.permutation.Attempt × ((grammar.permutation.Slot
-    Clause0_Clause0_Output) × (grammar.permutation.Slot
-    Clause1_Clause0_Output))) × B)
-  := do
-  match index.val with
-  | 0 =>
-    let (t, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst.eval_slot t backend input cursor context
-    let (_, s) := state
-    ok ((result, (slot, s)), backend1)
-  | 1 =>
-    let (_, t) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst1.eval_slot t backend input cursor context
-    let (s, _) := state
-    ok ((result, (s, slot)), backend1)
-  | _ =>
-    ok ((grammar.permutation.Attempt.Error input_types.ParseError.Mismatch,
-      state), backend)
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'input, B, (rusthammer::grammar::permutation::Slot<Clause0_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output)> for (P, Q)}]
-    Source: 'src/grammar/permutation.rs', lines 257:8-270:9 -/
-@[reducible]
-def Pair.Insts.RusthammerGrammarPermutationItemsInputBPairSlotSlotPair {B :
-  Type} {P : Type} {Q : Type} {Clause0_Clause0_Output : Type}
-  {Clause1_Clause0_Output : Type} (ItemEvalInst : grammar.permutation.ItemEval
-  P B Clause0_Clause0_Output) (ItemEvalInst1 : grammar.permutation.ItemEval Q B
-  Clause1_Clause0_Output) : grammar.permutation.Items (P × Q) B
-  ((grammar.permutation.Slot Clause0_Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Clause0_Output)) (Clause0_Clause0_Output ×
-  Clause1_Clause0_Output) := {
-  LayoutInst :=
-    Pair.Insts.RusthammerGrammarPermutationLayoutInputPairSlotSlotPair
-    ItemEvalInst.parser_traitsGrammarInst
-    ItemEvalInst1.parser_traitsGrammarInst
-  attempt :=
-    Pair.Insts.RusthammerGrammarPermutationItemsInputBPairSlotSlotPair.attempt
-    ItemEvalInst ItemEvalInst1
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'input, B, (rusthammer::grammar::permutation::Slot<Clause0_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause2_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output)> for (P, Q, R)}::attempt]:
-    Source: 'src/grammar/permutation.rs', lines 258:12-269:13
-    Visibility: public -/
-def
-  TuplePQR.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_Output.attempt
-  {B : Type} {P : Type} {Q : Type} {R : Type} {Clause0_Clause0_Output : Type}
-  {Clause1_Clause0_Output : Type} {Clause2_Clause0_Output : Type} (ItemEvalInst
-  : grammar.permutation.ItemEval P B Clause0_Clause0_Output) (ItemEvalInst1 :
-  grammar.permutation.ItemEval Q B Clause1_Clause0_Output) (ItemEvalInst2 :
-  grammar.permutation.ItemEval R B Clause2_Clause0_Output) (self : (P × Q × R))
-  (state : ((grammar.permutation.Slot Clause0_Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Clause0_Output) × (grammar.permutation.Slot
-  Clause2_Clause0_Output))) (index : Std.Usize) (backend : B)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((grammar.permutation.Attempt × ((grammar.permutation.Slot
-    Clause0_Clause0_Output) × (grammar.permutation.Slot Clause1_Clause0_Output)
-    × (grammar.permutation.Slot Clause2_Clause0_Output))) × B)
-  := do
-  match index.val with
-  | 0 =>
-    let (t, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst.eval_slot t backend input cursor context
-    let (_, s, s1) := state
-    ok ((result, (slot, s, s1)), backend1)
-  | 1 =>
-    let (_, t, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst1.eval_slot t backend input cursor context
-    let (s, _, s1) := state
-    ok ((result, (s, slot, s1)), backend1)
-  | 2 =>
-    let (_, _, t) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst2.eval_slot t backend input cursor context
-    let (s, s1, _) := state
-    ok ((result, (s, s1, slot)), backend1)
-  | _ =>
-    ok ((grammar.permutation.Attempt.Error input_types.ParseError.Mismatch,
-      state), backend)
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'input, B, (rusthammer::grammar::permutation::Slot<Clause0_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause2_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output)> for (P, Q, R)}]
-    Source: 'src/grammar/permutation.rs', lines 257:8-270:9 -/
-@[reducible]
-def
-  TuplePQR.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_Output
-  {B : Type} {P : Type} {Q : Type} {R : Type} {Clause0_Clause0_Output : Type}
-  {Clause1_Clause0_Output : Type} {Clause2_Clause0_Output : Type} (ItemEvalInst
-  : grammar.permutation.ItemEval P B Clause0_Clause0_Output) (ItemEvalInst1 :
-  grammar.permutation.ItemEval Q B Clause1_Clause0_Output) (ItemEvalInst2 :
-  grammar.permutation.ItemEval R B Clause2_Clause0_Output) :
-  grammar.permutation.Items (P × Q × R) B ((grammar.permutation.Slot
-  Clause0_Clause0_Output) × (grammar.permutation.Slot Clause1_Clause0_Output) ×
-  (grammar.permutation.Slot Clause2_Clause0_Output)) (Clause0_Clause0_Output ×
-  Clause1_Clause0_Output × Clause2_Clause0_Output) := {
-  LayoutInst :=
-    TuplePQR.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_Output
-    ItemEvalInst.parser_traitsGrammarInst
-    ItemEvalInst1.parser_traitsGrammarInst
-    ItemEvalInst2.parser_traitsGrammarInst
-  attempt :=
-    TuplePQR.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_Output.attempt
-    ItemEvalInst ItemEvalInst1 ItemEvalInst2
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'input, B, (rusthammer::grammar::permutation::Slot<Clause0_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause2_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause3_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output)> for (P, Q, R, S)}::attempt]:
-    Source: 'src/grammar/permutation.rs', lines 258:12-269:13
-    Visibility: public -/
-def
-  TuplePQRS.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_Output.attempt
-  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type}
-  {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
-  {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type} (ItemEvalInst
-  : grammar.permutation.ItemEval P B Clause0_Clause0_Output) (ItemEvalInst1 :
-  grammar.permutation.ItemEval Q B Clause1_Clause0_Output) (ItemEvalInst2 :
-  grammar.permutation.ItemEval R B Clause2_Clause0_Output) (ItemEvalInst3 :
-  grammar.permutation.ItemEval S B Clause3_Clause0_Output)
-  (self : (P × Q × R × S))
-  (state : ((grammar.permutation.Slot Clause0_Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Clause0_Output) × (grammar.permutation.Slot
-  Clause2_Clause0_Output) × (grammar.permutation.Slot Clause3_Clause0_Output)))
-  (index : Std.Usize) (backend : B) (input : Slice Std.U8)
-  (cursor : input_types.Cursor) (context : input_types.ParseContext) :
-  Result ((grammar.permutation.Attempt × ((grammar.permutation.Slot
-    Clause0_Clause0_Output) × (grammar.permutation.Slot Clause1_Clause0_Output)
-    × (grammar.permutation.Slot Clause2_Clause0_Output) ×
-    (grammar.permutation.Slot Clause3_Clause0_Output))) × B)
-  := do
-  match index.val with
-  | 0 =>
-    let (t, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst.eval_slot t backend input cursor context
-    let (_, s, s1, s2) := state
-    ok ((result, (slot, s, s1, s2)), backend1)
-  | 1 =>
-    let (_, t, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst1.eval_slot t backend input cursor context
-    let (s, _, s1, s2) := state
-    ok ((result, (s, slot, s1, s2)), backend1)
-  | 2 =>
-    let (_, _, t, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst2.eval_slot t backend input cursor context
-    let (s, s1, _, s2) := state
-    ok ((result, (s, s1, slot, s2)), backend1)
-  | 3 =>
-    let (_, _, _, t) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst3.eval_slot t backend input cursor context
-    let (s, s1, s2, _) := state
-    ok ((result, (s, s1, s2, slot)), backend1)
-  | _ =>
-    ok ((grammar.permutation.Attempt.Error input_types.ParseError.Mismatch,
-      state), backend)
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'input, B, (rusthammer::grammar::permutation::Slot<Clause0_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause2_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause3_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output)> for (P, Q, R, S)}]
-    Source: 'src/grammar/permutation.rs', lines 257:8-270:9 -/
-@[reducible]
-def
-  TuplePQRS.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_Output
-  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type}
-  {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
-  {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type} (ItemEvalInst
-  : grammar.permutation.ItemEval P B Clause0_Clause0_Output) (ItemEvalInst1 :
-  grammar.permutation.ItemEval Q B Clause1_Clause0_Output) (ItemEvalInst2 :
-  grammar.permutation.ItemEval R B Clause2_Clause0_Output) (ItemEvalInst3 :
-  grammar.permutation.ItemEval S B Clause3_Clause0_Output) :
-  grammar.permutation.Items (P × Q × R × S) B ((grammar.permutation.Slot
-  Clause0_Clause0_Output) × (grammar.permutation.Slot Clause1_Clause0_Output) ×
-  (grammar.permutation.Slot Clause2_Clause0_Output) × (grammar.permutation.Slot
-  Clause3_Clause0_Output)) (Clause0_Clause0_Output × Clause1_Clause0_Output ×
-  Clause2_Clause0_Output × Clause3_Clause0_Output) := {
-  LayoutInst :=
-    TuplePQRS.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_Output
-    ItemEvalInst.parser_traitsGrammarInst
-    ItemEvalInst1.parser_traitsGrammarInst
-    ItemEvalInst2.parser_traitsGrammarInst
-    ItemEvalInst3.parser_traitsGrammarInst
-  attempt :=
-    TuplePQRS.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_Output.attempt
-    ItemEvalInst ItemEvalInst1 ItemEvalInst2 ItemEvalInst3
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'input, B, (rusthammer::grammar::permutation::Slot<Clause0_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause2_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause3_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause4_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output)> for (P, Q, R, S, T)}::attempt]:
-    Source: 'src/grammar/permutation.rs', lines 258:12-269:13
-    Visibility: public -/
-def
-  TuplePQRST.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_Output.attempt
-  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type}
-  {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
-  {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type}
-  {Clause4_Clause0_Output : Type} (ItemEvalInst : grammar.permutation.ItemEval
-  P B Clause0_Clause0_Output) (ItemEvalInst1 : grammar.permutation.ItemEval Q B
-  Clause1_Clause0_Output) (ItemEvalInst2 : grammar.permutation.ItemEval R B
-  Clause2_Clause0_Output) (ItemEvalInst3 : grammar.permutation.ItemEval S B
-  Clause3_Clause0_Output) (ItemEvalInst4 : grammar.permutation.ItemEval T B
-  Clause4_Clause0_Output) (self : (P × Q × R × S × T))
-  (state : ((grammar.permutation.Slot Clause0_Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Clause0_Output) × (grammar.permutation.Slot
-  Clause2_Clause0_Output) × (grammar.permutation.Slot Clause3_Clause0_Output) ×
-  (grammar.permutation.Slot Clause4_Clause0_Output))) (index : Std.Usize)
-  (backend : B) (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((grammar.permutation.Attempt × ((grammar.permutation.Slot
-    Clause0_Clause0_Output) × (grammar.permutation.Slot Clause1_Clause0_Output)
-    × (grammar.permutation.Slot Clause2_Clause0_Output) ×
-    (grammar.permutation.Slot Clause3_Clause0_Output) ×
-    (grammar.permutation.Slot Clause4_Clause0_Output))) × B)
-  := do
-  match index.val with
-  | 0 =>
-    let (t, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst.eval_slot t backend input cursor context
-    let (_, s, s1, s2, s3) := state
-    ok ((result, (slot, s, s1, s2, s3)), backend1)
-  | 1 =>
-    let (_, t, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst1.eval_slot t backend input cursor context
-    let (s, _, s1, s2, s3) := state
-    ok ((result, (s, slot, s1, s2, s3)), backend1)
-  | 2 =>
-    let (_, _, t, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst2.eval_slot t backend input cursor context
-    let (s, s1, _, s2, s3) := state
-    ok ((result, (s, s1, slot, s2, s3)), backend1)
-  | 3 =>
-    let (_, _, _, t, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst3.eval_slot t backend input cursor context
-    let (s, s1, s2, _, s3) := state
-    ok ((result, (s, s1, s2, slot, s3)), backend1)
-  | 4 =>
-    let (_, _, _, _, t) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst4.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, _) := state
-    ok ((result, (s, s1, s2, s3, slot)), backend1)
-  | _ =>
-    ok ((grammar.permutation.Attempt.Error input_types.ParseError.Mismatch,
-      state), backend)
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'input, B, (rusthammer::grammar::permutation::Slot<Clause0_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause2_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause3_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause4_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output)> for (P, Q, R, S, T)}]
-    Source: 'src/grammar/permutation.rs', lines 257:8-270:9 -/
-@[reducible]
-def
-  TuplePQRST.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_Output
-  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type}
-  {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
-  {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type}
-  {Clause4_Clause0_Output : Type} (ItemEvalInst : grammar.permutation.ItemEval
-  P B Clause0_Clause0_Output) (ItemEvalInst1 : grammar.permutation.ItemEval Q B
-  Clause1_Clause0_Output) (ItemEvalInst2 : grammar.permutation.ItemEval R B
-  Clause2_Clause0_Output) (ItemEvalInst3 : grammar.permutation.ItemEval S B
-  Clause3_Clause0_Output) (ItemEvalInst4 : grammar.permutation.ItemEval T B
-  Clause4_Clause0_Output) : grammar.permutation.Items (P × Q × R × S × T) B
-  ((grammar.permutation.Slot Clause0_Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Clause0_Output) × (grammar.permutation.Slot
-  Clause2_Clause0_Output) × (grammar.permutation.Slot Clause3_Clause0_Output) ×
-  (grammar.permutation.Slot Clause4_Clause0_Output)) (Clause0_Clause0_Output ×
-  Clause1_Clause0_Output × Clause2_Clause0_Output × Clause3_Clause0_Output ×
-  Clause4_Clause0_Output) := {
-  LayoutInst :=
-    TuplePQRST.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_Output
-    ItemEvalInst.parser_traitsGrammarInst
-    ItemEvalInst1.parser_traitsGrammarInst
-    ItemEvalInst2.parser_traitsGrammarInst
-    ItemEvalInst3.parser_traitsGrammarInst
-    ItemEvalInst4.parser_traitsGrammarInst
-  attempt :=
-    TuplePQRST.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_Output.attempt
-    ItemEvalInst ItemEvalInst1 ItemEvalInst2 ItemEvalInst3 ItemEvalInst4
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'input, B, (rusthammer::grammar::permutation::Slot<Clause0_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause2_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause3_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause4_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause5_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output)> for (P, Q, R, S, T, U)}::attempt]:
-    Source: 'src/grammar/permutation.rs', lines 258:12-269:13
-    Visibility: public -/
-def
-  TuplePQRSTU.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_Output.attempt
-  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
-  {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
-  {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type}
-  {Clause4_Clause0_Output : Type} {Clause5_Clause0_Output : Type} (ItemEvalInst
-  : grammar.permutation.ItemEval P B Clause0_Clause0_Output) (ItemEvalInst1 :
-  grammar.permutation.ItemEval Q B Clause1_Clause0_Output) (ItemEvalInst2 :
-  grammar.permutation.ItemEval R B Clause2_Clause0_Output) (ItemEvalInst3 :
-  grammar.permutation.ItemEval S B Clause3_Clause0_Output) (ItemEvalInst4 :
-  grammar.permutation.ItemEval T B Clause4_Clause0_Output) (ItemEvalInst5 :
-  grammar.permutation.ItemEval U B Clause5_Clause0_Output)
-  (self : (P × Q × R × S × T × U))
-  (state : ((grammar.permutation.Slot Clause0_Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Clause0_Output) × (grammar.permutation.Slot
-  Clause2_Clause0_Output) × (grammar.permutation.Slot Clause3_Clause0_Output) ×
-  (grammar.permutation.Slot Clause4_Clause0_Output) × (grammar.permutation.Slot
-  Clause5_Clause0_Output))) (index : Std.Usize) (backend : B)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((grammar.permutation.Attempt × ((grammar.permutation.Slot
-    Clause0_Clause0_Output) × (grammar.permutation.Slot Clause1_Clause0_Output)
-    × (grammar.permutation.Slot Clause2_Clause0_Output) ×
-    (grammar.permutation.Slot Clause3_Clause0_Output) ×
-    (grammar.permutation.Slot Clause4_Clause0_Output) ×
-    (grammar.permutation.Slot Clause5_Clause0_Output))) × B)
-  := do
-  match index.val with
-  | 0 =>
-    let (t, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst.eval_slot t backend input cursor context
-    let (_, s, s1, s2, s3, s4) := state
-    ok ((result, (slot, s, s1, s2, s3, s4)), backend1)
-  | 1 =>
-    let (_, t, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst1.eval_slot t backend input cursor context
-    let (s, _, s1, s2, s3, s4) := state
-    ok ((result, (s, slot, s1, s2, s3, s4)), backend1)
-  | 2 =>
-    let (_, _, t, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst2.eval_slot t backend input cursor context
-    let (s, s1, _, s2, s3, s4) := state
-    ok ((result, (s, s1, slot, s2, s3, s4)), backend1)
-  | 3 =>
-    let (_, _, _, t, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst3.eval_slot t backend input cursor context
-    let (s, s1, s2, _, s3, s4) := state
-    ok ((result, (s, s1, s2, slot, s3, s4)), backend1)
-  | 4 =>
-    let (_, _, _, _, t, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst4.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, _, s4) := state
-    ok ((result, (s, s1, s2, s3, slot, s4)), backend1)
-  | 5 =>
-    let (_, _, _, _, _, t) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst5.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, _) := state
-    ok ((result, (s, s1, s2, s3, s4, slot)), backend1)
-  | _ =>
-    ok ((grammar.permutation.Attempt.Error input_types.ParseError.Mismatch,
-      state), backend)
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'input, B, (rusthammer::grammar::permutation::Slot<Clause0_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause2_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause3_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause4_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause5_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output)> for (P, Q, R, S, T, U)}]
-    Source: 'src/grammar/permutation.rs', lines 257:8-270:9 -/
-@[reducible]
-def
-  TuplePQRSTU.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_Output
-  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
-  {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
-  {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type}
-  {Clause4_Clause0_Output : Type} {Clause5_Clause0_Output : Type} (ItemEvalInst
-  : grammar.permutation.ItemEval P B Clause0_Clause0_Output) (ItemEvalInst1 :
-  grammar.permutation.ItemEval Q B Clause1_Clause0_Output) (ItemEvalInst2 :
-  grammar.permutation.ItemEval R B Clause2_Clause0_Output) (ItemEvalInst3 :
-  grammar.permutation.ItemEval S B Clause3_Clause0_Output) (ItemEvalInst4 :
-  grammar.permutation.ItemEval T B Clause4_Clause0_Output) (ItemEvalInst5 :
-  grammar.permutation.ItemEval U B Clause5_Clause0_Output) :
-  grammar.permutation.Items (P × Q × R × S × T × U) B
-  ((grammar.permutation.Slot Clause0_Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Clause0_Output) × (grammar.permutation.Slot
-  Clause2_Clause0_Output) × (grammar.permutation.Slot Clause3_Clause0_Output) ×
-  (grammar.permutation.Slot Clause4_Clause0_Output) × (grammar.permutation.Slot
-  Clause5_Clause0_Output)) (Clause0_Clause0_Output × Clause1_Clause0_Output ×
-  Clause2_Clause0_Output × Clause3_Clause0_Output × Clause4_Clause0_Output ×
-  Clause5_Clause0_Output) := {
-  LayoutInst :=
-    TuplePQRSTU.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_Output
-    ItemEvalInst.parser_traitsGrammarInst
-    ItemEvalInst1.parser_traitsGrammarInst
-    ItemEvalInst2.parser_traitsGrammarInst
-    ItemEvalInst3.parser_traitsGrammarInst
-    ItemEvalInst4.parser_traitsGrammarInst
-    ItemEvalInst5.parser_traitsGrammarInst
-  attempt :=
-    TuplePQRSTU.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_Output.attempt
-    ItemEvalInst ItemEvalInst1 ItemEvalInst2 ItemEvalInst3 ItemEvalInst4
-    ItemEvalInst5
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'input, B, (rusthammer::grammar::permutation::Slot<Clause0_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause2_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause3_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause4_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause5_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause6_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output, Clause6_Clause0_Output)> for (P, Q, R, S, T, U, V)}::attempt]:
-    Source: 'src/grammar/permutation.rs', lines 258:12-269:13
-    Visibility: public -/
-def
-  TuplePQRSTUV.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_Output.attempt
-  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
-  {V : Type} {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
-  {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type}
-  {Clause4_Clause0_Output : Type} {Clause5_Clause0_Output : Type}
-  {Clause6_Clause0_Output : Type} (ItemEvalInst : grammar.permutation.ItemEval
-  P B Clause0_Clause0_Output) (ItemEvalInst1 : grammar.permutation.ItemEval Q B
-  Clause1_Clause0_Output) (ItemEvalInst2 : grammar.permutation.ItemEval R B
-  Clause2_Clause0_Output) (ItemEvalInst3 : grammar.permutation.ItemEval S B
-  Clause3_Clause0_Output) (ItemEvalInst4 : grammar.permutation.ItemEval T B
-  Clause4_Clause0_Output) (ItemEvalInst5 : grammar.permutation.ItemEval U B
-  Clause5_Clause0_Output) (ItemEvalInst6 : grammar.permutation.ItemEval V B
-  Clause6_Clause0_Output) (self : (P × Q × R × S × T × U × V))
-  (state : ((grammar.permutation.Slot Clause0_Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Clause0_Output) × (grammar.permutation.Slot
-  Clause2_Clause0_Output) × (grammar.permutation.Slot Clause3_Clause0_Output) ×
-  (grammar.permutation.Slot Clause4_Clause0_Output) × (grammar.permutation.Slot
-  Clause5_Clause0_Output) × (grammar.permutation.Slot Clause6_Clause0_Output)))
-  (index : Std.Usize) (backend : B) (input : Slice Std.U8)
-  (cursor : input_types.Cursor) (context : input_types.ParseContext) :
-  Result ((grammar.permutation.Attempt × ((grammar.permutation.Slot
-    Clause0_Clause0_Output) × (grammar.permutation.Slot Clause1_Clause0_Output)
-    × (grammar.permutation.Slot Clause2_Clause0_Output) ×
-    (grammar.permutation.Slot Clause3_Clause0_Output) ×
-    (grammar.permutation.Slot Clause4_Clause0_Output) ×
-    (grammar.permutation.Slot Clause5_Clause0_Output) ×
-    (grammar.permutation.Slot Clause6_Clause0_Output))) × B)
-  := do
-  match index.val with
-  | 0 =>
-    let (t, _, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst.eval_slot t backend input cursor context
-    let (_, s, s1, s2, s3, s4, s5) := state
-    ok ((result, (slot, s, s1, s2, s3, s4, s5)), backend1)
-  | 1 =>
-    let (_, t, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst1.eval_slot t backend input cursor context
-    let (s, _, s1, s2, s3, s4, s5) := state
-    ok ((result, (s, slot, s1, s2, s3, s4, s5)), backend1)
-  | 2 =>
-    let (_, _, t, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst2.eval_slot t backend input cursor context
-    let (s, s1, _, s2, s3, s4, s5) := state
-    ok ((result, (s, s1, slot, s2, s3, s4, s5)), backend1)
-  | 3 =>
-    let (_, _, _, t, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst3.eval_slot t backend input cursor context
-    let (s, s1, s2, _, s3, s4, s5) := state
-    ok ((result, (s, s1, s2, slot, s3, s4, s5)), backend1)
-  | 4 =>
-    let (_, _, _, _, t, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst4.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, _, s4, s5) := state
-    ok ((result, (s, s1, s2, s3, slot, s4, s5)), backend1)
-  | 5 =>
-    let (_, _, _, _, _, t, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst5.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, _, s5) := state
-    ok ((result, (s, s1, s2, s3, s4, slot, s5)), backend1)
-  | 6 =>
-    let (_, _, _, _, _, _, t) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst6.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, s5, _) := state
-    ok ((result, (s, s1, s2, s3, s4, s5, slot)), backend1)
-  | _ =>
-    ok ((grammar.permutation.Attempt.Error input_types.ParseError.Mismatch,
-      state), backend)
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'input, B, (rusthammer::grammar::permutation::Slot<Clause0_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause2_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause3_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause4_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause5_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause6_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output, Clause6_Clause0_Output)> for (P, Q, R, S, T, U, V)}]
-    Source: 'src/grammar/permutation.rs', lines 257:8-270:9 -/
-@[reducible]
-def
-  TuplePQRSTUV.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_Output
-  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
-  {V : Type} {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
-  {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type}
-  {Clause4_Clause0_Output : Type} {Clause5_Clause0_Output : Type}
-  {Clause6_Clause0_Output : Type} (ItemEvalInst : grammar.permutation.ItemEval
-  P B Clause0_Clause0_Output) (ItemEvalInst1 : grammar.permutation.ItemEval Q B
-  Clause1_Clause0_Output) (ItemEvalInst2 : grammar.permutation.ItemEval R B
-  Clause2_Clause0_Output) (ItemEvalInst3 : grammar.permutation.ItemEval S B
-  Clause3_Clause0_Output) (ItemEvalInst4 : grammar.permutation.ItemEval T B
-  Clause4_Clause0_Output) (ItemEvalInst5 : grammar.permutation.ItemEval U B
-  Clause5_Clause0_Output) (ItemEvalInst6 : grammar.permutation.ItemEval V B
-  Clause6_Clause0_Output) : grammar.permutation.Items (P × Q × R × S × T × U ×
-  V) B ((grammar.permutation.Slot Clause0_Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Clause0_Output) × (grammar.permutation.Slot
-  Clause2_Clause0_Output) × (grammar.permutation.Slot Clause3_Clause0_Output) ×
-  (grammar.permutation.Slot Clause4_Clause0_Output) × (grammar.permutation.Slot
-  Clause5_Clause0_Output) × (grammar.permutation.Slot Clause6_Clause0_Output))
-  (Clause0_Clause0_Output × Clause1_Clause0_Output × Clause2_Clause0_Output ×
-  Clause3_Clause0_Output × Clause4_Clause0_Output × Clause5_Clause0_Output ×
-  Clause6_Clause0_Output) := {
-  LayoutInst :=
-    TuplePQRSTUV.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_Output
-    ItemEvalInst.parser_traitsGrammarInst
-    ItemEvalInst1.parser_traitsGrammarInst
-    ItemEvalInst2.parser_traitsGrammarInst
-    ItemEvalInst3.parser_traitsGrammarInst
-    ItemEvalInst4.parser_traitsGrammarInst
-    ItemEvalInst5.parser_traitsGrammarInst
-    ItemEvalInst6.parser_traitsGrammarInst
-  attempt :=
-    TuplePQRSTUV.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_Output.attempt
-    ItemEvalInst ItemEvalInst1 ItemEvalInst2 ItemEvalInst3 ItemEvalInst4
-    ItemEvalInst5 ItemEvalInst6
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'input, B, (rusthammer::grammar::permutation::Slot<Clause0_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause2_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause3_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause4_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause5_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause6_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause7_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output, Clause6_Clause0_Output, Clause7_Clause0_Output)> for (P, Q, R, S, T, U, V, W)}::attempt]:
-    Source: 'src/grammar/permutation.rs', lines 258:12-269:13
-    Visibility: public -/
-def
-  TuplePQRSTUVW.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_Output.attempt
-  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
-  {V : Type} {W : Type} {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output
-  : Type} {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type}
-  {Clause4_Clause0_Output : Type} {Clause5_Clause0_Output : Type}
-  {Clause6_Clause0_Output : Type} {Clause7_Clause0_Output : Type} (ItemEvalInst
-  : grammar.permutation.ItemEval P B Clause0_Clause0_Output) (ItemEvalInst1 :
-  grammar.permutation.ItemEval Q B Clause1_Clause0_Output) (ItemEvalInst2 :
-  grammar.permutation.ItemEval R B Clause2_Clause0_Output) (ItemEvalInst3 :
-  grammar.permutation.ItemEval S B Clause3_Clause0_Output) (ItemEvalInst4 :
-  grammar.permutation.ItemEval T B Clause4_Clause0_Output) (ItemEvalInst5 :
-  grammar.permutation.ItemEval U B Clause5_Clause0_Output) (ItemEvalInst6 :
-  grammar.permutation.ItemEval V B Clause6_Clause0_Output) (ItemEvalInst7 :
-  grammar.permutation.ItemEval W B Clause7_Clause0_Output)
-  (self : (P × Q × R × S × T × U × V × W))
-  (state : ((grammar.permutation.Slot Clause0_Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Clause0_Output) × (grammar.permutation.Slot
-  Clause2_Clause0_Output) × (grammar.permutation.Slot Clause3_Clause0_Output) ×
-  (grammar.permutation.Slot Clause4_Clause0_Output) × (grammar.permutation.Slot
-  Clause5_Clause0_Output) × (grammar.permutation.Slot Clause6_Clause0_Output) ×
-  (grammar.permutation.Slot Clause7_Clause0_Output))) (index : Std.Usize)
-  (backend : B) (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((grammar.permutation.Attempt × ((grammar.permutation.Slot
-    Clause0_Clause0_Output) × (grammar.permutation.Slot Clause1_Clause0_Output)
-    × (grammar.permutation.Slot Clause2_Clause0_Output) ×
-    (grammar.permutation.Slot Clause3_Clause0_Output) ×
-    (grammar.permutation.Slot Clause4_Clause0_Output) ×
-    (grammar.permutation.Slot Clause5_Clause0_Output) ×
-    (grammar.permutation.Slot Clause6_Clause0_Output) ×
-    (grammar.permutation.Slot Clause7_Clause0_Output))) × B)
-  := do
-  match index.val with
-  | 0 =>
-    let (t, _, _, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst.eval_slot t backend input cursor context
-    let (_, s, s1, s2, s3, s4, s5, s6) := state
-    ok ((result, (slot, s, s1, s2, s3, s4, s5, s6)), backend1)
-  | 1 =>
-    let (_, t, _, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst1.eval_slot t backend input cursor context
-    let (s, _, s1, s2, s3, s4, s5, s6) := state
-    ok ((result, (s, slot, s1, s2, s3, s4, s5, s6)), backend1)
-  | 2 =>
-    let (_, _, t, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst2.eval_slot t backend input cursor context
-    let (s, s1, _, s2, s3, s4, s5, s6) := state
-    ok ((result, (s, s1, slot, s2, s3, s4, s5, s6)), backend1)
-  | 3 =>
-    let (_, _, _, t, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst3.eval_slot t backend input cursor context
-    let (s, s1, s2, _, s3, s4, s5, s6) := state
-    ok ((result, (s, s1, s2, slot, s3, s4, s5, s6)), backend1)
-  | 4 =>
-    let (_, _, _, _, t, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst4.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, _, s4, s5, s6) := state
-    ok ((result, (s, s1, s2, s3, slot, s4, s5, s6)), backend1)
-  | 5 =>
-    let (_, _, _, _, _, t, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst5.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, _, s5, s6) := state
-    ok ((result, (s, s1, s2, s3, s4, slot, s5, s6)), backend1)
-  | 6 =>
-    let (_, _, _, _, _, _, t, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst6.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, s5, _, s6) := state
-    ok ((result, (s, s1, s2, s3, s4, s5, slot, s6)), backend1)
-  | 7 =>
-    let (_, _, _, _, _, _, _, t) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst7.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, s5, s6, _) := state
-    ok ((result, (s, s1, s2, s3, s4, s5, s6, slot)), backend1)
-  | _ =>
-    ok ((grammar.permutation.Attempt.Error input_types.ParseError.Mismatch,
-      state), backend)
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'input, B, (rusthammer::grammar::permutation::Slot<Clause0_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause2_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause3_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause4_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause5_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause6_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause7_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output, Clause6_Clause0_Output, Clause7_Clause0_Output)> for (P, Q, R, S, T, U, V, W)}]
-    Source: 'src/grammar/permutation.rs', lines 257:8-270:9 -/
-@[reducible]
-def
-  TuplePQRSTUVW.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_Output
-  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
-  {V : Type} {W : Type} {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output
-  : Type} {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type}
-  {Clause4_Clause0_Output : Type} {Clause5_Clause0_Output : Type}
-  {Clause6_Clause0_Output : Type} {Clause7_Clause0_Output : Type} (ItemEvalInst
-  : grammar.permutation.ItemEval P B Clause0_Clause0_Output) (ItemEvalInst1 :
-  grammar.permutation.ItemEval Q B Clause1_Clause0_Output) (ItemEvalInst2 :
-  grammar.permutation.ItemEval R B Clause2_Clause0_Output) (ItemEvalInst3 :
-  grammar.permutation.ItemEval S B Clause3_Clause0_Output) (ItemEvalInst4 :
-  grammar.permutation.ItemEval T B Clause4_Clause0_Output) (ItemEvalInst5 :
-  grammar.permutation.ItemEval U B Clause5_Clause0_Output) (ItemEvalInst6 :
-  grammar.permutation.ItemEval V B Clause6_Clause0_Output) (ItemEvalInst7 :
-  grammar.permutation.ItemEval W B Clause7_Clause0_Output) :
-  grammar.permutation.Items (P × Q × R × S × T × U × V × W) B
-  ((grammar.permutation.Slot Clause0_Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Clause0_Output) × (grammar.permutation.Slot
-  Clause2_Clause0_Output) × (grammar.permutation.Slot Clause3_Clause0_Output) ×
-  (grammar.permutation.Slot Clause4_Clause0_Output) × (grammar.permutation.Slot
-  Clause5_Clause0_Output) × (grammar.permutation.Slot Clause6_Clause0_Output) ×
-  (grammar.permutation.Slot Clause7_Clause0_Output)) (Clause0_Clause0_Output ×
-  Clause1_Clause0_Output × Clause2_Clause0_Output × Clause3_Clause0_Output ×
-  Clause4_Clause0_Output × Clause5_Clause0_Output × Clause6_Clause0_Output ×
-  Clause7_Clause0_Output) := {
-  LayoutInst :=
-    TuplePQRSTUVW.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_Output
-    ItemEvalInst.parser_traitsGrammarInst
-    ItemEvalInst1.parser_traitsGrammarInst
-    ItemEvalInst2.parser_traitsGrammarInst
-    ItemEvalInst3.parser_traitsGrammarInst
-    ItemEvalInst4.parser_traitsGrammarInst
-    ItemEvalInst5.parser_traitsGrammarInst
-    ItemEvalInst6.parser_traitsGrammarInst
-    ItemEvalInst7.parser_traitsGrammarInst
-  attempt :=
-    TuplePQRSTUVW.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_Output.attempt
-    ItemEvalInst ItemEvalInst1 ItemEvalInst2 ItemEvalInst3 ItemEvalInst4
-    ItemEvalInst5 ItemEvalInst6 ItemEvalInst7
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'input, B, (rusthammer::grammar::permutation::Slot<Clause0_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause2_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause3_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause4_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause5_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause6_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause7_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause8_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output, Clause6_Clause0_Output, Clause7_Clause0_Output, Clause8_Clause0_Output)> for (P, Q, R, S, T, U, V, W, X)}::attempt]:
-    Source: 'src/grammar/permutation.rs', lines 258:12-269:13
-    Visibility: public -/
-def
-  TuplePQRSTUVWX.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_Output.attempt
-  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
-  {V : Type} {W : Type} {X : Type} {Clause0_Clause0_Output : Type}
-  {Clause1_Clause0_Output : Type} {Clause2_Clause0_Output : Type}
-  {Clause3_Clause0_Output : Type} {Clause4_Clause0_Output : Type}
-  {Clause5_Clause0_Output : Type} {Clause6_Clause0_Output : Type}
-  {Clause7_Clause0_Output : Type} {Clause8_Clause0_Output : Type} (ItemEvalInst
-  : grammar.permutation.ItemEval P B Clause0_Clause0_Output) (ItemEvalInst1 :
-  grammar.permutation.ItemEval Q B Clause1_Clause0_Output) (ItemEvalInst2 :
-  grammar.permutation.ItemEval R B Clause2_Clause0_Output) (ItemEvalInst3 :
-  grammar.permutation.ItemEval S B Clause3_Clause0_Output) (ItemEvalInst4 :
-  grammar.permutation.ItemEval T B Clause4_Clause0_Output) (ItemEvalInst5 :
-  grammar.permutation.ItemEval U B Clause5_Clause0_Output) (ItemEvalInst6 :
-  grammar.permutation.ItemEval V B Clause6_Clause0_Output) (ItemEvalInst7 :
-  grammar.permutation.ItemEval W B Clause7_Clause0_Output) (ItemEvalInst8 :
-  grammar.permutation.ItemEval X B Clause8_Clause0_Output)
-  (self : (P × Q × R × S × T × U × V × W × X))
-  (state : ((grammar.permutation.Slot Clause0_Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Clause0_Output) × (grammar.permutation.Slot
-  Clause2_Clause0_Output) × (grammar.permutation.Slot Clause3_Clause0_Output) ×
-  (grammar.permutation.Slot Clause4_Clause0_Output) × (grammar.permutation.Slot
-  Clause5_Clause0_Output) × (grammar.permutation.Slot Clause6_Clause0_Output) ×
-  (grammar.permutation.Slot Clause7_Clause0_Output) × (grammar.permutation.Slot
-  Clause8_Clause0_Output))) (index : Std.Usize) (backend : B)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((grammar.permutation.Attempt × ((grammar.permutation.Slot
-    Clause0_Clause0_Output) × (grammar.permutation.Slot Clause1_Clause0_Output)
-    × (grammar.permutation.Slot Clause2_Clause0_Output) ×
-    (grammar.permutation.Slot Clause3_Clause0_Output) ×
-    (grammar.permutation.Slot Clause4_Clause0_Output) ×
-    (grammar.permutation.Slot Clause5_Clause0_Output) ×
-    (grammar.permutation.Slot Clause6_Clause0_Output) ×
-    (grammar.permutation.Slot Clause7_Clause0_Output) ×
-    (grammar.permutation.Slot Clause8_Clause0_Output))) × B)
-  := do
-  match index.val with
-  | 0 =>
-    let (t, _, _, _, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst.eval_slot t backend input cursor context
-    let (_, s, s1, s2, s3, s4, s5, s6, s7) := state
-    ok ((result, (slot, s, s1, s2, s3, s4, s5, s6, s7)), backend1)
-  | 1 =>
-    let (_, t, _, _, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst1.eval_slot t backend input cursor context
-    let (s, _, s1, s2, s3, s4, s5, s6, s7) := state
-    ok ((result, (s, slot, s1, s2, s3, s4, s5, s6, s7)), backend1)
-  | 2 =>
-    let (_, _, t, _, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst2.eval_slot t backend input cursor context
-    let (s, s1, _, s2, s3, s4, s5, s6, s7) := state
-    ok ((result, (s, s1, slot, s2, s3, s4, s5, s6, s7)), backend1)
-  | 3 =>
-    let (_, _, _, t, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst3.eval_slot t backend input cursor context
-    let (s, s1, s2, _, s3, s4, s5, s6, s7) := state
-    ok ((result, (s, s1, s2, slot, s3, s4, s5, s6, s7)), backend1)
-  | 4 =>
-    let (_, _, _, _, t, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst4.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, _, s4, s5, s6, s7) := state
-    ok ((result, (s, s1, s2, s3, slot, s4, s5, s6, s7)), backend1)
-  | 5 =>
-    let (_, _, _, _, _, t, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst5.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, _, s5, s6, s7) := state
-    ok ((result, (s, s1, s2, s3, s4, slot, s5, s6, s7)), backend1)
-  | 6 =>
-    let (_, _, _, _, _, _, t, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst6.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, s5, _, s6, s7) := state
-    ok ((result, (s, s1, s2, s3, s4, s5, slot, s6, s7)), backend1)
-  | 7 =>
-    let (_, _, _, _, _, _, _, t, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst7.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, s5, s6, _, s7) := state
-    ok ((result, (s, s1, s2, s3, s4, s5, s6, slot, s7)), backend1)
-  | 8 =>
-    let (_, _, _, _, _, _, _, _, t) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst8.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, s5, s6, s7, _) := state
-    ok ((result, (s, s1, s2, s3, s4, s5, s6, s7, slot)), backend1)
-  | _ =>
-    ok ((grammar.permutation.Attempt.Error input_types.ParseError.Mismatch,
-      state), backend)
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'input, B, (rusthammer::grammar::permutation::Slot<Clause0_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause2_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause3_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause4_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause5_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause6_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause7_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause8_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output, Clause6_Clause0_Output, Clause7_Clause0_Output, Clause8_Clause0_Output)> for (P, Q, R, S, T, U, V, W, X)}]
-    Source: 'src/grammar/permutation.rs', lines 257:8-270:9 -/
-@[reducible]
-def
-  TuplePQRSTUVWX.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_Output
-  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
-  {V : Type} {W : Type} {X : Type} {Clause0_Clause0_Output : Type}
-  {Clause1_Clause0_Output : Type} {Clause2_Clause0_Output : Type}
-  {Clause3_Clause0_Output : Type} {Clause4_Clause0_Output : Type}
-  {Clause5_Clause0_Output : Type} {Clause6_Clause0_Output : Type}
-  {Clause7_Clause0_Output : Type} {Clause8_Clause0_Output : Type} (ItemEvalInst
-  : grammar.permutation.ItemEval P B Clause0_Clause0_Output) (ItemEvalInst1 :
-  grammar.permutation.ItemEval Q B Clause1_Clause0_Output) (ItemEvalInst2 :
-  grammar.permutation.ItemEval R B Clause2_Clause0_Output) (ItemEvalInst3 :
-  grammar.permutation.ItemEval S B Clause3_Clause0_Output) (ItemEvalInst4 :
-  grammar.permutation.ItemEval T B Clause4_Clause0_Output) (ItemEvalInst5 :
-  grammar.permutation.ItemEval U B Clause5_Clause0_Output) (ItemEvalInst6 :
-  grammar.permutation.ItemEval V B Clause6_Clause0_Output) (ItemEvalInst7 :
-  grammar.permutation.ItemEval W B Clause7_Clause0_Output) (ItemEvalInst8 :
-  grammar.permutation.ItemEval X B Clause8_Clause0_Output) :
-  grammar.permutation.Items (P × Q × R × S × T × U × V × W × X) B
-  ((grammar.permutation.Slot Clause0_Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Clause0_Output) × (grammar.permutation.Slot
-  Clause2_Clause0_Output) × (grammar.permutation.Slot Clause3_Clause0_Output) ×
-  (grammar.permutation.Slot Clause4_Clause0_Output) × (grammar.permutation.Slot
-  Clause5_Clause0_Output) × (grammar.permutation.Slot Clause6_Clause0_Output) ×
-  (grammar.permutation.Slot Clause7_Clause0_Output) × (grammar.permutation.Slot
-  Clause8_Clause0_Output)) (Clause0_Clause0_Output × Clause1_Clause0_Output ×
-  Clause2_Clause0_Output × Clause3_Clause0_Output × Clause4_Clause0_Output ×
-  Clause5_Clause0_Output × Clause6_Clause0_Output × Clause7_Clause0_Output ×
-  Clause8_Clause0_Output) := {
-  LayoutInst :=
-    TuplePQRSTUVWX.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_Output
-    ItemEvalInst.parser_traitsGrammarInst
-    ItemEvalInst1.parser_traitsGrammarInst
-    ItemEvalInst2.parser_traitsGrammarInst
-    ItemEvalInst3.parser_traitsGrammarInst
-    ItemEvalInst4.parser_traitsGrammarInst
-    ItemEvalInst5.parser_traitsGrammarInst
-    ItemEvalInst6.parser_traitsGrammarInst
-    ItemEvalInst7.parser_traitsGrammarInst
-    ItemEvalInst8.parser_traitsGrammarInst
-  attempt :=
-    TuplePQRSTUVWX.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_Output.attempt
-    ItemEvalInst ItemEvalInst1 ItemEvalInst2 ItemEvalInst3 ItemEvalInst4
-    ItemEvalInst5 ItemEvalInst6 ItemEvalInst7 ItemEvalInst8
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'input, B, (rusthammer::grammar::permutation::Slot<Clause0_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause2_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause3_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause4_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause5_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause6_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause7_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause8_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause9_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output, Clause6_Clause0_Output, Clause7_Clause0_Output, Clause8_Clause0_Output, Clause9_Clause0_Output)> for (P, Q, R, S, T, U, V, W, X, Y)}::attempt]:
-    Source: 'src/grammar/permutation.rs', lines 258:12-269:13
-    Visibility: public -/
-def
-  TuplePQRSTUVWXY.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_Output.attempt
-  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
-  {V : Type} {W : Type} {X : Type} {Y : Type} {Clause0_Clause0_Output : Type}
-  {Clause1_Clause0_Output : Type} {Clause2_Clause0_Output : Type}
-  {Clause3_Clause0_Output : Type} {Clause4_Clause0_Output : Type}
-  {Clause5_Clause0_Output : Type} {Clause6_Clause0_Output : Type}
-  {Clause7_Clause0_Output : Type} {Clause8_Clause0_Output : Type}
-  {Clause9_Clause0_Output : Type} (ItemEvalInst : grammar.permutation.ItemEval
-  P B Clause0_Clause0_Output) (ItemEvalInst1 : grammar.permutation.ItemEval Q B
-  Clause1_Clause0_Output) (ItemEvalInst2 : grammar.permutation.ItemEval R B
-  Clause2_Clause0_Output) (ItemEvalInst3 : grammar.permutation.ItemEval S B
-  Clause3_Clause0_Output) (ItemEvalInst4 : grammar.permutation.ItemEval T B
-  Clause4_Clause0_Output) (ItemEvalInst5 : grammar.permutation.ItemEval U B
-  Clause5_Clause0_Output) (ItemEvalInst6 : grammar.permutation.ItemEval V B
-  Clause6_Clause0_Output) (ItemEvalInst7 : grammar.permutation.ItemEval W B
-  Clause7_Clause0_Output) (ItemEvalInst8 : grammar.permutation.ItemEval X B
-  Clause8_Clause0_Output) (ItemEvalInst9 : grammar.permutation.ItemEval Y B
-  Clause9_Clause0_Output) (self : (P × Q × R × S × T × U × V × W × X × Y))
-  (state : ((grammar.permutation.Slot Clause0_Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Clause0_Output) × (grammar.permutation.Slot
-  Clause2_Clause0_Output) × (grammar.permutation.Slot Clause3_Clause0_Output) ×
-  (grammar.permutation.Slot Clause4_Clause0_Output) × (grammar.permutation.Slot
-  Clause5_Clause0_Output) × (grammar.permutation.Slot Clause6_Clause0_Output) ×
-  (grammar.permutation.Slot Clause7_Clause0_Output) × (grammar.permutation.Slot
-  Clause8_Clause0_Output) × (grammar.permutation.Slot Clause9_Clause0_Output)))
-  (index : Std.Usize) (backend : B) (input : Slice Std.U8)
-  (cursor : input_types.Cursor) (context : input_types.ParseContext) :
-  Result ((grammar.permutation.Attempt × ((grammar.permutation.Slot
-    Clause0_Clause0_Output) × (grammar.permutation.Slot Clause1_Clause0_Output)
-    × (grammar.permutation.Slot Clause2_Clause0_Output) ×
-    (grammar.permutation.Slot Clause3_Clause0_Output) ×
-    (grammar.permutation.Slot Clause4_Clause0_Output) ×
-    (grammar.permutation.Slot Clause5_Clause0_Output) ×
-    (grammar.permutation.Slot Clause6_Clause0_Output) ×
-    (grammar.permutation.Slot Clause7_Clause0_Output) ×
-    (grammar.permutation.Slot Clause8_Clause0_Output) ×
-    (grammar.permutation.Slot Clause9_Clause0_Output))) × B)
-  := do
-  match index.val with
-  | 0 =>
-    let (t, _, _, _, _, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst.eval_slot t backend input cursor context
-    let (_, s, s1, s2, s3, s4, s5, s6, s7, s8) := state
-    ok ((result, (slot, s, s1, s2, s3, s4, s5, s6, s7, s8)), backend1)
-  | 1 =>
-    let (_, t, _, _, _, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst1.eval_slot t backend input cursor context
-    let (s, _, s1, s2, s3, s4, s5, s6, s7, s8) := state
-    ok ((result, (s, slot, s1, s2, s3, s4, s5, s6, s7, s8)), backend1)
-  | 2 =>
-    let (_, _, t, _, _, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst2.eval_slot t backend input cursor context
-    let (s, s1, _, s2, s3, s4, s5, s6, s7, s8) := state
-    ok ((result, (s, s1, slot, s2, s3, s4, s5, s6, s7, s8)), backend1)
-  | 3 =>
-    let (_, _, _, t, _, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst3.eval_slot t backend input cursor context
-    let (s, s1, s2, _, s3, s4, s5, s6, s7, s8) := state
-    ok ((result, (s, s1, s2, slot, s3, s4, s5, s6, s7, s8)), backend1)
-  | 4 =>
-    let (_, _, _, _, t, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst4.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, _, s4, s5, s6, s7, s8) := state
-    ok ((result, (s, s1, s2, s3, slot, s4, s5, s6, s7, s8)), backend1)
-  | 5 =>
-    let (_, _, _, _, _, t, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst5.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, _, s5, s6, s7, s8) := state
-    ok ((result, (s, s1, s2, s3, s4, slot, s5, s6, s7, s8)), backend1)
-  | 6 =>
-    let (_, _, _, _, _, _, t, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst6.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, s5, _, s6, s7, s8) := state
-    ok ((result, (s, s1, s2, s3, s4, s5, slot, s6, s7, s8)), backend1)
-  | 7 =>
-    let (_, _, _, _, _, _, _, t, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst7.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, s5, s6, _, s7, s8) := state
-    ok ((result, (s, s1, s2, s3, s4, s5, s6, slot, s7, s8)), backend1)
-  | 8 =>
-    let (_, _, _, _, _, _, _, _, t, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst8.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, s5, s6, s7, _, s8) := state
-    ok ((result, (s, s1, s2, s3, s4, s5, s6, s7, slot, s8)), backend1)
-  | 9 =>
-    let (_, _, _, _, _, _, _, _, _, t) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst9.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, s5, s6, s7, s8, _) := state
-    ok ((result, (s, s1, s2, s3, s4, s5, s6, s7, s8, slot)), backend1)
-  | _ =>
-    ok ((grammar.permutation.Attempt.Error input_types.ParseError.Mismatch,
-      state), backend)
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'input, B, (rusthammer::grammar::permutation::Slot<Clause0_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause2_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause3_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause4_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause5_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause6_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause7_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause8_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause9_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output, Clause6_Clause0_Output, Clause7_Clause0_Output, Clause8_Clause0_Output, Clause9_Clause0_Output)> for (P, Q, R, S, T, U, V, W, X, Y)}]
-    Source: 'src/grammar/permutation.rs', lines 257:8-270:9 -/
-@[reducible]
-def
-  TuplePQRSTUVWXY.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_Output
-  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
-  {V : Type} {W : Type} {X : Type} {Y : Type} {Clause0_Clause0_Output : Type}
-  {Clause1_Clause0_Output : Type} {Clause2_Clause0_Output : Type}
-  {Clause3_Clause0_Output : Type} {Clause4_Clause0_Output : Type}
-  {Clause5_Clause0_Output : Type} {Clause6_Clause0_Output : Type}
-  {Clause7_Clause0_Output : Type} {Clause8_Clause0_Output : Type}
-  {Clause9_Clause0_Output : Type} (ItemEvalInst : grammar.permutation.ItemEval
-  P B Clause0_Clause0_Output) (ItemEvalInst1 : grammar.permutation.ItemEval Q B
-  Clause1_Clause0_Output) (ItemEvalInst2 : grammar.permutation.ItemEval R B
-  Clause2_Clause0_Output) (ItemEvalInst3 : grammar.permutation.ItemEval S B
-  Clause3_Clause0_Output) (ItemEvalInst4 : grammar.permutation.ItemEval T B
-  Clause4_Clause0_Output) (ItemEvalInst5 : grammar.permutation.ItemEval U B
-  Clause5_Clause0_Output) (ItemEvalInst6 : grammar.permutation.ItemEval V B
-  Clause6_Clause0_Output) (ItemEvalInst7 : grammar.permutation.ItemEval W B
-  Clause7_Clause0_Output) (ItemEvalInst8 : grammar.permutation.ItemEval X B
-  Clause8_Clause0_Output) (ItemEvalInst9 : grammar.permutation.ItemEval Y B
-  Clause9_Clause0_Output) : grammar.permutation.Items (P × Q × R × S × T × U ×
-  V × W × X × Y) B ((grammar.permutation.Slot Clause0_Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Clause0_Output) × (grammar.permutation.Slot
-  Clause2_Clause0_Output) × (grammar.permutation.Slot Clause3_Clause0_Output) ×
-  (grammar.permutation.Slot Clause4_Clause0_Output) × (grammar.permutation.Slot
-  Clause5_Clause0_Output) × (grammar.permutation.Slot Clause6_Clause0_Output) ×
-  (grammar.permutation.Slot Clause7_Clause0_Output) × (grammar.permutation.Slot
-  Clause8_Clause0_Output) × (grammar.permutation.Slot Clause9_Clause0_Output))
-  (Clause0_Clause0_Output × Clause1_Clause0_Output × Clause2_Clause0_Output ×
-  Clause3_Clause0_Output × Clause4_Clause0_Output × Clause5_Clause0_Output ×
-  Clause6_Clause0_Output × Clause7_Clause0_Output × Clause8_Clause0_Output ×
-  Clause9_Clause0_Output) := {
-  LayoutInst :=
-    TuplePQRSTUVWXY.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_Output
-    ItemEvalInst.parser_traitsGrammarInst
-    ItemEvalInst1.parser_traitsGrammarInst
-    ItemEvalInst2.parser_traitsGrammarInst
-    ItemEvalInst3.parser_traitsGrammarInst
-    ItemEvalInst4.parser_traitsGrammarInst
-    ItemEvalInst5.parser_traitsGrammarInst
-    ItemEvalInst6.parser_traitsGrammarInst
-    ItemEvalInst7.parser_traitsGrammarInst
-    ItemEvalInst8.parser_traitsGrammarInst
-    ItemEvalInst9.parser_traitsGrammarInst
-  attempt :=
-    TuplePQRSTUVWXY.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_Output.attempt
-    ItemEvalInst ItemEvalInst1 ItemEvalInst2 ItemEvalInst3 ItemEvalInst4
-    ItemEvalInst5 ItemEvalInst6 ItemEvalInst7 ItemEvalInst8 ItemEvalInst9
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'input, B, (rusthammer::grammar::permutation::Slot<Clause0_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause2_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause3_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause4_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause5_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause6_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause7_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause8_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause9_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause10_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output, Clause6_Clause0_Output, Clause7_Clause0_Output, Clause8_Clause0_Output, Clause9_Clause0_Output, Clause10_Clause0_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z)}::attempt]:
-    Source: 'src/grammar/permutation.rs', lines 258:12-269:13
-    Visibility: public -/
-def
-  TuplePQRSTUVWXYZ.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_OutputClause10_Clause0_Output.attempt
-  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
-  {V : Type} {W : Type} {X : Type} {Y : Type} {Z : Type}
-  {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
-  {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type}
-  {Clause4_Clause0_Output : Type} {Clause5_Clause0_Output : Type}
-  {Clause6_Clause0_Output : Type} {Clause7_Clause0_Output : Type}
-  {Clause8_Clause0_Output : Type} {Clause9_Clause0_Output : Type}
-  {Clause10_Clause0_Output : Type} (ItemEvalInst : grammar.permutation.ItemEval
-  P B Clause0_Clause0_Output) (ItemEvalInst1 : grammar.permutation.ItemEval Q B
-  Clause1_Clause0_Output) (ItemEvalInst2 : grammar.permutation.ItemEval R B
-  Clause2_Clause0_Output) (ItemEvalInst3 : grammar.permutation.ItemEval S B
-  Clause3_Clause0_Output) (ItemEvalInst4 : grammar.permutation.ItemEval T B
-  Clause4_Clause0_Output) (ItemEvalInst5 : grammar.permutation.ItemEval U B
-  Clause5_Clause0_Output) (ItemEvalInst6 : grammar.permutation.ItemEval V B
-  Clause6_Clause0_Output) (ItemEvalInst7 : grammar.permutation.ItemEval W B
-  Clause7_Clause0_Output) (ItemEvalInst8 : grammar.permutation.ItemEval X B
-  Clause8_Clause0_Output) (ItemEvalInst9 : grammar.permutation.ItemEval Y B
-  Clause9_Clause0_Output) (ItemEvalInst10 : grammar.permutation.ItemEval Z B
-  Clause10_Clause0_Output) (self : (P × Q × R × S × T × U × V × W × X × Y × Z))
-  (state : ((grammar.permutation.Slot Clause0_Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Clause0_Output) × (grammar.permutation.Slot
-  Clause2_Clause0_Output) × (grammar.permutation.Slot Clause3_Clause0_Output) ×
-  (grammar.permutation.Slot Clause4_Clause0_Output) × (grammar.permutation.Slot
-  Clause5_Clause0_Output) × (grammar.permutation.Slot Clause6_Clause0_Output) ×
-  (grammar.permutation.Slot Clause7_Clause0_Output) × (grammar.permutation.Slot
-  Clause8_Clause0_Output) × (grammar.permutation.Slot Clause9_Clause0_Output) ×
-  (grammar.permutation.Slot Clause10_Clause0_Output))) (index : Std.Usize)
-  (backend : B) (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((grammar.permutation.Attempt × ((grammar.permutation.Slot
-    Clause0_Clause0_Output) × (grammar.permutation.Slot Clause1_Clause0_Output)
-    × (grammar.permutation.Slot Clause2_Clause0_Output) ×
-    (grammar.permutation.Slot Clause3_Clause0_Output) ×
-    (grammar.permutation.Slot Clause4_Clause0_Output) ×
-    (grammar.permutation.Slot Clause5_Clause0_Output) ×
-    (grammar.permutation.Slot Clause6_Clause0_Output) ×
-    (grammar.permutation.Slot Clause7_Clause0_Output) ×
-    (grammar.permutation.Slot Clause8_Clause0_Output) ×
-    (grammar.permutation.Slot Clause9_Clause0_Output) ×
-    (grammar.permutation.Slot Clause10_Clause0_Output))) × B)
-  := do
-  match index.val with
-  | 0 =>
-    let (t, _, _, _, _, _, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst.eval_slot t backend input cursor context
-    let (_, s, s1, s2, s3, s4, s5, s6, s7, s8, s9) := state
-    ok ((result, (slot, s, s1, s2, s3, s4, s5, s6, s7, s8, s9)), backend1)
-  | 1 =>
-    let (_, t, _, _, _, _, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst1.eval_slot t backend input cursor context
-    let (s, _, s1, s2, s3, s4, s5, s6, s7, s8, s9) := state
-    ok ((result, (s, slot, s1, s2, s3, s4, s5, s6, s7, s8, s9)), backend1)
-  | 2 =>
-    let (_, _, t, _, _, _, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst2.eval_slot t backend input cursor context
-    let (s, s1, _, s2, s3, s4, s5, s6, s7, s8, s9) := state
-    ok ((result, (s, s1, slot, s2, s3, s4, s5, s6, s7, s8, s9)), backend1)
-  | 3 =>
-    let (_, _, _, t, _, _, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst3.eval_slot t backend input cursor context
-    let (s, s1, s2, _, s3, s4, s5, s6, s7, s8, s9) := state
-    ok ((result, (s, s1, s2, slot, s3, s4, s5, s6, s7, s8, s9)), backend1)
-  | 4 =>
-    let (_, _, _, _, t, _, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst4.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, _, s4, s5, s6, s7, s8, s9) := state
-    ok ((result, (s, s1, s2, s3, slot, s4, s5, s6, s7, s8, s9)), backend1)
-  | 5 =>
-    let (_, _, _, _, _, t, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst5.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, _, s5, s6, s7, s8, s9) := state
-    ok ((result, (s, s1, s2, s3, s4, slot, s5, s6, s7, s8, s9)), backend1)
-  | 6 =>
-    let (_, _, _, _, _, _, t, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst6.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, s5, _, s6, s7, s8, s9) := state
-    ok ((result, (s, s1, s2, s3, s4, s5, slot, s6, s7, s8, s9)), backend1)
-  | 7 =>
-    let (_, _, _, _, _, _, _, t, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst7.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, s5, s6, _, s7, s8, s9) := state
-    ok ((result, (s, s1, s2, s3, s4, s5, s6, slot, s7, s8, s9)), backend1)
-  | 8 =>
-    let (_, _, _, _, _, _, _, _, t, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst8.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, s5, s6, s7, _, s8, s9) := state
-    ok ((result, (s, s1, s2, s3, s4, s5, s6, s7, slot, s8, s9)), backend1)
-  | 9 =>
-    let (_, _, _, _, _, _, _, _, _, t, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst9.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, s5, s6, s7, s8, _, s9) := state
-    ok ((result, (s, s1, s2, s3, s4, s5, s6, s7, s8, slot, s9)), backend1)
-  | 10 =>
-    let (_, _, _, _, _, _, _, _, _, _, t) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst10.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, s5, s6, s7, s8, s9, _) := state
-    ok ((result, (s, s1, s2, s3, s4, s5, s6, s7, s8, s9, slot)), backend1)
-  | _ =>
-    ok ((grammar.permutation.Attempt.Error input_types.ParseError.Mismatch,
-      state), backend)
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'input, B, (rusthammer::grammar::permutation::Slot<Clause0_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause2_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause3_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause4_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause5_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause6_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause7_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause8_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause9_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause10_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output, Clause6_Clause0_Output, Clause7_Clause0_Output, Clause8_Clause0_Output, Clause9_Clause0_Output, Clause10_Clause0_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z)}]
-    Source: 'src/grammar/permutation.rs', lines 257:8-270:9 -/
-@[reducible]
-def
-  TuplePQRSTUVWXYZ.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_OutputClause10_Clause0_Output
-  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
-  {V : Type} {W : Type} {X : Type} {Y : Type} {Z : Type}
-  {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
-  {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type}
-  {Clause4_Clause0_Output : Type} {Clause5_Clause0_Output : Type}
-  {Clause6_Clause0_Output : Type} {Clause7_Clause0_Output : Type}
-  {Clause8_Clause0_Output : Type} {Clause9_Clause0_Output : Type}
-  {Clause10_Clause0_Output : Type} (ItemEvalInst : grammar.permutation.ItemEval
-  P B Clause0_Clause0_Output) (ItemEvalInst1 : grammar.permutation.ItemEval Q B
-  Clause1_Clause0_Output) (ItemEvalInst2 : grammar.permutation.ItemEval R B
-  Clause2_Clause0_Output) (ItemEvalInst3 : grammar.permutation.ItemEval S B
-  Clause3_Clause0_Output) (ItemEvalInst4 : grammar.permutation.ItemEval T B
-  Clause4_Clause0_Output) (ItemEvalInst5 : grammar.permutation.ItemEval U B
-  Clause5_Clause0_Output) (ItemEvalInst6 : grammar.permutation.ItemEval V B
-  Clause6_Clause0_Output) (ItemEvalInst7 : grammar.permutation.ItemEval W B
-  Clause7_Clause0_Output) (ItemEvalInst8 : grammar.permutation.ItemEval X B
-  Clause8_Clause0_Output) (ItemEvalInst9 : grammar.permutation.ItemEval Y B
-  Clause9_Clause0_Output) (ItemEvalInst10 : grammar.permutation.ItemEval Z B
-  Clause10_Clause0_Output) : grammar.permutation.Items (P × Q × R × S × T × U ×
-  V × W × X × Y × Z) B ((grammar.permutation.Slot Clause0_Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Clause0_Output) × (grammar.permutation.Slot
-  Clause2_Clause0_Output) × (grammar.permutation.Slot Clause3_Clause0_Output) ×
-  (grammar.permutation.Slot Clause4_Clause0_Output) × (grammar.permutation.Slot
-  Clause5_Clause0_Output) × (grammar.permutation.Slot Clause6_Clause0_Output) ×
-  (grammar.permutation.Slot Clause7_Clause0_Output) × (grammar.permutation.Slot
-  Clause8_Clause0_Output) × (grammar.permutation.Slot Clause9_Clause0_Output) ×
-  (grammar.permutation.Slot Clause10_Clause0_Output)) (Clause0_Clause0_Output ×
-  Clause1_Clause0_Output × Clause2_Clause0_Output × Clause3_Clause0_Output ×
-  Clause4_Clause0_Output × Clause5_Clause0_Output × Clause6_Clause0_Output ×
-  Clause7_Clause0_Output × Clause8_Clause0_Output × Clause9_Clause0_Output ×
-  Clause10_Clause0_Output) := {
-  LayoutInst :=
-    TuplePQRSTUVWXYZ.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_Output
-    ItemEvalInst.parser_traitsGrammarInst
-    ItemEvalInst1.parser_traitsGrammarInst
-    ItemEvalInst2.parser_traitsGrammarInst
-    ItemEvalInst3.parser_traitsGrammarInst
-    ItemEvalInst4.parser_traitsGrammarInst
-    ItemEvalInst5.parser_traitsGrammarInst
-    ItemEvalInst6.parser_traitsGrammarInst
-    ItemEvalInst7.parser_traitsGrammarInst
-    ItemEvalInst8.parser_traitsGrammarInst
-    ItemEvalInst9.parser_traitsGrammarInst
-    ItemEvalInst10.parser_traitsGrammarInst
-  attempt :=
-    TuplePQRSTUVWXYZ.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_OutputClause10_Clause0_Output.attempt
-    ItemEvalInst ItemEvalInst1 ItemEvalInst2 ItemEvalInst3 ItemEvalInst4
-    ItemEvalInst5 ItemEvalInst6 ItemEvalInst7 ItemEvalInst8 ItemEvalInst9
-    ItemEvalInst10
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'input, B, (rusthammer::grammar::permutation::Slot<Clause0_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause2_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause3_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause4_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause5_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause6_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause7_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause8_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause9_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause10_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause11_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output, Clause6_Clause0_Output, Clause7_Clause0_Output, Clause8_Clause0_Output, Clause9_Clause0_Output, Clause10_Clause0_Output, Clause11_Clause0_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z, A)}::attempt]:
-    Source: 'src/grammar/permutation.rs', lines 258:12-269:13
-    Visibility: public -/
-def
-  TuplePQRSTUVWXYZA.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_OutputClause10_Clause0_OutputClause11_Clause0_Output.attempt
-  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
-  {V : Type} {W : Type} {X : Type} {Y : Type} {Z : Type} {A : Type}
-  {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
-  {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type}
-  {Clause4_Clause0_Output : Type} {Clause5_Clause0_Output : Type}
-  {Clause6_Clause0_Output : Type} {Clause7_Clause0_Output : Type}
-  {Clause8_Clause0_Output : Type} {Clause9_Clause0_Output : Type}
-  {Clause10_Clause0_Output : Type} {Clause11_Clause0_Output : Type}
-  (ItemEvalInst : grammar.permutation.ItemEval P B Clause0_Clause0_Output)
-  (ItemEvalInst1 : grammar.permutation.ItemEval Q B Clause1_Clause0_Output)
-  (ItemEvalInst2 : grammar.permutation.ItemEval R B Clause2_Clause0_Output)
-  (ItemEvalInst3 : grammar.permutation.ItemEval S B Clause3_Clause0_Output)
-  (ItemEvalInst4 : grammar.permutation.ItemEval T B Clause4_Clause0_Output)
-  (ItemEvalInst5 : grammar.permutation.ItemEval U B Clause5_Clause0_Output)
-  (ItemEvalInst6 : grammar.permutation.ItemEval V B Clause6_Clause0_Output)
-  (ItemEvalInst7 : grammar.permutation.ItemEval W B Clause7_Clause0_Output)
-  (ItemEvalInst8 : grammar.permutation.ItemEval X B Clause8_Clause0_Output)
-  (ItemEvalInst9 : grammar.permutation.ItemEval Y B Clause9_Clause0_Output)
-  (ItemEvalInst10 : grammar.permutation.ItemEval Z B Clause10_Clause0_Output)
-  (ItemEvalInst11 : grammar.permutation.ItemEval A B Clause11_Clause0_Output)
-  (self : (P × Q × R × S × T × U × V × W × X × Y × Z × A))
-  (state : ((grammar.permutation.Slot Clause0_Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Clause0_Output) × (grammar.permutation.Slot
-  Clause2_Clause0_Output) × (grammar.permutation.Slot Clause3_Clause0_Output) ×
-  (grammar.permutation.Slot Clause4_Clause0_Output) × (grammar.permutation.Slot
-  Clause5_Clause0_Output) × (grammar.permutation.Slot Clause6_Clause0_Output) ×
-  (grammar.permutation.Slot Clause7_Clause0_Output) × (grammar.permutation.Slot
-  Clause8_Clause0_Output) × (grammar.permutation.Slot Clause9_Clause0_Output) ×
-  (grammar.permutation.Slot Clause10_Clause0_Output) ×
-  (grammar.permutation.Slot Clause11_Clause0_Output))) (index : Std.Usize)
-  (backend : B) (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((grammar.permutation.Attempt × ((grammar.permutation.Slot
-    Clause0_Clause0_Output) × (grammar.permutation.Slot Clause1_Clause0_Output)
-    × (grammar.permutation.Slot Clause2_Clause0_Output) ×
-    (grammar.permutation.Slot Clause3_Clause0_Output) ×
-    (grammar.permutation.Slot Clause4_Clause0_Output) ×
-    (grammar.permutation.Slot Clause5_Clause0_Output) ×
-    (grammar.permutation.Slot Clause6_Clause0_Output) ×
-    (grammar.permutation.Slot Clause7_Clause0_Output) ×
-    (grammar.permutation.Slot Clause8_Clause0_Output) ×
-    (grammar.permutation.Slot Clause9_Clause0_Output) ×
-    (grammar.permutation.Slot Clause10_Clause0_Output) ×
-    (grammar.permutation.Slot Clause11_Clause0_Output))) × B)
-  := do
-  match index.val with
-  | 0 =>
-    let (t, _, _, _, _, _, _, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst.eval_slot t backend input cursor context
-    let (_, s, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10) := state
-    ok ((result, (slot, s, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10)), backend1)
-  | 1 =>
-    let (_, t, _, _, _, _, _, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst1.eval_slot t backend input cursor context
-    let (s, _, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10) := state
-    ok ((result, (s, slot, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10)), backend1)
-  | 2 =>
-    let (_, _, t, _, _, _, _, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst2.eval_slot t backend input cursor context
-    let (s, s1, _, s2, s3, s4, s5, s6, s7, s8, s9, s10) := state
-    ok ((result, (s, s1, slot, s2, s3, s4, s5, s6, s7, s8, s9, s10)), backend1)
-  | 3 =>
-    let (_, _, _, t, _, _, _, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst3.eval_slot t backend input cursor context
-    let (s, s1, s2, _, s3, s4, s5, s6, s7, s8, s9, s10) := state
-    ok ((result, (s, s1, s2, slot, s3, s4, s5, s6, s7, s8, s9, s10)), backend1)
-  | 4 =>
-    let (_, _, _, _, t, _, _, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst4.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, _, s4, s5, s6, s7, s8, s9, s10) := state
-    ok ((result, (s, s1, s2, s3, slot, s4, s5, s6, s7, s8, s9, s10)), backend1)
-  | 5 =>
-    let (_, _, _, _, _, t, _, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst5.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, _, s5, s6, s7, s8, s9, s10) := state
-    ok ((result, (s, s1, s2, s3, s4, slot, s5, s6, s7, s8, s9, s10)), backend1)
-  | 6 =>
-    let (_, _, _, _, _, _, t, _, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst6.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, s5, _, s6, s7, s8, s9, s10) := state
-    ok ((result, (s, s1, s2, s3, s4, s5, slot, s6, s7, s8, s9, s10)), backend1)
-  | 7 =>
-    let (_, _, _, _, _, _, _, t, _, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst7.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, s5, s6, _, s7, s8, s9, s10) := state
-    ok ((result, (s, s1, s2, s3, s4, s5, s6, slot, s7, s8, s9, s10)), backend1)
-  | 8 =>
-    let (_, _, _, _, _, _, _, _, t, _, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst8.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, s5, s6, s7, _, s8, s9, s10) := state
-    ok ((result, (s, s1, s2, s3, s4, s5, s6, s7, slot, s8, s9, s10)), backend1)
-  | 9 =>
-    let (_, _, _, _, _, _, _, _, _, t, _, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst9.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, s5, s6, s7, s8, _, s9, s10) := state
-    ok ((result, (s, s1, s2, s3, s4, s5, s6, s7, s8, slot, s9, s10)), backend1)
-  | 10 =>
-    let (_, _, _, _, _, _, _, _, _, _, t, _) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst10.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, s5, s6, s7, s8, s9, _, s10) := state
-    ok ((result, (s, s1, s2, s3, s4, s5, s6, s7, s8, s9, slot, s10)), backend1)
-  | 11 =>
-    let (_, _, _, _, _, _, _, _, _, _, _, t) := self
-    let ((result, slot), backend1) ←
-      ItemEvalInst11.eval_slot t backend input cursor context
-    let (s, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, _) := state
-    ok ((result, (s, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, slot)), backend1)
-  | _ =>
-    ok ((grammar.permutation.Attempt.Error input_types.ParseError.Mismatch,
-      state), backend)
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::grammar::permutation::Items<'input, B, (rusthammer::grammar::permutation::Slot<Clause0_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause1_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause2_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause3_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause4_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause5_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause6_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause7_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause8_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause9_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause10_Clause0_Output>, rusthammer::grammar::permutation::Slot<Clause11_Clause0_Output>), (Clause0_Clause0_Output, Clause1_Clause0_Output, Clause2_Clause0_Output, Clause3_Clause0_Output, Clause4_Clause0_Output, Clause5_Clause0_Output, Clause6_Clause0_Output, Clause7_Clause0_Output, Clause8_Clause0_Output, Clause9_Clause0_Output, Clause10_Clause0_Output, Clause11_Clause0_Output)> for (P, Q, R, S, T, U, V, W, X, Y, Z, A)}]
-    Source: 'src/grammar/permutation.rs', lines 257:8-270:9 -/
-@[reducible]
-def
-  TuplePQRSTUVWXYZA.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_OutputClause10_Clause0_OutputClause11_Clause0_Output
-  {B : Type} {P : Type} {Q : Type} {R : Type} {S : Type} {T : Type} {U : Type}
-  {V : Type} {W : Type} {X : Type} {Y : Type} {Z : Type} {A : Type}
-  {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
-  {Clause2_Clause0_Output : Type} {Clause3_Clause0_Output : Type}
-  {Clause4_Clause0_Output : Type} {Clause5_Clause0_Output : Type}
-  {Clause6_Clause0_Output : Type} {Clause7_Clause0_Output : Type}
-  {Clause8_Clause0_Output : Type} {Clause9_Clause0_Output : Type}
-  {Clause10_Clause0_Output : Type} {Clause11_Clause0_Output : Type}
-  (ItemEvalInst : grammar.permutation.ItemEval P B Clause0_Clause0_Output)
-  (ItemEvalInst1 : grammar.permutation.ItemEval Q B Clause1_Clause0_Output)
-  (ItemEvalInst2 : grammar.permutation.ItemEval R B Clause2_Clause0_Output)
-  (ItemEvalInst3 : grammar.permutation.ItemEval S B Clause3_Clause0_Output)
-  (ItemEvalInst4 : grammar.permutation.ItemEval T B Clause4_Clause0_Output)
-  (ItemEvalInst5 : grammar.permutation.ItemEval U B Clause5_Clause0_Output)
-  (ItemEvalInst6 : grammar.permutation.ItemEval V B Clause6_Clause0_Output)
-  (ItemEvalInst7 : grammar.permutation.ItemEval W B Clause7_Clause0_Output)
-  (ItemEvalInst8 : grammar.permutation.ItemEval X B Clause8_Clause0_Output)
-  (ItemEvalInst9 : grammar.permutation.ItemEval Y B Clause9_Clause0_Output)
-  (ItemEvalInst10 : grammar.permutation.ItemEval Z B Clause10_Clause0_Output)
-  (ItemEvalInst11 : grammar.permutation.ItemEval A B Clause11_Clause0_Output) :
-  grammar.permutation.Items (P × Q × R × S × T × U × V × W × X × Y × Z × A) B
-  ((grammar.permutation.Slot Clause0_Clause0_Output) ×
-  (grammar.permutation.Slot Clause1_Clause0_Output) × (grammar.permutation.Slot
-  Clause2_Clause0_Output) × (grammar.permutation.Slot Clause3_Clause0_Output) ×
-  (grammar.permutation.Slot Clause4_Clause0_Output) × (grammar.permutation.Slot
-  Clause5_Clause0_Output) × (grammar.permutation.Slot Clause6_Clause0_Output) ×
-  (grammar.permutation.Slot Clause7_Clause0_Output) × (grammar.permutation.Slot
-  Clause8_Clause0_Output) × (grammar.permutation.Slot Clause9_Clause0_Output) ×
-  (grammar.permutation.Slot Clause10_Clause0_Output) ×
-  (grammar.permutation.Slot Clause11_Clause0_Output)) (Clause0_Clause0_Output ×
-  Clause1_Clause0_Output × Clause2_Clause0_Output × Clause3_Clause0_Output ×
-  Clause4_Clause0_Output × Clause5_Clause0_Output × Clause6_Clause0_Output ×
-  Clause7_Clause0_Output × Clause8_Clause0_Output × Clause9_Clause0_Output ×
-  Clause10_Clause0_Output × Clause11_Clause0_Output) := {
-  LayoutInst :=
-    TuplePQRSTUVWXYZA.Insts.RusthammerGrammarPermutationLayoutInputTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_OutputClause1_OutputClause2_OutputClause3_OutputClause4_OutputClause5_OutputClause6_OutputClause7_OutputClause8_OutputClause9_OutputClause10_OutputClause11_Output
-    ItemEvalInst.parser_traitsGrammarInst
-    ItemEvalInst1.parser_traitsGrammarInst
-    ItemEvalInst2.parser_traitsGrammarInst
-    ItemEvalInst3.parser_traitsGrammarInst
-    ItemEvalInst4.parser_traitsGrammarInst
-    ItemEvalInst5.parser_traitsGrammarInst
-    ItemEvalInst6.parser_traitsGrammarInst
-    ItemEvalInst7.parser_traitsGrammarInst
-    ItemEvalInst8.parser_traitsGrammarInst
-    ItemEvalInst9.parser_traitsGrammarInst
-    ItemEvalInst10.parser_traitsGrammarInst
-    ItemEvalInst11.parser_traitsGrammarInst
-  attempt :=
-    TuplePQRSTUVWXYZA.Insts.RusthammerGrammarPermutationItemsInputBTupleSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotSlotTupleClause0_Clause0_OutputClause1_Clause0_OutputClause2_Clause0_OutputClause3_Clause0_OutputClause4_Clause0_OutputClause5_Clause0_OutputClause6_Clause0_OutputClause7_Clause0_OutputClause8_Clause0_OutputClause9_Clause0_OutputClause10_Clause0_OutputClause11_Clause0_Output.attempt
-    ItemEvalInst ItemEvalInst1 ItemEvalInst2 ItemEvalInst3 ItemEvalInst4
-    ItemEvalInst5 ItemEvalInst6 ItemEvalInst7 ItemEvalInst8 ItemEvalInst9
-    ItemEvalInst10 ItemEvalInst11
-}
-
-/-- [rusthammer::grammar::permutation::search]:
-    Source: 'src/grammar/permutation.rs', lines 287:0-387:1 -/
-def grammar.permutation.search
-  {B : Type} {L : Type} {Clause0_Clause0_State : Type} {Clause0_Clause0_Output
-  : Type} (ItemsInst : grammar.permutation.Items L B Clause0_Clause0_State
-  Clause0_Clause0_Output) (items : L) (state : Clause0_Clause0_State)
-  (remaining : Std.Usize) (backend : B) (input : Slice Std.U8)
-  (cursor : input_types.Cursor) (context : input_types.ParseContext)
-  (index : Std.Usize) (all_absent : Bool) :
-  Result (((input_types.ParseOutcome Unit) × Clause0_Clause0_State) × B)
-  := do
-  if remaining = 0#usize
-  then ok ((input_types.ParseOutcome.Success cursor (), state), backend)
-  else
-    let i ← ItemsInst.LayoutInst.count items
-    if index >= i
-    then
-      if all_absent
-      then ok ((input_types.ParseOutcome.Success cursor (), state), backend)
-      else
-        ok ((input_types.ParseOutcome.Error input_types.ParseError.Mismatch,
-          state), backend)
-    else
-      let b ← ItemsInst.LayoutInst.matched items state index
-      if b
-      then
-        let i1 ← index + 1#usize
-        grammar.permutation.search ItemsInst items state remaining backend
-          input cursor context i1 all_absent
-      else
-        let ((attempt, state1), backend1) ←
-          ItemsInst.attempt items state index backend input cursor context
-        match attempt with
-        | grammar.permutation.Attempt.Matched next =>
-          let i1 ← remaining - 1#usize
-          let ((result, state2), backend2) ←
-            grammar.permutation.search ItemsInst items state1 i1 backend1 input
-              next context 0#usize true
-          match result with
-          | input_types.ParseOutcome.Success c _ =>
-            ok ((input_types.ParseOutcome.Success c (), state2), backend2)
-          | input_types.ParseOutcome.Error error =>
-            let b1 ← input_types.ParseError.is_recoverable error
-            if b1
-            then
-              let state3 ← ItemsInst.LayoutInst.clear items state2 index
-              let i2 ← index + 1#usize
-              grammar.permutation.search ItemsInst items state3 remaining
-                backend2 input cursor context i2 false
-            else ok ((result, state2), backend2)
-          | input_types.ParseOutcome.NeedMore =>
-            ok ((input_types.ParseOutcome.NeedMore, state2), backend2)
-        | grammar.permutation.Attempt.Absent =>
-          let i1 ← index + 1#usize
-          grammar.permutation.search ItemsInst items state1 remaining backend1
-            input cursor context i1 all_absent
-        | grammar.permutation.Attempt.Error error =>
-          let b1 ← input_types.ParseError.is_recoverable error
-          if b1
-          then
-            let i1 ← index + 1#usize
-            grammar.permutation.search ItemsInst items state1 remaining
-              backend1 input cursor context i1 false
-          else ok ((input_types.ParseOutcome.Error error, state1), backend1)
-        | grammar.permutation.Attempt.NeedMore =>
-          ok ((input_types.ParseOutcome.NeedMore, state1), backend1)
-partial_fixpoint
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::parser_traits::Grammar<'input, Clause0_Output> for rusthammer::grammar::permutation::Permutation<T>}]
-    Source: 'src/grammar/permutation.rs', lines 389:0-391:1 -/
-@[reducible]
-def grammar.permutation.Permutation.Insts.RusthammerParser_traitsGrammar {T :
-  Type} {Clause0_State : Type} {Clause0_Output : Type} (LayoutInst :
-  grammar.permutation.Layout T Clause0_State Clause0_Output) :
-  parser_traits.Grammar (grammar.permutation.Permutation T) Clause0_Output := {
-}
-
-/-- [rusthammer::grammar::permutation::{impl rusthammer::parser_traits::Eval<'input, B, Clause0_Clause0_Output> for rusthammer::grammar::permutation::Permutation<T>}::eval]:
-    Source: 'src/grammar/permutation.rs', lines 394:4-420:5
-    Visibility: public -/
-def grammar.permutation.Permutation.Insts.RusthammerParser_traitsEval.eval
-  {B : Type} {T : Type} {Clause0_Clause0_State : Type} {Clause0_Clause0_Output
-  : Type} (ItemsInst : grammar.permutation.Items T B Clause0_Clause0_State
-  Clause0_Clause0_Output) (self : grammar.permutation.Permutation T)
-  (backend : B) (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Clause0_Clause0_Output) × B)
-  := do
-  let t ← ItemsInst.LayoutInst.empty self.items
-  let i ← ItemsInst.LayoutInst.count self.items
-  let ((result, state), backend1) ←
-    grammar.permutation.search ItemsInst self.items t i backend input cursor
-      context 0#usize true
-  match result with
-  | input_types.ParseOutcome.Success next _ =>
-    let r ← ItemsInst.LayoutInst.finish self.items state
-    match r with
-    | core.result.Result.Ok value =>
-      ok (input_types.ParseOutcome.Success next value, backend1)
-    | core.result.Result.Err error =>
-      ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.Error error =>
-    ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
-
-/-- Trait implementation: [rusthammer::grammar::permutation::{impl rusthammer::parser_traits::Eval<'input, B, Clause0_Clause0_Output> for rusthammer::grammar::permutation::Permutation<T>}]
-    Source: 'src/grammar/permutation.rs', lines 393:0-421:1 -/
-@[reducible]
-def grammar.permutation.Permutation.Insts.RusthammerParser_traitsEval {B :
-  Type} {T : Type} {Clause0_Clause0_State : Type} {Clause0_Clause0_Output :
-  Type} (ItemsInst : grammar.permutation.Items T B Clause0_Clause0_State
-  Clause0_Clause0_Output) : parser_traits.Eval (grammar.permutation.Permutation
-  T) B Clause0_Clause0_Output := {
-  GrammarInst :=
-    grammar.permutation.Permutation.Insts.RusthammerParser_traitsGrammar
-    ItemsInst.LayoutInst
-  eval :=
-    grammar.permutation.Permutation.Insts.RusthammerParser_traitsEval.eval
-    ItemsInst
-}
-
 /-- [rusthammer::grammar::position::SkipBits]
-    Source: 'src/grammar/position.rs', lines 83:0-85:1
+    Source: 'src/grammar/position.rs', lines 81:0-83:1
     Visibility: public -/
 structure grammar.position.SkipBits where
   bits : Std.Usize
 
 /-- [rusthammer::grammar::position::{impl core::clone::Clone for rusthammer::grammar::position::SkipBits}::clone]:
-    Source: 'src/grammar/position.rs', lines 82:9-82:14
+    Source: 'src/grammar/position.rs', lines 80:9-80:14
     Visibility: public -/
 def grammar.position.SkipBits.Insts.CoreCloneClone.clone
   (self : grammar.position.SkipBits) : Result grammar.position.SkipBits := do
   ok self
 
 /-- Trait implementation: [rusthammer::grammar::position::{impl core::clone::Clone for rusthammer::grammar::position::SkipBits}]
-    Source: 'src/grammar/position.rs', lines 82:9-82:14 -/
+    Source: 'src/grammar/position.rs', lines 80:9-80:14 -/
 @[reducible]
 def grammar.position.SkipBits.Insts.CoreCloneClone : core.clone.Clone
   grammar.position.SkipBits := {
@@ -10782,177 +4892,104 @@ def grammar.position.SkipBits.Insts.CoreCloneClone : core.clone.Clone
 }
 
 /-- [rusthammer::grammar::position::{rusthammer::grammar::position::SkipBits}::new]:
-    Source: 'src/grammar/position.rs', lines 89:4-91:5
+    Source: 'src/grammar/position.rs', lines 87:4-89:5
     Visibility: public -/
 def grammar.position.SkipBits.new
   (bits : Std.Usize) : Result grammar.position.SkipBits := do
   ok { bits }
 
 /-- [rusthammer::grammar::position::{rusthammer::grammar::position::SkipBits}::bits]:
-    Source: 'src/grammar/position.rs', lines 94:4-96:5
+    Source: 'src/grammar/position.rs', lines 92:4-94:5
     Visibility: public -/
 def grammar.position.SkipBits.impl.bits
   (self : grammar.position.SkipBits) : Result Std.Usize := do
   ok self.bits
 
-/-- Trait implementation: [rusthammer::grammar::position::{impl rusthammer::parser_traits::Grammar<'input, ()> for rusthammer::grammar::position::SkipBits}]
-    Source: 'src/grammar/position.rs', lines 99:0-101:1 -/
-@[reducible]
-def grammar.position.SkipBits.Insts.RusthammerParser_traitsGrammarInputTuple :
-  parser_traits.Grammar grammar.position.SkipBits Unit := {
-}
-
-/-- [rusthammer::grammar::position::{impl rusthammer::parser_traits::Eval<'input, Backend, ()> for rusthammer::grammar::position::SkipBits}::eval]:
-    Source: 'src/grammar/position.rs', lines 104:4-116:5
+/-- [rusthammer::grammar::position::{impl rusthammer::parser_traits::Parser<'input, ()> for rusthammer::grammar::position::SkipBits}::parse_with]:
+    Source: 'src/grammar/position.rs', lines 100:4-111:5
     Visibility: public -/
 def
-  grammar.position.SkipBits.Insts.RusthammerParser_traitsEvalInputBackendTuple.eval
-  {Backend : Type} (self : grammar.position.SkipBits) (t : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Unit) × Backend)
+  grammar.position.SkipBits.Insts.RusthammerParser_traitsParserInputTuple.parse_with
+  (self : grammar.position.SkipBits) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (bo : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Unit)
+    input_types.ParseError)
   := do
   let i := Slice.len input
   let r ← grammar.position.advance_cursor i cursor self.bits
-  let result ←
-    match r with
-    | core.result.Result.Ok next => ok (core.result.Result.Ok (next, ()))
-    | core.result.Result.Err error => ok (core.result.Result.Err error)
-  let po ← input_types.InputStatus.classify context.status result
-  ok (po, t)
+  match r with
+  | core.result.Result.Ok next => ok (core.result.Result.Ok (next, ()))
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
 
-/-- Trait implementation: [rusthammer::grammar::position::{impl rusthammer::parser_traits::Eval<'input, Backend, ()> for rusthammer::grammar::position::SkipBits}]
-    Source: 'src/grammar/position.rs', lines 103:0-117:1 -/
+/-- Trait implementation: [rusthammer::grammar::position::{impl rusthammer::parser_traits::Parser<'input, ()> for rusthammer::grammar::position::SkipBits}]
+    Source: 'src/grammar/position.rs', lines 97:0-112:1 -/
 @[reducible]
-def
-  grammar.position.SkipBits.Insts.RusthammerParser_traitsEvalInputBackendTuple
-  (Backend : Type) : parser_traits.Eval grammar.position.SkipBits Backend Unit
-  := {
-  GrammarInst :=
-    grammar.position.SkipBits.Insts.RusthammerParser_traitsGrammarInputTuple
-  eval :=
-    grammar.position.SkipBits.Insts.RusthammerParser_traitsEvalInputBackendTuple.eval
+impl_def
+  grammar.position.SkipBits.Insts.RusthammerParser_traitsParserInputTuple :
+  parser_traits.Parser grammar.position.SkipBits Unit := {
+  parse_with :=
+    grammar.position.SkipBits.Insts.RusthammerParser_traitsParserInputTuple.parse_with
+  parse := parser_traits.Parser.parse.default
+    grammar.position.SkipBits.Insts.RusthammerParser_traitsParserInputTuple
 }
 
 /-- [rusthammer::grammar::position::Tell]
-    Source: 'src/grammar/position.rs', lines 132:0-132:16
+    Source: 'src/grammar/position.rs', lines 127:0-127:16
     Visibility: public -/
 @[reducible]
 def grammar.position.Tell := Unit
 
 /-- [rusthammer::grammar::position::{impl core::clone::Clone for rusthammer::grammar::position::Tell}::clone]:
-    Source: 'src/grammar/position.rs', lines 131:9-131:14
+    Source: 'src/grammar/position.rs', lines 126:9-126:14
     Visibility: public -/
 def grammar.position.Tell.Insts.CoreCloneClone.clone
   (self : grammar.position.Tell) : Result grammar.position.Tell := do
   ok self
 
 /-- Trait implementation: [rusthammer::grammar::position::{impl core::clone::Clone for rusthammer::grammar::position::Tell}]
-    Source: 'src/grammar/position.rs', lines 131:9-131:14 -/
+    Source: 'src/grammar/position.rs', lines 126:9-126:14 -/
 @[reducible]
 def grammar.position.Tell.Insts.CoreCloneClone : core.clone.Clone
   grammar.position.Tell := {
   clone := grammar.position.Tell.Insts.CoreCloneClone.clone
 }
 
-/-- Trait implementation: [rusthammer::grammar::position::{impl rusthammer::parser_traits::Grammar<'input, rusthammer::input_types::Cursor> for rusthammer::grammar::position::Tell}]
-    Source: 'src/grammar/position.rs', lines 134:0-136:1 -/
-@[reducible]
-def grammar.position.Tell.Insts.RusthammerParser_traitsGrammarInputCursor :
-  parser_traits.Grammar grammar.position.Tell input_types.Cursor := {
-}
-
-/-- [rusthammer::grammar::position::{impl rusthammer::parser_traits::Eval<'input, Backend, rusthammer::input_types::Cursor> for rusthammer::grammar::position::Tell}::eval]:
-    Source: 'src/grammar/position.rs', lines 139:4-150:5
+/-- [rusthammer::grammar::position::{impl rusthammer::parser_traits::Parser<'input, rusthammer::input_types::Cursor> for rusthammer::grammar::position::Tell}::parse_with]:
+    Source: 'src/grammar/position.rs', lines 132:4-142:5
     Visibility: public -/
 def
-  grammar.position.Tell.Insts.RusthammerParser_traitsEvalInputBackendCursor.eval
-  {Backend : Type} (self : grammar.position.Tell) (t : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (_context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome input_types.Cursor) × Backend)
+  grammar.position.Tell.Insts.RusthammerParser_traitsParserInputCursor.parse_with
+  (self : grammar.position.Tell) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (_byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × input_types.Cursor)
+    input_types.ParseError)
   := do
   let i := Slice.len input
   let r ← grammar.position.advance_cursor i cursor 0#usize
   match r with
-  | core.result.Result.Ok next =>
-    ok (input_types.ParseOutcome.Success next next, t)
-  | core.result.Result.Err error =>
-    ok (input_types.ParseOutcome.Error error, t)
+  | core.result.Result.Ok next => ok (core.result.Result.Ok (next, next))
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
 
-/-- Trait implementation: [rusthammer::grammar::position::{impl rusthammer::parser_traits::Eval<'input, Backend, rusthammer::input_types::Cursor> for rusthammer::grammar::position::Tell}]
-    Source: 'src/grammar/position.rs', lines 138:0-151:1 -/
+/-- Trait implementation: [rusthammer::grammar::position::{impl rusthammer::parser_traits::Parser<'input, rusthammer::input_types::Cursor> for rusthammer::grammar::position::Tell}]
+    Source: 'src/grammar/position.rs', lines 129:0-143:1 -/
 @[reducible]
-def grammar.position.Tell.Insts.RusthammerParser_traitsEvalInputBackendCursor
-  (Backend : Type) : parser_traits.Eval grammar.position.Tell Backend
-  input_types.Cursor := {
-  GrammarInst :=
-    grammar.position.Tell.Insts.RusthammerParser_traitsGrammarInputCursor
-  eval :=
-    grammar.position.Tell.Insts.RusthammerParser_traitsEvalInputBackendCursor.eval
+impl_def grammar.position.Tell.Insts.RusthammerParser_traitsParserInputCursor :
+  parser_traits.Parser grammar.position.Tell input_types.Cursor := {
+  parse_with :=
+    grammar.position.Tell.Insts.RusthammerParser_traitsParserInputCursor.parse_with
+  parse := parser_traits.Parser.parse.default
+    grammar.position.Tell.Insts.RusthammerParser_traitsParserInputCursor
 }
-
-/-- [rusthammer::grammar::position::{impl core::clone::Clone for rusthammer::grammar::position::SeekTarget}::clone]:
-    Source: 'src/grammar/position.rs', lines 153:9-153:14
-    Visibility: public -/
-def grammar.position.SeekTarget.Insts.CoreCloneClone.clone
-  (self : grammar.position.SeekTarget) :
-  Result grammar.position.SeekTarget
-  := do
-  ok self
-
-/-- Trait implementation: [rusthammer::grammar::position::{impl core::clone::Clone for rusthammer::grammar::position::SeekTarget}]
-    Source: 'src/grammar/position.rs', lines 153:9-153:14 -/
-@[reducible]
-def grammar.position.SeekTarget.Insts.CoreCloneClone : core.clone.Clone
-  grammar.position.SeekTarget := {
-  clone := grammar.position.SeekTarget.Insts.CoreCloneClone.clone
-}
-
-/-- [rusthammer::grammar::position::{impl core::clone::Clone for rusthammer::grammar::position::Seek}::clone]:
-    Source: 'src/grammar/position.rs', lines 190:9-190:14
-    Visibility: public -/
-def grammar.position.Seek.Insts.CoreCloneClone.clone
-  (self : grammar.position.Seek) : Result grammar.position.Seek := do
-  ok self
-
-/-- Trait implementation: [rusthammer::grammar::position::{impl core::clone::Clone for rusthammer::grammar::position::Seek}]
-    Source: 'src/grammar/position.rs', lines 190:9-190:14 -/
-@[reducible]
-def grammar.position.Seek.Insts.CoreCloneClone : core.clone.Clone
-  grammar.position.Seek := {
-  clone := grammar.position.Seek.Insts.CoreCloneClone.clone
-}
-
-/-- [rusthammer::grammar::position::{rusthammer::grammar::position::Seek}::to]:
-    Source: 'src/grammar/position.rs', lines 199:4-207:5
-    Visibility: public -/
-def grammar.position.Seek.to
-  (target : input_types.Cursor) :
-  Result (core.result.Result grammar.position.Seek input_types.ConfigError)
-  := do
-  if target.bit >= 8#u8
-  then ok (core.result.Result.Err input_types.ConfigError.InvalidBitOffset)
-  else
-    ok (core.result.Result.Ok
-      { target := (grammar.position.SeekTarget.Absolute target) })
-
-/-- [rusthammer::grammar::position::{rusthammer::grammar::position::Seek}::from_end]:
-    Source: 'src/grammar/position.rs', lines 219:4-223:5
-    Visibility: public -/
-def grammar.position.Seek.from_end
-  (offset_bits : Std.Isize) : Result grammar.position.Seek := do
-  ok { target := (grammar.position.SeekTarget.End offset_bits) }
 
 /-- [rusthammer::grammar::position::{impl core::clone::Clone for rusthammer::grammar::position::End}::clone]:
-    Source: 'src/grammar/position.rs', lines 313:9-313:14
+    Source: 'src/grammar/position.rs', lines 147:9-147:14
     Visibility: public -/
 def grammar.position.End.Insts.CoreCloneClone.clone
   (self : grammar.position.End) : Result grammar.position.End := do
   ok self
 
 /-- Trait implementation: [rusthammer::grammar::position::{impl core::clone::Clone for rusthammer::grammar::position::End}]
-    Source: 'src/grammar/position.rs', lines 313:9-313:14 -/
+    Source: 'src/grammar/position.rs', lines 147:9-147:14 -/
 @[reducible]
 def grammar.position.End.Insts.CoreCloneClone : core.clone.Clone
   grammar.position.End := {
@@ -10960,7 +4997,7 @@ def grammar.position.End.Insts.CoreCloneClone : core.clone.Clone
 }
 
 /-- [rusthammer::grammar::repeat::{impl core::clone::Clone for rusthammer::grammar::repeat::RepeatBounds}::clone]:
-    Source: 'src/grammar/repeat.rs', lines 345:9-345:14
+    Source: 'src/grammar/repeat.rs', lines 343:9-343:14
     Visibility: public -/
 def grammar.repeat.RepeatBounds.Insts.CoreCloneClone.clone
   (self : grammar.repeat.RepeatBounds) :
@@ -10969,7 +5006,7 @@ def grammar.repeat.RepeatBounds.Insts.CoreCloneClone.clone
   ok self
 
 /-- [rusthammer::grammar::repeat::{impl core::clone::Clone for rusthammer::grammar::repeat::Repeat<P>}::clone]:
-    Source: 'src/grammar/repeat.rs', lines 49:9-49:14
+    Source: 'src/grammar/repeat.rs', lines 47:9-47:14
     Visibility: public -/
 def grammar.repeat.Repeat.Insts.CoreCloneClone.clone
   {P : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -10981,7 +5018,7 @@ def grammar.repeat.Repeat.Insts.CoreCloneClone.clone
   ok { parser := t, bounds := rb }
 
 /-- Trait implementation: [rusthammer::grammar::repeat::{impl core::clone::Clone for rusthammer::grammar::repeat::Repeat<P>}]
-    Source: 'src/grammar/repeat.rs', lines 49:9-49:14 -/
+    Source: 'src/grammar/repeat.rs', lines 47:9-47:14 -/
 @[reducible]
 def grammar.repeat.Repeat.Insts.CoreCloneClone {P : Type} (corecloneCloneInst :
   core.clone.Clone P) : core.clone.Clone (grammar.repeat.Repeat P) := {
@@ -10989,7 +5026,7 @@ def grammar.repeat.Repeat.Insts.CoreCloneClone {P : Type} (corecloneCloneInst :
 }
 
 /-- [rusthammer::grammar::repeat::{rusthammer::grammar::repeat::RepeatBounds}::new]:
-    Source: 'src/grammar/repeat.rs', lines 352:4-361:5 -/
+    Source: 'src/grammar/repeat.rs', lines 350:4-359:5 -/
 def grammar.repeat.RepeatBounds.new
   (min : Std.Usize) (max : Std.Usize) :
   Result (core.result.Result grammar.repeat.RepeatBounds
@@ -11000,7 +5037,7 @@ def grammar.repeat.RepeatBounds.new
   else ok (core.result.Result.Ok { min, max := (some max) })
 
 /-- [rusthammer::grammar::repeat::{rusthammer::grammar::repeat::Repeat<P>}::new]:
-    Source: 'src/grammar/repeat.rs', lines 58:4-61:5
+    Source: 'src/grammar/repeat.rs', lines 56:4-59:5
     Visibility: public -/
 def grammar.repeat.Repeat.new
   {P : Type} (parser : P) (min : Std.Usize) (max : Std.Usize) :
@@ -11017,13 +5054,13 @@ def grammar.repeat.Repeat.new
       residual
 
 /-- [rusthammer::grammar::repeat::{rusthammer::grammar::repeat::RepeatBounds}::at_least]:
-    Source: 'src/grammar/repeat.rs', lines 370:4-372:5 -/
+    Source: 'src/grammar/repeat.rs', lines 368:4-370:5 -/
 def grammar.repeat.RepeatBounds.at_least
   (min : Std.Usize) : Result grammar.repeat.RepeatBounds := do
   ok { min, max := none }
 
 /-- [rusthammer::grammar::repeat::{rusthammer::grammar::repeat::Repeat<P>}::at_least]:
-    Source: 'src/grammar/repeat.rs', lines 74:4-79:5
+    Source: 'src/grammar/repeat.rs', lines 72:4-77:5
     Visibility: public -/
 def grammar.repeat.Repeat.at_least
   {P : Type} (parser : P) (min : Std.Usize) :
@@ -11033,21 +5070,21 @@ def grammar.repeat.Repeat.at_least
   ok { parser, bounds := rb }
 
 /-- [rusthammer::grammar::repeat::{rusthammer::grammar::repeat::Repeat<P>}::min]:
-    Source: 'src/grammar/repeat.rs', lines 82:4-84:5
+    Source: 'src/grammar/repeat.rs', lines 80:4-82:5
     Visibility: public -/
 def grammar.repeat.Repeat.min
   {P : Type} (self : grammar.repeat.Repeat P) : Result Std.Usize := do
   ok self.bounds.min
 
 /-- [rusthammer::grammar::repeat::{rusthammer::grammar::repeat::Repeat<P>}::max]:
-    Source: 'src/grammar/repeat.rs', lines 87:4-89:5
+    Source: 'src/grammar/repeat.rs', lines 85:4-87:5
     Visibility: public -/
 def grammar.repeat.Repeat.max
   {P : Type} (self : grammar.repeat.Repeat P) : Result (Option Std.Usize) := do
   ok self.bounds.max
 
 /-- [rusthammer::grammar::repeat::FoldRepeat]
-    Source: 'src/grammar/repeat.rs', lines 127:0-132:1
+    Source: 'src/grammar/repeat.rs', lines 125:0-130:1
     Visibility: public -/
 structure grammar.repeat.FoldRepeat (P : Type) (I : Type) (F : Type) where
   parser : P
@@ -11056,7 +5093,7 @@ structure grammar.repeat.FoldRepeat (P : Type) (I : Type) (F : Type) where
   fold : F
 
 /-- [rusthammer::grammar::repeat::{impl core::clone::Clone for rusthammer::grammar::repeat::FoldRepeat<P, I, F>}::clone]:
-    Source: 'src/grammar/repeat.rs', lines 126:9-126:14
+    Source: 'src/grammar/repeat.rs', lines 124:9-124:14
     Visibility: public -/
 def grammar.repeat.FoldRepeat.Insts.CoreCloneClone.clone
   {P : Type} {I : Type} {F : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -11071,7 +5108,7 @@ def grammar.repeat.FoldRepeat.Insts.CoreCloneClone.clone
   ok { parser := t, bounds := rb, init := t1, fold := t2 }
 
 /-- Trait implementation: [rusthammer::grammar::repeat::{impl core::clone::Clone for rusthammer::grammar::repeat::FoldRepeat<P, I, F>}]
-    Source: 'src/grammar/repeat.rs', lines 126:9-126:14 -/
+    Source: 'src/grammar/repeat.rs', lines 124:9-124:14 -/
 @[reducible]
 def grammar.repeat.FoldRepeat.Insts.CoreCloneClone {P : Type} {I : Type} {F :
   Type} (corecloneCloneInst : core.clone.Clone P) (corecloneCloneInst1 :
@@ -11082,7 +5119,7 @@ def grammar.repeat.FoldRepeat.Insts.CoreCloneClone {P : Type} {I : Type} {F :
 }
 
 /-- [rusthammer::grammar::repeat::{rusthammer::grammar::repeat::FoldRepeat<P, I, F>}::new]:
-    Source: 'src/grammar/repeat.rs', lines 136:4-144:5
+    Source: 'src/grammar/repeat.rs', lines 134:4-142:5
     Visibility: public -/
 def grammar.repeat.FoldRepeat.new
   {P : Type} {I : Type} {F : Type} (parser : P) (min : Std.Usize)
@@ -11101,7 +5138,7 @@ def grammar.repeat.FoldRepeat.new
       input_types.ConfigError) residual
 
 /-- [rusthammer::grammar::repeat::{rusthammer::grammar::repeat::FoldRepeat<P, I, F>}::exact]:
-    Source: 'src/grammar/repeat.rs', lines 147:4-154:5
+    Source: 'src/grammar/repeat.rs', lines 145:4-152:5
     Visibility: public -/
 def grammar.repeat.FoldRepeat.exact
   {P : Type} {I : Type} {F : Type} (parser : P) (count : Std.Usize) (init : I)
@@ -11112,7 +5149,7 @@ def grammar.repeat.FoldRepeat.exact
   ok { parser, bounds := rb, init, fold }
 
 /-- [rusthammer::grammar::repeat::{rusthammer::grammar::repeat::FoldRepeat<P, I, F>}::at_least]:
-    Source: 'src/grammar/repeat.rs', lines 157:4-164:5
+    Source: 'src/grammar/repeat.rs', lines 155:4-162:5
     Visibility: public -/
 def grammar.repeat.FoldRepeat.at_least
   {P : Type} {I : Type} {F : Type} (parser : P) (min : Std.Usize) (init : I)
@@ -11123,7 +5160,7 @@ def grammar.repeat.FoldRepeat.at_least
   ok { parser, bounds := rb, init, fold }
 
 /-- [rusthammer::grammar::repeat::{rusthammer::grammar::repeat::FoldRepeat<P, I, F>}::min]:
-    Source: 'src/grammar/repeat.rs', lines 167:4-169:5
+    Source: 'src/grammar/repeat.rs', lines 165:4-167:5
     Visibility: public -/
 def grammar.repeat.FoldRepeat.min
   {P : Type} {I : Type} {F : Type} (self : grammar.repeat.FoldRepeat P I F) :
@@ -11132,7 +5169,7 @@ def grammar.repeat.FoldRepeat.min
   ok self.bounds.min
 
 /-- [rusthammer::grammar::repeat::{rusthammer::grammar::repeat::FoldRepeat<P, I, F>}::max]:
-    Source: 'src/grammar/repeat.rs', lines 172:4-174:5
+    Source: 'src/grammar/repeat.rs', lines 170:4-172:5
     Visibility: public -/
 def grammar.repeat.FoldRepeat.max
   {P : Type} {I : Type} {F : Type} (self : grammar.repeat.FoldRepeat P I F) :
@@ -11141,7 +5178,7 @@ def grammar.repeat.FoldRepeat.max
   ok self.bounds.max
 
 /-- [rusthammer::grammar::repeat::SepBy]
-    Source: 'src/grammar/repeat.rs', lines 207:0-211:1
+    Source: 'src/grammar/repeat.rs', lines 205:0-209:1
     Visibility: public -/
 structure grammar.repeat.SepBy (P : Type) (S : Type) where
   parser : P
@@ -11149,7 +5186,7 @@ structure grammar.repeat.SepBy (P : Type) (S : Type) where
   bounds : grammar.repeat.RepeatBounds
 
 /-- [rusthammer::grammar::repeat::{impl core::clone::Clone for rusthammer::grammar::repeat::SepBy<P, S>}::clone]:
-    Source: 'src/grammar/repeat.rs', lines 206:9-206:14
+    Source: 'src/grammar/repeat.rs', lines 204:9-204:14
     Visibility: public -/
 def grammar.repeat.SepBy.Insts.CoreCloneClone.clone
   {P : Type} {S : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -11163,7 +5200,7 @@ def grammar.repeat.SepBy.Insts.CoreCloneClone.clone
   ok { parser := t, separator := t1, bounds := rb }
 
 /-- Trait implementation: [rusthammer::grammar::repeat::{impl core::clone::Clone for rusthammer::grammar::repeat::SepBy<P, S>}]
-    Source: 'src/grammar/repeat.rs', lines 206:9-206:14 -/
+    Source: 'src/grammar/repeat.rs', lines 204:9-204:14 -/
 @[reducible]
 def grammar.repeat.SepBy.Insts.CoreCloneClone {P : Type} {S : Type}
   (corecloneCloneInst : core.clone.Clone P) (corecloneCloneInst1 :
@@ -11173,7 +5210,7 @@ def grammar.repeat.SepBy.Insts.CoreCloneClone {P : Type} {S : Type}
 }
 
 /-- [rusthammer::grammar::repeat::{rusthammer::grammar::repeat::SepBy<P, S>}::new]:
-    Source: 'src/grammar/repeat.rs', lines 216:4-223:5
+    Source: 'src/grammar/repeat.rs', lines 214:4-221:5
     Visibility: public -/
 def grammar.repeat.SepBy.new
   {P : Type} {S : Type} (parser : P) (separator : S) (min : Std.Usize)
@@ -11192,7 +5229,7 @@ def grammar.repeat.SepBy.new
       input_types.ConfigError) residual
 
 /-- [rusthammer::grammar::repeat::{rusthammer::grammar::repeat::SepBy<P, S>}::exact]:
-    Source: 'src/grammar/repeat.rs', lines 226:4-232:5
+    Source: 'src/grammar/repeat.rs', lines 224:4-230:5
     Visibility: public -/
 def grammar.repeat.SepBy.exact
   {P : Type} {S : Type} (parser : P) (separator : S) (count : Std.Usize) :
@@ -11202,7 +5239,7 @@ def grammar.repeat.SepBy.exact
   ok { parser, separator, bounds := rb }
 
 /-- [rusthammer::grammar::repeat::{rusthammer::grammar::repeat::SepBy<P, S>}::at_least]:
-    Source: 'src/grammar/repeat.rs', lines 236:4-242:5
+    Source: 'src/grammar/repeat.rs', lines 234:4-240:5
     Visibility: public -/
 def grammar.repeat.SepBy.at_least
   {P : Type} {S : Type} (parser : P) (separator : S) (min : Std.Usize) :
@@ -11212,7 +5249,7 @@ def grammar.repeat.SepBy.at_least
   ok { parser, separator, bounds := rb }
 
 /-- [rusthammer::grammar::repeat::{rusthammer::grammar::repeat::SepBy<P, S>}::min]:
-    Source: 'src/grammar/repeat.rs', lines 245:4-247:5
+    Source: 'src/grammar/repeat.rs', lines 243:4-245:5
     Visibility: public -/
 def grammar.repeat.SepBy.min
   {P : Type} {S : Type} (self : grammar.repeat.SepBy P S) :
@@ -11221,7 +5258,7 @@ def grammar.repeat.SepBy.min
   ok self.bounds.min
 
 /-- [rusthammer::grammar::repeat::{rusthammer::grammar::repeat::SepBy<P, S>}::max]:
-    Source: 'src/grammar/repeat.rs', lines 250:4-252:5
+    Source: 'src/grammar/repeat.rs', lines 248:4-250:5
     Visibility: public -/
 def grammar.repeat.SepBy.max
   {P : Type} {S : Type} (self : grammar.repeat.SepBy P S) :
@@ -11230,7 +5267,7 @@ def grammar.repeat.SepBy.max
   ok self.bounds.max
 
 /-- [rusthammer::grammar::repeat::FoldSepBy]
-    Source: 'src/grammar/repeat.rs', lines 283:0-289:1
+    Source: 'src/grammar/repeat.rs', lines 281:0-287:1
     Visibility: public -/
 structure grammar.repeat.FoldSepBy (P : Type) (S : Type) (I : Type) (F : Type)
   where
@@ -11241,7 +5278,7 @@ structure grammar.repeat.FoldSepBy (P : Type) (S : Type) (I : Type) (F : Type)
   fold : F
 
 /-- [rusthammer::grammar::repeat::{impl core::clone::Clone for rusthammer::grammar::repeat::FoldSepBy<P, S, I, F>}::clone]:
-    Source: 'src/grammar/repeat.rs', lines 282:9-282:14
+    Source: 'src/grammar/repeat.rs', lines 280:9-280:14
     Visibility: public -/
 def grammar.repeat.FoldSepBy.Insts.CoreCloneClone.clone
   {P : Type} {S : Type} {I : Type} {F : Type} (corecloneCloneInst :
@@ -11258,7 +5295,7 @@ def grammar.repeat.FoldSepBy.Insts.CoreCloneClone.clone
   ok { parser := t, separator := t1, bounds := rb, init := t2, fold := t3 }
 
 /-- Trait implementation: [rusthammer::grammar::repeat::{impl core::clone::Clone for rusthammer::grammar::repeat::FoldSepBy<P, S, I, F>}]
-    Source: 'src/grammar/repeat.rs', lines 282:9-282:14 -/
+    Source: 'src/grammar/repeat.rs', lines 280:9-280:14 -/
 @[reducible]
 def grammar.repeat.FoldSepBy.Insts.CoreCloneClone {P : Type} {S : Type} {I :
   Type} {F : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -11271,7 +5308,7 @@ def grammar.repeat.FoldSepBy.Insts.CoreCloneClone {P : Type} {S : Type} {I :
 }
 
 /-- [rusthammer::grammar::repeat::{rusthammer::grammar::repeat::FoldSepBy<P, S, I, F>}::new]:
-    Source: 'src/grammar/repeat.rs', lines 293:4-309:5
+    Source: 'src/grammar/repeat.rs', lines 291:4-307:5
     Visibility: public -/
 def grammar.repeat.FoldSepBy.new
   {P : Type} {S : Type} {I : Type} {F : Type} (parser : P) (separator : S)
@@ -11290,7 +5327,7 @@ def grammar.repeat.FoldSepBy.new
       input_types.ConfigError) residual
 
 /-- [rusthammer::grammar::repeat::{rusthammer::grammar::repeat::FoldSepBy<P, S, I, F>}::exact]:
-    Source: 'src/grammar/repeat.rs', lines 312:4-320:5
+    Source: 'src/grammar/repeat.rs', lines 310:4-318:5
     Visibility: public -/
 def grammar.repeat.FoldSepBy.exact
   {P : Type} {S : Type} {I : Type} {F : Type} (parser : P) (separator : S)
@@ -11301,7 +5338,7 @@ def grammar.repeat.FoldSepBy.exact
   ok { parser, separator, bounds := rb, init, fold }
 
 /-- [rusthammer::grammar::repeat::{rusthammer::grammar::repeat::FoldSepBy<P, S, I, F>}::at_least]:
-    Source: 'src/grammar/repeat.rs', lines 323:4-331:5
+    Source: 'src/grammar/repeat.rs', lines 321:4-329:5
     Visibility: public -/
 def grammar.repeat.FoldSepBy.at_least
   {P : Type} {S : Type} {I : Type} {F : Type} (parser : P) (separator : S)
@@ -11312,7 +5349,7 @@ def grammar.repeat.FoldSepBy.at_least
   ok { parser, separator, bounds := rb, init, fold }
 
 /-- [rusthammer::grammar::repeat::{rusthammer::grammar::repeat::FoldSepBy<P, S, I, F>}::min]:
-    Source: 'src/grammar/repeat.rs', lines 334:4-336:5
+    Source: 'src/grammar/repeat.rs', lines 332:4-334:5
     Visibility: public -/
 def grammar.repeat.FoldSepBy.min
   {P : Type} {S : Type} {I : Type} {F : Type}
@@ -11322,7 +5359,7 @@ def grammar.repeat.FoldSepBy.min
   ok self.bounds.min
 
 /-- [rusthammer::grammar::repeat::{rusthammer::grammar::repeat::FoldSepBy<P, S, I, F>}::max]:
-    Source: 'src/grammar/repeat.rs', lines 339:4-341:5
+    Source: 'src/grammar/repeat.rs', lines 337:4-339:5
     Visibility: public -/
 def grammar.repeat.FoldSepBy.max
   {P : Type} {S : Type} {I : Type} {F : Type}
@@ -11332,7 +5369,7 @@ def grammar.repeat.FoldSepBy.max
   ok self.bounds.max
 
 /-- Trait implementation: [rusthammer::grammar::repeat::{impl core::clone::Clone for rusthammer::grammar::repeat::RepeatBounds}]
-    Source: 'src/grammar/repeat.rs', lines 345:9-345:14 -/
+    Source: 'src/grammar/repeat.rs', lines 343:9-343:14 -/
 @[reducible]
 def grammar.repeat.RepeatBounds.Insts.CoreCloneClone : core.clone.Clone
   grammar.repeat.RepeatBounds := {
@@ -11340,7 +5377,7 @@ def grammar.repeat.RepeatBounds.Insts.CoreCloneClone : core.clone.Clone
 }
 
 /-- [rusthammer::grammar::repeat::{impl rusthammer::grammar::repeat::RepeatAccumulator<A, R> for rusthammer::grammar::repeat::FoldRepeat<P, I, F>}::step]:
-    Source: 'src/grammar/repeat.rs', lines 406:4-408:5 -/
+    Source: 'src/grammar/repeat.rs', lines 404:4-406:5 -/
 def
   grammar.repeat.FoldRepeat.Insts.RusthammerGrammarRepeatRepeatAccumulator.step
   {P : Type} {I : Type} {F : Type} {A : Type} {R : Type}
@@ -11352,7 +5389,7 @@ def
   coreopsfunctionFnFPairRInst.call self.fold (accumulated, value)
 
 /-- [rusthammer::grammar::repeat::{impl rusthammer::grammar::repeat::RepeatAccumulator<A, R> for rusthammer::grammar::repeat::FoldRepeat<P, I, F>}::init]:
-    Source: 'src/grammar/repeat.rs', lines 403:4-405:5 -/
+    Source: 'src/grammar/repeat.rs', lines 401:4-403:5 -/
 def
   grammar.repeat.FoldRepeat.Insts.RusthammerGrammarRepeatRepeatAccumulator.init
   {P : Type} {I : Type} {F : Type} {A : Type} {R : Type}
@@ -11364,7 +5401,7 @@ def
   coreopsfunctionFnITupleRInst.call self.init ()
 
 /-- Trait implementation: [rusthammer::grammar::repeat::{impl rusthammer::grammar::repeat::RepeatAccumulator<A, R> for rusthammer::grammar::repeat::FoldRepeat<P, I, F>}]
-    Source: 'src/grammar/repeat.rs', lines 397:0-409:1 -/
+    Source: 'src/grammar/repeat.rs', lines 395:0-407:1 -/
 @[reducible]
 def grammar.repeat.FoldRepeat.Insts.RusthammerGrammarRepeatRepeatAccumulator (P
   : Type) {I : Type} {F : Type} {A : Type} {R : Type}
@@ -11380,7 +5417,7 @@ def grammar.repeat.FoldRepeat.Insts.RusthammerGrammarRepeatRepeatAccumulator (P
 }
 
 /-- [rusthammer::grammar::repeat::{impl rusthammer::grammar::repeat::RepeatAccumulator<A, R> for rusthammer::grammar::repeat::FoldSepBy<P, S, I, F>}::step]:
-    Source: 'src/grammar/repeat.rs', lines 420:4-422:5 -/
+    Source: 'src/grammar/repeat.rs', lines 418:4-420:5 -/
 def
   grammar.repeat.FoldSepBy.Insts.RusthammerGrammarRepeatRepeatAccumulator.step
   {P : Type} {S : Type} {I : Type} {F : Type} {A : Type} {R : Type}
@@ -11392,7 +5429,7 @@ def
   coreopsfunctionFnFPairRInst.call self.fold (accumulated, value)
 
 /-- [rusthammer::grammar::repeat::{impl rusthammer::grammar::repeat::RepeatAccumulator<A, R> for rusthammer::grammar::repeat::FoldSepBy<P, S, I, F>}::init]:
-    Source: 'src/grammar/repeat.rs', lines 417:4-419:5 -/
+    Source: 'src/grammar/repeat.rs', lines 415:4-417:5 -/
 def
   grammar.repeat.FoldSepBy.Insts.RusthammerGrammarRepeatRepeatAccumulator.init
   {P : Type} {S : Type} {I : Type} {F : Type} {A : Type} {R : Type}
@@ -11404,7 +5441,7 @@ def
   coreopsfunctionFnITupleRInst.call self.init ()
 
 /-- Trait implementation: [rusthammer::grammar::repeat::{impl rusthammer::grammar::repeat::RepeatAccumulator<A, R> for rusthammer::grammar::repeat::FoldSepBy<P, S, I, F>}]
-    Source: 'src/grammar/repeat.rs', lines 411:0-423:1 -/
+    Source: 'src/grammar/repeat.rs', lines 409:0-421:1 -/
 @[reducible]
 def grammar.repeat.FoldSepBy.Insts.RusthammerGrammarRepeatRepeatAccumulator (P
   : Type) (S : Type) {I : Type} {F : Type} {A : Type} {R : Type}
@@ -11419,158 +5456,120 @@ def grammar.repeat.FoldSepBy.Insts.RusthammerGrammarRepeatRepeatAccumulator (P
     coreopsfunctionFnITupleRInst coreopsfunctionFnFPairRInst
 }
 
-/-- Trait implementation: [rusthammer::grammar::repeat::{impl rusthammer::parser_traits::Grammar<'input, R> for rusthammer::grammar::repeat::FoldRepeat<P, I, F>}]
-    Source: 'src/grammar/repeat.rs', lines 489:0-496:1 -/
-@[reducible]
-def grammar.repeat.FoldRepeat.Insts.RusthammerParser_traitsGrammar {P : Type}
-  {I : Type} {F : Type} {R : Type} {Clause0_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
+/-- [rusthammer::grammar::repeat::{impl rusthammer::parser_traits::Parser<'input, R> for rusthammer::grammar::repeat::FoldRepeat<P, I, F>}::parse_with]:
+    Source: 'src/grammar/repeat.rs', lines 490:4-497:5
+    Visibility: public -/
+def grammar.repeat.FoldRepeat.Insts.RusthammerParser_traitsParser.parse_with
+  {P : Type} {I : Type} {F : Type} {R : Type} {Clause0_Output : Type}
+  (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
   (coreopsfunctionFnITupleRInst : core.ops.function.Fn I Unit R)
   (coreopsfunctionFnFPairRInst : core.ops.function.Fn F (R × Clause0_Output) R)
-  : parser_traits.Grammar (grammar.repeat.FoldRepeat P I F) R := {
-}
-
-/-- [rusthammer::grammar::repeat::{impl rusthammer::parser_traits::Eval<'input, Backend, R> for rusthammer::grammar::repeat::FoldRepeat<P, I, F>}::eval]:
-    Source: 'src/grammar/repeat.rs', lines 504:4-520:5
-    Visibility: public -/
-def grammar.repeat.FoldRepeat.Insts.RusthammerParser_traitsEval.eval
-  {Backend : Type} {P : Type} {I : Type} {F : Type} {R : Type}
-  {Clause0_Clause0_Output : Type} (parser_traitsEvalInst : parser_traits.Eval P
-  Backend Clause0_Clause0_Output) (coreopsfunctionFnITupleRInst :
-  core.ops.function.Fn I Unit R) (coreopsfunctionFnFPairRInst :
-  core.ops.function.Fn F (R × Clause0_Clause0_Output) R)
-  (self : grammar.repeat.FoldRepeat P I F) (backend : Backend)
-  (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome R) × Backend)
+  (self : grammar.repeat.FoldRepeat P I F) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × R) input_types.ParseError)
   := do
-  grammar.repeat.repeat_run parser_traitsEvalInst
+  grammar.repeat.repeat_run parser_traitsParserInst
     (grammar.repeat.FoldRepeat.Insts.RusthammerGrammarRepeatRepeatAccumulator P
-    coreopsfunctionFnITupleRInst coreopsfunctionFnFPairRInst) backend
-    self.parser self.bounds self input cursor context
+    coreopsfunctionFnITupleRInst coreopsfunctionFnFPairRInst) self.parser
+    self.bounds self input cursor byte_order
 
-/-- Trait implementation: [rusthammer::grammar::repeat::{impl rusthammer::parser_traits::Eval<'input, Backend, R> for rusthammer::grammar::repeat::FoldRepeat<P, I, F>}]
-    Source: 'src/grammar/repeat.rs', lines 498:0-521:1 -/
+/-- Trait implementation: [rusthammer::grammar::repeat::{impl rusthammer::parser_traits::Parser<'input, R> for rusthammer::grammar::repeat::FoldRepeat<P, I, F>}]
+    Source: 'src/grammar/repeat.rs', lines 482:0-498:1 -/
 @[reducible]
-def grammar.repeat.FoldRepeat.Insts.RusthammerParser_traitsEval {Backend :
-  Type} {P : Type} {I : Type} {F : Type} {R : Type} {Clause0_Clause0_Output :
-  Type} (parser_traitsEvalInst : parser_traits.Eval P Backend
-  Clause0_Clause0_Output) (coreopsfunctionFnITupleRInst : core.ops.function.Fn
-  I Unit R) (coreopsfunctionFnFPairRInst : core.ops.function.Fn F (R ×
-  Clause0_Clause0_Output) R) : parser_traits.Eval (grammar.repeat.FoldRepeat P
-  I F) Backend R := {
-  GrammarInst := grammar.repeat.FoldRepeat.Insts.RusthammerParser_traitsGrammar
-    parser_traitsEvalInst.GrammarInst coreopsfunctionFnITupleRInst
+impl_def grammar.repeat.FoldRepeat.Insts.RusthammerParser_traitsParser {P :
+  Type} {I : Type} {F : Type} {R : Type} {Clause0_Output : Type}
+  (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
+  (coreopsfunctionFnITupleRInst : core.ops.function.Fn I Unit R)
+  (coreopsfunctionFnFPairRInst : core.ops.function.Fn F (R × Clause0_Output) R)
+  : parser_traits.Parser (grammar.repeat.FoldRepeat P I F) R := {
+  parse_with :=
+    grammar.repeat.FoldRepeat.Insts.RusthammerParser_traitsParser.parse_with
+    parser_traitsParserInst coreopsfunctionFnITupleRInst
     coreopsfunctionFnFPairRInst
-  eval := grammar.repeat.FoldRepeat.Insts.RusthammerParser_traitsEval.eval
-    parser_traitsEvalInst coreopsfunctionFnITupleRInst
-    coreopsfunctionFnFPairRInst
+  parse := parser_traits.Parser.parse.default
+    (grammar.repeat.FoldRepeat.Insts.RusthammerParser_traitsParser
+    parser_traitsParserInst coreopsfunctionFnITupleRInst
+    coreopsfunctionFnFPairRInst)
 }
 
-/-- Trait implementation: [rusthammer::grammar::repeat::{impl rusthammer::parser_traits::Grammar<'input, alloc::vec::Vec<Clause0_Output>> for rusthammer::grammar::repeat::SepBy<P, S>}]
-    Source: 'src/grammar/repeat.rs', lines 549:0-551:1 -/
-@[reducible]
-def grammar.repeat.SepBy.Insts.RusthammerParser_traitsGrammarInputVec {P :
-  Type} {S : Type} {Clause0_Output : Type} {Clause1_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
-  (parser_traitsGrammarInst1 : parser_traits.Grammar S Clause1_Output) :
-  parser_traits.Grammar (grammar.repeat.SepBy P S) (alloc.vec.Vec
-  Clause0_Output) := {
-}
-
-/-- [rusthammer::grammar::repeat::{impl rusthammer::parser_traits::Eval<'input, Backend, alloc::vec::Vec<Clause0_Clause0_Output>> for rusthammer::grammar::repeat::SepBy<P, S>}::eval]:
-    Source: 'src/grammar/repeat.rs', lines 557:4-578:5
+/-- [rusthammer::grammar::repeat::{impl rusthammer::parser_traits::Parser<'input, alloc::vec::Vec<Clause0_Output>> for rusthammer::grammar::repeat::SepBy<P, S>}::parse_with]:
+    Source: 'src/grammar/repeat.rs', lines 527:4-546:5
     Visibility: public -/
-def grammar.repeat.SepBy.Insts.RusthammerParser_traitsEvalInputBackendVec.eval
-  {Backend : Type} {P : Type} {S : Type} {Clause0_Clause0_Output : Type}
-  {Clause1_Clause0_Output : Type} (parser_traitsEvalInst : parser_traits.Eval P
-  Backend Clause0_Clause0_Output) (parser_traitsEvalInst1 : parser_traits.Eval
-  S Backend Clause1_Clause0_Output) (self : grammar.repeat.SepBy P S)
-  (backend : Backend) (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome (alloc.vec.Vec Clause0_Clause0_Output)) ×
-    Backend)
+def grammar.repeat.SepBy.Insts.RusthammerParser_traitsParserInputVec.parse_with
+  {P : Type} {S : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+  (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
+  (parser_traitsParserInst1 : parser_traits.Parser S Clause1_Output)
+  (self : grammar.repeat.SepBy P S) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × (alloc.vec.Vec
+    Clause0_Output)) input_types.ParseError)
   := do
-  grammar.repeat.repeat_run_with parser_traitsEvalInst
-    (grammar.sequence.Right.Insts.RusthammerParser_traitsEval
-    (Shared0P.Insts.RusthammerParser_traitsEval parser_traitsEvalInst1)
-    (Shared0P.Insts.RusthammerParser_traitsEval parser_traitsEvalInst))
+  grammar.repeat.repeat_run_with parser_traitsParserInst
+    (grammar.sequence.Right.Insts.RusthammerParser_traitsParser
+    (Shared0P.Insts.RusthammerParser_traitsParser parser_traitsParserInst1)
+    (Shared0P.Insts.RusthammerParser_traitsParser parser_traitsParserInst))
     (grammar.repeat.Collect.Insts.RusthammerGrammarRepeatRepeatAccumulatorAVec
-    Clause0_Clause0_Output) backend self.parser
+    Clause0_Output) self.parser
     { first := self.separator, second := self.parser } self.bounds () input
-    cursor context
+    cursor byte_order
 
-/-- Trait implementation: [rusthammer::grammar::repeat::{impl rusthammer::parser_traits::Eval<'input, Backend, alloc::vec::Vec<Clause0_Clause0_Output>> for rusthammer::grammar::repeat::SepBy<P, S>}]
-    Source: 'src/grammar/repeat.rs', lines 554:0-579:1 -/
+/-- Trait implementation: [rusthammer::grammar::repeat::{impl rusthammer::parser_traits::Parser<'input, alloc::vec::Vec<Clause0_Output>> for rusthammer::grammar::repeat::SepBy<P, S>}]
+    Source: 'src/grammar/repeat.rs', lines 524:0-547:1 -/
 @[reducible]
-def grammar.repeat.SepBy.Insts.RusthammerParser_traitsEvalInputBackendVec
-  {Backend : Type} {P : Type} {S : Type} {Clause0_Clause0_Output : Type}
-  {Clause1_Clause0_Output : Type} (parser_traitsEvalInst : parser_traits.Eval P
-  Backend Clause0_Clause0_Output) (parser_traitsEvalInst1 : parser_traits.Eval
-  S Backend Clause1_Clause0_Output) : parser_traits.Eval (grammar.repeat.SepBy
-  P S) Backend (alloc.vec.Vec Clause0_Clause0_Output) := {
-  GrammarInst :=
-    grammar.repeat.SepBy.Insts.RusthammerParser_traitsGrammarInputVec
-    parser_traitsEvalInst.GrammarInst parser_traitsEvalInst1.GrammarInst
-  eval :=
-    grammar.repeat.SepBy.Insts.RusthammerParser_traitsEvalInputBackendVec.eval
-    parser_traitsEvalInst parser_traitsEvalInst1
+impl_def grammar.repeat.SepBy.Insts.RusthammerParser_traitsParserInputVec {P :
+  Type} {S : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+  (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
+  (parser_traitsParserInst1 : parser_traits.Parser S Clause1_Output) :
+  parser_traits.Parser (grammar.repeat.SepBy P S) (alloc.vec.Vec
+  Clause0_Output) := {
+  parse_with :=
+    grammar.repeat.SepBy.Insts.RusthammerParser_traitsParserInputVec.parse_with
+    parser_traitsParserInst parser_traitsParserInst1
+  parse := parser_traits.Parser.parse.default
+    (grammar.repeat.SepBy.Insts.RusthammerParser_traitsParserInputVec
+    parser_traitsParserInst parser_traitsParserInst1)
 }
 
-/-- Trait implementation: [rusthammer::grammar::repeat::{impl rusthammer::parser_traits::Grammar<'input, R> for rusthammer::grammar::repeat::FoldSepBy<P, S, I, F>}]
-    Source: 'src/grammar/repeat.rs', lines 581:0-589:1 -/
-@[reducible]
-def grammar.repeat.FoldSepBy.Insts.RusthammerParser_traitsGrammar {P : Type} {S
-  : Type} {I : Type} {F : Type} {R : Type} {Clause0_Output : Type}
-  {Clause1_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar P
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar S
+/-- [rusthammer::grammar::repeat::{impl rusthammer::parser_traits::Parser<'input, R> for rusthammer::grammar::repeat::FoldSepBy<P, S, I, F>}::parse_with]:
+    Source: 'src/grammar/repeat.rs', lines 558:4-577:5
+    Visibility: public -/
+def grammar.repeat.FoldSepBy.Insts.RusthammerParser_traitsParser.parse_with
+  {P : Type} {S : Type} {I : Type} {F : Type} {R : Type} {Clause0_Output :
+  Type} {Clause1_Output : Type} (parser_traitsParserInst : parser_traits.Parser
+  P Clause0_Output) (parser_traitsParserInst1 : parser_traits.Parser S
   Clause1_Output) (coreopsfunctionFnITupleRInst : core.ops.function.Fn I Unit
   R) (coreopsfunctionFnFPairRInst : core.ops.function.Fn F (R × Clause0_Output)
-  R) : parser_traits.Grammar (grammar.repeat.FoldSepBy P S I F) R := {
-}
-
-/-- [rusthammer::grammar::repeat::{impl rusthammer::parser_traits::Eval<'input, Backend, R> for rusthammer::grammar::repeat::FoldSepBy<P, S, I, F>}::eval]:
-    Source: 'src/grammar/repeat.rs', lines 598:4-619:5
-    Visibility: public -/
-def grammar.repeat.FoldSepBy.Insts.RusthammerParser_traitsEval.eval
-  {Backend : Type} {P : Type} {S : Type} {I : Type} {F : Type} {R : Type}
-  {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
-  (parser_traitsEvalInst : parser_traits.Eval P Backend Clause0_Clause0_Output)
-  (parser_traitsEvalInst1 : parser_traits.Eval S Backend
-  Clause1_Clause0_Output) (coreopsfunctionFnITupleRInst : core.ops.function.Fn
-  I Unit R) (coreopsfunctionFnFPairRInst : core.ops.function.Fn F (R ×
-  Clause0_Clause0_Output) R) (self : grammar.repeat.FoldSepBy P S I F)
-  (backend : Backend) (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome R) × Backend)
+  R) (self : grammar.repeat.FoldSepBy P S I F) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × R) input_types.ParseError)
   := do
-  grammar.repeat.repeat_run_with parser_traitsEvalInst
-    (grammar.sequence.Right.Insts.RusthammerParser_traitsEval
-    (Shared0P.Insts.RusthammerParser_traitsEval parser_traitsEvalInst1)
-    (Shared0P.Insts.RusthammerParser_traitsEval parser_traitsEvalInst))
+  grammar.repeat.repeat_run_with parser_traitsParserInst
+    (grammar.sequence.Right.Insts.RusthammerParser_traitsParser
+    (Shared0P.Insts.RusthammerParser_traitsParser parser_traitsParserInst1)
+    (Shared0P.Insts.RusthammerParser_traitsParser parser_traitsParserInst))
     (grammar.repeat.FoldSepBy.Insts.RusthammerGrammarRepeatRepeatAccumulator P
-    S coreopsfunctionFnITupleRInst coreopsfunctionFnFPairRInst) backend
-    self.parser { first := self.separator, second := self.parser } self.bounds
-    self input cursor context
+    S coreopsfunctionFnITupleRInst coreopsfunctionFnFPairRInst) self.parser
+    { first := self.separator, second := self.parser } self.bounds self input
+    cursor byte_order
 
-/-- Trait implementation: [rusthammer::grammar::repeat::{impl rusthammer::parser_traits::Eval<'input, Backend, R> for rusthammer::grammar::repeat::FoldSepBy<P, S, I, F>}]
-    Source: 'src/grammar/repeat.rs', lines 591:0-620:1 -/
+/-- Trait implementation: [rusthammer::grammar::repeat::{impl rusthammer::parser_traits::Parser<'input, R> for rusthammer::grammar::repeat::FoldSepBy<P, S, I, F>}]
+    Source: 'src/grammar/repeat.rs', lines 549:0-578:1 -/
 @[reducible]
-def grammar.repeat.FoldSepBy.Insts.RusthammerParser_traitsEval {Backend : Type}
-  {P : Type} {S : Type} {I : Type} {F : Type} {R : Type}
-  {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output : Type}
-  (parser_traitsEvalInst : parser_traits.Eval P Backend Clause0_Clause0_Output)
-  (parser_traitsEvalInst1 : parser_traits.Eval S Backend
-  Clause1_Clause0_Output) (coreopsfunctionFnITupleRInst : core.ops.function.Fn
-  I Unit R) (coreopsfunctionFnFPairRInst : core.ops.function.Fn F (R ×
-  Clause0_Clause0_Output) R) : parser_traits.Eval (grammar.repeat.FoldSepBy P S
-  I F) Backend R := {
-  GrammarInst := grammar.repeat.FoldSepBy.Insts.RusthammerParser_traitsGrammar
-    parser_traitsEvalInst.GrammarInst parser_traitsEvalInst1.GrammarInst
+impl_def grammar.repeat.FoldSepBy.Insts.RusthammerParser_traitsParser {P :
+  Type} {S : Type} {I : Type} {F : Type} {R : Type} {Clause0_Output : Type}
+  {Clause1_Output : Type} (parser_traitsParserInst : parser_traits.Parser P
+  Clause0_Output) (parser_traitsParserInst1 : parser_traits.Parser S
+  Clause1_Output) (coreopsfunctionFnITupleRInst : core.ops.function.Fn I Unit
+  R) (coreopsfunctionFnFPairRInst : core.ops.function.Fn F (R × Clause0_Output)
+  R) : parser_traits.Parser (grammar.repeat.FoldSepBy P S I F) R := {
+  parse_with :=
+    grammar.repeat.FoldSepBy.Insts.RusthammerParser_traitsParser.parse_with
+    parser_traitsParserInst parser_traitsParserInst1
     coreopsfunctionFnITupleRInst coreopsfunctionFnFPairRInst
-  eval := grammar.repeat.FoldSepBy.Insts.RusthammerParser_traitsEval.eval
-    parser_traitsEvalInst parser_traitsEvalInst1 coreopsfunctionFnITupleRInst
-    coreopsfunctionFnFPairRInst
+  parse := parser_traits.Parser.parse.default
+    (grammar.repeat.FoldSepBy.Insts.RusthammerParser_traitsParser
+    parser_traitsParserInst parser_traitsParserInst1
+    coreopsfunctionFnITupleRInst coreopsfunctionFnFPairRInst)
 }
 
 /-- [rusthammer::grammar::sequence::{impl core::clone::Clone for rusthammer::grammar::sequence::Seq<P, Q>}::clone]:
@@ -11597,7 +5596,7 @@ def grammar.sequence.Seq.Insts.CoreCloneClone {P : Type} {Q : Type}
 }
 
 /-- [rusthammer::grammar::sequence::{impl core::clone::Clone for rusthammer::grammar::sequence::Bind<P, F>}::clone]:
-    Source: 'src/grammar/sequence.rs', lines 85:9-85:14
+    Source: 'src/grammar/sequence.rs', lines 80:9-80:14
     Visibility: public -/
 def grammar.sequence.Bind.Insts.CoreCloneClone.clone
   {P : Type} {F : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -11610,7 +5609,7 @@ def grammar.sequence.Bind.Insts.CoreCloneClone.clone
   ok { parser := t, «then» := t1 }
 
 /-- Trait implementation: [rusthammer::grammar::sequence::{impl core::clone::Clone for rusthammer::grammar::sequence::Bind<P, F>}]
-    Source: 'src/grammar/sequence.rs', lines 85:9-85:14 -/
+    Source: 'src/grammar/sequence.rs', lines 80:9-80:14 -/
 @[reducible]
 def grammar.sequence.Bind.Insts.CoreCloneClone {P : Type} {F : Type}
   (corecloneCloneInst : core.clone.Clone P) (corecloneCloneInst1 :
@@ -11620,14 +5619,14 @@ def grammar.sequence.Bind.Insts.CoreCloneClone {P : Type} {F : Type}
 }
 
 /-- [rusthammer::grammar::sequence::Left]
-    Source: 'src/grammar/sequence.rs', lines 146:0-149:1
+    Source: 'src/grammar/sequence.rs', lines 132:0-135:1
     Visibility: public -/
 structure grammar.sequence.Left (P : Type) (Q : Type) where
   first : P
   second : Q
 
 /-- [rusthammer::grammar::sequence::{impl core::clone::Clone for rusthammer::grammar::sequence::Left<P, Q>}::clone]:
-    Source: 'src/grammar/sequence.rs', lines 145:9-145:14
+    Source: 'src/grammar/sequence.rs', lines 131:9-131:14
     Visibility: public -/
 def grammar.sequence.Left.Insts.CoreCloneClone.clone
   {P : Type} {Q : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -11640,7 +5639,7 @@ def grammar.sequence.Left.Insts.CoreCloneClone.clone
   ok { first := t, second := t1 }
 
 /-- Trait implementation: [rusthammer::grammar::sequence::{impl core::clone::Clone for rusthammer::grammar::sequence::Left<P, Q>}]
-    Source: 'src/grammar/sequence.rs', lines 145:9-145:14 -/
+    Source: 'src/grammar/sequence.rs', lines 131:9-131:14 -/
 @[reducible]
 def grammar.sequence.Left.Insts.CoreCloneClone {P : Type} {Q : Type}
   (corecloneCloneInst : core.clone.Clone P) (corecloneCloneInst1 :
@@ -11649,60 +5648,47 @@ def grammar.sequence.Left.Insts.CoreCloneClone {P : Type} {Q : Type}
     corecloneCloneInst1
 }
 
-/-- Trait implementation: [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Grammar<'input, Clause0_Output> for rusthammer::grammar::sequence::Left<P, Q>}]
-    Source: 'src/grammar/sequence.rs', lines 151:0-153:1 -/
-@[reducible]
-def grammar.sequence.Left.Insts.RusthammerParser_traitsGrammar {P : Type} {Q :
-  Type} {Clause0_Output : Type} {Clause1_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
-  (parser_traitsGrammarInst1 : parser_traits.Grammar Q Clause1_Output) :
-  parser_traits.Grammar (grammar.sequence.Left P Q) Clause0_Output := {
-}
-
-/-- [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::grammar::sequence::Left<P, Q>}::eval]:
-    Source: 'src/grammar/sequence.rs', lines 158:4-179:5
+/-- [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Parser<'input, Clause0_Output> for rusthammer::grammar::sequence::Left<P, Q>}::parse_with]:
+    Source: 'src/grammar/sequence.rs', lines 140:4-160:5
     Visibility: public -/
-def grammar.sequence.Left.Insts.RusthammerParser_traitsEval.eval
-  {Backend : Type} {P : Type} {Q : Type} {Clause0_Clause0_Output : Type}
-  {Clause1_Clause0_Output : Type} (parser_traitsEvalInst : parser_traits.Eval P
-  Backend Clause0_Clause0_Output) (parser_traitsEvalInst1 : parser_traits.Eval
-  Q Backend Clause1_Clause0_Output) (self : grammar.sequence.Left P Q)
-  (backend : Backend) (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Clause0_Clause0_Output) × Backend)
+def grammar.sequence.Left.Insts.RusthammerParser_traitsParser.parse_with
+  {P : Type} {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+  (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
+  (parser_traitsParserInst1 : parser_traits.Parser Q Clause1_Output)
+  (self : grammar.sequence.Left P Q) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Clause0_Output)
+    input_types.ParseError)
   := do
-  let (po, backend1) ←
-    grammar.sequence.Seq.Insts.RusthammerParser_traitsEvalInputBackendPair.eval
-      (Shared0P.Insts.RusthammerParser_traitsEval parser_traitsEvalInst)
-      (Shared0P.Insts.RusthammerParser_traitsEval parser_traitsEvalInst1)
-      { first := self.first, second := self.second } backend input cursor
-      context
-  match po with
-  | input_types.ParseOutcome.Success next values =>
-    let (first, _) := values
-    ok (input_types.ParseOutcome.Success next first, backend1)
-  | input_types.ParseOutcome.Error error =>
-    ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
+  let r ←
+    grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair.parse_with
+      (Shared0P.Insts.RusthammerParser_traitsParser parser_traitsParserInst)
+      (Shared0P.Insts.RusthammerParser_traitsParser parser_traitsParserInst1)
+      { first := self.first, second := self.second } input cursor byte_order
+  match r with
+  | core.result.Result.Ok parsed =>
+    let (next, (first, _)) := parsed
+    ok (core.result.Result.Ok (next, first))
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
 
-/-- Trait implementation: [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Eval<'input, Backend, Clause0_Clause0_Output> for rusthammer::grammar::sequence::Left<P, Q>}]
-    Source: 'src/grammar/sequence.rs', lines 155:0-180:1 -/
+/-- Trait implementation: [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Parser<'input, Clause0_Output> for rusthammer::grammar::sequence::Left<P, Q>}]
+    Source: 'src/grammar/sequence.rs', lines 137:0-161:1 -/
 @[reducible]
-def grammar.sequence.Left.Insts.RusthammerParser_traitsEval {Backend : Type} {P
-  : Type} {Q : Type} {Clause0_Clause0_Output : Type} {Clause1_Clause0_Output :
-  Type} (parser_traitsEvalInst : parser_traits.Eval P Backend
-  Clause0_Clause0_Output) (parser_traitsEvalInst1 : parser_traits.Eval Q
-  Backend Clause1_Clause0_Output) : parser_traits.Eval (grammar.sequence.Left P
-  Q) Backend Clause0_Clause0_Output := {
-  GrammarInst := grammar.sequence.Left.Insts.RusthammerParser_traitsGrammar
-    parser_traitsEvalInst.GrammarInst parser_traitsEvalInst1.GrammarInst
-  eval := grammar.sequence.Left.Insts.RusthammerParser_traitsEval.eval
-    parser_traitsEvalInst parser_traitsEvalInst1
+impl_def grammar.sequence.Left.Insts.RusthammerParser_traitsParser {P : Type}
+  {Q : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+  (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
+  (parser_traitsParserInst1 : parser_traits.Parser Q Clause1_Output) :
+  parser_traits.Parser (grammar.sequence.Left P Q) Clause0_Output := {
+  parse_with :=
+    grammar.sequence.Left.Insts.RusthammerParser_traitsParser.parse_with
+    parser_traitsParserInst parser_traitsParserInst1
+  parse := parser_traits.Parser.parse.default
+    (grammar.sequence.Left.Insts.RusthammerParser_traitsParser
+    parser_traitsParserInst parser_traitsParserInst1)
 }
 
 /-- [rusthammer::grammar::sequence::{impl core::clone::Clone for rusthammer::grammar::sequence::Right<P, Q>}::clone]:
-    Source: 'src/grammar/sequence.rs', lines 185:9-185:14
+    Source: 'src/grammar/sequence.rs', lines 166:9-166:14
     Visibility: public -/
 def grammar.sequence.Right.Insts.CoreCloneClone.clone
   {P : Type} {Q : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -11715,7 +5701,7 @@ def grammar.sequence.Right.Insts.CoreCloneClone.clone
   ok { first := t, second := t1 }
 
 /-- Trait implementation: [rusthammer::grammar::sequence::{impl core::clone::Clone for rusthammer::grammar::sequence::Right<P, Q>}]
-    Source: 'src/grammar/sequence.rs', lines 185:9-185:14 -/
+    Source: 'src/grammar/sequence.rs', lines 166:9-166:14 -/
 @[reducible]
 def grammar.sequence.Right.Insts.CoreCloneClone {P : Type} {Q : Type}
   (corecloneCloneInst : core.clone.Clone P) (corecloneCloneInst1 :
@@ -11725,7 +5711,7 @@ def grammar.sequence.Right.Insts.CoreCloneClone {P : Type} {Q : Type}
 }
 
 /-- [rusthammer::grammar::sequence::Middle]
-    Source: 'src/grammar/sequence.rs', lines 226:0-230:1
+    Source: 'src/grammar/sequence.rs', lines 202:0-206:1
     Visibility: public -/
 structure grammar.sequence.Middle (L : Type) (P : Type) (R : Type) where
   left : L
@@ -11733,7 +5719,7 @@ structure grammar.sequence.Middle (L : Type) (P : Type) (R : Type) where
   right : R
 
 /-- [rusthammer::grammar::sequence::{impl core::clone::Clone for rusthammer::grammar::sequence::Middle<L, P, R>}::clone]:
-    Source: 'src/grammar/sequence.rs', lines 225:9-225:14
+    Source: 'src/grammar/sequence.rs', lines 201:9-201:14
     Visibility: public -/
 def grammar.sequence.Middle.Insts.CoreCloneClone.clone
   {L : Type} {P : Type} {R : Type} (corecloneCloneInst : core.clone.Clone L)
@@ -11747,7 +5733,7 @@ def grammar.sequence.Middle.Insts.CoreCloneClone.clone
   ok { left := t, parser := t1, right := t2 }
 
 /-- Trait implementation: [rusthammer::grammar::sequence::{impl core::clone::Clone for rusthammer::grammar::sequence::Middle<L, P, R>}]
-    Source: 'src/grammar/sequence.rs', lines 225:9-225:14 -/
+    Source: 'src/grammar/sequence.rs', lines 201:9-201:14 -/
 @[reducible]
 def grammar.sequence.Middle.Insts.CoreCloneClone {L : Type} {P : Type} {R :
   Type} (corecloneCloneInst : core.clone.Clone L) (corecloneCloneInst1 :
@@ -11757,77 +5743,61 @@ def grammar.sequence.Middle.Insts.CoreCloneClone {L : Type} {P : Type} {R :
     corecloneCloneInst corecloneCloneInst1 corecloneCloneInst2
 }
 
-/-- Trait implementation: [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Grammar<'input, Clause1_Output> for rusthammer::grammar::sequence::Middle<L, P, R>}]
-    Source: 'src/grammar/sequence.rs', lines 232:0-236:1 -/
-@[reducible]
-def grammar.sequence.Middle.Insts.RusthammerParser_traitsGrammar {L : Type} {P
-  : Type} {R : Type} {Clause0_Output : Type} {Clause1_Output : Type}
-  {Clause2_Output : Type} (parser_traitsGrammarInst : parser_traits.Grammar L
-  Clause0_Output) (parser_traitsGrammarInst1 : parser_traits.Grammar P
-  Clause1_Output) (parser_traitsGrammarInst2 : parser_traits.Grammar R
-  Clause2_Output) : parser_traits.Grammar (grammar.sequence.Middle L P R)
-  Clause1_Output := {
-}
-
-/-- [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Eval<'input, Backend, Clause1_Clause0_Output> for rusthammer::grammar::sequence::Middle<L, P, R>}::eval]:
-    Source: 'src/grammar/sequence.rs', lines 246:4-270:5
+/-- [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Parser<'input, Clause1_Output> for rusthammer::grammar::sequence::Middle<L, P, R>}::parse_with]:
+    Source: 'src/grammar/sequence.rs', lines 213:4-236:5
     Visibility: public -/
-def grammar.sequence.Middle.Insts.RusthammerParser_traitsEval.eval
-  {Backend : Type} {L : Type} {P : Type} {R : Type} {Clause0_Clause0_Output :
-  Type} {Clause1_Clause0_Output : Type} {Clause2_Clause0_Output : Type}
-  (parser_traitsEvalInst : parser_traits.Eval L Backend Clause0_Clause0_Output)
-  (parser_traitsEvalInst1 : parser_traits.Eval P Backend
-  Clause1_Clause0_Output) (parser_traitsEvalInst2 : parser_traits.Eval R
-  Backend Clause2_Clause0_Output) (self : grammar.sequence.Middle L P R)
-  (backend : Backend) (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Clause1_Clause0_Output) × Backend)
+def grammar.sequence.Middle.Insts.RusthammerParser_traitsParser.parse_with
+  {L : Type} {P : Type} {R : Type} {Clause0_Output : Type} {Clause1_Output :
+  Type} {Clause2_Output : Type} (parser_traitsParserInst : parser_traits.Parser
+  L Clause0_Output) (parser_traitsParserInst1 : parser_traits.Parser P
+  Clause1_Output) (parser_traitsParserInst2 : parser_traits.Parser R
+  Clause2_Output) (self : grammar.sequence.Middle L P R) (input : Slice Std.U8)
+  (cursor : input_types.Cursor) (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Clause1_Output)
+    input_types.ParseError)
   := do
-  let (po, backend1) ←
-    grammar.sequence.Seq.Insts.RusthammerParser_traitsEvalInputBackendPair.eval
-      (Shared0P.Insts.RusthammerParser_traitsEval parser_traitsEvalInst)
-      (grammar.sequence.Seq.Insts.RusthammerParser_traitsEvalInputBackendPair
-      (Shared0P.Insts.RusthammerParser_traitsEval parser_traitsEvalInst1)
-      (Shared0P.Insts.RusthammerParser_traitsEval parser_traitsEvalInst2))
+  let r ←
+    grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair.parse_with
+      (Shared0P.Insts.RusthammerParser_traitsParser parser_traitsParserInst)
+      (grammar.sequence.Seq.Insts.RusthammerParser_traitsParserInputPair
+      (Shared0P.Insts.RusthammerParser_traitsParser parser_traitsParserInst1)
+      (Shared0P.Insts.RusthammerParser_traitsParser parser_traitsParserInst2))
       {
         first := self.left,
         second := { first := self.parser, second := self.right }
-      } backend input cursor context
-  match po with
-  | input_types.ParseOutcome.Success next values =>
-    let (_, (middle, _)) := values
-    ok (input_types.ParseOutcome.Success next middle, backend1)
-  | input_types.ParseOutcome.Error error =>
-    ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
+      } input cursor byte_order
+  match r with
+  | core.result.Result.Ok parsed =>
+    let (next, (_, (middle, _))) := parsed
+    ok (core.result.Result.Ok (next, middle))
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
 
-/-- Trait implementation: [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Eval<'input, Backend, Clause1_Clause0_Output> for rusthammer::grammar::sequence::Middle<L, P, R>}]
-    Source: 'src/grammar/sequence.rs', lines 238:0-271:1 -/
+/-- Trait implementation: [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Parser<'input, Clause1_Output> for rusthammer::grammar::sequence::Middle<L, P, R>}]
+    Source: 'src/grammar/sequence.rs', lines 208:0-237:1 -/
 @[reducible]
-def grammar.sequence.Middle.Insts.RusthammerParser_traitsEval {Backend : Type}
-  {L : Type} {P : Type} {R : Type} {Clause0_Clause0_Output : Type}
-  {Clause1_Clause0_Output : Type} {Clause2_Clause0_Output : Type}
-  (parser_traitsEvalInst : parser_traits.Eval L Backend Clause0_Clause0_Output)
-  (parser_traitsEvalInst1 : parser_traits.Eval P Backend
-  Clause1_Clause0_Output) (parser_traitsEvalInst2 : parser_traits.Eval R
-  Backend Clause2_Clause0_Output) : parser_traits.Eval (grammar.sequence.Middle
-  L P R) Backend Clause1_Clause0_Output := {
-  GrammarInst := grammar.sequence.Middle.Insts.RusthammerParser_traitsGrammar
-    parser_traitsEvalInst.GrammarInst parser_traitsEvalInst1.GrammarInst
-    parser_traitsEvalInst2.GrammarInst
-  eval := grammar.sequence.Middle.Insts.RusthammerParser_traitsEval.eval
-    parser_traitsEvalInst parser_traitsEvalInst1 parser_traitsEvalInst2
+impl_def grammar.sequence.Middle.Insts.RusthammerParser_traitsParser {L : Type}
+  {P : Type} {R : Type} {Clause0_Output : Type} {Clause1_Output : Type}
+  {Clause2_Output : Type} (parser_traitsParserInst : parser_traits.Parser L
+  Clause0_Output) (parser_traitsParserInst1 : parser_traits.Parser P
+  Clause1_Output) (parser_traitsParserInst2 : parser_traits.Parser R
+  Clause2_Output) : parser_traits.Parser (grammar.sequence.Middle L P R)
+  Clause1_Output := {
+  parse_with :=
+    grammar.sequence.Middle.Insts.RusthammerParser_traitsParser.parse_with
+    parser_traitsParserInst parser_traitsParserInst1 parser_traitsParserInst2
+  parse := parser_traits.Parser.parse.default
+    (grammar.sequence.Middle.Insts.RusthammerParser_traitsParser
+    parser_traitsParserInst parser_traitsParserInst1 parser_traitsParserInst2)
 }
 
 /-- [rusthammer::grammar::sequence::Ignore]
-    Source: 'src/grammar/sequence.rs', lines 277:0-279:1
+    Source: 'src/grammar/sequence.rs', lines 243:0-245:1
     Visibility: public -/
 structure grammar.sequence.Ignore (P : Type) where
   parser : P
 
 /-- [rusthammer::grammar::sequence::{impl core::clone::Clone for rusthammer::grammar::sequence::Ignore<P>}::clone]:
-    Source: 'src/grammar/sequence.rs', lines 276:9-276:14
+    Source: 'src/grammar/sequence.rs', lines 242:9-242:14
     Visibility: public -/
 def grammar.sequence.Ignore.Insts.CoreCloneClone.clone
   {P : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -11838,7 +5808,7 @@ def grammar.sequence.Ignore.Insts.CoreCloneClone.clone
   ok { parser := t }
 
 /-- Trait implementation: [rusthammer::grammar::sequence::{impl core::clone::Clone for rusthammer::grammar::sequence::Ignore<P>}]
-    Source: 'src/grammar/sequence.rs', lines 276:9-276:14 -/
+    Source: 'src/grammar/sequence.rs', lines 242:9-242:14 -/
 @[reducible]
 def grammar.sequence.Ignore.Insts.CoreCloneClone {P : Type} (corecloneCloneInst
   : core.clone.Clone P) : core.clone.Clone (grammar.sequence.Ignore P) := {
@@ -11846,53 +5816,43 @@ def grammar.sequence.Ignore.Insts.CoreCloneClone {P : Type} (corecloneCloneInst
     corecloneCloneInst
 }
 
-/-- Trait implementation: [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Grammar<'input, ()> for rusthammer::grammar::sequence::Ignore<P>}]
-    Source: 'src/grammar/sequence.rs', lines 281:0-283:1 -/
-@[reducible]
-def grammar.sequence.Ignore.Insts.RusthammerParser_traitsGrammarInputTuple {P :
-  Type} {Clause0_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) : parser_traits.Grammar
-  (grammar.sequence.Ignore P) Unit := {
-}
-
-/-- [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Eval<'input, Backend, ()> for rusthammer::grammar::sequence::Ignore<P>}::eval]:
-    Source: 'src/grammar/sequence.rs', lines 286:4-298:5
+/-- [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Parser<'input, ()> for rusthammer::grammar::sequence::Ignore<P>}::parse_with]:
+    Source: 'src/grammar/sequence.rs', lines 250:4-263:5
     Visibility: public -/
 def
-  grammar.sequence.Ignore.Insts.RusthammerParser_traitsEvalInputBackendTuple.eval
-  {Backend : Type} {P : Type} {Clause0_Clause0_Output : Type}
-  (parser_traitsEvalInst : parser_traits.Eval P Backend Clause0_Clause0_Output)
-  (self : grammar.sequence.Ignore P) (backend : Backend) (input : Slice Std.U8)
-  (cursor : input_types.Cursor) (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome Unit) × Backend)
+  grammar.sequence.Ignore.Insts.RusthammerParser_traitsParserInputTuple.parse_with
+  {P : Type} {Clause0_Output : Type} (parser_traitsParserInst :
+  parser_traits.Parser P Clause0_Output) (self : grammar.sequence.Ignore P)
+  (input : Slice Std.U8) (cursor : input_types.Cursor)
+  (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × Unit)
+    input_types.ParseError)
   := do
-  let (po, backend1) ←
-    parser_traitsEvalInst.eval self.parser backend input cursor context
-  match po with
-  | input_types.ParseOutcome.Success next _ =>
-    ok (input_types.ParseOutcome.Success next (), backend1)
-  | input_types.ParseOutcome.Error error =>
-    ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
+  let r ←
+    parser_traitsParserInst.parse_with self.parser input cursor byte_order
+  match r with
+  | core.result.Result.Ok parsed =>
+    let (next, _) := parsed
+    ok (core.result.Result.Ok (next, ()))
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
 
-/-- Trait implementation: [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Eval<'input, Backend, ()> for rusthammer::grammar::sequence::Ignore<P>}]
-    Source: 'src/grammar/sequence.rs', lines 285:0-299:1 -/
+/-- Trait implementation: [rusthammer::grammar::sequence::{impl rusthammer::parser_traits::Parser<'input, ()> for rusthammer::grammar::sequence::Ignore<P>}]
+    Source: 'src/grammar/sequence.rs', lines 247:0-264:1 -/
 @[reducible]
-def grammar.sequence.Ignore.Insts.RusthammerParser_traitsEvalInputBackendTuple
-  {Backend : Type} {P : Type} {Clause0_Clause0_Output : Type}
-  (parser_traitsEvalInst : parser_traits.Eval P Backend Clause0_Clause0_Output)
-  : parser_traits.Eval (grammar.sequence.Ignore P) Backend Unit := {
-  GrammarInst :=
-    grammar.sequence.Ignore.Insts.RusthammerParser_traitsGrammarInputTuple
-    parser_traitsEvalInst.GrammarInst
-  eval :=
-    grammar.sequence.Ignore.Insts.RusthammerParser_traitsEvalInputBackendTuple.eval
-    parser_traitsEvalInst
+impl_def grammar.sequence.Ignore.Insts.RusthammerParser_traitsParserInputTuple
+  {P : Type} {Clause0_Output : Type} (parser_traitsParserInst :
+  parser_traits.Parser P Clause0_Output) : parser_traits.Parser
+  (grammar.sequence.Ignore P) Unit := {
+  parse_with :=
+    grammar.sequence.Ignore.Insts.RusthammerParser_traitsParserInputTuple.parse_with
+    parser_traitsParserInst
+  parse := parser_traits.Parser.parse.default
+    (grammar.sequence.Ignore.Insts.RusthammerParser_traitsParserInputTuple
+    parser_traitsParserInst)
 }
 
 /-- [rusthammer::grammar::span::{impl core::clone::Clone for rusthammer::grammar::span::WithSpan<P>}::clone]:
-    Source: 'src/grammar/span.rs', lines 29:9-29:14
+    Source: 'src/grammar/span.rs', lines 26:9-26:14
     Visibility: public -/
 def grammar.span.WithSpan.Insts.CoreCloneClone.clone
   {P : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -11903,7 +5863,7 @@ def grammar.span.WithSpan.Insts.CoreCloneClone.clone
   ok { parser := t }
 
 /-- Trait implementation: [rusthammer::grammar::span::{impl core::clone::Clone for rusthammer::grammar::span::WithSpan<P>}]
-    Source: 'src/grammar/span.rs', lines 29:9-29:14 -/
+    Source: 'src/grammar/span.rs', lines 26:9-26:14 -/
 @[reducible]
 def grammar.span.WithSpan.Insts.CoreCloneClone {P : Type} (corecloneCloneInst :
   core.clone.Clone P) : core.clone.Clone (grammar.span.WithSpan P) := {
@@ -11911,13 +5871,13 @@ def grammar.span.WithSpan.Insts.CoreCloneClone {P : Type} (corecloneCloneInst :
 }
 
 /-- [rusthammer::grammar::span::Recognize]
-    Source: 'src/grammar/span.rs', lines 77:0-79:1
+    Source: 'src/grammar/span.rs', lines 71:0-73:1
     Visibility: public -/
 structure grammar.span.Recognize (P : Type) where
   parser : P
 
 /-- [rusthammer::grammar::span::{impl core::clone::Clone for rusthammer::grammar::span::Recognize<P>}::clone]:
-    Source: 'src/grammar/span.rs', lines 76:9-76:14
+    Source: 'src/grammar/span.rs', lines 70:9-70:14
     Visibility: public -/
 def grammar.span.Recognize.Insts.CoreCloneClone.clone
   {P : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -11928,64 +5888,52 @@ def grammar.span.Recognize.Insts.CoreCloneClone.clone
   ok { parser := t }
 
 /-- Trait implementation: [rusthammer::grammar::span::{impl core::clone::Clone for rusthammer::grammar::span::Recognize<P>}]
-    Source: 'src/grammar/span.rs', lines 76:9-76:14 -/
+    Source: 'src/grammar/span.rs', lines 70:9-70:14 -/
 @[reducible]
 def grammar.span.Recognize.Insts.CoreCloneClone {P : Type} (corecloneCloneInst
   : core.clone.Clone P) : core.clone.Clone (grammar.span.Recognize P) := {
   clone := grammar.span.Recognize.Insts.CoreCloneClone.clone corecloneCloneInst
 }
 
-/-- Trait implementation: [rusthammer::grammar::span::{impl rusthammer::parser_traits::Grammar<'input, rusthammer::span_types::BitSpan<'input>> for rusthammer::grammar::span::Recognize<P>}]
-    Source: 'src/grammar/span.rs', lines 81:0-83:1 -/
-@[reducible]
-def grammar.span.Recognize.Insts.RusthammerParser_traitsGrammarInputBitSpan {P
-  : Type} {Clause0_Output : Type} (parser_traitsGrammarInst :
-  parser_traits.Grammar P Clause0_Output) : parser_traits.Grammar
-  (grammar.span.Recognize P) span_types.BitSpan := {
-}
-
-/-- [rusthammer::grammar::span::{impl rusthammer::parser_traits::Eval<'input, Backend, rusthammer::span_types::BitSpan<'_>> for rusthammer::grammar::span::Recognize<P>}::eval]:
-    Source: 'src/grammar/span.rs', lines 86:4-106:5
+/-- [rusthammer::grammar::span::{impl rusthammer::parser_traits::Parser<'input, rusthammer::span_types::BitSpan<'input>> for rusthammer::grammar::span::Recognize<P>}::parse_with]:
+    Source: 'src/grammar/span.rs', lines 78:4-97:5
     Visibility: public -/
 def
-  grammar.span.Recognize.Insts.RusthammerParser_traitsEvalInputBackendBitSpan.eval
-  {Backend : Type} {P : Type} {Clause0_Clause0_Output : Type}
-  (parser_traitsEvalInst : parser_traits.Eval P Backend Clause0_Clause0_Output)
-  (self : grammar.span.Recognize P) (backend : Backend) (input : Slice Std.U8)
-  (cursor : input_types.Cursor) (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome span_types.BitSpan) × Backend)
+  grammar.span.Recognize.Insts.RusthammerParser_traitsParserInputBitSpan.parse_with
+  {P : Type} {Clause0_Output : Type} (parser_traitsParserInst :
+  parser_traits.Parser P Clause0_Output) (self : grammar.span.Recognize P)
+  (input : Slice Std.U8) (cursor : input_types.Cursor)
+  (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × span_types.BitSpan)
+    input_types.ParseError)
   := do
-  let (po, backend1) ←
-    grammar.span.WithSpan.Insts.RusthammerParser_traitsEvalInputBackendPairClause0_Clause0_OutputBitSpan.eval
-      (Shared0P.Insts.RusthammerParser_traitsEval parser_traitsEvalInst)
-      { parser := self.parser } backend input cursor context
-  match po with
-  | input_types.ParseOutcome.Success next p =>
-    let (_, bs) := p
-    ok (input_types.ParseOutcome.Success next bs, backend1)
-  | input_types.ParseOutcome.Error error =>
-    ok (input_types.ParseOutcome.Error error, backend1)
-  | input_types.ParseOutcome.NeedMore =>
-    ok (input_types.ParseOutcome.NeedMore, backend1)
+  let r ←
+    grammar.span.WithSpan.Insts.RusthammerParser_traitsParserInputPairClause0_OutputBitSpan.parse_with
+      (Shared0P.Insts.RusthammerParser_traitsParser parser_traitsParserInst)
+      { parser := self.parser } input cursor byte_order
+  match r with
+  | core.result.Result.Ok p =>
+    let (next, (_, bs)) := p
+    ok (core.result.Result.Ok (next, bs))
+  | core.result.Result.Err error => ok (core.result.Result.Err error)
 
-/-- Trait implementation: [rusthammer::grammar::span::{impl rusthammer::parser_traits::Eval<'input, Backend, rusthammer::span_types::BitSpan<'_>> for rusthammer::grammar::span::Recognize<P>}]
-    Source: 'src/grammar/span.rs', lines 85:0-107:1 -/
+/-- Trait implementation: [rusthammer::grammar::span::{impl rusthammer::parser_traits::Parser<'input, rusthammer::span_types::BitSpan<'input>> for rusthammer::grammar::span::Recognize<P>}]
+    Source: 'src/grammar/span.rs', lines 75:0-98:1 -/
 @[reducible]
-def grammar.span.Recognize.Insts.RusthammerParser_traitsEvalInputBackendBitSpan
-  {Backend : Type} {P : Type} {Clause0_Clause0_Output : Type}
-  (parser_traitsEvalInst : parser_traits.Eval P Backend Clause0_Clause0_Output)
-  : parser_traits.Eval (grammar.span.Recognize P) Backend span_types.BitSpan
-  := {
-  GrammarInst :=
-    grammar.span.Recognize.Insts.RusthammerParser_traitsGrammarInputBitSpan
-    parser_traitsEvalInst.GrammarInst
-  eval :=
-    grammar.span.Recognize.Insts.RusthammerParser_traitsEvalInputBackendBitSpan.eval
-    parser_traitsEvalInst
+impl_def grammar.span.Recognize.Insts.RusthammerParser_traitsParserInputBitSpan
+  {P : Type} {Clause0_Output : Type} (parser_traitsParserInst :
+  parser_traits.Parser P Clause0_Output) : parser_traits.Parser
+  (grammar.span.Recognize P) span_types.BitSpan := {
+  parse_with :=
+    grammar.span.Recognize.Insts.RusthammerParser_traitsParserInputBitSpan.parse_with
+    parser_traitsParserInst
+  parse := parser_traits.Parser.parse.default
+    (grammar.span.Recognize.Insts.RusthammerParser_traitsParserInputBitSpan
+    parser_traitsParserInst)
 }
 
 /-- [rusthammer::grammar::transform::{impl core::clone::Clone for rusthammer::grammar::transform::Map<P, F>}::clone]:
-    Source: 'src/grammar/transform.rs', lines 9:9-9:14
+    Source: 'src/grammar/transform.rs', lines 8:9-8:14
     Visibility: public -/
 def grammar.transform.Map.Insts.CoreCloneClone.clone
   {P : Type} {F : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -11998,7 +5946,7 @@ def grammar.transform.Map.Insts.CoreCloneClone.clone
   ok { parser := t, map := t1 }
 
 /-- Trait implementation: [rusthammer::grammar::transform::{impl core::clone::Clone for rusthammer::grammar::transform::Map<P, F>}]
-    Source: 'src/grammar/transform.rs', lines 9:9-9:14 -/
+    Source: 'src/grammar/transform.rs', lines 8:9-8:14 -/
 @[reducible]
 def grammar.transform.Map.Insts.CoreCloneClone {P : Type} {F : Type}
   (corecloneCloneInst : core.clone.Clone P) (corecloneCloneInst1 :
@@ -12008,7 +5956,7 @@ def grammar.transform.Map.Insts.CoreCloneClone {P : Type} {F : Type}
 }
 
 /-- [rusthammer::grammar::transform::{impl core::clone::Clone for rusthammer::grammar::transform::TryMap<P, F>}::clone]:
-    Source: 'src/grammar/transform.rs', lines 71:9-71:14
+    Source: 'src/grammar/transform.rs', lines 65:9-65:14
     Visibility: public -/
 def grammar.transform.TryMap.Insts.CoreCloneClone.clone
   {P : Type} {F : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -12021,7 +5969,7 @@ def grammar.transform.TryMap.Insts.CoreCloneClone.clone
   ok { parser := t, map := t1 }
 
 /-- Trait implementation: [rusthammer::grammar::transform::{impl core::clone::Clone for rusthammer::grammar::transform::TryMap<P, F>}]
-    Source: 'src/grammar/transform.rs', lines 71:9-71:14 -/
+    Source: 'src/grammar/transform.rs', lines 65:9-65:14 -/
 @[reducible]
 def grammar.transform.TryMap.Insts.CoreCloneClone {P : Type} {F : Type}
   (corecloneCloneInst : core.clone.Clone P) (corecloneCloneInst1 :
@@ -12031,47 +5979,36 @@ def grammar.transform.TryMap.Insts.CoreCloneClone {P : Type} {F : Type}
 }
 
 /-- [rusthammer::grammar::transform::try_map]:
-    Source: 'src/grammar/transform.rs', lines 86:0-92:1
+    Source: 'src/grammar/transform.rs', lines 80:0-86:1
     Visibility: public -/
 def grammar.transform.try_map
   {P : Type} {F : Type} {O : Type} {E : Type} {Clause0_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
+  (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
   (coreopsfunctionFnFTupleClause0_OutputResultInst : core.ops.function.Fn F
   Clause0_Output (core.result.Result O E)) (parser : P) (map : F) :
   Result (grammar.transform.TryMap P F)
   := do
   ok { parser, map }
 
-/-- Trait implementation: [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Grammar<'input, O> for rusthammer::grammar::transform::TryMap<P, F>}]
-    Source: 'src/grammar/transform.rs', lines 94:0-100:1 -/
+/-- Trait implementation: [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Parser<'input, O> for rusthammer::grammar::transform::TryMap<P, F>}]
+    Source: 'src/grammar/transform.rs', lines 88:0-115:1 -/
 @[reducible]
-def grammar.transform.TryMap.Insts.RusthammerParser_traitsGrammar {P : Type} {F
-  : Type} {O : Type} {E : Type} {Clause0_Output : Type}
-  (parser_traitsGrammarInst : parser_traits.Grammar P Clause0_Output)
+impl_def grammar.transform.TryMap.Insts.RusthammerParser_traitsParser {P :
+  Type} {F : Type} {O : Type} {E : Type} {Clause0_Output : Type}
+  (parser_traitsParserInst : parser_traits.Parser P Clause0_Output)
   (coreopsfunctionFnFTupleClause0_OutputResultInst : core.ops.function.Fn F
-  Clause0_Output (core.result.Result O E)) : parser_traits.Grammar
+  Clause0_Output (core.result.Result O E)) : parser_traits.Parser
   (grammar.transform.TryMap P F) O := {
-}
-
-/-- Trait implementation: [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Eval<'input, Backend, O> for rusthammer::grammar::transform::TryMap<P, F>}]
-    Source: 'src/grammar/transform.rs', lines 102:0-126:1 -/
-@[reducible]
-def grammar.transform.TryMap.Insts.RusthammerParser_traitsEval {Backend : Type}
-  {P : Type} {F : Type} {O : Type} {E : Type} {Clause0_Clause0_Output : Type}
-  (parser_traitsEvalInst : parser_traits.Eval P Backend Clause0_Clause0_Output)
-  (coreopsfunctionFnFTupleClause0_Clause0_OutputResultInst :
-  core.ops.function.Fn F Clause0_Clause0_Output (core.result.Result O E)) :
-  parser_traits.Eval (grammar.transform.TryMap P F) Backend O := {
-  GrammarInst := grammar.transform.TryMap.Insts.RusthammerParser_traitsGrammar
-    parser_traitsEvalInst.GrammarInst
-    coreopsfunctionFnFTupleClause0_Clause0_OutputResultInst
-  eval := grammar.transform.TryMap.Insts.RusthammerParser_traitsEval.eval
-    parser_traitsEvalInst
-    coreopsfunctionFnFTupleClause0_Clause0_OutputResultInst
+  parse_with :=
+    grammar.transform.TryMap.Insts.RusthammerParser_traitsParser.parse_with
+    parser_traitsParserInst coreopsfunctionFnFTupleClause0_OutputResultInst
+  parse := parser_traits.Parser.parse.default
+    (grammar.transform.TryMap.Insts.RusthammerParser_traitsParser
+    parser_traitsParserInst coreopsfunctionFnFTupleClause0_OutputResultInst)
 }
 
 /-- [rusthammer::grammar::transform::{impl core::clone::Clone for rusthammer::grammar::transform::Verify<P, F>}::clone]:
-    Source: 'src/grammar/transform.rs', lines 134:9-134:14
+    Source: 'src/grammar/transform.rs', lines 123:9-123:14
     Visibility: public -/
 def grammar.transform.Verify.Insts.CoreCloneClone.clone
   {P : Type} {F : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -12084,7 +6021,7 @@ def grammar.transform.Verify.Insts.CoreCloneClone.clone
   ok { parser := t, predicate := t1 }
 
 /-- Trait implementation: [rusthammer::grammar::transform::{impl core::clone::Clone for rusthammer::grammar::transform::Verify<P, F>}]
-    Source: 'src/grammar/transform.rs', lines 134:9-134:14 -/
+    Source: 'src/grammar/transform.rs', lines 123:9-123:14 -/
 @[reducible]
 def grammar.transform.Verify.Insts.CoreCloneClone {P : Type} {F : Type}
   (corecloneCloneInst : core.clone.Clone P) (corecloneCloneInst1 :
@@ -12094,7 +6031,7 @@ def grammar.transform.Verify.Insts.CoreCloneClone {P : Type} {F : Type}
 }
 
 /-- [rusthammer::grammar::transform::IntRange]
-    Source: 'src/grammar/transform.rs', lines 222:0-226:1
+    Source: 'src/grammar/transform.rs', lines 204:0-208:1
     Visibility: public -/
 structure grammar.transform.IntRange (P : Type) (T : Type) where
   parser : P
@@ -12102,7 +6039,7 @@ structure grammar.transform.IntRange (P : Type) (T : Type) where
   upper : T
 
 /-- [rusthammer::grammar::transform::{impl core::clone::Clone for rusthammer::grammar::transform::IntRange<P, T>}::clone]:
-    Source: 'src/grammar/transform.rs', lines 221:9-221:14
+    Source: 'src/grammar/transform.rs', lines 203:9-203:14
     Visibility: public -/
 def grammar.transform.IntRange.Insts.CoreCloneClone.clone
   {P : Type} {T : Type} (corecloneCloneInst : core.clone.Clone P)
@@ -12116,7 +6053,7 @@ def grammar.transform.IntRange.Insts.CoreCloneClone.clone
   ok { parser := t, lower := t1, upper := t2 }
 
 /-- Trait implementation: [rusthammer::grammar::transform::{impl core::clone::Clone for rusthammer::grammar::transform::IntRange<P, T>}]
-    Source: 'src/grammar/transform.rs', lines 221:9-221:14 -/
+    Source: 'src/grammar/transform.rs', lines 203:9-203:14 -/
 @[reducible]
 def grammar.transform.IntRange.Insts.CoreCloneClone {P : Type} {T : Type}
   (corecloneCloneInst : core.clone.Clone P) (corecloneCloneInst1 :
@@ -12126,10 +6063,10 @@ def grammar.transform.IntRange.Insts.CoreCloneClone {P : Type} {T : Type}
 }
 
 /-- [rusthammer::grammar::transform::{rusthammer::grammar::transform::IntRange<P, T>}::new]:
-    Source: 'src/grammar/transform.rs', lines 230:4-244:5
+    Source: 'src/grammar/transform.rs', lines 212:4-226:5
     Visibility: public -/
 def grammar.transform.IntRange.new
-  {P : Type} {T : Type} (parser_traitsGrammarInst : parser_traits.Grammar P T)
+  {P : Type} {T : Type} (parser_traitsParserInst : parser_traits.Parser P T)
   (corecmpOrdInst : core.cmp.Ord T) (parser : P) (lower : T) (upper : T) :
   Result (core.result.Result (grammar.transform.IntRange P T)
     input_types.ConfigError)
@@ -12140,7 +6077,7 @@ def grammar.transform.IntRange.new
   else ok (core.result.Result.Ok { parser, lower, upper })
 
 /-- [rusthammer::grammar::transform::{rusthammer::grammar::transform::IntRange<P, T>}::lower]:
-    Source: 'src/grammar/transform.rs', lines 247:4-249:5
+    Source: 'src/grammar/transform.rs', lines 229:4-231:5
     Visibility: public -/
 def grammar.transform.IntRange.impl.lower
   {P : Type} {T : Type} (self : grammar.transform.IntRange P T) :
@@ -12149,7 +6086,7 @@ def grammar.transform.IntRange.impl.lower
   ok self.lower
 
 /-- [rusthammer::grammar::transform::{rusthammer::grammar::transform::IntRange<P, T>}::upper]:
-    Source: 'src/grammar/transform.rs', lines 252:4-254:5
+    Source: 'src/grammar/transform.rs', lines 234:4-236:5
     Visibility: public -/
 def grammar.transform.IntRange.impl.upper
   {P : Type} {T : Type} (self : grammar.transform.IntRange P T) :
@@ -12157,29 +6094,20 @@ def grammar.transform.IntRange.impl.upper
   := do
   ok self.upper
 
-/-- Trait implementation: [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Grammar<'input, T> for rusthammer::grammar::transform::IntRange<P, T>}]
-    Source: 'src/grammar/transform.rs', lines 257:0-263:1 -/
+/-- [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Parser<'input, T> for rusthammer::grammar::transform::IntRange<P, T>}::parse_with::{closure}]
+    Source: 'src/grammar/transform.rs', lines 254:23-254:79 -/
 @[reducible]
-def grammar.transform.IntRange.Insts.RusthammerParser_traitsGrammar {P : Type}
-  {T : Type} (parser_traitsGrammarInst : parser_traits.Grammar P T)
-  (corecmpOrdInst : core.cmp.Ord T) : parser_traits.Grammar
-  (grammar.transform.IntRange P T) T := {
-}
-
-/-- [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Eval<'input, Backend, T> for rusthammer::grammar::transform::IntRange<P, T>}::eval::{closure}]
-    Source: 'src/grammar/transform.rs', lines 279:23-279:79 -/
-@[reducible]
-def grammar.transform.EvalInputIntRangeBackendT.eval.closure (Backend : Type)
-  (P : Type) (T : Type) :=
+def grammar.transform.ParserInputIntRangeT.parse_with.closure (P : Type) (T :
+  Type) :=
   grammar.transform.IntRange P T
 
-/-- [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Eval<'input, Backend, T> for rusthammer::grammar::transform::IntRange<P, T>}::eval::{impl core::ops::function::Fn<(&'_2 T,), bool> for rusthammer::grammar::transform::{impl rusthammer::parser_traits::Eval<'input, Backend, T> for rusthammer::grammar::transform::IntRange<P, T>}::eval::{closure}<'input, '_1, Backend, P, T>}::call]:
-    Source: 'src/grammar/transform.rs', lines 279:23-279:79 -/
+/-- [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Parser<'input, T> for rusthammer::grammar::transform::IntRange<P, T>}::parse_with::{impl core::ops::function::Fn<(&'_2 T,), bool> for rusthammer::grammar::transform::{impl rusthammer::parser_traits::Parser<'input, T> for rusthammer::grammar::transform::IntRange<P, T>}::parse_with::{closure}<'input, '_1, P, T>}::call]:
+    Source: 'src/grammar/transform.rs', lines 254:23-254:79 -/
 def
-  grammar.transform.EvalInputIntRangeBackendT.eval.closure.Insts.CoreOpsFunctionFnTupleShared1TBool.call
-  {Backend : Type} {P : Type} {T : Type} (parser_traitsEvalInst :
-  parser_traits.Eval P Backend T) (corecmpOrdInst : core.cmp.Ord T)
-  (c : grammar.transform.EvalInputIntRangeBackendT.eval.closure Backend P T)
+  grammar.transform.ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1TBool.call
+  {P : Type} {T : Type} (parser_traitsParserInst : parser_traits.Parser P T)
+  (corecmpOrdInst : core.cmp.Ord T)
+  (c : grammar.transform.ParserInputIntRangeT.parse_with.closure P T)
   (tupled_args : T) :
   Result Bool
   := do
@@ -12188,117 +6116,111 @@ def
   then corecmpOrdInst.partialOrdInst.le tupled_args c.upper
   else ok false
 
-/-- [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Eval<'input, Backend, T> for rusthammer::grammar::transform::IntRange<P, T>}::eval::{impl core::ops::function::FnMut<(&'_2 T,), bool> for rusthammer::grammar::transform::{impl rusthammer::parser_traits::Eval<'input, Backend, T> for rusthammer::grammar::transform::IntRange<P, T>}::eval::{closure}<'input, '_1, Backend, P, T>}::call_mut]:
-    Source: 'src/grammar/transform.rs', lines 279:23-279:79 -/
+/-- [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Parser<'input, T> for rusthammer::grammar::transform::IntRange<P, T>}::parse_with::{impl core::ops::function::FnMut<(&'_2 T,), bool> for rusthammer::grammar::transform::{impl rusthammer::parser_traits::Parser<'input, T> for rusthammer::grammar::transform::IntRange<P, T>}::parse_with::{closure}<'input, '_1, P, T>}::call_mut]:
+    Source: 'src/grammar/transform.rs', lines 254:23-254:79 -/
 def
-  grammar.transform.EvalInputIntRangeBackendT.eval.closure.Insts.CoreOpsFunctionFnMutTupleShared1TBool.call_mut
-  {Backend : Type} {P : Type} {T : Type} (parser_traitsEvalInst :
-  parser_traits.Eval P Backend T) (corecmpOrdInst : core.cmp.Ord T)
-  (state : grammar.transform.EvalInputIntRangeBackendT.eval.closure Backend P
-  T) (args : T) :
-  Result (Bool × (grammar.transform.EvalInputIntRangeBackendT.eval.closure
-    Backend P T))
+  grammar.transform.ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnMutTupleShared1TBool.call_mut
+  {P : Type} {T : Type} (parser_traitsParserInst : parser_traits.Parser P T)
+  (corecmpOrdInst : core.cmp.Ord T)
+  (state : grammar.transform.ParserInputIntRangeT.parse_with.closure P T)
+  (args : T) :
+  Result (Bool × (grammar.transform.ParserInputIntRangeT.parse_with.closure P
+    T))
   := do
   let b ←
-    grammar.transform.EvalInputIntRangeBackendT.eval.closure.Insts.CoreOpsFunctionFnTupleShared1TBool.call
-      parser_traitsEvalInst corecmpOrdInst state args
+    grammar.transform.ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1TBool.call
+      parser_traitsParserInst corecmpOrdInst state args
   ok (b, state)
 
-/-- [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Eval<'input, Backend, T> for rusthammer::grammar::transform::IntRange<P, T>}::eval::{impl core::ops::function::FnOnce<(&'_2 T,), bool> for rusthammer::grammar::transform::{impl rusthammer::parser_traits::Eval<'input, Backend, T> for rusthammer::grammar::transform::IntRange<P, T>}::eval::{closure}<'input, '_1, Backend, P, T>}::call_once]:
-    Source: 'src/grammar/transform.rs', lines 279:23-279:79 -/
+/-- [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Parser<'input, T> for rusthammer::grammar::transform::IntRange<P, T>}::parse_with::{impl core::ops::function::FnOnce<(&'_2 T,), bool> for rusthammer::grammar::transform::{impl rusthammer::parser_traits::Parser<'input, T> for rusthammer::grammar::transform::IntRange<P, T>}::parse_with::{closure}<'input, '_1, P, T>}::call_once]:
+    Source: 'src/grammar/transform.rs', lines 254:23-254:79 -/
 def
-  grammar.transform.EvalInputIntRangeBackendT.eval.closure.Insts.CoreOpsFunctionFnOnceTupleShared1TBool.call_once
-  {Backend : Type} {P : Type} {T : Type} (parser_traitsEvalInst :
-  parser_traits.Eval P Backend T) (corecmpOrdInst : core.cmp.Ord T)
-  (c : grammar.transform.EvalInputIntRangeBackendT.eval.closure Backend P T)
+  grammar.transform.ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnOnceTupleShared1TBool.call_once
+  {P : Type} {T : Type} (parser_traitsParserInst : parser_traits.Parser P T)
+  (corecmpOrdInst : core.cmp.Ord T)
+  (c : grammar.transform.ParserInputIntRangeT.parse_with.closure P T) 
   (t : T) :
   Result Bool
   := do
   let (b, _) ←
-    grammar.transform.EvalInputIntRangeBackendT.eval.closure.Insts.CoreOpsFunctionFnMutTupleShared1TBool.call_mut
-      parser_traitsEvalInst corecmpOrdInst c t
+    grammar.transform.ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnMutTupleShared1TBool.call_mut
+      parser_traitsParserInst corecmpOrdInst c t
   ok b
 
-/-- Trait implementation: [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Eval<'input, Backend, T> for rusthammer::grammar::transform::IntRange<P, T>}::eval::{impl core::ops::function::FnOnce<(&'_2 T,), bool> for rusthammer::grammar::transform::{impl rusthammer::parser_traits::Eval<'input, Backend, T> for rusthammer::grammar::transform::IntRange<P, T>}::eval::{closure}<'input, '_1, Backend, P, T>}]
-    Source: 'src/grammar/transform.rs', lines 279:23-279:79 -/
+/-- Trait implementation: [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Parser<'input, T> for rusthammer::grammar::transform::IntRange<P, T>}::parse_with::{impl core::ops::function::FnOnce<(&'_2 T,), bool> for rusthammer::grammar::transform::{impl rusthammer::parser_traits::Parser<'input, T> for rusthammer::grammar::transform::IntRange<P, T>}::parse_with::{closure}<'input, '_1, P, T>}]
+    Source: 'src/grammar/transform.rs', lines 254:23-254:79 -/
 @[reducible]
 def
-  grammar.transform.EvalInputIntRangeBackendT.eval.closure.Insts.CoreOpsFunctionFnOnceTupleShared1TBool
-  {Backend : Type} {P : Type} {T : Type} (parser_traitsEvalInst :
-  parser_traits.Eval P Backend T) (corecmpOrdInst : core.cmp.Ord T) :
-  core.ops.function.FnOnce
-  (grammar.transform.EvalInputIntRangeBackendT.eval.closure Backend P T) T Bool
-  := {
+  grammar.transform.ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnOnceTupleShared1TBool
+  {P : Type} {T : Type} (parser_traitsParserInst : parser_traits.Parser P T)
+  (corecmpOrdInst : core.cmp.Ord T) : core.ops.function.FnOnce
+  (grammar.transform.ParserInputIntRangeT.parse_with.closure P T) T Bool := {
   call_once :=
-    grammar.transform.EvalInputIntRangeBackendT.eval.closure.Insts.CoreOpsFunctionFnOnceTupleShared1TBool.call_once
-    parser_traitsEvalInst corecmpOrdInst
+    grammar.transform.ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnOnceTupleShared1TBool.call_once
+    parser_traitsParserInst corecmpOrdInst
 }
 
-/-- Trait implementation: [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Eval<'input, Backend, T> for rusthammer::grammar::transform::IntRange<P, T>}::eval::{impl core::ops::function::FnMut<(&'_2 T,), bool> for rusthammer::grammar::transform::{impl rusthammer::parser_traits::Eval<'input, Backend, T> for rusthammer::grammar::transform::IntRange<P, T>}::eval::{closure}<'input, '_1, Backend, P, T>}]
-    Source: 'src/grammar/transform.rs', lines 279:23-279:79 -/
+/-- Trait implementation: [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Parser<'input, T> for rusthammer::grammar::transform::IntRange<P, T>}::parse_with::{impl core::ops::function::FnMut<(&'_2 T,), bool> for rusthammer::grammar::transform::{impl rusthammer::parser_traits::Parser<'input, T> for rusthammer::grammar::transform::IntRange<P, T>}::parse_with::{closure}<'input, '_1, P, T>}]
+    Source: 'src/grammar/transform.rs', lines 254:23-254:79 -/
 @[reducible]
 def
-  grammar.transform.EvalInputIntRangeBackendT.eval.closure.Insts.CoreOpsFunctionFnMutTupleShared1TBool
-  {Backend : Type} {P : Type} {T : Type} (parser_traitsEvalInst :
-  parser_traits.Eval P Backend T) (corecmpOrdInst : core.cmp.Ord T) :
-  core.ops.function.FnMut
-  (grammar.transform.EvalInputIntRangeBackendT.eval.closure Backend P T) T Bool
-  := {
+  grammar.transform.ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnMutTupleShared1TBool
+  {P : Type} {T : Type} (parser_traitsParserInst : parser_traits.Parser P T)
+  (corecmpOrdInst : core.cmp.Ord T) : core.ops.function.FnMut
+  (grammar.transform.ParserInputIntRangeT.parse_with.closure P T) T Bool := {
   FnOnceInst :=
-    grammar.transform.EvalInputIntRangeBackendT.eval.closure.Insts.CoreOpsFunctionFnOnceTupleShared1TBool
-    parser_traitsEvalInst corecmpOrdInst
+    grammar.transform.ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnOnceTupleShared1TBool
+    parser_traitsParserInst corecmpOrdInst
   call_mut :=
-    grammar.transform.EvalInputIntRangeBackendT.eval.closure.Insts.CoreOpsFunctionFnMutTupleShared1TBool.call_mut
-    parser_traitsEvalInst corecmpOrdInst
+    grammar.transform.ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnMutTupleShared1TBool.call_mut
+    parser_traitsParserInst corecmpOrdInst
 }
 
-/-- Trait implementation: [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Eval<'input, Backend, T> for rusthammer::grammar::transform::IntRange<P, T>}::eval::{impl core::ops::function::Fn<(&'_2 T,), bool> for rusthammer::grammar::transform::{impl rusthammer::parser_traits::Eval<'input, Backend, T> for rusthammer::grammar::transform::IntRange<P, T>}::eval::{closure}<'input, '_1, Backend, P, T>}]
-    Source: 'src/grammar/transform.rs', lines 279:23-279:79 -/
+/-- Trait implementation: [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Parser<'input, T> for rusthammer::grammar::transform::IntRange<P, T>}::parse_with::{impl core::ops::function::Fn<(&'_2 T,), bool> for rusthammer::grammar::transform::{impl rusthammer::parser_traits::Parser<'input, T> for rusthammer::grammar::transform::IntRange<P, T>}::parse_with::{closure}<'input, '_1, P, T>}]
+    Source: 'src/grammar/transform.rs', lines 254:23-254:79 -/
 @[reducible]
 def
-  grammar.transform.EvalInputIntRangeBackendT.eval.closure.Insts.CoreOpsFunctionFnTupleShared1TBool
-  {Backend : Type} {P : Type} {T : Type} (parser_traitsEvalInst :
-  parser_traits.Eval P Backend T) (corecmpOrdInst : core.cmp.Ord T) :
-  core.ops.function.Fn
-  (grammar.transform.EvalInputIntRangeBackendT.eval.closure Backend P T) T Bool
-  := {
+  grammar.transform.ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1TBool
+  {P : Type} {T : Type} (parser_traitsParserInst : parser_traits.Parser P T)
+  (corecmpOrdInst : core.cmp.Ord T) : core.ops.function.Fn
+  (grammar.transform.ParserInputIntRangeT.parse_with.closure P T) T Bool := {
   FnMutInst :=
-    grammar.transform.EvalInputIntRangeBackendT.eval.closure.Insts.CoreOpsFunctionFnMutTupleShared1TBool
-    parser_traitsEvalInst corecmpOrdInst
+    grammar.transform.ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnMutTupleShared1TBool
+    parser_traitsParserInst corecmpOrdInst
   call :=
-    grammar.transform.EvalInputIntRangeBackendT.eval.closure.Insts.CoreOpsFunctionFnTupleShared1TBool.call
-    parser_traitsEvalInst corecmpOrdInst
+    grammar.transform.ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1TBool.call
+    parser_traitsParserInst corecmpOrdInst
 }
 
-/-- [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Eval<'input, Backend, T> for rusthammer::grammar::transform::IntRange<P, T>}::eval]:
-    Source: 'src/grammar/transform.rs', lines 270:4-282:5
+/-- [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Parser<'input, T> for rusthammer::grammar::transform::IntRange<P, T>}::parse_with]:
+    Source: 'src/grammar/transform.rs', lines 246:4-257:5
     Visibility: public -/
-def grammar.transform.IntRange.Insts.RusthammerParser_traitsEval.eval
-  {Backend : Type} {P : Type} {T : Type} (parser_traitsEvalInst :
-  parser_traits.Eval P Backend T) (corecmpOrdInst : core.cmp.Ord T)
-  (self : grammar.transform.IntRange P T) (backend : Backend)
+def grammar.transform.IntRange.Insts.RusthammerParser_traitsParser.parse_with
+  {P : Type} {T : Type} (parser_traitsParserInst : parser_traits.Parser P T)
+  (corecmpOrdInst : core.cmp.Ord T) (self : grammar.transform.IntRange P T)
   (input : Slice Std.U8) (cursor : input_types.Cursor)
-  (context : input_types.ParseContext) :
-  Result ((input_types.ParseOutcome T) × Backend)
+  (byte_order : input_types.ByteOrder) :
+  Result (core.result.Result (input_types.Cursor × T) input_types.ParseError)
   := do
-  grammar.transform.Verify.Insts.RusthammerParser_traitsEval.eval
-    (Shared0P.Insts.RusthammerParser_traitsEval parser_traitsEvalInst)
-    (grammar.transform.EvalInputIntRangeBackendT.eval.closure.Insts.CoreOpsFunctionFnTupleShared1TBool
-    parser_traitsEvalInst corecmpOrdInst)
-    { parser := self.parser, predicate := self } backend input cursor context
+  grammar.transform.Verify.Insts.RusthammerParser_traitsParser.parse_with
+    (Shared0P.Insts.RusthammerParser_traitsParser parser_traitsParserInst)
+    (grammar.transform.ParserInputIntRangeT.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared1TBool
+    parser_traitsParserInst corecmpOrdInst)
+    { parser := self.parser, predicate := self } input cursor byte_order
 
-/-- Trait implementation: [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Eval<'input, Backend, T> for rusthammer::grammar::transform::IntRange<P, T>}]
-    Source: 'src/grammar/transform.rs', lines 265:0-283:1 -/
+/-- Trait implementation: [rusthammer::grammar::transform::{impl rusthammer::parser_traits::Parser<'input, T> for rusthammer::grammar::transform::IntRange<P, T>}]
+    Source: 'src/grammar/transform.rs', lines 239:0-258:1 -/
 @[reducible]
-def grammar.transform.IntRange.Insts.RusthammerParser_traitsEval {Backend :
-  Type} {P : Type} {T : Type} (parser_traitsEvalInst : parser_traits.Eval P
-  Backend T) (corecmpOrdInst : core.cmp.Ord T) : parser_traits.Eval
-  (grammar.transform.IntRange P T) Backend T := {
-  GrammarInst :=
-    grammar.transform.IntRange.Insts.RusthammerParser_traitsGrammar
-    parser_traitsEvalInst.GrammarInst corecmpOrdInst
-  eval := grammar.transform.IntRange.Insts.RusthammerParser_traitsEval.eval
-    parser_traitsEvalInst corecmpOrdInst
+impl_def grammar.transform.IntRange.Insts.RusthammerParser_traitsParser {P :
+  Type} {T : Type} (parser_traitsParserInst : parser_traits.Parser P T)
+  (corecmpOrdInst : core.cmp.Ord T) : parser_traits.Parser
+  (grammar.transform.IntRange P T) T := {
+  parse_with :=
+    grammar.transform.IntRange.Insts.RusthammerParser_traitsParser.parse_with
+    parser_traitsParserInst corecmpOrdInst
+  parse := parser_traits.Parser.parse.default
+    (grammar.transform.IntRange.Insts.RusthammerParser_traitsParser
+    parser_traitsParserInst corecmpOrdInst)
 }
 
 /-- [rusthammer::input_types::{impl core::clone::Clone for rusthammer::input_types::Cursor}::clone]:
@@ -12332,122 +6254,37 @@ def input_types.ConfigError.Insts.CoreCloneClone : core.clone.Clone
 }
 
 /-- [rusthammer::input_types::{impl core::clone::Clone for rusthammer::input_types::ParseError}::clone]:
-    Source: 'src/input_types.rs', lines 33:9-33:14
+    Source: 'src/input_types.rs', lines 31:9-31:14
     Visibility: public -/
 def input_types.ParseError.Insts.CoreCloneClone.clone
   (self : input_types.ParseError) : Result input_types.ParseError := do
   ok self
 
 /-- Trait implementation: [rusthammer::input_types::{impl core::clone::Clone for rusthammer::input_types::ParseError}]
-    Source: 'src/input_types.rs', lines 33:9-33:14 -/
+    Source: 'src/input_types.rs', lines 31:9-31:14 -/
 @[reducible]
 def input_types.ParseError.Insts.CoreCloneClone : core.clone.Clone
   input_types.ParseError := {
   clone := input_types.ParseError.Insts.CoreCloneClone.clone
 }
 
-/-- [rusthammer::input_types::{impl core::clone::Clone for rusthammer::input_types::InputStatus}::clone]:
-    Source: 'src/input_types.rs', lines 61:9-61:14
-    Visibility: public -/
-def input_types.InputStatus.Insts.CoreCloneClone.clone
-  (self : input_types.InputStatus) : Result input_types.InputStatus := do
-  ok self
-
-/-- Trait implementation: [rusthammer::input_types::{impl core::clone::Clone for rusthammer::input_types::InputStatus}]
-    Source: 'src/input_types.rs', lines 61:9-61:14 -/
-@[reducible]
-def input_types.InputStatus.Insts.CoreCloneClone : core.clone.Clone
-  input_types.InputStatus := {
-  clone := input_types.InputStatus.Insts.CoreCloneClone.clone
-}
-
-/-- [rusthammer::input_types::{impl core::clone::Clone for rusthammer::input_types::BitOrder}::clone]:
-    Source: 'src/input_types.rs', lines 71:9-71:14
-    Visibility: public -/
-def input_types.BitOrder.Insts.CoreCloneClone.clone
-  (self : input_types.BitOrder) : Result input_types.BitOrder := do
-  ok self
-
-/-- Trait implementation: [rusthammer::input_types::{impl core::clone::Clone for rusthammer::input_types::BitOrder}]
-    Source: 'src/input_types.rs', lines 71:9-71:14 -/
-@[reducible]
-def input_types.BitOrder.Insts.CoreCloneClone : core.clone.Clone
-  input_types.BitOrder := {
-  clone := input_types.BitOrder.Insts.CoreCloneClone.clone
-}
-
-/-- [rusthammer::input_types::{impl core::clone::Clone for rusthammer::input_types::ByteOrder}::clone]:
-    Source: 'src/input_types.rs', lines 78:9-78:14
-    Visibility: public -/
-def input_types.ByteOrder.Insts.CoreCloneClone.clone
-  (self : input_types.ByteOrder) : Result input_types.ByteOrder := do
-  ok self
-
 /-- Trait implementation: [rusthammer::input_types::{impl core::clone::Clone for rusthammer::input_types::ByteOrder}]
-    Source: 'src/input_types.rs', lines 78:9-78:14 -/
+    Source: 'src/input_types.rs', lines 59:9-59:14 -/
 @[reducible]
 def input_types.ByteOrder.Insts.CoreCloneClone : core.clone.Clone
   input_types.ByteOrder := {
   clone := input_types.ByteOrder.Insts.CoreCloneClone.clone
 }
 
-/-- Trait implementation: [rusthammer::input_types::{impl core::clone::Clone for rusthammer::input_types::Order}]
-    Source: 'src/input_types.rs', lines 85:9-85:14 -/
-@[reducible]
-def input_types.Order.Insts.CoreCloneClone : core.clone.Clone input_types.Order
-  := {
-  clone := input_types.Order.Insts.CoreCloneClone.clone
-}
-
-/-- [rusthammer::input_types::{impl core::clone::Clone for rusthammer::input_types::ParseContext}::clone]:
-    Source: 'src/input_types.rs', lines 103:9-103:14
-    Visibility: public -/
-def input_types.ParseContext.Insts.CoreCloneClone.clone
-  (self : input_types.ParseContext) : Result input_types.ParseContext := do
-  ok self
-
-/-- Trait implementation: [rusthammer::input_types::{impl core::clone::Clone for rusthammer::input_types::ParseContext}]
-    Source: 'src/input_types.rs', lines 103:9-103:14 -/
-@[reducible]
-def input_types.ParseContext.Insts.CoreCloneClone : core.clone.Clone
-  input_types.ParseContext := {
-  clone := input_types.ParseContext.Insts.CoreCloneClone.clone
-}
-
-/-- [rusthammer::input_types::{rusthammer::input_types::ParseContext}::PARTIAL]
-    Source: 'src/input_types.rs', lines 116:4-119:6
-    Visibility: public -/
-@[global_simps, irreducible]
-def input_types.ParseContext.PARTIAL : input_types.ParseContext :=
-  {
-    order := input_types.Order.DEFAULT,
-    status := input_types.InputStatus.Partial
-  }
-
-/-- [rusthammer::parser_traits::{impl core::clone::Clone for rusthammer::parser_traits::Direct}::clone]:
-    Source: 'src/parser_traits.rs', lines 45:9-45:14
-    Visibility: public -/
-def parser_traits.Direct.Insts.CoreCloneClone.clone
-  (self : parser_traits.Direct) : Result parser_traits.Direct := do
-  ok self
-
-/-- Trait implementation: [rusthammer::parser_traits::{impl core::clone::Clone for rusthammer::parser_traits::Direct}]
-    Source: 'src/parser_traits.rs', lines 45:9-45:14 -/
-@[reducible]
-def parser_traits.Direct.Insts.CoreCloneClone : core.clone.Clone
-  parser_traits.Direct := {
-  clone := parser_traits.Direct.Insts.CoreCloneClone.clone
-}
-
 /-- [rusthammer::span_types::{impl core::clone::Clone for rusthammer::span_types::BitSpan<'input>}::clone]:
-    Source: 'src/span_types.rs', lines 17:9-17:14
+    Source: 'src/span_types.rs', lines 12:9-12:14
     Visibility: public -/
 def span_types.BitSpan.Insts.CoreCloneClone.clone
   (self : span_types.BitSpan) : Result span_types.BitSpan := do
   ok self
 
 /-- Trait implementation: [rusthammer::span_types::{impl core::clone::Clone for rusthammer::span_types::BitSpan<'input>}]
-    Source: 'src/span_types.rs', lines 17:9-17:14 -/
+    Source: 'src/span_types.rs', lines 12:9-12:14 -/
 @[reducible]
 def span_types.BitSpan.Insts.CoreCloneClone : core.clone.Clone
   span_types.BitSpan := {
@@ -12455,35 +6292,28 @@ def span_types.BitSpan.Insts.CoreCloneClone : core.clone.Clone
 }
 
 /-- [rusthammer::span_types::{rusthammer::span_types::BitSpan<'input>}::input]:
-    Source: 'src/span_types.rs', lines 53:4-55:5
+    Source: 'src/span_types.rs', lines 37:4-39:5
     Visibility: public -/
 def span_types.BitSpan.impl.input
   (self : span_types.BitSpan) : Result (Slice Std.U8) := do
   ok self.input
 
 /-- [rusthammer::span_types::{rusthammer::span_types::BitSpan<'input>}::start]:
-    Source: 'src/span_types.rs', lines 57:4-59:5
+    Source: 'src/span_types.rs', lines 41:4-43:5
     Visibility: public -/
 def span_types.BitSpan.impl.start
   (self : span_types.BitSpan) : Result input_types.Cursor := do
   ok self.start
 
 /-- [rusthammer::span_types::{rusthammer::span_types::BitSpan<'input>}::end]:
-    Source: 'src/span_types.rs', lines 61:4-63:5
+    Source: 'src/span_types.rs', lines 45:4-47:5
     Visibility: public -/
 def span_types.BitSpan.impl.end
   (self : span_types.BitSpan) : Result input_types.Cursor := do
   ok self.end
 
-/-- [rusthammer::span_types::{rusthammer::span_types::BitSpan<'input>}::bit_order]:
-    Source: 'src/span_types.rs', lines 66:4-68:5
-    Visibility: public -/
-def span_types.BitSpan.impl.bit_order
-  (self : span_types.BitSpan) : Result input_types.BitOrder := do
-  ok self.bit_order
-
 /-- [rusthammer::span_types::{rusthammer::span_types::BitSpan<'input>}::is_empty]:
-    Source: 'src/span_types.rs', lines 70:4-72:5
+    Source: 'src/span_types.rs', lines 49:4-51:5
     Visibility: public -/
 def span_types.BitSpan.is_empty (self : span_types.BitSpan) : Result Bool := do
   if self.start.byte = self.end.byte

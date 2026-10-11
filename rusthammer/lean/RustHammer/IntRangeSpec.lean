@@ -1,4 +1,4 @@
-import RustHammer.PartialSpec
+import RustHammer.ParserSpec
 
 open RustHammer.Code.grammar.transform
   RustHammer.Code.input_types
@@ -20,9 +20,9 @@ def intRangeNewOutcome {P T : Type} (le : T → T → Prop) [DecidableRel le]
   if le lower upper then result = .Ok { parser, lower, upper }
   else result = .Err .InvalidBounds
 
-/-- Both status-aware and complete range contracts reuse the existing Verify
+/-- Both-aware and complete range contracts reuse the existing Verify
 relations with `inRange` as their predicate. This preserves the child's input
-validation, decoded value, consumed cursor, errors, and incompleteness rules. -/
+validation, decoded value, consumed cursor, and error rules. -/
 abbrev intRange {T : Type} (child : Cursor → ParseResult T → Prop)
     (le : T → T → Prop) [DecidableRel le] (lower upper : T) :=
   verify child (inRange le lower upper)

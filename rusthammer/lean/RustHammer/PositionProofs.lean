@@ -1,5 +1,5 @@
 import RustHammer.PositionSpec
-import RustHammer.PartialProofs
+import RustHammer.ParserProofs
 
 open RustHammer.Code.grammar.position
   RustHammer.Code.input_types
@@ -99,26 +99,26 @@ theorem tell_clone_spec (parser : Tell) :
   simp [Tell.Insts.CoreCloneClone.clone, spec_ok]
 
 theorem skip_bits_with_spec (parser : SkipBits) (input : Slice U8)
-    (cursor : Cursor) (status : InputStatus) :
-    SkipBits.Insts.RusthammerParserInputTuple.parse_with parser input cursor (Spec.defaultContext status)
-      ⦃ result => Partial.primitive status (Spec.skipBitsOutcome input cursor parser.bits) result ⦄ := by
-  rw [SkipBits.Insts.RusthammerParserInputTuple.parse_with_eq]
+    (cursor : Cursor) :
+    SkipBits.Insts.RusthammerParser_traitsParserInputTuple.parse_with parser input cursor ByteOrder.Big
+      ⦃ result => Contracts.primitive (Spec.skipBitsOutcome input cursor parser.bits) result ⦄ := by
+  rw [SkipBits.Insts.RusthammerParser_traitsParserInputTuple.parse_with]
   step with advance_cursor_spec input.len cursor parser.bits as ⟨advanced, hadvanced⟩
   cases advanced with
   | Ok next =>
-    step with classify_spec status (.Ok (next, ())) as ⟨outcome, houtcome⟩
-    exact ⟨.Ok (next, ()), ⟨.Ok next, hadvanced, rfl⟩, houtcome⟩
+    simp only [spec_ok]
+    exact ⟨.Ok (next, ()), ⟨.Ok next, hadvanced, rfl⟩, rfl⟩
   | Err error =>
-    step with classify_spec status (.Err error) as ⟨outcome, houtcome⟩
-    exact ⟨.Err error, ⟨.Err error, hadvanced, rfl⟩, houtcome⟩
+    simp only [spec_ok]
+    exact ⟨.Err error, ⟨.Err error, hadvanced, rfl⟩, rfl⟩
 
 theorem skip_bits_spec (parser : SkipBits) (input : Slice U8) (cursor : Cursor) :
-    DirectParser.parse SkipBits.Insts.RusthammerParserInputTuple parser input cursor
+    parser_traits.Parser.parse.default SkipBits.Insts.RusthammerParser_traitsParserInputTuple parser input cursor
       ⦃ result => Spec.skipBitsOutcome input cursor parser.bits result ⦄ := by
   apply complete_spec
-  simpa only [SkipBits.Insts.RusthammerParserInputTuple.parse_with, ParseContext.FINAL,
-    Spec.defaultContext, Partial.primitive, Partial.primitiveResult, Spec.completed] using
-    skip_bits_with_spec parser input cursor .Final
+  simpa only [SkipBits.Insts.RusthammerParser_traitsParserInputTuple.parse_with, ByteOrder.Big,
+    Contracts.primitive, Spec.satisfies] using
+    skip_bits_with_spec parser input cursor
 
 private theorem normalized_position_injective (first second : Cursor)
     (hf : first.bit.val < 8) (hs : second.bit.val < 8)
@@ -143,10 +143,10 @@ theorem advance_cursor_zero_spec (length : Usize) (cursor : Cursor) :
     simp [hv, heq]
   · simpa only [Spec.advanceOutcome, if_neg hv] using hresult
 
-theorem tell_with_spec (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
-    Tell.Insts.RusthammerParserInputCursor.parse_with () input cursor (Spec.defaultContext status)
-      ⦃ result => Spec.completed (Spec.tellOutcome input cursor) result ⦄ := by
-  rw [Tell.Insts.RusthammerParserInputCursor.parse_with_eq]
+theorem tell_with_spec (input : Slice U8) (cursor : Cursor) :
+    Tell.Insts.RusthammerParser_traitsParserInputCursor.parse_with () input cursor ByteOrder.Big
+      ⦃ result => Spec.satisfies (Spec.tellOutcome input cursor) result ⦄ := by
+  rw [Tell.Insts.RusthammerParser_traitsParserInputCursor.parse_with]
   step with advance_cursor_zero_spec input.len cursor as ⟨advanced, hadvanced⟩
   by_cases hv : Spec.validCursor input cursor
   · have heq : advanced = .Ok cursor := by
@@ -159,42 +159,41 @@ theorem tell_with_spec (input : Slice U8) (cursor : Cursor) (status : InputStatu
     exact ⟨.Err .InvalidCursor, by rw [Spec.tellOutcome, if_neg hv], rfl⟩
 
 theorem tell_spec (input : Slice U8) (cursor : Cursor) :
-    DirectParser.parse Tell.Insts.RusthammerParserInputCursor () input cursor
+    parser_traits.Parser.parse.default Tell.Insts.RusthammerParser_traitsParserInputCursor () input cursor
       ⦃ result => Spec.tellOutcome input cursor result ⦄ := by
-  exact complete_spec Tell.Insts.RusthammerParserInputCursor () input cursor _
-    (tell_with_spec input cursor .Final)
+  exact complete_spec Tell.Insts.RusthammerParser_traitsParserInputCursor () input cursor _
+    (tell_with_spec input cursor)
 
 theorem skip_bits_final_spec (parser : SkipBits) (input : Slice U8) (cursor : Cursor) :
-    SkipBits.Insts.RusthammerParserInputTuple.parse_with parser input cursor ParseContext.FINAL
-      ⦃ result => Spec.completed (Spec.skipBitsOutcome input cursor parser.bits) result ⦄ := by
-  simpa only [SkipBits.Insts.RusthammerParserInputTuple.parse_with, ParseContext.FINAL,
-    Spec.defaultContext, Partial.primitive, Partial.primitiveResult, Spec.completed] using
-    skip_bits_with_spec parser input cursor .Final
+    SkipBits.Insts.RusthammerParser_traitsParserInputTuple.parse_with parser input cursor ByteOrder.Big
+      ⦃ result => Spec.satisfies (Spec.skipBitsOutcome input cursor parser.bits) result ⦄ := by
+  simpa only [SkipBits.Insts.RusthammerParser_traitsParserInputTuple.parse_with, ByteOrder.Big,
+    Contracts.primitive, Spec.satisfies] using
+    skip_bits_with_spec parser input cursor
 
-theorem skip_bits_zero_with_spec (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
-    SkipBits.Insts.RusthammerParserInputTuple.parse_with { bits := 0#usize } input cursor (Spec.defaultContext status)
-      ⦃ result => result = if Spec.validCursor input cursor then .Success cursor () else .Error .InvalidCursor ⦄ := by
-  rw [SkipBits.Insts.RusthammerParserInputTuple.parse_with_eq]
+theorem skip_bits_zero_with_spec (input : Slice U8) (cursor : Cursor) :
+    SkipBits.Insts.RusthammerParser_traitsParserInputTuple.parse_with { bits := 0#usize } input cursor ByteOrder.Big
+      ⦃ result => result = if Spec.validCursor input cursor then .Ok (cursor, ()) else .Err .InvalidCursor ⦄ := by
+  rw [SkipBits.Insts.RusthammerParser_traitsParserInputTuple.parse_with]
   step with advance_cursor_zero_spec input.len cursor as ⟨advanced, hadvanced⟩
   by_cases hv : Spec.validCursor input cursor
   · have heq : advanced = .Ok cursor := by
       simpa only [Spec.validPosition, Slice.len_val, if_pos hv] using hadvanced
-    cases status <;> simp [heq, InputStatus.classify, hv, spec_ok]
+    simp [heq, hv, spec_ok]
   · have heq : advanced = .Err .InvalidCursor := by
       simpa only [Spec.validPosition, Slice.len_val, if_neg hv] using hadvanced
-    cases status <;> simp [heq, InputStatus.classify, hv, spec_ok]
+    simp [heq, hv, spec_ok]
 
 theorem skip_bits_success (input : Slice U8) (cursor next : Cursor) (bits : Usize)
-    (status : InputStatus)
-    (h : Partial.primitive status (Spec.skipBitsOutcome input cursor bits) (.Success next ())) :
+    (h : Contracts.primitive (Spec.skipBitsOutcome input cursor bits) (.Ok (next, ()))) :
     Spec.validCursor input cursor ∧ Spec.validCursor input next ∧
       Spec.position next = Spec.position cursor + bits.val := by
   rcases h with ⟨parsed, ⟨advanced, hadvanced, rfl⟩, heq⟩
   cases advanced with
-  | Err error => cases status <;> cases error <;> cases heq
+  | Err error => cases error <;> cases heq
   | Ok after =>
     have hn : next = after := by
-      cases status <;> simpa [Partial.primitiveResult, Spec.completedResult] using heq
+      simpa [] using heq
     subst after
     unfold Spec.advanceOutcome at hadvanced
     split at hadvanced
@@ -205,17 +204,5 @@ theorem skip_bits_success (input : Slice U8) (cursor next : Cursor) (bits : Usiz
         exact ⟨hv, hlast, hpos⟩
       · cases hadvanced
     · cases hadvanced
-
-/-- Tell cannot require more input: its contract validates and reports the
-current position, even at a partial buffer's end. -/
-theorem tell_never_need_more (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
-    Tell.Insts.RusthammerParserInputCursor.parse_with () input cursor (Spec.defaultContext status)
-      ⦃ result => result ≠ .NeedMore ⦄ := by
-  step with tell_with_spec input cursor status as ⟨result, hresult⟩
-  rcases hresult with ⟨parsed, _hparsed, heq⟩
-  subst result
-  cases parsed with
-  | Ok pair => cases pair; simp [Spec.completedResult]
-  | Err error => simp [Spec.completedResult]
 
 end RustHammer.Proofs

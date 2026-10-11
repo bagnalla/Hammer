@@ -1,4 +1,4 @@
-use super::super::{BitSpan, Cursor, Eval, Grammar, ParseContext, ParseError, ParseOutcome};
+use super::super::{BitSpan, ByteOrder, Cursor, ParseError, Parser};
 
 use super::super::span_types::span_cursor_valid;
 
@@ -8,15 +8,12 @@ use super::super::span_types::span_cursor_valid;
 /// own result; nested values acquire spans only where explicitly wrapped.
 /// The starting cursor is validated before the child runs. On success, the
 /// ending cursor is validated and backward movement rejected with `NonProgress`.
-/// Empty matches are allowed. Child errors and `NeedMore` propagate unchanged.
-/// Backend state and context follow the child, including on a rejected exit.
+/// Empty matches are allowed. Child errors propagate unchanged.
 ///
-/// Custom children must obey the ordering scope rules: endpoint checks cannot
+/// Custom children must obey the parser contract: endpoint checks cannot
 /// establish which bits an arbitrary parser inspected. Lookahead contributes
 /// no consumed input, and therefore has an empty span when wrapped.
-/// Seeking measures the interval between this wrapper's entry and final exit:
-/// it can include skipped bytes and omit bytes read during a seek-and-return
-/// excursion. Wrap the field parser after a seek to capture that field's span.
+/// Skipped bits are included; speculative lookahead beyond the endpoint is not.
 ///
 /// ```
 /// use rusthammer::{BeU16, Cursor, Parser, WithSpan};
@@ -31,31 +28,28 @@ pub struct WithSpan<P> {
     pub parser: P,
 }
 
-impl<'input, P: Grammar<'input>> Grammar<'input> for WithSpan<P> {
+impl<'input, P: Parser<'input>> Parser<'input> for WithSpan<P> {
     type Output = (P::Output, BitSpan<'input>);
-}
 
-impl<'input, Backend, P: Eval<'input, Backend>> Eval<'input, Backend> for WithSpan<P> {
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
         if !span_cursor_valid(input.len(), cursor) {
-            return ParseOutcome::Error(ParseError::InvalidCursor);
+            return Err(ParseError::InvalidCursor);
         }
-        match self.parser.eval(backend, input, cursor, context) {
-            ParseOutcome::Success(next, value) => {
-                let span = match BitSpan::new(input, cursor, next, context.order.bit) {
+        match self.parser.parse_with(input, cursor, byte_order) {
+            Ok(parsed) => {
+                let (next, value) = parsed;
+                let span = match BitSpan::new(input, cursor, next) {
                     Ok(span) => span,
-                    Err(error) => return ParseOutcome::Error(error),
+                    Err(error) => return Err(error),
                 };
-                ParseOutcome::Success(next, (value, span))
+                Ok((next, (value, span)))
             }
-            ParseOutcome::Error(error) => ParseOutcome::Error(error),
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+            Err(error) => Err(error),
         }
     }
 }
@@ -64,7 +58,7 @@ impl<'input, Backend, P: Eval<'input, Backend>> Eval<'input, Backend> for WithSp
 ///
 /// Uses the same validation and consumption rules as [`WithSpan`]. The child
 /// still runs and constructs its output, including allocations and callback
-/// effects; that value is then dropped. Grammar nodes remain backend-generic.
+/// effects; that value is then dropped.
 ///
 /// ```
 /// use rusthammer::{BeU16, Cursor, Parser, Recognize};
@@ -78,30 +72,27 @@ pub struct Recognize<P> {
     pub parser: P,
 }
 
-impl<'input, P: Grammar<'input>> Grammar<'input> for Recognize<P> {
+impl<'input, P: Parser<'input>> Parser<'input> for Recognize<P> {
     type Output = BitSpan<'input>;
-}
 
-impl<'input, Backend, P: Eval<'input, Backend>> Eval<'input, Backend> for Recognize<P> {
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
         let spanned = WithSpan {
             parser: &self.parser,
         };
-        match spanned.eval(backend, input, cursor, context) {
+        match spanned.parse_with(input, cursor, byte_order) {
             // Move the complete tuple before destructuring for dependency MIR;
-            // see InputStatus::classify and probes/cross_crate/README.md.
-            ParseOutcome::Success(next, output) => {
+            // see probes/direct_v1/README.md.
+            Ok(parsed) => {
+                let (next, output) = parsed;
                 let (_, span) = output;
-                ParseOutcome::Success(next, span)
+                Ok((next, span))
             }
-            ParseOutcome::Error(error) => ParseOutcome::Error(error),
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+            Err(error) => Err(error),
         }
     }
 }

@@ -2,8 +2,7 @@
 #[cfg(rusthammer_verify)]
 use crate as rusthammer;
 use rusthammer::{
-    Bits, ConfigError, Cursor, End, Eval, Grammar, ParseContext, ParseError, ParseOutcome, Parser,
-    Seq, TakeAligned, Verify,
+    Bits, ByteOrder, ConfigError, Cursor, End, ParseError, Parser, Seq, TakeAligned, Verify,
 };
 
 /// Maximum payload length in the example record format, in bytes.
@@ -23,8 +22,6 @@ pub struct Record<'input> {
 /// Version must be 1; all five flag bits are available. Lengths above
 /// `MAX_RECORD_PAYLOAD` are rejected with `Mismatch`. The complete three-byte
 /// header is read before these constraints are checked. Trailing input is rejected.
-/// Partial input waits for the remaining bytes or confirmation of EOF; call
-/// `parse_with` again with the accumulated buffer and the original cursor.
 #[derive(Clone, Copy)]
 pub struct RecordParser {
     version: Bits,
@@ -55,12 +52,7 @@ impl RecordParser {
     }
 }
 
-impl<'input> Grammar<'input> for RecordParser {
-    type Output = Record<'input>;
-}
-
-// Construct this closure outside the lifetime/backend-generic method: the pinned
-// Aeneas cannot infer its unused Backend argument. See probes/backend_closure.rs.
+// Share the checked header construction with the extracted format proof.
 fn record_header(
     version: Bits,
     flags: Bits,
@@ -78,64 +70,59 @@ fn record_header(
     }
 }
 
-impl<'input, Backend> Eval<'input, Backend> for RecordParser {
-    fn eval(
+impl<'input> Parser<'input> for RecordParser {
+    type Output = Record<'input>;
+
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
         // An empty aligned read validates the cursor and alignment without advancing.
-        match (TakeAligned { count: 0 }).eval(backend, input, cursor, context) {
-            ParseOutcome::NeedMore => return ParseOutcome::NeedMore,
-            ParseOutcome::Error(error) => return ParseOutcome::Error(error),
-            ParseOutcome::Success(_, _) => {}
+        match (TakeAligned { count: 0 }).parse_with(input, cursor, byte_order) {
+            Err(error) => return Err(error),
+            Ok(parsed) => {
+                let (_, _) = parsed;
+            }
         }
         let header = record_header(self.version, self.flags, self.length);
-        match header.eval(backend, input, cursor, context) {
-            ParseOutcome::NeedMore => return ParseOutcome::NeedMore,
-            ParseOutcome::Error(error) => ParseOutcome::Error(error),
-            ParseOutcome::Success(next, (version, (flags, length))) => {
+        match header.parse_with(input, cursor, byte_order) {
+            Err(error) => Err(error),
+            Ok(parsed) => {
+                let (next, (version, (flags, length))) = parsed;
                 // The verified bound fits usize on every supported Rust target.
-                parse_record_body(
-                    backend,
-                    input,
-                    next,
-                    version,
-                    flags,
-                    length as usize,
-                    context,
-                )
+                parse_record_body(input, next, version, flags, length as usize, byte_order)
             }
         }
     }
 }
 
-fn parse_record_body<'input, Backend>(
-    backend: &mut Backend,
+fn parse_record_body<'input>(
     input: &'input [u8],
     cursor: Cursor,
     version: u64,
     flags: u64,
     count: usize,
-    context: ParseContext,
-) -> ParseOutcome<Record<'input>> {
+    byte_order: ByteOrder,
+) -> Result<(Cursor, Record<'input>), ParseError> {
     let body = Seq {
         first: TakeAligned { count },
         second: End,
     };
-    match body.eval(backend, input, cursor, context) {
-        ParseOutcome::NeedMore => return ParseOutcome::NeedMore,
-        ParseOutcome::Error(error) => ParseOutcome::Error(error),
-        ParseOutcome::Success(end, (payload, ())) => ParseOutcome::Success(
-            end,
-            Record {
-                version,
-                flags,
-                payload,
-            },
-        ),
+    match body.parse_with(input, cursor, byte_order) {
+        Err(error) => Err(error),
+        Ok(parsed) => {
+            let (end, (payload, ())) = parsed;
+            Ok((
+                end,
+                Record {
+                    version,
+                    flags,
+                    payload,
+                },
+            ))
+        }
     }
 }
 

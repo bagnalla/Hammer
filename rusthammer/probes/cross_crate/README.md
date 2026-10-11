@@ -1,86 +1,33 @@
 # Cross-crate extraction regression
 
-This Cargo package consumes RustHammer through a normal path dependency. It
-checks a captured fallible callback returning an owned, non-`Clone` value,
-sequencing and output selection returning a borrowed payload, the default
-complete-input method, exact/unbounded collection with `alloc`, and allocation-free
-folding with captured initialization, borrowed child values, and an owned non-`Clone`
-accumulator. Both finite and unbounded folding are exercised. Separated-list
-entries check exact collection with borrowed item and separator outputs, and
-unbounded folding with an owned non-`Clone` separator output that is discarded.
-`Bind` entries check a captured count limit and borrowed payload, a borrowed
-first value configuring an owned literal parser, a constructed repetition with
-a copied child, and a factory returning an existing parser by shared reference.
-Byte-pattern entries check independent input/pattern/parser lifetimes, a `u8`
-reader, and sequencing whose output contains both pattern and input borrows.
-Signed-field entries check a runtime constructor with distinct configuration
-errors and sequencing a validated signed parser by reference with an unsigned
-byte. Native tests include the full `i64` extremes and both input statuses.
-Fixed-width entries sequence native unsigned/signed 16-, 32-, and 64-bit outputs,
-include a shared parser reference, and call the default complete method for `I8`.
-They cover all seven new reader implementations as ordinary dependency bodies.
-Range entries check dynamic unsigned bounds through `u64::MAX`, signed and byte
-range sequencing through a child reference, the complete API, and an owned integer
-newtype with derived ordering and neither `Copy` nor `Clone`. Configuration errors
-remain separate from parsing outcomes.
-Byte-set entries check owned bitmap construction, membership/exclusion queries,
-sequencing through a shared reference and a clone, and the complete API.
-Native tests cover unaligned reads, empty/duplicate sets, errors, incompleteness,
-and parsers that outlive or are reused after changes to the construction slice.
-An entry returning an owned parser checks that no source-slice lifetime escapes.
-Position entries check dynamic skip construction, cloning and its bit-count
-accessor, sequencing a shared skip parser with `Tell`, direct position reporting,
-and the complete skip API. Native tests cover unaligned starts, skips beyond
-64 bits, exhaustion in both statuses, invalid cursors, and `usize::MAX` counts.
-Match entries check `ButNot` with a borrowed payload and unrelated numeric
-second output, `Difference` with an independent pattern borrow, and `Xor` with
-borrowed alternatives or an owned, non-`Clone` application enum built through
-`Map`. They cover shared parser references, cloning, and all three default
-complete methods. Native tests check equal/unequal lengths, partial input,
-constructor errors, enum variants, and borrow identity/lifetimes.
-Ordering entries check all four orders through unsigned, signed, and named
-`Be` readers; a borrowed payload followed by a low-first scope and an outer
-integer; and a pattern borrow returned through a scope. They cover context
-propagation, restored order, partial input, and parser references/cloning.
-Span entries check independent pattern/input borrows through `WithSpan`,
-`Recognize` over a borrowed child, the complete API, validated construction and
-all span accessors, a partial low-first span escaping its enclosing scope, and
-both wrappers composing with a child that only supports a custom backend.
-Native tests also check raw views and propagation of partial-input exhaustion.
-Constructor entries use all seven public helpers, including captured callbacks,
-alternative priority, a child that only supports a custom backend, shared parser
-references, and independent configuration/input borrows. The opaque-callback
-factory is shared with the runnable constructor example and evaluated through
-an arbitrary backend; its output implements neither `Clone` nor `Copy`.
-Permutation entries exercise independent input/configuration borrows, non-`Clone`
-header outputs, stateful backtracking, and the empty and twelve-entry tuples.
-Seeking entries check all three constructors, the shared borrowed-payload
-example, spans, finite backward folding, signed endpoint comparison, a custom
-backend, and saving/restoring `Tell` through `TryMap` and `Bind`.
-The consumer now has 66 extraction roots.
-All entries now pass `ParseContext` through the ordinary dependency interface.
-The `backend_payload` entry uses a consumer-defined mutable backend and a child
-that implements only `Eval<Counter>`. Lookahead, sequencing, and a dependent
-parser share its call counter. Its borrowed output escapes the local backend;
-native tests check pointer identity, call counts, and partial-input outcomes.
+This package consumes the direct-only RustHammer v1 API through a normal Cargo
+path dependency. Its 51 extraction roots cover all retained families, constructor
+inference and opaque returns, shared references, independent input/configuration
+borrows, owned non-`Clone` outputs, checked callbacks, and borrowed accumulators.
+Both allocation configurations have native tests; extraction includes `alloc`.
 
-Run `python3 tools/verify.py` from `rusthammer/`. Alongside the library tests and
-proofs, that command:
+Ordering entries cover high-first traversal and both byte orders, including
+unaligned scopes and fixed `Be*` readers. Span entries cover construction,
+accessors, original byte views, and captured borrowed outputs. Position entries
+retain `SkipBits` and `Tell`. Dependent parsing and repetition cover borrowed
+payloads, owned fields, shared parser factories, exact/bounded/unbounded counts,
+separator rollback, and folding. The shared MAVLink example validates the CRC and
+borrows its payload; a closure forwards the HEARTBEAT lookup.
 
-1. Extracts the library's complete set of verification roots from optimized MIR,
-   the compiler stage available for dependencies, and Lean type-checks it.
-2. Tests this consumer with allocation disabled and enabled.
-3. Extracts the consumer with RustHammer's dependency bodies included and `alloc`
-   enabled, checks that all 66 entry points were translated, and Lean
-   type-checks the result.
-4. Rejects admitted or opaque project declarations in both extra translations.
+The consumer has no backend, finality, seek, permutation, or low-first entries.
+Complete-input/high-first cases from the old mixed tests remain, along with
+ownership and borrow-identity checks. Reproduce those excluded APIs at `c5c2643`.
 
-Extra translations and Cargo outputs stay under `rusthammer/target/`. Existing
-library correctness proofs still use the ordinary promoted-MIR translation.
-The additional checks establish extraction and Lean type-checking compatibility;
-they do not constitute new application correctness theorems or a proof that the
-compiler stages are equivalent. Standard-library model and destructor limitations
-remain as documented in the crate README.
+Run `python3 tools/verify.py --aeneas-dir /path/to/aeneas` from `rusthammer/`.
+It tests both consumer allocation configurations, extracts its dependency bodies,
+requires all 51 roots in the result, and compiles the generated Lean with warnings
+as errors and implicit parameters disabled. Borrowed callback forwarding includes
+`core::ops::function::impls::_`, so reference calls have actual translated bodies.
+
+The verifier also translates the library at promoted and optimized MIR stages.
+Extra translations stay under `target/`. The handwritten correctness proofs use
+the promoted translation; compatibility checks do not prove equivalence of
+compiler stages. The library README describes model/resource limitations.
 
 ## Cause of the original failure
 
@@ -142,17 +89,17 @@ not library exports or expected failures in the normal verification command.
 
 ## Library changes
 
-In `InputStatus::classify`, `Left`, `Right`, and `Middle`, move the entire tuple
+In result-handling combinators, move the entire tuple
 payload out of the enum before unpacking or selecting its fields. For example:
 
 ```rust,ignore
 // The nested pattern partially moves the enum's tuple payload.
-Ok((next, value)) => ParseOutcome::Success(next, value),
+Ok((next, value)) => Ok((next, value)),
 
 // Moving the tuple first avoids the problematic cleanup discriminant read.
 Ok(parsed) => {
     let (next, value) = parsed;
-    ParseOutcome::Success(next, value)
+    Ok((next, value))
 }
 ```
 
@@ -161,7 +108,7 @@ In `TryMap`, bind the rejected conversion error as `Err(_error)` instead of
 moves it out, so both variants' payloads are consumed and the redundant enum
 check disappears. The error is still dropped and the result is still `Mismatch`.
 
-These changes preserve the public API, input consumption, outcome rules, and
+These source-shape changes preserve input consumption, error rules, and
 support for borrowed and non-`Copy` outputs. Native ownership/destructor tests and
 all existing Lean proofs pass. No tool patch, additional trait bound, or disabled
 interpreter check is required. The original separate-crate example and this

@@ -1,6 +1,5 @@
 use rusthammer::{
-    ConfigError, Cursor, End, FoldSepBy, Left, Literal, ParseContext, ParseError, ParseOutcome,
-    Parser,
+    ByteOrder, ConfigError, Cursor, End, FoldSepBy, Left, Literal, ParseError, Parser,
 };
 
 fn main() -> Result<(), ConfigError> {
@@ -11,12 +10,7 @@ fn main() -> Result<(), ConfigError> {
     assert_eq!((next, items), (Cursor { byte: 5, bit: 0 }, 3));
     println!("items: {items}; next: {next:?}");
 
-    // On partial input the next item might still arrive. Retry from the original
-    // cursor with the accumulated buffer; each call initializes its own count.
-    assert_eq!(
-        count.parse_with(b"a,", Cursor::start(), ParseContext::PARTIAL),
-        ParseOutcome::NeedMore
-    );
+    // The minimum is met, so a rejected separator/item pair leaves the separator.
     assert_eq!(
         count.parse(b"a,", Cursor::start()),
         Ok((Cursor { byte: 1, bit: 0 }, 1))
@@ -31,11 +25,11 @@ fn main() -> Result<(), ConfigError> {
         Err(ParseError::TrailingInput)
     );
 
-    // Exact counts finish without probing a further separator, even on partial input.
+    // Exact counts finish without probing a further separator.
     let pair = FoldSepBy::exact(item, separator, 2, || 0usize, |n, _| n + 1);
     assert_eq!(
-        pair.parse_with(b"a,a,", Cursor::start(), ParseContext::PARTIAL),
-        ParseOutcome::Success(Cursor { byte: 3, bit: 0 }, 2)
+        pair.parse_with(b"a,a,", Cursor::start(), ByteOrder::Big),
+        Ok((Cursor { byte: 3, bit: 0 }, 2))
     );
 
     #[cfg(feature = "alloc")]

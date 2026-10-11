@@ -14,9 +14,9 @@ ROOT = Path(__file__).resolve().parents[1]
 ORDER_THEOREMS = (
     "RustHammer.Ordering.unsigned_default",
     "RustHammer.Proofs.read_ordered_bits_spec",
-    "RustHammer.Proofs.read_bit_ordered_spec",
+    "RustHammer.Proofs.bit_spec",
     *(f"RustHammer.Ordering.{name}" for name in (
-        "with_order_spec", "with_order_blocked", "scope_success_aligned",
+        "with_byte_order_spec",
         "bits_with_spec", "bit_with_spec", "literal_with_spec", "signed_bits_with_spec",
         "byte_with_spec", "i8_with_spec", "be_u16_with_spec", "be_u32_with_spec",
         "be_u64_with_spec", "be_i16_with_spec", "be_i32_with_spec", "be_i64_with_spec",
@@ -25,29 +25,28 @@ ORDER_THEOREMS = (
     )),
 )
 
-BACKEND_THEOREMS = (
-    "RustHammer.Code.eval_direct",
-    "RustHammer.Code.direct_entry_with",
-    "RustHammer.Code.direct_entry",
-    "RustHammer.Code.direct_projection_spec",
-    "RustHammer.Backend.seq_eval_spec",
-    "RustHammer.Backend.choice_eval_spec",
-)
+PARSER_THEOREMS = tuple(f"RustHammer.Proofs.{name}" for name in (
+    "seq_with_spec", "choice_with_spec", "optional_with_spec", "and_with_spec",
+    "not_with_spec", "map_with_spec", "verify_with_spec", "bind_with_spec",
+    "try_map_with_spec", "parser_ref_with_spec", "parser_ref_spec",
+    "repeat_run_with_bounded_spec", "repeat_run_with_unbounded_spec",
+    "match_endpoint_order_displacement",
+))
 
 SPAN_THEOREMS = tuple(f"RustHammer.Span.{name}" for name in (
     "cursor_valid_spec", "new_spec", "checked_success", "input_spec", "start_spec",
-    "end_spec", "bit_order_spec", "clone_spec", "is_empty_spec", "as_bytes_spec",
-    "with_span_eval_spec", "recognize_eval_spec", "with_span_with_spec", "recognize_with_spec",
-    "capture_need_more", "recognize_need_more", "with_span_complete_spec", "recognize_complete_spec",
+    "end_spec", "clone_spec", "is_empty_spec", "as_bytes_spec",
+    "with_span_with_spec", "recognize_with_spec",
+    "with_span_complete_spec", "recognize_complete_spec",
     "with_span_clone_spec", "recognize_clone_spec", "capture_success",
     "offset_physical", "physical_offset", "physical_injective", "consumed_length",
-    "bits_distinct", "mem_bits", "selected_in_input", "high_same_byte", "low_same_byte",
+    "bits_distinct", "mem_bits", "selected_in_input", "high_same_byte",
     "interior_byte", "crossing_start", "crossing_end", "aligned_region",
 ))
 
 CONSTRUCTOR_THEOREMS = tuple(f"RustHammer.Constructors.{name}" for name in (
     "seq_eq", "choice_eq", "optional_eq", "map_eq", "try_map_eq", "verify_eq", "bind_eq",
-    "reuse_spec", "seq_eval_spec",
+    "reuse_spec", "seq_parse_spec",
 ))
 
 MAVLINK_THEOREMS = tuple(f"RustHammer.Mavlink.{name}" for name in (
@@ -55,30 +54,21 @@ MAVLINK_THEOREMS = tuple(f"RustHammer.Mavlink.{name}" for name in (
     "header_constructor", "header_spec", "payload_spec", "body_spec", "checksum_spec",
     "checksum_predicate_spec", "fields_spec", "checked_spec", "packet_spec",
     "frame_constructor", "frame_parser_spec", "mavlink_spec", "heartbeat_lookup_spec",
-    "header_success", "frame_success", "frame_final_not_more", "mavlink_final_not_more",
+    "header_success", "frame_success",
     "payload_truncated",
 ))
 
-PERMUTATION_THEOREMS = tuple(f"RustHammer.Permutation.{name}" for name in (
-    "search_spec", "eval_spec", "required_eq", "permutation_eq", "required_eval_spec",
-    "required_slot_spec", "optional_slot_spec", "required_entry_spec", "optional_entry_spec",
-    "empty_eval_spec",
-    *(f"tuple{arity}_{operation}" for arity in range(1, 13)
-      for operation in ("initial", "matched", "clear", "finish", "output_order", "dispatch")),
+FORWARD_THEOREMS = tuple(f"RustHammer.Forward.{name}" for name in (
+    "primitive", "bit", "literal", "matched_bytes", "byte_pattern",
+    "bits", "signed_bits", "unsigned_integer", "signed_integer",
+    "take_aligned", "skip_bits", "epsilon", "fail",
+    "tell", "end_of_input", "sequence", "bind",
+    "map", "try_map", "verify", "choice",
+    "optional", "and", "not", "left",
+    "right", "middle", "ignore", "match_restriction",
+    "exclusive", "capture", "recognize", "indexed_repetitions",
+    "bounded_iterations", "unbounded_iterations", "accumulated", "mavlink",
 ))
-
-SEEK_THEOREMS = (
-    *(f"RustHammer.Seeking.{name}" for name in (
-        "to_spec", "relative_spec", "from_end_spec", "to_valid", "clone_spec",
-        "retreat_cursor_spec", "offset_cursor_spec", "position_spec", "eval_spec",
-        "with_spec", "entry_with_spec", "target_success", "success_iff",
-        "success_under_extension", "relative_outcome", "final_not_more", "complete_spec",
-    )),
-    *(f"RustHammer.Offset.{name}" for name in (
-        "factory_spec", "payload_spec", "jump_success", "payload_success",
-    )),
-    "RustHammer.Proofs.match_endpoint_order_displacement",
-)
 
 
 def output(*args, cwd=None):
@@ -99,14 +89,14 @@ def translate(aeneas, llbc, destination, namespace):
 
 
 def audit_proofs(lake_args=()):
-    theorems = (ORDER_THEOREMS + BACKEND_THEOREMS + SPAN_THEOREMS
-                + CONSTRUCTOR_THEOREMS + PERMUTATION_THEOREMS + SEEK_THEOREMS
-                + MAVLINK_THEOREMS)
+    theorems = (ORDER_THEOREMS + PARSER_THEOREMS + SPAN_THEOREMS
+                + CONSTRUCTOR_THEOREMS
+                + MAVLINK_THEOREMS + FORWARD_THEOREMS)
     audit = ROOT / "target" / "proof-axioms.lean"
     audit.write_text("import RustHammer\n" + "".join(
         f"#print axioms {name}\n" for name in theorems
     ))
-    result = output("lake", *lake_args, "env", "lean", "-DwarningAsError=true", audit,
+    result = output("lake", *lake_args, "env", "lean", "-DwarningAsError=true", "-DautoImplicit=false", audit,
                     cwd=ROOT / "lean")
     audits = re.findall(
         r"'([^']+)' (?:depends on axioms: \[([^]]*)\]|does not depend on any axioms)", result,
@@ -160,11 +150,9 @@ def main():
         "--rustc-arg=--cfg=rusthammer_verify",
         "--start-from", "rusthammer::dependent_examples::payload",
         "--start-from", "rusthammer::dependent_examples::fields",
-        "--start-from", "rusthammer::offset_example::payload",
         "--start-from", "rusthammer::flags_example::parse_flags",
         "--start-from", "rusthammer::grammar::bytes::take_aligned",
         "--start-from", "rusthammer::grammar::numeric::read_bits",
-        "--start-from", "rusthammer::input_types::ParseContext::PARTIAL",
         "--start-from", "rusthammer::grammar::sequence::seq",
         "--start-from", "rusthammer::grammar::control::choice",
         "--start-from", "rusthammer::grammar::control::optional",
@@ -172,13 +160,6 @@ def main():
         "--start-from", "rusthammer::grammar::transform::try_map",
         "--start-from", "rusthammer::grammar::transform::verify",
         "--start-from", "rusthammer::grammar::sequence::bind",
-        "--start-from", "rusthammer::grammar::permutation::permutation",
-        "--start-from", "rusthammer::grammar::permutation::required",
-        "--start-from", "{impl rusthammer::grammar::permutation::Layout for _}",
-        "--start-from", "{impl rusthammer::grammar::permutation::Items for _}",
-        "--start-from", "{impl rusthammer::grammar::permutation::ItemEval for _}",
-        "--start-from", "{impl core::clone::Clone for rusthammer::grammar::permutation::Permutation}",
-        "--start-from", "{impl core::clone::Clone for rusthammer::grammar::permutation::Required}",
         "--start-from", "rusthammer::marker_example::parse_marker",
         "--start-from", "rusthammer::record_example::parse_record",
         "--start-from", "rusthammer::mavlink_example::mavlink_v2",
@@ -189,12 +170,8 @@ def main():
         "--start-from", "rusthammer::span_types::BitSpan::input",
         "--start-from", "rusthammer::span_types::BitSpan::start",
         "--start-from", "rusthammer::span_types::BitSpan::end",
-        "--start-from", "rusthammer::span_types::BitSpan::bit_order",
         "--start-from", "rusthammer::span_types::BitSpan::is_empty",
         "--start-from", "rusthammer::span_types::BitSpan::as_bytes",
-        "--start-from", "rusthammer::grammar::position::Seek::to",
-        "--start-from", "rusthammer::grammar::position::Seek::relative",
-        "--start-from", "rusthammer::grammar::position::Seek::from_end",
         "--start-from", "rusthammer::grammar::position::SkipBits::new",
         "--start-from", "rusthammer::grammar::position::SkipBits::bits",
         "--start-from", "rusthammer::grammar::numeric::SignedBits::new",
@@ -236,12 +213,11 @@ def main():
         "--start-from", "rusthammer::grammar::repeat::FoldSepBy::min",
         "--start-from", "rusthammer::grammar::repeat::FoldSepBy::max",
         "--start-from", "{impl rusthammer::parser_traits::Parser for _}",
-        "--start-from", "{impl rusthammer::parser_traits::Eval for _}",
         # Clone roots follow definition paths, including the private family modules.
         *(
             arg
             for module in (
-                "input_types", "parser_traits", "span_types", "grammar::numeric", "grammar::bytes",
+                "input_types", "span_types", "grammar::numeric", "grammar::bytes",
                 "grammar::position", "grammar::order", "grammar::sequence",
                 "grammar::control", "grammar::transform", "grammar::span", "grammar::repeat",
             )
@@ -258,7 +234,6 @@ def main():
         "--dest-file", "target/rusthammer.llbc", "--", "--lib", "--locked", "--features", "alloc",
     )
     translate(aeneas, "target/rusthammer.llbc", "lean/RustHammer", "RustHammer.Code")
-    run("python3", ROOT / "tools/generate_permutation_tuple_proofs.py", "--check")
 
     optimized = ROOT / "target" / "optimized"
     optimized.mkdir(parents=True, exist_ok=True)
@@ -280,7 +255,7 @@ def main():
     run("cargo", "test", *cargo_args, "--no-default-features")
     run("cargo", "test", *cargo_args, "--features", "alloc")
     entries = (
-        "checked_flag", "packet", "complete_bit", "blocks", "leading_ones", "backend_payload",
+        "checked_flag", "packet", "complete_bit", "blocks", "leading_ones",
         "folded_checksum", "leading_ones_count",
         "separated_blocks", "separated_checksum",
         "bound_payload", "bound_literal", "bound_blocks", "bound_reference",
@@ -294,11 +269,8 @@ def main():
         "restricted_payload", "difference_pattern", "exclusive_patterns", "exclusive_value",
         "complete_matches",
         "ordered_fields", "scoped_payload", "scoped_pattern",
-        "spanned_pattern", "recognized_payload", "scoped_span", "span_views", "backend_span",
-        "constructor_header", "constructor_choice", "constructor_payload",
-        "seek_absolute", "seek_relative", "seek_end_relative", "seek_packet", "seek_spanned",
-        "seek_repeated", "seek_compared", "seek_backend", "seek_saved_position",
-        "permuted_borrows", "permuted_headers", "permuted_backend", "permuted_empty", "permuted_twelve",
+        "spanned_pattern", "recognized_payload", "scoped_span", "span_views",
+        "constructor_header", "constructor_choice", "constructor_payload", "mavlink_packet",
     )
     entry_args = [
         arg for name in entries
@@ -307,6 +279,7 @@ def main():
     run(
         str(charon), "cargo", "--preset=aeneas", "--sysroot", "default",
         *entry_args, "--include", "rusthammer::_",
+        "--include", "core::ops::function::impls::_",
         "--dest-file", consumer / "rusthammer_cross_crate_probe.llbc",
         "--", "--lib", *cargo_args, "--features", "alloc",
     )
@@ -330,7 +303,7 @@ def main():
     run("lake", *lake_args, "build", cwd=ROOT / "lean")
     audit_proofs(lake_args)
     for path in compatibility_files:
-        run("lake", *lake_args, "env", "lean", "-DwarningAsError=true", path, cwd=ROOT / "lean")
+        run("lake", *lake_args, "env", "lean", "-DwarningAsError=true", "-DautoImplicit=false", path, cwd=ROOT / "lean")
 
 
 if __name__ == "__main__":

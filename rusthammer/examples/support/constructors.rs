@@ -8,7 +8,7 @@ pub struct Header {
     pub length: u16,
 }
 
-/// Hide the closure type while preserving the node's backend implementations.
+/// Hide the closure type while preserving the node's direct parser implementation.
 pub fn header() -> Map<Seq<Byte, BeU16>, impl Fn((u8, u16)) -> Header + Copy> {
     map(seq(Byte, BeU16), |(tag, length)| Header { tag, length })
 }

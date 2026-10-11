@@ -1,11 +1,11 @@
 // Standalone driver for tools/compare_matches.py; not part of the library API.
-#[allow(dead_code)]
+#[allow(dead_code, unused_imports)]
 #[path = "../../src/lib.rs"]
 mod rusthammer;
 
 use rusthammer::{
-    And, ButNot, Cursor, Difference, Epsilon, Eval, Fail, Grammar, Left, Literal, Map,
-    ParseContext, ParseOutcome, Parser, Right, SkipBits, Xor,
+    And, ButNot, ByteOrder, Cursor, Difference, Epsilon, Fail, Left, Literal, Map, ParseError,
+    Parser, Right, SkipBits, Xor,
 };
 use std::io::{self, BufRead};
 
@@ -28,49 +28,48 @@ impl Atom {
 }
 
 // Normalize C's discarded/unit AST to zero only in this test adapter.
-impl<'input> Grammar<'input> for Atom {
-    type Output = u64;
-}
 
-impl<'input, Backend> Eval<'input, Backend> for Atom {
-    fn eval(
+impl<'input> Parser<'input> for Atom {
+    type Output = u64;
+
+    fn parse_with(
         &self,
-        backend: &mut Backend,
+
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<u64> {
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, u64), ParseError> {
         match self.kind {
             1 => Map {
                 parser: SkipBits::new(usize::from(self.width)),
                 map: |()| 0,
             }
-            .eval(backend, input, cursor, context),
+            .parse_with(input, cursor, byte_order),
             5 => Map {
                 parser: Epsilon,
                 map: |()| 0,
             }
-            .eval(backend, input, cursor, context),
-            6 => Fail::<u64>::new().eval(backend, input, cursor, context),
+            .parse_with(input, cursor, byte_order),
+            6 => Fail::<u64>::new().parse_with(input, cursor, byte_order),
             _ => {
                 let literal = Literal::new(self.width, self.expected).unwrap();
                 match self.kind {
-                    0 => literal.eval(backend, input, cursor, context),
+                    0 => literal.parse_with(input, cursor, byte_order),
                     2 => Map {
                         parser: And { parser: literal },
                         map: |()| 0,
                     }
-                    .eval(backend, input, cursor, context),
+                    .parse_with(input, cursor, byte_order),
                     3 => Right {
                         first: SkipBits::new(3),
                         second: literal,
                     }
-                    .eval(backend, input, cursor, context),
+                    .parse_with(input, cursor, byte_order),
                     4 => Left {
                         first: literal,
                         second: SkipBits::new(3),
                     }
-                    .eval(backend, input, cursor, context),
+                    .parse_with(input, cursor, byte_order),
                     _ => panic!("unsupported atom"),
                 }
             }

@@ -1,356 +1,175 @@
 # RustHammer design and verification overview
 
-This overview describes the verified implementation at `c5c2643`, before the
-2026-10-10 simplification. The [active v1 plan](../plans/rusthammer.md) now targets
-one direct parser interface, complete inputs, high-first bits, and forward
-successful consumption. Diagnostics, permutation, and seeking are deferred.
-That migration is pending; the broader API and proof descriptions here record
-the baseline, not requirements on the new design.
-
-MAVLink 2 packet parsing is the v1 target application. The
-[active application plan](../plans/rusthammer.md#target-application-mavlink-2-packet-parsing)
-uses the unsigned framing/CRC example as the starting point. Byte order remains
-configurable, and authentication/key/replay state belongs to application code.
-The current proofs do not cover additional payload or signature-field decoding.
-
-RustHammer currently has three connected parts: **a typed Rust parser-combinator
-library, a translation of that implementation into Lean, and mathematical
-specifications with proofs about the translated code**. The current
-implementation uses direct execution of nonrecursive grammars. The work on
-recursive grammars and packrat remains separate, deferred research.
+RustHammer v1 is a typed parser-combinator core for direct execution on complete
+immutable byte slices. MAVLink 2 framing is the initial target. The current
+application example accepts unsigned frames with a borrowed payload and a
+validated dialect-dependent CRC. The [README](README.md) describes the public
+API; the [plan](../plans/rusthammer.md) records scope and remaining decisions.
 
 ## Grammar representation and execution
 
-The central Rust abstraction is a **grammar value whose type determines its
-output**. A primitive is usually a small struct containing configuration; a
-combinator is a struct containing its children and possibly callbacks.
+A grammar is an ordinary Rust value whose type records its children and callbacks.
+`Seq<P, Q>` stores two parsers; `Map<P, F>` stores a parser and transformation;
+`Bind<P, F>` stores a parser and a factory for the following parser. There is no
+runtime grammar graph, generic backend, interpreter state, or engine selection.
 
-For example:
+One `Parser<'input>` trait declares the associated `Output` and execution method:
 
-```rust
-use rusthammer::grammar::{seq, BeU16, Byte, Seq};
-use rusthammer::{Cursor, Parser};
-
-let header: Seq<Byte, BeU16> = seq(Byte, BeU16);
-
-let result = header.parse(&[7, 0, 3, 99], Cursor::start());
-// Ok((Cursor { byte: 3, bit: 0 }, (7u8, 3u16)))
+```rust,ignore
+fn parse_with(
+    &self,
+    input: &'input [u8],
+    cursor: Cursor,
+    byte_order: ByteOrder,
+) -> Result<(Cursor, Self::Output), ParseError>;
 ```
 
-`seq` constructs a `Seq` containing two children. During execution, the first
-child runs, then the second runs at the returned cursor, and their values become
-a pair. Construction itself performs no parsing.
+The provided `parse` method supplies big byte order. Outputs can be owned or
+borrowed, including an input borrow and an independently borrowed configuration
+in one result. Outputs need neither `Clone` nor `Copy`. `&P` forwards execution;
+node cloning/copying depends only on stored configuration. Constructors store
+children and callbacks without invoking them. The seven free construction helpers
+return concrete nodes and preserve normal Rust type inference.
 
-This retains a function-like interpretation of a parser while also preserving
-grammar structure. The representation is a nested collection of concrete Rust
-types, using static dispatch. There is no central, heap-allocated grammar-node
-enum or universal dynamically typed AST.
+Complete input is a property of an invocation, not a demand to consume every byte.
+Prefix parsers return a cursor; `End` adds exact consumption. Exhaustion returns
+`UnexpectedEnd`. Transport buffering and retries with a new complete buffer are
+application responsibilities.
 
-The three traits separate different responsibilities:
+## Input and parser contracts
 
-| Trait | Responsibility |
-|---|---|
-| `Grammar<'input>` | Declares the associated `Output` type. |
-| `Eval<'input, Backend>` | Executes the grammar using a particular backend and its mutable state. |
-| `Parser<'input>` | Supplies convenient `.parse()` and `.parse_with()` methods for grammars supporting `Eval<Direct>`. |
+`Cursor { byte, bit }` tracks a byte index and the number of consumed high bits.
+Its canonical end position is `(input.len(), 0)`. Lean uses the unbounded
+mathematical position `8 * byte + bit`. Rust advances or compares byte/bit
+coordinates directly to avoid absolute-position overflow.
 
-These definitions are together in [parser_traits.rs](src/parser_traits.rs).
+High-first traversal is fixed. Big/little byte order determines how successive
+physical-byte fragments contribute to a numeric value. `WithByteOrder` passes an
+order to its child without checking alignment; later siblings receive their
+enclosing order. Fixed `Be*` readers pin big order. Raw payload slicing does not
+interpret byte order.
 
-An associated output type means that a particular grammar type, for a particular
-input lifetime, determines its output. Many different grammar types can produce
-`u8`; that creates no ambiguity.
+Input-reading primitives validate cursors. Existing empty grammar behavior is
+preserved: for example, `Epsilon`, an empty pattern, or a zero-cap repetition may
+return an invalid raw entry cursor unchanged. The supported cursor law therefore
+starts from a **valid** entry: successful execution returns a valid position at
+or after that entry. It is a semantic obligation for custom implementations and
+factory-produced parsers. The trait itself cannot enforce it.
 
-`Direct` is an empty backend. Combinators call their children's `eval` methods
-and pass the same backend through every call. This boundary also supports custom
-bookkeeping backends, but a backend parameter alone does not implement caching
-or another parsing algorithm. Future engines still need their own implementation
-and proofs.
+`Mismatch`, `UnexpectedEnd`, and `TrailingInput` permit recovery. Choice retries
+at the original cursor; lookahead restores it. Fatal cursor, alignment, progress,
+and count errors propagate. Callbacks execute only on the relevant successes;
+rolling back a cursor does not undo their effects. Generic proofs require explicit
+termination and semantic contracts for children and callbacks.
 
-## Input, outcomes, and parser behavior
+`WithSpan` validates entry and the child's successful endpoint before constructing
+a borrowed interval. `Recognize` discards the child value. Span geometry needs no
+direction parameter. Aligned spans expose their exact original bytes.
 
-**Input, position, execution settings, and mutable execution state are separate.**
-Each evaluation receives:
+Repetition uses one shared driver with accumulator operations. Collecting modes
+use `Vec` behind `alloc`; folds can operate without allocation. Finite repetitions
+permit empty success. Unbounded iterations must strictly advance within the
+input, including each whole separator/item attempt, before retaining its output.
+Bounds, count overflow, recoverable stopping, and callback order are explicit in
+the specification.
 
-- An immutable input byte slice.
-- A `Cursor { byte, bit }`.
-- A `ParseContext` containing bit order, byte order, and input finality.
-- A mutable backend.
+## Source organization
 
-Its result is:
+| Location | Purpose |
+| --- | --- |
+| [src/parser_traits.rs](src/parser_traits.rs) | Direct parser trait and shared-reference forwarding |
+| [src/input_types.rs](src/input_types.rs) | Cursor, byte order, configuration and parse errors |
+| [src/span_types.rs](src/span_types.rs) | Validated borrowed span |
+| [src/grammar/](src/grammar/) | Public grammar namespace, with private implementation family files |
+| [examples/support/](examples/support/) | Shared application grammars used by examples, tests, and extraction |
+| [tests/](tests/) | Oracles, boundary cases, callbacks, ownership/drop and borrow identity tests |
+| [probes/cross_crate/](probes/cross_crate/) | Normal Cargo consumer exercising supported public forms |
+| [lean/RustHammer/](lean/RustHammer/) | Generated code, independent specifications, and proofs |
+| [tools/verify.py](tools/verify.py) | Native, extraction, Lean, and axiom verification gates |
 
-```rust
-enum ParseOutcome<T> {
-    Success(Cursor, T),
-    Error(ParseError),
-    NeedMore,
-}
-```
-
-This makes consumption explicit: successful parsing returns a new cursor.
-Recoverable failure allows a combinator such as `Choice` to try another child at
-the original cursor. Backend bookkeeping and callback effects survive that retry.
-
-The returned cursor can precede the entry cursor. `Seek::to`, `Seek::relative`,
-and `Seek::from_end` reposition without reading bytes and return the destination
-as their value. Finite repetition can move backward; unbounded repetition still
-requires net forward progress. Spans measure only their endpoint interval, so
-they may include skipped bytes or omit reads made during an excursion.
-
-`NeedMore` means that the supplied buffer does not establish an answer yet. It
-propagates before alternatives are tried or optional absence is inferred. There
-is currently no saved continuation or buffering layer: callers retry with
-accumulated input and the original cursor.
-
-Finality and full consumption are separate concepts. `.parse()` treats the
-supplied input as final, but it may leave input unconsumed—as in the example
-above. Compose with `End` when the grammar must consume everything.
-
-The core is bit-oriented. Bit direction and byte significance are independently
-configurable. `WithOrder` scopes those settings, with byte-aligned boundaries
-required when changing bit direction. Span metadata is opt-in: `WithSpan<P>`
-returns the child's value together with its span, while `Recognize<P>` returns
-the span.
-
-Outputs are ordinary Rust values. They can borrow input or grammar configuration,
-and generally need neither `Copy` nor `Clone`. Parser values can themselves be
-copied or cloned when their stored fields support it. The crate is `no_std`,
-forbids unsafe Rust, and has no runtime dependencies. Collecting repetition uses
-the optional `alloc` feature; folding repetition can accumulate results without
-library allocation.
-
-The implementation also shares machinery between related operations. `Repeat`,
-`FoldRepeat`, `SepBy`, and `FoldSepBy` use a common iteration driver with different
-child-selection and storage policies. Output-selection combinators reuse
-sequencing. Permutation has one search implementation shared by its supported
-tuple arities.
-
-## Code organization
-
-Paths in this table are relative to the `rusthammer/` directory unless indicated
-otherwise.
-
-| Location | What it contains |
-|---|---|
-| [src/lib.rs](src/lib.rs) | Crate documentation, module declarations, public re-exports, and private extraction fixtures. |
-| [src/parser_traits.rs](src/parser_traits.rs) | `Grammar`, `Eval`, `Parser`, `Direct`, and shared-reference implementations. |
-| [src/input_types.rs](src/input_types.rs) | Cursor, errors, outcomes, ordering configuration, and input finality. |
-| [src/span_types.rs](src/span_types.rs) | The validated `BitSpan` result type and its borrowed byte view. |
-| [src/grammar/](src/grammar/) | The public grammar-building namespace, with private files for numeric and byte primitives, sequencing, control flow, transformations, repetition, positions, ordering scopes, spans, and permutation. |
-| [src/grammar/permutation.rs](src/grammar/permutation.rs) | Required/optional entries, tuple storage adapters, and permutation search. |
-| [src/grammar/position.rs](src/grammar/position.rs) | Skipping, position reporting, seeking, end-of-input, and checked cursor arithmetic. |
-| [examples/](examples/) and [examples/support/](examples/support/) | Runnable demonstrations and reusable application grammars. The [record format](examples/support/record.rs) is shared by examples, tests, and extraction. |
-| [tests/](tests/) | Native behavioral, boundary, ownership, borrowing, and cleanup tests, organized by feature. Some C comparison adapters live under `tests/compat/`. |
-| [lean/RustHammer/](lean/RustHammer/) | The generated Lean implementation, specifications, supporting mathematics, and proofs. |
-| [probes/](probes/) | Extraction experiments and compatibility fixtures. Some intentionally reproduce failures. The ordinary Cargo consumer here is part of routine verification. |
-| [tools/verify.py](tools/verify.py) and other tools | The main verification pipeline, focused compatibility checks, C comparisons, and tuple-proof generation. |
-| [../plans/](../plans/) (`rusthammer*.md`) | Design decisions, implementation status, intended capabilities, and deferred investigations. |
-
-Application-specific types such as `Record` are kept outside the public library.
-A private extraction configuration includes their shared source so the proofs
-concern the same implementation that examples and native tests use.
-
-The family files keep each grammar node's type, constructor, evaluator, and
-supporting helpers together. Their public items are re-exported through
-`rusthammer::grammar`, so callers need not name the private family modules.
-Crate-root exports such as `rusthammer::Seq` remain available too.
-The private support-module names avoid collisions with local variable names in
-the Lean generated by the pinned Aeneas version.
+The core is `no_std`, has no dependencies, and forbids unsafe Rust. Application
+formats are not library API. Research probes are separate from production source.
 
 ## From Rust to Lean
 
-**The Lean verification starts from the Rust implementation.** The pipeline is:
+The pinned Rust toolchain produces MIR; Charon translates selected roots to LLBC;
+Aeneas generates [Rusthammer.lean](lean/RustHammer/Rusthammer.lean). The generated
+module contains the actual implementations, trait dictionaries, callback code,
+and loop bodies. Handwritten proofs refer to those definitions. Regeneration is
+part of the verifier, and generated files must not be patched to make proofs pass.
 
-```mermaid
-flowchart LR
-    R["Rust source"] --> M["rustc MIR"]
-    M --> C["Charon: structured LLBC"]
-    C --> A["Aeneas: generated Lean implementation"]
-    A --> P["Proofs checked by Lean"]
-    S["Mathematical specifications"] --> P
-```
+Aeneas's outer `Result` models execution, including panics/failure or divergence.
+Inside it, Rust's `core.result.Result (Cursor × Output) ParseError` distinguishes
+successful parsing from an ordinary parser error. A totality theorem for the
+outer computation can therefore establish both successful and rejecting parsing
+without claiming that every input is accepted.
 
-Charon extracts a structured representation of Rust's compiler intermediate code.
-Aeneas translates it into Lean definitions. The checked-in result is
-[Rusthammer.lean](lean/RustHammer/Rusthammer.lean), under the namespace
-`RustHammer.Code`. We regenerate this file from Rust rather than editing it.
+A specification is a relation between input, entry cursor, and a Rust result.
+Combinator relations compose arbitrary child relations; proofs relate extracted
+execution to those relations under child/callback contracts. Application proofs
+instantiate them with numeric decoding, borrowed slices, format constraints, and
+checksum specifications.
 
-The translation exposes details that Rust normally hides. Trait implementations
-become explicit dictionaries of operations. Mutable backend state becomes an
-explicit returned value. Rust machine integers retain bounded arithmetic and
-its safety obligations.
+The build checks both promoted and optimized MIR and separately extracts a Cargo
+consumer through its normal path dependency. This catches source patterns that
+work in local extraction but fail once the parser is used downstream. Remaining
+restrictions and their controls are recorded in the [direct-v1 probe](probes/direct_v1/README.md).
 
-The generated functions use an outer Aeneas execution result. This is distinct
-from the parser's own `ParseOutcome`: returning `ParseOutcome.Error(Mismatch)` is
-an ordinary, successful execution of a rejecting parser. An outer execution
-failure represents something such as a modeled panic.
+## Proof organization and coverage
 
-That distinction explains the usual theorem notation:
+| Area | Specifications and proofs |
+| --- | --- |
+| Cursor, bit and payload primitives | `Spec`, `Proofs`, `BitsSpec`, `BitsProofs`, `CompleteProofs` |
+| Direct composition and callbacks | `ParserSpec`, `ParserProofs`, `Control*`, `Selection*`, `Composition*`, `Bind*` |
+| Numeric interpretation | `Order*`, `SignedBits*`, `Integer*`, `IntRange*` |
+| Bytes and positions | `Byte*`, `ByteSet*`, `Position*`, `Match*` |
+| Borrowed spans | `SpanSpec`, `SpanProofs` |
+| Repetition and folds | `Repeat*`, `UnboundedRepeatProofs`, `Iteration*`, `FoldRepeat*`, `SepBy*` |
+| Constructors and cursor preservation | `ConstructorProofs`, `ForwardProofs` |
+| Applications | `FlagsProofs`, `Record*`, `Dependent*`, marker proofs in `ControlProofs` |
+| MAVLink | `MavlinkSpec`, `MavlinkProofs`, `MavlinkProperties`, `MavlinkCrcSpec`, `MavlinkCrcProofs` |
 
-```lean
-parse_record input cursor parser
-  ⦃ result => Spec.recordOutcome input cursor result ⦄
-```
+Contracts cover arbitrary raw cursors and complete buffers, including error
+precedence, zero-width/count behavior, exact decoded values, unaligned fields,
+shared-reference reuse, callback short-circuiting, and borrowed source contents.
+Repetition proofs establish loop termination and arithmetic bounds. The forward
+cursor laws compose under explicit child contracts and apply directly to the
+MAVLink frame relation.
 
-Under the theorem's hypotheses, this means:
+The CRC implementation is compared to an independent bit-vector recurrence for
+arbitrary input bytes and `CRC_EXTRA`. MAVLink parsing proofs establish total
+execution under a dialect callback contract. Success establishes exact framing
+consumption, aligned endpoints, header constraints, the original payload interval,
+and the checksum over precisely the transmitted header/payload interval.
 
-> The translated computation terminates normally and returns a result satisfying
-> the stated contract.
-
-It therefore covers termination and absence of modeled execution failures, as
-well as the returned value. Expected parse errors can—and often should—satisfy
-that contract.
-
-## Specifications and proof organization
-
-**Specifications describe what parsing means using mathematics.** They commonly
-use unbounded natural numbers or integers, lists, and relations between inputs
-and outcomes.
-
-For instance, the numeric-field specification defines the decoded value by
-positional binary notation. It specifies that a successful width-`w` read
-advances exactly `w` bits. The proof connects the Rust shifts, masks, fragments,
-and machine arithmetic to that mathematical definition.
-
-Within the Lean directory, the organization largely follows this pattern:
-
-- `*Spec.lean` defines meaning and contracts.
-- `*Proofs.lean` proves the translated implementation satisfies them.
-- Supporting modules such as `OrderMath.lean` and `RepeatSupport.lean` handle
-  reusable arithmetic or driver obligations.
-- [RustHammer.lean](lean/RustHammer.lean) is the top-level import list for the
-  proof project.
-
-There is also a small adaptation layer: `DirectState.lean`, `Direct.lean`, and
-`DirectEquations.lean`. These specialize extracted evaluators to `Direct`,
-project away its empty state, and expose convenient equations. Their connection
-to the generated implementation is proved. They are not an independently assumed
-parser implementation.
-
-Most existing contracts concern direct execution.
-[BackendProofs.lean](lean/RustHammer/BackendProofs.lean) additionally proves
-sequencing and choice with arbitrary backend state transitions. Span and
-permutation proofs also explicitly account for backend state.
-
-**The proofs are compositional.** A sequencing theorem assumes contracts for its
-two children and establishes the sequencing contract: the second child starts at
-the first child's successful cursor, outputs are paired, and errors or
-incompleteness propagate correctly. An application can instantiate that theorem
-instead of reproving sequencing's implementation.
-
-Callbacks and custom parsers require their own contracts. For example, a `Map`
-proof needs to know that its callback terminates and has the desired relationship
-between input and output. Such obligations can be restricted to values actually
-reachable after child success. Merely constructing a grammar from library
-combinators does not automatically prove an application's intended format
-specification.
-
-Configuration invariants are explicit too. Rust makes a `Bits` width private and
-validates it in its constructor. The extracted Lean structure can nevertheless
-be written down with any width, so parsing theorems assume `validBits`;
-constructor theorems establish that invariant. This connects validated
-construction to safe execution.
-
-## Properties proved
-
-The main proved properties are:
-
-| Area | Properties established |
-|---|---|
-| Constructors and primitives | Valid configuration, exact decoded values, exact consumption, safe indexing/arithmetic/casts, and specified rejection of invalid cursors or insufficient input. |
-| Composition and control flow | Sequencing, ordered-choice priority, optionality, lookahead, output selection, mapping, and error/`NeedMore` propagation, under child contracts. |
-| Repetition and separated lists | Output counts and order, cursor chaining, stopping and rollback rules, fold results, progress checks, count-overflow handling, and termination. |
-| Dependent parsing | Correct use of a successful first value to construct the next parser, correct cursor transfer, and short-circuiting before unused factories or children. |
-| Ordering and spans | Correct physical-bit interpretation, scope-boundary rules, span validity, exact selected-bit geometry, and aligned byte views. |
-| Seeking | Safe signed arithmetic, exact destinations, input-finality classification, unchanged backend state, and stability of absolute/current-relative successes under extension. |
-| Permutation | Agreement with the ordered-search model, termination under child contracts, safe counters, backend transitions, and tuple storage/output-order equations. |
-| Application grammars | Acceptance and rejection according to independently stated format contracts, including decoded contents and consumption. |
-
-Termination arguments vary with the operation. Finite repetition decreases its
-remaining permitted calls, allowing empty successes. Unbounded repetition checks
-strict progress and decreases the remaining input bits. Permutation decreases
-the remaining entries and candidates. These are mathematical termination
-arguments; physical stack exhaustion remains outside them.
-
-The bounded record example gives a concrete picture of an application proof.
-Its format is:
-
-```text
-version: 3 bits | flags: 5 bits | length: 16 bits | payload: length bytes | EOF
-```
-
-The [record specification](lean/RustHammer/RecordSpec.lean) independently
-describes decoding and rejection conditions. The
-[record proofs](lean/RustHammer/RecordProofs.lean) establish that:
-
-- Valid aligned records with version 1 and payload length at most 1,024 bytes are
-  accepted.
-- Successful results contain the specified version, flags, and exact input
-  subsequence.
-- Payload length matches the declared length, and the final cursor is canonical
-  EOF.
-- Invalid inputs receive the specified errors, including their precedence.
-- Separate partial-input proofs cover incomplete data and waiting for EOF
-  confirmation.
-
-This provides both valid-input acceptance and correctness of returned results,
-together with the rejection contract.
-
-The [MAVLink specification](lean/RustHammer/MavlinkSpec.lean) describes the
-unsigned MAVLink 2 frame grammar, including little-endian numeric decoding and
-partial-input outcomes. Its [parser proof](lean/RustHammer/MavlinkProofs.lean)
-connects that contract to the extracted example. The
-[success properties](lean/RustHammer/MavlinkProperties.lean) establish exact
-consumption of `12 + payload_length` bytes, the payload's input slice, and the
-checksum interval excluding magic and the checksum itself. The
-[CRC proof](lean/RustHammer/MavlinkCrcProofs.lean) establishes termination and
-agreement with the reflected `0x8408` bit-vector specification for arbitrary
-byte slices, including the dialect's final `CRC_EXTRA` byte. The dialect callback
-needs a total-correctness contract; the example's HEARTBEAT lookup is proved
-separately. Payload decoding and signed frames are outside this example.
+The migration removes backend projection/state equations, input-finality
+conversion, incomplete-input lemmas, seek/offset proofs, permutation proofs,
+low-first geometry, and changed-direction scope guards. Retained complete-input,
+high-first behavior is proved against regenerated code. The [migration record](../plans/rusthammer.md#verification-and-proof-maintenance)
+maps the removed and retained proof areas. The earlier evidence remains at
+`c5c2643` and in the archived plan.
 
 ## Verification workflow and limits
 
-**The verification pipeline checks several different kinds of evidence.** From
-`rusthammer/`, `tools/verify.py` checks pinned tools, runs native tests with and
-without allocation, regenerates the primary Lean implementation, and builds the
-proofs. It also checks extraction from optimized MIR and from a separate Cargo
-consumer.
+From `rusthammer/`, run `python3 tools/verify.py --aeneas-dir /path/to/aeneas`.
+It checks formatting, tests with and without `alloc`, both MIR stages, consumer
+roots, full Lean compilation, absence of admissions/opaque project declarations,
+and standard-only axioms for selected theorem roots. `lake build` in `lean/`
+checks the current extracted definitions without regenerating them. Local package
+overrides are supported for existing Aeneas/Lean dependency checkouts.
 
-Those extra extraction checks matter because downstream dependency bodies arrive
-through a different compiler stage. They establish translation and Lean
-type-checking compatibility; the existing semantic proofs use the primary
-promoted-MIR translation. We have not separately proved equivalence between
-compiler stages.
+The trust boundary includes the pinned Rust compiler, Charon, Aeneas, its
+standard-library models, and Lean's kernel. Proofs do not establish physical
+resource bounds or recoverable allocation failure. The Aeneas vector model
+abstracts allocation and stores a bounded list; loop count obligations are proved.
+Arbitrary user destructors are outside that model. Native tests check ownership,
+drop behavior, and pointer identity because Lean's slice model retains contents.
 
-At the snapshot described here, the pipeline checks 66 consumer entry points and
-audits the axiom dependencies of 200 selected theorem roots. That is an audit
-count, not the total number of theorems. Project files contain no admitted
-obligations or project-defined axioms. Native tests and C comparisons provide
-additional evidence, including pointer identity and destructor behavior.
+C differential tests compare explicit retained subsets, not the whole C API.
+High-first ordering, primitive decoding, and match restrictions retain C behavior
+on complete inputs. There are no claims about retired bit directions or engines.
 
-The limits are explicit:
-
-- The proofs rely on the pinned translation tools, their execution/library
-  models, and Lean's checker; they do not verify the compiler or translation
-  pipeline itself.
-- Slice proofs describe contents rather than physical pointer identity.
-  Arbitrary user destructors are outside these functional contracts.
-- Allocation failure, physical memory limits, and stack overflow are not
-  covered. This includes the current permutation stack concern.
-- C comparisons cover selected operations and corpora; there is no general
-  proof of equivalence with C Hammer.
-- Recursive grammars, production packrat, and buffering/resumption are not
-  implemented. Native floating-point fields/ranges are excluded from the first
-  release due to the [pinned Aeneas limitations](probes/floating_point/README.md).
-  Seeking and permutation are implemented/proved in this baseline but are excluded
-  from the simplified v1, along with diagnostics and low-first bit traversal.
-
-## Suggested reading path
-
-For a first reading, follow one small operation through the layers: the traits
-in [parser_traits.rs](src/parser_traits.rs), `Seq` in
-[grammar/sequence.rs](src/grammar/sequence.rs), its outcome relation in
-[PartialSpec.lean](lean/RustHammer/PartialSpec.lean), and `seq_with_spec` in
-[PartialProofs.lean](lean/RustHammer/PartialProofs.lean). Then read the record
-specification and its application theorem. That shows how the implementation,
-reusable combinator contracts, and format-level guarantees fit together.
+Authentication, signing keys, and replay protection remain application concerns.
+CRC acceptance is not authentication. The current frame proof does not decode
+message payloads, accept signed frames, or prove conformance to every dialect.
+Those extensions require explicit scope and their own contracts.

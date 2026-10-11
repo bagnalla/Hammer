@@ -10,16 +10,16 @@ namespace RustHammer.Ordering
 open Code
 
 def literalOutcome (input : Slice U8) (cursor : Cursor) (width : U8) (expected : U64)
-    (order : Order) (result : Spec.ParseResult U64) : Prop :=
+    (order : ByteOrder) (result : Spec.ParseResult U64) : Prop :=
   ∃ numeric, outcome input cursor width order numeric ∧ result = Spec.literalResult expected numeric
 
-def signedBitsSuccess (input : Slice U8) (cursor : Cursor) (width : U8) (order : Order)
+def signedBitsSuccess (input : Slice U8) (cursor : Cursor) (width : U8) (order : ByteOrder)
     (result : Spec.ParseResult I64) : Prop :=
   ∃ next value, result = .Ok (next, value) ∧ Spec.validCursor input next ∧
     Spec.position next = Spec.position cursor + width.val ∧
     value.val = Spec.signedValue width.val (unsigned input order (Spec.position cursor) width.val)
 
-def signedBitsOutcome (input : Slice U8) (cursor : Cursor) (width : U8) (order : Order)
+def signedBitsOutcome (input : Slice U8) (cursor : Cursor) (width : U8) (order : ByteOrder)
     (result : Spec.ParseResult I64) : Prop :=
   if Spec.validCursor input cursor then
     if Spec.position cursor + width.val ≤ 8 * input.val.length then
@@ -27,13 +27,13 @@ def signedBitsOutcome (input : Slice U8) (cursor : Cursor) (width : U8) (order :
     else result = .Err .UnexpectedEnd
   else result = .Err .InvalidCursor
 
-def unsignedIntegerSuccess (ty : UScalarTy) (input : Slice U8) (cursor : Cursor) (order : Order)
+def unsignedIntegerSuccess (ty : UScalarTy) (input : Slice U8) (cursor : Cursor) (order : ByteOrder)
     (result : Spec.ParseResult (UScalar ty)) : Prop :=
   ∃ next value, result = .Ok (next, value) ∧ Spec.validCursor input next ∧
     Spec.position next = Spec.position cursor + ty.numBits ∧
     value.val = unsigned input order (Spec.position cursor) ty.numBits
 
-def unsignedIntegerOutcome (ty : UScalarTy) (input : Slice U8) (cursor : Cursor) (order : Order)
+def unsignedIntegerOutcome (ty : UScalarTy) (input : Slice U8) (cursor : Cursor) (order : ByteOrder)
     (result : Spec.ParseResult (UScalar ty)) : Prop :=
   if Spec.validCursor input cursor then
     if Spec.position cursor + ty.numBits ≤ 8 * input.val.length then
@@ -41,13 +41,13 @@ def unsignedIntegerOutcome (ty : UScalarTy) (input : Slice U8) (cursor : Cursor)
     else result = .Err .UnexpectedEnd
   else result = .Err .InvalidCursor
 
-def signedIntegerSuccess (ty : IScalarTy) (input : Slice U8) (cursor : Cursor) (order : Order)
+def signedIntegerSuccess (ty : IScalarTy) (input : Slice U8) (cursor : Cursor) (order : ByteOrder)
     (result : Spec.ParseResult (IScalar ty)) : Prop :=
   ∃ next value, result = .Ok (next, value) ∧ Spec.validCursor input next ∧
     Spec.position next = Spec.position cursor + ty.numBits ∧
     value.val = Spec.signedValue ty.numBits (unsigned input order (Spec.position cursor) ty.numBits)
 
-def signedIntegerOutcome (ty : IScalarTy) (input : Slice U8) (cursor : Cursor) (order : Order)
+def signedIntegerOutcome (ty : IScalarTy) (input : Slice U8) (cursor : Cursor) (order : ByteOrder)
     (result : Spec.ParseResult (IScalar ty)) : Prop :=
   if Spec.validCursor input cursor then
     if Spec.position cursor + ty.numBits ≤ 8 * input.val.length then
@@ -55,23 +55,19 @@ def signedIntegerOutcome (ty : IScalarTy) (input : Slice U8) (cursor : Cursor) (
     else result = .Err .UnexpectedEnd
   else result = .Err .InvalidCursor
 
-def matchBytes (input : Slice U8) (context : ParseContext) :
-    List U8 → Cursor → ParseOutcome Unit → Prop
-  | [], cursor, result => result = .Success cursor ()
+def matchBytes (input : Slice U8) (context : ByteOrder) :
+    List U8 → Cursor → Spec.ParseResult Unit → Prop
+  | [], cursor, result => result = .Ok (cursor, ())
   | expected :: rest, cursor, result =>
-    ∃ decoded, Partial.primitive context.status
-      (unsignedIntegerOutcome .U8 input cursor context.order) decoded ∧
+    ∃ decoded, Contracts.primitive
+      (unsignedIntegerOutcome .U8 input cursor context) decoded ∧
       match decoded with
-      | .Success next value => if value = expected then matchBytes input context rest next result
-          else result = .Error .Mismatch
-      | .Error error => result = .Error error
-      | .NeedMore => result = .NeedMore
-
-def bytePatternOutcome (input : Slice U8) (context : ParseContext) (pattern : Slice U8)
-    (cursor : Cursor) (result : ParseOutcome (Slice U8)) : Prop :=
+      | .Ok (next, value) => if value = expected then matchBytes input context rest next result
+          else result = .Err .Mismatch
+      | .Err error => result = .Err error
+def bytePatternOutcome (input : Slice U8) (context : ByteOrder) (pattern : Slice U8)
+    (cursor : Cursor) (result : Spec.ParseResult (Slice U8)) : Prop :=
   match result with
-  | .Success next output => output = pattern ∧ matchBytes input context pattern.val cursor (.Success next ())
-  | .Error error => matchBytes input context pattern.val cursor (.Error error)
-  | .NeedMore => matchBytes input context pattern.val cursor .NeedMore
-
+  | .Ok (next, output) => output = pattern ∧ matchBytes input context pattern.val cursor (.Ok (next, ()))
+  | .Err error => matchBytes input context pattern.val cursor (.Err error)
 end RustHammer.Ordering

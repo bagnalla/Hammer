@@ -1,4 +1,4 @@
-import RustHammer.PartialSpec
+import RustHammer.ParserSpec
 
 open RustHammer.Code.input_types
 
@@ -21,30 +21,26 @@ def byteOutcome (input : Slice U8) (cursor : Cursor) (result : ParseResult U8) :
 
 /-- Match a mathematical list of bytes in order. Each byte denotes eight bits,
 including at unaligned positions. A fully decoded mismatch rejects immediately;
-an incomplete byte is governed by input finality. The empty list is the identity,
+a truncated byte reports UnexpectedEnd. The empty list is the identity,
 including for raw cursors. This definition uses no machine counter or indexing. -/
-def matchBytes (input : Slice U8) (status : InputStatus) :
-    List U8 → Cursor → ParseOutcome Unit → Prop
-  | [], cursor, outcome => outcome = .Success cursor ()
+def matchBytes (input : Slice U8) :
+    List U8 → Cursor → Spec.ParseResult Unit → Prop
+  | [], cursor, outcome => outcome = .Ok (cursor, ())
   | expected :: rest, cursor, outcome =>
-    ∃ decoded, Partial.primitive status (byteOutcome input cursor) decoded ∧
+    ∃ decoded, Contracts.primitive (byteOutcome input cursor) decoded ∧
       match decoded with
-      | .Success next value => if value = expected then matchBytes input status rest next outcome
-          else outcome = .Error .Mismatch
-      | .Error error => outcome = .Error error
-      | .NeedMore => outcome = .NeedMore
-
+      | .Ok (next, value) => if value = expected then matchBytes input rest next outcome
+          else outcome = .Err .Mismatch
+      | .Err error => outcome = .Err error
 /-- Successful output is the configured pattern, independently of the input's
 storage. Slice identity is checked by Rust tests; the Lean slice model is by value. -/
-def bytePatternOutcome (input : Slice U8) (status : InputStatus) (pattern : Slice U8)
-    (cursor : Cursor) (outcome : ParseOutcome (Slice U8)) : Prop :=
+def bytePatternOutcome (input : Slice U8) (pattern : Slice U8)
+    (cursor : Cursor) (outcome : Spec.ParseResult (Slice U8)) : Prop :=
   match outcome with
-  | .Success next output => output = pattern ∧ matchBytes input status pattern.val cursor (.Success next ())
-  | .Error error => matchBytes input status pattern.val cursor (.Error error)
-  | .NeedMore => matchBytes input status pattern.val cursor .NeedMore
-
+  | .Ok (next, output) => output = pattern ∧ matchBytes input pattern.val cursor (.Ok (next, ()))
+  | .Err error => matchBytes input pattern.val cursor (.Err error)
 def bytePatternComplete (input pattern : Slice U8) (cursor : Cursor)
     (result : ParseResult (Slice U8)) : Prop :=
-  bytePatternOutcome input .Final pattern cursor (completedResult result)
+  bytePatternOutcome input pattern cursor (result)
 
 end RustHammer.Spec

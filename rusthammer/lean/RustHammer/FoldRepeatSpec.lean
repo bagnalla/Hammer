@@ -26,24 +26,24 @@ inductive folds {α R : Type} (initial : R → Prop) (step : R → α → R → 
       (prior : folds initial step values state) (last : step state value next) :
       folds initial step (values ++ [value]) next
 
-def boundedFoldRepeat {α R : Type} (child : Cursor → ParseOutcome α → Prop)
+def boundedFoldRepeat {α R : Type} (child : Cursor → Spec.ParseResult α → Prop)
     (initial : R → Prop) (step : R → α → R → Prop) (min max : Nat)
-    (cursor : Cursor) (outcome : ParseOutcome R) : Prop :=
+    (cursor : Cursor) (outcome : Spec.ParseResult R) : Prop :=
   accumulated (folds initial step) (boundedRepetition child min max cursor) outcome
 
-def unboundedFoldRepeat {α R : Type} (input : Slice U8) (child : Cursor → ParseOutcome α → Prop)
+def unboundedFoldRepeat {α R : Type} (input : Slice U8) (child : Cursor → Spec.ParseResult α → Prop)
     (initial : R → Prop) (step : R → α → R → Prop) (min : Nat)
-    (cursor : Cursor) (outcome : ParseOutcome R) : Prop :=
+    (cursor : Cursor) (outcome : Spec.ParseResult R) : Prop :=
   accumulated (folds initial step) (unboundedRepetition input child min cursor) outcome
 
 def boundedFoldRepeatComplete {α R : Type} (child : Cursor → ParseResult α → Prop)
     (initial : R → Prop) (step : R → α → R → Prop) (min max : Nat)
     (cursor : Cursor) (result : ParseResult R) : Prop :=
-  boundedFoldRepeat (fun start => completed (child start)) initial step min max cursor (completedResult result)
+  boundedFoldRepeat (fun start => satisfies (child start)) initial step min max cursor (result)
 
 def unboundedFoldRepeatComplete {α R : Type} (input : Slice U8) (child : Cursor → ParseResult α → Prop)
     (initial : R → Prop) (step : R → α → R → Prop) (min : Nat)
     (cursor : Cursor) (result : ParseResult R) : Prop :=
-  unboundedFoldRepeat input (fun start => completed (child start)) initial step min cursor (completedResult result)
+  unboundedFoldRepeat input (fun start => satisfies (child start)) initial step min cursor (result)
 
 end RustHammer.Spec

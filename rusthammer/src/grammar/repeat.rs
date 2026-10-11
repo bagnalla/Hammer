@@ -1,6 +1,4 @@
-use super::super::{
-    ConfigError, Cursor, Eval, Grammar, ParseContext, ParseError, ParseOutcome, Right,
-};
+use super::super::{ByteOrder, ConfigError, Cursor, ParseError, Parser, Right};
 
 #[cfg(feature = "alloc")]
 use super::super::alloc::vec::Vec;
@@ -10,7 +8,7 @@ use super::super::alloc::vec::Vec;
 ///
 /// Recoverable rejection stops successfully once the minimum is met, restoring
 /// the cursor to before that attempt. Otherwise the error propagates. Fatal errors
-/// and `NeedMore` always propagate, discarding previously collected values.
+/// always propagate, discarding previously collected values.
 /// Reaching a finite maximum succeeds without attempting another child. Finite
 /// repetition permits empty successes. Unbounded repetition validates its starting
 /// and successful child cursors and requires strict forward progress, returning
@@ -70,7 +68,7 @@ impl<P> Repeat<P> {
 
     /// Require at least `min` successes, with no configured maximum.
     /// Every successful child must advance within the input, even after `min`
-    /// is met. Recoverable rejection stops repetition; `NeedMore` still propagates.
+    /// is met. Recoverable rejection stops repetition.
     pub fn at_least(parser: P, min: usize) -> Self {
         Self {
             parser,
@@ -94,14 +92,14 @@ impl<P> Repeat<P> {
 /// The count bounds and stopping rules are the same as for `Repeat`: finite
 /// repetition permits empty successes, while unbounded repetition requires valid,
 /// strictly advancing cursors. Recoverable rejection stops after the minimum;
-/// fatal errors and `NeedMore` always propagate. The cursor rolls back to before
+/// fatal errors always propagate. The cursor rolls back to before
 /// the rejected attempt. Reaching the maximum makes no further child call.
 ///
 /// `init` creates a fresh accumulator once per parse, including a zero maximum.
 /// An invalid unbounded starting cursor is rejected before calling it. `fold`
 /// takes ownership of the accumulator and each accepted output in order, after
-/// progress and count checks. Neither type needs `Copy` or `Clone`. On error or
-/// `NeedMore`, the accumulator is discarded. Retrying a parse initializes again;
+/// progress and count checks. Neither type needs `Copy` or `Clone`. On error, the accumulator
+/// is discarded. Retrying a parse initializes again;
 /// this combinator does not retain partial state between calls.
 ///
 /// The driver uses no allocation; callbacks and child parsers may allocate.
@@ -180,8 +178,8 @@ impl<P, I, F> FoldRepeat<P, I, F> {
 ///
 /// The first attempt parses only an item. Each later attempt parses a separator
 /// and an item together. Recoverable rejection after the minimum rolls back the
-/// whole attempt, leaving a trailing separator unconsumed. Fatal errors and
-/// `NeedMore` always propagate. Reaching the maximum makes no separator call.
+/// whole attempt, leaving a trailing separator unconsumed. Fatal errors always propagate.
+/// Reaching the maximum makes no separator call.
 ///
 /// Counts refer to items. Finite repetition permits empty successes. Unbounded
 /// repetition requires the first item and each complete separator/item pair to
@@ -261,7 +259,7 @@ impl<P, S> SepBy<P, S> {
 /// after the progress/count checks. Outputs and accumulators need neither
 /// `Copy` nor `Clone`. Parser copying depends only on the stored components.
 ///
-/// Errors and `NeedMore` discard the accumulator. Retrying initializes again;
+/// Errors discard the accumulator. Retrying initializes again;
 /// cursor rollback does not undo callback effects. Like `FoldRepeat`, the driver
 /// allocates no storage, but children and callbacks may allocate. Verification
 /// requires child and callback contracts, including termination and panic freedom.
@@ -461,206 +459,164 @@ fn repeat_next_count(count: usize) -> Result<usize, ParseError> {
 }
 
 #[cfg(feature = "alloc")]
-impl<'input, P: Grammar<'input>> Grammar<'input> for Repeat<P> {
+impl<'input, P: Parser<'input>> Parser<'input> for Repeat<P> {
     type Output = Vec<P::Output>;
-}
 
-#[cfg(feature = "alloc")]
-impl<'input, Backend, P: Eval<'input, Backend>> Eval<'input, Backend> for Repeat<P> {
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
         repeat_run(
-            backend,
             &self.parser,
             self.bounds,
             &Collect,
             input,
             cursor,
-            context,
+            byte_order,
         )
     }
 }
 
-impl<'input, P, I, F, R> Grammar<'input> for FoldRepeat<P, I, F>
+impl<'input, P, I, F, R> Parser<'input> for FoldRepeat<P, I, F>
 where
-    P: Grammar<'input>,
+    P: Parser<'input>,
     I: Fn() -> R,
     F: Fn(R, P::Output) -> R,
 {
     type Output = R;
-}
 
-impl<'input, Backend, P, I, F, R> Eval<'input, Backend> for FoldRepeat<P, I, F>
-where
-    P: Eval<'input, Backend>,
-    I: Fn() -> R,
-    F: Fn(R, P::Output) -> R,
-{
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<R> {
-        repeat_run(
-            backend,
-            &self.parser,
-            self.bounds,
-            self,
-            input,
-            cursor,
-            context,
-        )
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, R), ParseError> {
+        repeat_run(&self.parser, self.bounds, self, input, cursor, byte_order)
     }
 }
 
-fn repeat_run<'input, Backend, P, A>(
-    backend: &mut Backend,
+fn repeat_run<'input, P, A>(
     parser: &P,
     bounds: RepeatBounds,
     accumulator: &A,
     input: &'input [u8],
     cursor: Cursor,
-    context: ParseContext,
-) -> ParseOutcome<A::Output>
+    byte_order: ByteOrder,
+) -> Result<(Cursor, A::Output), ParseError>
 where
-    P: Eval<'input, Backend>,
+    P: Parser<'input>,
     A: RepeatAccumulator<P::Output>,
 {
     repeat_run_with(
-        backend,
         parser,
         parser,
         bounds,
         accumulator,
         input,
         cursor,
-        context,
+        byte_order,
     )
 }
 
 #[cfg(feature = "alloc")]
-impl<'input, P: Grammar<'input>, S: Grammar<'input>> Grammar<'input> for SepBy<P, S> {
+impl<'input, P: Parser<'input>, S: Parser<'input>> Parser<'input> for SepBy<P, S> {
     type Output = Vec<P::Output>;
-}
 
-#[cfg(feature = "alloc")]
-impl<'input, Backend, P: Eval<'input, Backend>, S: Eval<'input, Backend>> Eval<'input, Backend>
-    for SepBy<P, S>
-{
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
         let following = Right {
             first: &self.separator,
             second: &self.parser,
         };
         repeat_run_with(
-            backend,
             &self.parser,
             &following,
             self.bounds,
             &Collect,
             input,
             cursor,
-            context,
+            byte_order,
         )
     }
 }
 
-impl<'input, P, S, I, F, R> Grammar<'input> for FoldSepBy<P, S, I, F>
+impl<'input, P, S, I, F, R> Parser<'input> for FoldSepBy<P, S, I, F>
 where
-    P: Grammar<'input>,
-    S: Grammar<'input>,
+    P: Parser<'input>,
+    S: Parser<'input>,
     I: Fn() -> R,
     F: Fn(R, P::Output) -> R,
 {
     type Output = R;
-}
 
-impl<'input, Backend, P, S, I, F, R> Eval<'input, Backend> for FoldSepBy<P, S, I, F>
-where
-    P: Eval<'input, Backend>,
-    S: Eval<'input, Backend>,
-    I: Fn() -> R,
-    F: Fn(R, P::Output) -> R,
-{
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<R> {
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, R), ParseError> {
         let following = Right {
             first: &self.separator,
             second: &self.parser,
         };
         repeat_run_with(
-            backend,
             &self.parser,
             &following,
             self.bounds,
             self,
             input,
             cursor,
-            context,
+            byte_order,
         )
     }
 }
 
 // Choose by retained item count, not cursor position: finite empty items are valid.
-fn repeat_parse<'input, Backend, P, Q>(
-    backend: &mut Backend,
+fn repeat_parse<'input, P, Q>(
     parser: &P,
     following: &Q,
     count: usize,
     input: &'input [u8],
     cursor: Cursor,
-    context: ParseContext,
-) -> ParseOutcome<P::Output>
+    byte_order: ByteOrder,
+) -> Result<(Cursor, P::Output), ParseError>
 where
-    P: Eval<'input, Backend>,
-    Q: Eval<'input, Backend, Output = P::Output>,
+    P: Parser<'input>,
+    Q: Parser<'input, Output = P::Output>,
 {
     if count == 0 {
-        parser.eval(backend, input, cursor, context)
+        parser.parse_with(input, cursor, byte_order)
     } else {
-        following.eval(backend, input, cursor, context)
+        following.parse_with(input, cursor, byte_order)
     }
 }
 
 // The first item and all following attempts share one count/progress/storage loop.
 // A separator/item pair is a single `Right` parser, so rejected pairs naturally
 // leave `next` at the cursor before the separator.
-fn repeat_run_with<'input, Backend, P, Q, A>(
-    backend: &mut Backend,
+fn repeat_run_with<'input, P, Q, A>(
     parser: &P,
     following: &Q,
     bounds: RepeatBounds,
     accumulator: &A,
     input: &'input [u8],
     cursor: Cursor,
-    context: ParseContext,
-) -> ParseOutcome<A::Output>
+    byte_order: ByteOrder,
+) -> Result<(Cursor, A::Output), ParseError>
 where
-    P: Eval<'input, Backend>,
-    Q: Eval<'input, Backend, Output = P::Output>,
+    P: Parser<'input>,
+    Q: Parser<'input, Output = P::Output>,
     A: RepeatAccumulator<P::Output>,
 {
     let unbounded = bounds.max.is_none();
     if let Err(error) = repeat_start(input, cursor, unbounded) {
-        return ParseOutcome::Error(error);
+        return Err(error);
     }
     let mut values = accumulator.init();
     let mut next = cursor;
@@ -669,29 +625,29 @@ where
     // this call in a `while` condition combined with early returns.
     loop {
         if !repeat_below_max(count, bounds.max) {
-            return ParseOutcome::Success(next, values);
+            return Ok((next, values));
         }
-        match repeat_parse(backend, parser, following, count, input, next, context) {
-            ParseOutcome::Success(after, value) => {
+        match repeat_parse(parser, following, count, input, next, byte_order) {
+            Ok(parsed) => {
+                let (after, value) = parsed;
                 if unbounded {
                     if let Err(error) = repeat_progress(input, next, after) {
-                        return ParseOutcome::Error(error);
+                        return Err(error);
                     }
                 }
                 count = match repeat_next_count(count) {
                     Ok(count) => count,
-                    Err(error) => return ParseOutcome::Error(error),
+                    Err(error) => return Err(error),
                 };
                 values = accumulator.step(values, value);
                 next = after;
             }
-            ParseOutcome::Error(error) => {
+            Err(error) => {
                 if count >= bounds.min && error.is_recoverable() {
-                    return ParseOutcome::Success(next, values);
+                    return Ok((next, values));
                 }
-                return ParseOutcome::Error(error);
+                return Err(error);
             }
-            ParseOutcome::NeedMore => return ParseOutcome::NeedMore,
         }
     }
 }

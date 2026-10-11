@@ -1,7 +1,4 @@
-use rusthammer::{
-    BeU16, ButNot, ByteIn, BytePattern, Cursor, Difference, Map, ParseContext, ParseOutcome,
-    Parser, Right, Xor,
-};
+use rusthammer::{BeU16, ButNot, ByteIn, BytePattern, Cursor, Difference, Map, Parser, Right, Xor};
 
 #[derive(Debug, PartialEq, Eq)]
 enum Value {
@@ -47,14 +44,11 @@ fn main() {
         Value::Word(0x1234)
     );
 
-    // A partial second match cannot yet be counted as a rejection.
+    // Exhaustion rejects the second match, so the first match is accepted.
     let prefix = ButNot {
         first: BytePattern::new(b"a"),
         second: BytePattern::new(b"ab"),
     };
-    assert_eq!(
-        prefix.parse_with(b"a", Cursor::start(), ParseContext::PARTIAL),
-        ParseOutcome::NeedMore
-    );
+
     assert_eq!(prefix.parse(b"a", Cursor::start()).unwrap().1, b"a");
 }

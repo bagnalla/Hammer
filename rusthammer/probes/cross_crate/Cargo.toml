@@ -13,3 +13,6 @@ rusthammer = { path = "../..", default-features = false }
 
 [lib]
 path = "lib.rs"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(rusthammer_verify)'] }

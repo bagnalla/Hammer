@@ -1,19 +1,8 @@
-use super::super::{
-    BitOrder, ByteOrder, ConfigError, Cursor, Eval, Grammar, Order, ParseContext, ParseError,
-    ParseOutcome,
-};
+use super::super::{ByteOrder, ConfigError, Cursor, ParseError, Parser};
 
 /// Read one bit, advancing into the next byte after its least-significant bit.
 /// All cursor values are checked; malformed input is an ordinary error.
 pub fn read_bit(input: &[u8], cursor: Cursor) -> Result<(Cursor, bool), ParseError> {
-    read_bit_ordered(input, cursor, BitOrder::HighFirst)
-}
-
-fn read_bit_ordered(
-    input: &[u8],
-    cursor: Cursor,
-    order: BitOrder,
-) -> Result<(Cursor, bool), ParseError> {
     if cursor.bit >= 8 {
         return Err(ParseError::InvalidCursor);
     }
@@ -25,10 +14,7 @@ fn read_bit_ordered(
         };
     }
 
-    let shift = match order {
-        BitOrder::HighFirst => 7 - cursor.bit,
-        BitOrder::LowFirst => cursor.bit,
-    };
+    let shift = 7 - cursor.bit;
     let value = ((input[cursor.byte] >> shift) & 1) != 0;
     let next = if cursor.bit == 7 {
         Cursor {
@@ -47,21 +33,16 @@ fn read_bit_ordered(
 #[derive(Clone, Copy)]
 pub struct Bit;
 
-impl<'input> Grammar<'input> for Bit {
+impl<'input> Parser<'input> for Bit {
     type Output = bool;
-}
 
-impl<'input, Backend> Eval<'input, Backend> for Bit {
-    fn eval(
+    fn parse_with(
         &self,
-        _: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<bool> {
-        context
-            .status
-            .classify(read_bit_ordered(input, cursor, context.order.bit))
+        _: ByteOrder,
+    ) -> Result<(Cursor, bool), ParseError> {
+        read_bit(input, cursor)
     }
 }
 
@@ -96,26 +77,21 @@ impl Bits {
     }
 }
 
-impl<'input> Grammar<'input> for Bits {
+impl<'input> Parser<'input> for Bits {
     type Output = u64;
-}
 
-impl<'input, Backend> Eval<'input, Backend> for Bits {
-    fn eval(
+    fn parse_with(
         &self,
-        _: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<u64> {
-        context
-            .status
-            .classify(read_ordered_bits(input, cursor, self, context.order))
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, u64), ParseError> {
+        read_ordered_bits(input, cursor, self, byte_order)
     }
 }
 
 /// Read a validated field with high-first bits and big byte order, without
-/// implicit alignment. Use `Bits::parse_with` for explicit ordering/finality.
+/// implicit alignment. Use `Bits::parse_with` for explicit byte order.
 pub fn read_bits(input: &[u8], cursor: Cursor, parser: &Bits) -> Result<(Cursor, u64), ParseError> {
     if cursor.bit >= 8
         || cursor.byte > input.len()
@@ -147,23 +123,12 @@ fn read_ordered_bits(
     input: &[u8],
     cursor: Cursor,
     parser: &Bits,
-    order: Order,
+    order: ByteOrder,
 ) -> Result<(Cursor, u64), ParseError> {
-    if let Order {
-        bit: BitOrder::HighFirst,
-        byte: ByteOrder::Big,
-    } = order
-    {
+    if let ByteOrder::Big = order {
         return read_bits(input, cursor, parser);
     }
     read_fragments(input, cursor, parser.width, order)
-}
-
-fn fragment_offset(bit: u8, take: u8, order: BitOrder) -> u8 {
-    match order {
-        BitOrder::HighFirst => bit,
-        BitOrder::LowFirst => 8 - bit - take,
-    }
 }
 
 fn append_fragment(value: u64, fragment: u64, done: u8, take: u8, order: ByteOrder) -> u64 {
@@ -192,7 +157,7 @@ fn read_fragments(
     input: &[u8],
     cursor: Cursor,
     width: u8,
-    order: Order,
+    order: ByteOrder,
 ) -> Result<(Cursor, u64), ParseError> {
     if cursor.bit >= 8
         || cursor.byte > input.len()
@@ -213,7 +178,7 @@ fn read_fragments(
         } else {
             available
         };
-        let bit = fragment_offset(next.bit, take, order.bit);
+        let bit = next.bit;
         let fragment = match read_bits(
             input,
             Cursor {
@@ -225,7 +190,7 @@ fn read_fragments(
             Ok((_, fragment)) => fragment,
             Err(error) => return Err(error),
         };
-        value = append_fragment(value, fragment, width - remaining, take, order.byte);
+        value = append_fragment(value, fragment, width - remaining, take, order);
         next = advance_fragment(next, take);
         remaining -= take;
     }
@@ -269,24 +234,21 @@ impl SignedBits {
     }
 }
 
-impl<'input> Grammar<'input> for SignedBits {
+impl<'input> Parser<'input> for SignedBits {
     type Output = i64;
-}
 
-impl<'input, Backend> Eval<'input, Backend> for SignedBits {
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<i64> {
-        match self.bits.eval(backend, input, cursor, context) {
-            ParseOutcome::Success(next, value) => {
-                ParseOutcome::Success(next, sign_extend(value, self.bits.width))
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, i64), ParseError> {
+        match self.bits.parse_with(input, cursor, byte_order) {
+            Ok(parsed) => {
+                let (next, value) = parsed;
+                Ok((next, sign_extend(value, self.bits.width)))
             }
-            ParseOutcome::Error(error) => ParseOutcome::Error(error),
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+            Err(error) => Err(error),
         }
     }
 }
@@ -312,23 +274,22 @@ fn sign_extend(value: u64, width: u8) -> i64 {
 #[derive(Clone, Copy)]
 pub struct Byte;
 
-impl<'input> Grammar<'input> for Byte {
+impl<'input> Parser<'input> for Byte {
     type Output = u8;
-}
 
-impl<'input, Backend> Eval<'input, Backend> for Byte {
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<u8> {
-        match (Bits { width: 8 }).eval(backend, input, cursor, context) {
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, u8), ParseError> {
+        match (Bits { width: 8 }).parse_with(input, cursor, byte_order) {
             // An eight-bit field is always representable as a byte.
-            ParseOutcome::Success(next, value) => ParseOutcome::Success(next, value as u8),
-            ParseOutcome::Error(error) => ParseOutcome::Error(error),
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+            Ok(parsed) => {
+                let (next, value) = parsed;
+                Ok((next, value as u8))
+            }
+            Err(error) => Err(error),
         }
     }
 }
@@ -342,25 +303,24 @@ macro_rules! fixed_integer {
         #[derive(Clone, Copy)]
         pub struct $name;
 
-        impl<'input> Grammar<'input> for $name {
-            type Output = $output;
-        }
 
-        impl<'input, Backend> Eval<'input, Backend> for $name {
-            fn eval(
+
+        impl<'input> Parser<'input> for $name {
+            type Output = $output;
+
+            fn parse_with(
                 &self,
-                backend: &mut Backend,
                 input: &'input [u8],
                 cursor: Cursor,
-                context: ParseContext,
-            ) -> ParseOutcome<$output> {
-                let context = if $pin_big {
-                    ParseContext { order: Order { bit: context.order.bit, byte: ByteOrder::Big }, status: context.status }
-                } else { context };
-                match ($field).eval(backend, input, cursor, context) {
-                    ParseOutcome::Success(next, value) => ParseOutcome::Success(next, value as $output),
-                    ParseOutcome::Error(error) => ParseOutcome::Error(error),
-                    ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+                byte_order: ByteOrder,
+            ) -> Result<(Cursor, $output), ParseError> {
+                let byte_order = if $pin_big {
+                    ByteOrder::Big
+                } else { byte_order };
+                match ($field).parse_with(input, cursor, byte_order) {
+                    Ok(parsed) => { let (next, value) = parsed; Ok((next, value as $output)) },
+                    Err(error) => Err(error),
+
                 }
             }
         }
@@ -370,7 +330,7 @@ macro_rules! fixed_integer {
 fixed_integer!(
     /// Read a big-endian 16-bit unsigned integer as `u16`.
     ///
-    /// Pins big byte order and inherits bit direction, without implicit alignment.
+    /// Pins big byte order, without implicit alignment.
     /// This zero-sized parser has no configuration to validate.
     ///
     /// ```
@@ -390,7 +350,7 @@ fixed_integer!(
 fixed_integer!(
     /// Read a big-endian 32-bit unsigned integer as `u32`.
     ///
-    /// Pins big byte order and inherits bit direction, without implicit alignment.
+    /// Pins big byte order, without implicit alignment.
     /// This zero-sized parser has no configuration to validate.
     BeU32,
     u32,
@@ -401,7 +361,7 @@ fixed_integer!(
 fixed_integer!(
     /// Read a big-endian 64-bit unsigned integer as `u64`.
     ///
-    /// Pins big byte order and inherits bit direction, without implicit alignment.
+    /// Pins big byte order, without implicit alignment.
     /// This zero-sized parser has no configuration to validate.
     BeU64,
     u64,
@@ -425,7 +385,7 @@ fixed_integer!(
 fixed_integer!(
     /// Read a big-endian 16-bit two's-complement integer as `i16`.
     ///
-    /// Pins big byte order and inherits bit direction, without implicit alignment.
+    /// Pins big byte order, without implicit alignment.
     /// This zero-sized parser has no configuration to validate.
     BeI16,
     i16,
@@ -438,7 +398,7 @@ fixed_integer!(
 fixed_integer!(
     /// Read a big-endian 32-bit two's-complement integer as `i32`.
     ///
-    /// Pins big byte order and inherits bit direction, without implicit alignment.
+    /// Pins big byte order, without implicit alignment.
     /// This zero-sized parser has no configuration to validate.
     BeI32,
     i32,
@@ -451,7 +411,7 @@ fixed_integer!(
 fixed_integer!(
     /// Read a big-endian 64-bit two's-complement integer as `i64`.
     ///
-    /// Pins big byte order and inherits bit direction, without implicit alignment.
+    /// Pins big byte order, without implicit alignment.
     /// This zero-sized parser has no configuration to validate.
     BeI64,
     i64,
@@ -466,7 +426,7 @@ fixed_integer!(
 /// Construction checks that width is at most 64 and value fits that width.
 /// The only valid zero-width literal is zero. Parsing does not recheck these
 /// configuration constraints. It reads the whole field before comparing, so a
-/// short partial prefix returns `NeedMore` even if its available bits differ.
+/// short input returns `UnexpectedEnd` even if its available bits differ.
 ///
 /// ```compile_fail,E0616
 /// let mut parser = rusthammer::Literal::new(3, 7).unwrap();
@@ -504,21 +464,16 @@ impl Literal {
     }
 }
 
-impl<'input> Grammar<'input> for Literal {
+impl<'input> Parser<'input> for Literal {
     type Output = u64;
-}
 
-impl<'input, Backend> Eval<'input, Backend> for Literal {
-    fn eval(
+    fn parse_with(
         &self,
-        _: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<u64> {
-        context
-            .status
-            .classify(read_literal(input, cursor, self, context.order))
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, u64), ParseError> {
+        read_literal(input, cursor, self, byte_order)
     }
 }
 
@@ -526,7 +481,7 @@ fn read_literal(
     input: &[u8],
     cursor: Cursor,
     parser: &Literal,
-    order: Order,
+    order: ByteOrder,
 ) -> Result<(Cursor, u64), ParseError> {
     match read_ordered_bits(input, cursor, &parser.bits, order) {
         Err(error) => Err(error),

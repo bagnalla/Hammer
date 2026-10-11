@@ -54,22 +54,22 @@ theorem fold_repeat_max_spec {P I F : Type} (parser : FoldRepeat P I F) :
 
 /-- The public bounded fold implements the callback recurrence over exactly the
 same child sequence, bounds, stopping, and rollback contract as collection. -/
-theorem fold_repeat_with_spec {P I F α R : Type} (pi : DirectParser P α)
+theorem fold_repeat_with_spec {P I F α R : Type} (pi : parser_traits.Parser P α)
     (ii : core.ops.function.Fn I Unit R) (fi : core.ops.function.Fn F (R × α) R)
     (parser : FoldRepeat P I F) (max : Usize) (hmax : parser.bounds.max = some max)
-    (input : Slice U8) (cursor : Cursor) (context : ParseContext) (hconfig : Spec.validFoldRepeat parser)
-    (child : Cursor → ParseOutcome α → Prop) (initial : R → Prop) (fold : R → α → R → Prop)
+    (input : Slice U8) (cursor : Cursor) (context : ByteOrder) (hconfig : Spec.validFoldRepeat parser)
+    (child : Cursor → Spec.ParseResult α → Prop) (initial : R → Prop) (fold : R → α → R → Prop)
     (hp : ∀ start, pi.parse_with parser.parser input start context ⦃ result => child start result ⦄)
     (hi : ii.call parser.init () ⦃ result => initial result ⦄)
     (hf : ∀ values next after value state,
-      Spec.repetitions child cursor values next → child next (.Success after value) →
+      Spec.repetitions child cursor values next → child next (.Ok (after, value)) →
       values.length < max.val → Spec.folds initial fold values state →
       fi.call parser.fold (state, value) ⦃ result => fold state value result ⦄) :
-    FoldRepeat.Insts.RusthammerParser.parse_with pi ii fi parser input cursor context
+    FoldRepeat.Insts.RusthammerParser_traitsParser.parse_with pi ii fi parser input cursor context
       ⦃ result => Spec.boundedFoldRepeat child initial fold parser.bounds.min.val max.val cursor result ⦄ := by
   have hb : parser.bounds = { min := parser.bounds.min, max := some max } := by
     cases h : parser.bounds; simp_all
-  rw [FoldRepeat.Insts.RusthammerParser.parse_with_eq]
+  rw [FoldRepeat.Insts.RusthammerParser_traitsParser.parse_with]
   rw [hb]
   apply repeat_run_bounded_spec pi (FoldRepeat.Insts.RusthammerGrammarRepeatRepeatAccumulator P ii fi)
     parser.parser parser.bounds.min max parser input cursor context (hconfig max hmax) child
@@ -84,23 +84,23 @@ theorem fold_repeat_with_spec {P I F α R : Type} (pi : DirectParser P α)
 
 /-- Unbounded folding retains only advancing successes and checks overflow before
 calling the fold step. It uses the same input-based termination proof as collection. -/
-theorem fold_repeat_unbounded_with_spec {P I F α R : Type} (pi : DirectParser P α)
+theorem fold_repeat_unbounded_with_spec {P I F α R : Type} (pi : parser_traits.Parser P α)
     (ii : core.ops.function.Fn I Unit R) (fi : core.ops.function.Fn F (R × α) R)
     (parser : FoldRepeat P I F) (hmax : parser.bounds.max = none)
-    (input : Slice U8) (cursor : Cursor) (context : ParseContext)
-    (child : Cursor → ParseOutcome α → Prop) (initial : R → Prop) (fold : R → α → R → Prop)
+    (input : Slice U8) (cursor : Cursor) (context : ByteOrder)
+    (child : Cursor → Spec.ParseResult α → Prop) (initial : R → Prop) (fold : R → α → R → Prop)
     (hp : ∀ start, pi.parse_with parser.parser input start context ⦃ result => child start result ⦄)
     (hi : ii.call parser.init () ⦃ result => initial result ⦄)
     (hf : ∀ values next after value state,
       Spec.repetitions (Spec.advancing input child) cursor values next →
-      Spec.advancing input child next (.Success after value) →
+      Spec.advancing input child next (.Ok (after, value)) →
       values.length < Usize.max → Spec.folds initial fold values state →
       fi.call parser.fold (state, value) ⦃ result => fold state value result ⦄) :
-    FoldRepeat.Insts.RusthammerParser.parse_with pi ii fi parser input cursor context
+    FoldRepeat.Insts.RusthammerParser_traitsParser.parse_with pi ii fi parser input cursor context
       ⦃ result => Spec.unboundedFoldRepeat input child initial fold parser.bounds.min.val cursor result ⦄ := by
   have hb : parser.bounds = { min := parser.bounds.min, max := none } := by
     cases h : parser.bounds; simp_all
-  rw [FoldRepeat.Insts.RusthammerParser.parse_with_eq]
+  rw [FoldRepeat.Insts.RusthammerParser_traitsParser.parse_with]
   rw [hb]
   apply repeat_run_unbounded_spec pi (FoldRepeat.Insts.RusthammerGrammarRepeatRepeatAccumulator P ii fi)
     parser.parser parser.bounds.min parser input cursor context child (Spec.folds initial fold) hp
@@ -121,41 +121,39 @@ theorem folds_function {α R : Type} (initial : R) (step : R → α → R) (valu
   | append _ hstep ih => simp [List.foldl_append, ← ih, hstep]
 
 /-- Exact repetition folds precisely the configured number of child values. -/
-theorem fold_repeat_exact_success {α R : Type} (child : Cursor → ParseOutcome α → Prop)
+theorem fold_repeat_exact_success {α R : Type} (child : Cursor → Spec.ParseResult α → Prop)
     (initial : R → Prop) (fold : R → α → R → Prop) (count : Nat) (cursor next : Cursor) (state : R)
-    (h : Spec.boundedFoldRepeat child initial fold count count cursor (.Success next state)) :
+    (h : Spec.boundedFoldRepeat child initial fold count count cursor (.Ok (next, state))) :
     ∃ values, values.length = count ∧ Spec.repetitions child cursor values next ∧
       Spec.folds initial fold values state := by
   rcases h with ⟨values, hfold, hlo, hhi, hprefix, _⟩
   exact ⟨values, by omega, hprefix, hfold⟩
 
 /-- Zero maximum needs only the initializer contract: neither child nor step runs. -/
-theorem fold_repeat_zero {P I F α R : Type} (pi : DirectParser P α)
+theorem fold_repeat_zero {P I F α R : Type} (pi : parser_traits.Parser P α)
     (ii : core.ops.function.Fn I Unit R) (fi : core.ops.function.Fn F (R × α) R)
-    (parser : P) (init : I) (fold : F) (input : Slice U8) (cursor : Cursor) (context : ParseContext)
+    (parser : P) (init : I) (fold : F) (input : Slice U8) (cursor : Cursor) (context : ByteOrder)
     (initial : R → Prop) (hi : ii.call init () ⦃ result => initial result ⦄) :
-    FoldRepeat.Insts.RusthammerParser.parse_with pi ii fi
+    FoldRepeat.Insts.RusthammerParser_traitsParser.parse_with pi ii fi
       { parser, bounds := { min := 0#usize, max := some 0#usize }, init, fold } input cursor context
-      ⦃ result => ∃ state, initial state ∧ result = .Success cursor state ⦄ := by
-  rw [FoldRepeat.Insts.RusthammerParser.parse_with_eq, DirectRun.repeat_run_eq, DirectRun.repeat_run_with_eq]
+      ⦃ result => ∃ state, initial state ∧ result = .Ok (cursor, state) ⦄ := by
+  rw [FoldRepeat.Insts.RusthammerParser_traitsParser.parse_with, grammar.repeat.repeat_run, grammar.repeat.repeat_run_with]
   simp only [core.option.Option.is_none, Option.isNone, repeat_start, Bool.false_eq_true,
     ↓reduceIte, bind_ok, FoldRepeat.Insts.RusthammerGrammarRepeatRepeatAccumulator,
     FoldRepeat.Insts.RusthammerGrammarRepeatRepeatAccumulator.init]
   step with hi as ⟨state, hstate⟩
-  unfold DirectRun.repeat_run_with_loop
-  apply direct_projection_spec
   unfold repeat_run_with_loop loop
-  simp [repeat_run_with_loop.body, repeat_below_max, DirectRun.repeat_parse_lift,
-    Std.bind_assoc, DirectRun.repeat_parse_eq, spec_ok, hstate]
+  simp [repeat_run_with_loop.body, repeat_below_max,
+    grammar.repeat.repeat_parse, spec_ok, hstate]
 
 /-- Invalid unbounded input requires no child, initializer, or step contracts. -/
-theorem fold_repeat_unbounded_invalid_cursor {P I F α R : Type} (pi : DirectParser P α)
+theorem fold_repeat_unbounded_invalid_cursor {P I F α R : Type} (pi : parser_traits.Parser P α)
     (ii : core.ops.function.Fn I Unit R) (fi : core.ops.function.Fn F (R × α) R)
     (parser : FoldRepeat P I F) (hmax : parser.bounds.max = none)
-    (input : Slice U8) (cursor : Cursor) (context : ParseContext) (hc : ¬Spec.validCursor input cursor) :
-    FoldRepeat.Insts.RusthammerParser.parse_with pi ii fi parser input cursor context
-      ⦃ result => result = .Error .InvalidCursor ⦄ := by
-  rw [FoldRepeat.Insts.RusthammerParser.parse_with_eq, DirectRun.repeat_run_eq, DirectRun.repeat_run_with_eq]
+    (input : Slice U8) (cursor : Cursor) (context : ByteOrder) (hc : ¬Spec.validCursor input cursor) :
+    FoldRepeat.Insts.RusthammerParser_traitsParser.parse_with pi ii fi parser input cursor context
+      ⦃ result => result = .Err .InvalidCursor ⦄ := by
+  rw [FoldRepeat.Insts.RusthammerParser_traitsParser.parse_with, grammar.repeat.repeat_run, grammar.repeat.repeat_run_with]
   simp only [hmax, core.option.Option.is_none, Option.isNone]
   step with repeat_start_spec input cursor true as ⟨initial, hinitial⟩
   simp [hc] at hinitial
@@ -163,53 +161,42 @@ theorem fold_repeat_unbounded_invalid_cursor {P I F α R : Type} (pi : DirectPar
 
 /-- Specialize the bounded theorem to complete input, then use this to obtain the
 public complete-input `parse` contract without any additional callback assumptions. -/
-theorem fold_repeat_complete_spec {P I F α R : Type} (pi : DirectParser P α)
+theorem fold_repeat_complete_spec {P I F α R : Type} (pi : parser_traits.Parser P α)
     (ii : core.ops.function.Fn I Unit R) (fi : core.ops.function.Fn F (R × α) R)
     (parser : FoldRepeat P I F) (min max : Nat) (input : Slice U8) (cursor : Cursor)
     (child : Cursor → Spec.ParseResult α → Prop) (initial : R → Prop) (fold : R → α → R → Prop)
-    (hp : FoldRepeat.Insts.RusthammerParser.parse_with pi ii fi parser input cursor ParseContext.FINAL
-      ⦃ result => Spec.boundedFoldRepeat (fun start => Spec.completed (child start))
+    (hp : FoldRepeat.Insts.RusthammerParser_traitsParser.parse_with pi ii fi parser input cursor ByteOrder.Big
+      ⦃ result => Spec.boundedFoldRepeat (fun start => Spec.satisfies (child start))
         initial fold min max cursor result ⦄) :
-    DirectParser.parse (FoldRepeat.Insts.RusthammerParser pi ii fi) parser input cursor
+    parser_traits.Parser.parse.default (FoldRepeat.Insts.RusthammerParser_traitsParser pi ii fi) parser input cursor
       ⦃ result => Spec.boundedFoldRepeatComplete child initial fold min max cursor result ⦄ := by
-  apply complete_spec (FoldRepeat.Insts.RusthammerParser pi ii fi) parser input cursor
+  apply complete_spec (FoldRepeat.Insts.RusthammerParser_traitsParser pi ii fi) parser input cursor
     (Spec.boundedFoldRepeatComplete child initial fold min max cursor)
-  change FoldRepeat.Insts.RusthammerParser.parse_with pi ii fi parser input cursor ParseContext.FINAL
+  change FoldRepeat.Insts.RusthammerParser_traitsParser.parse_with pi ii fi parser input cursor ByteOrder.Big
     ⦃ outcome => _ ⦄
   step with hp as ⟨outcome, houtcome⟩
   cases outcome with
-  | Success next state => exact ⟨.Ok (next, state), houtcome, rfl⟩
-  | Error error => exact ⟨.Err error, houtcome, rfl⟩
-  | NeedMore =>
-    rcases houtcome with ⟨_, _, _, _, parsed, _, heq⟩
-    cases parsed with
-    | Err _ => cases heq
-    | Ok pair => cases pair; cases heq
-
-theorem fold_repeat_unbounded_complete_spec {P I F α R : Type} (pi : DirectParser P α)
+  | Ok pair =>
+    rcases pair with ⟨next, state⟩
+    exact ⟨.Ok (next, state), houtcome, rfl⟩
+  | Err error => exact ⟨.Err error, houtcome, rfl⟩
+theorem fold_repeat_unbounded_complete_spec {P I F α R : Type} (pi : parser_traits.Parser P α)
     (ii : core.ops.function.Fn I Unit R) (fi : core.ops.function.Fn F (R × α) R)
     (parser : FoldRepeat P I F) (min : Nat) (input : Slice U8) (cursor : Cursor)
     (child : Cursor → Spec.ParseResult α → Prop) (initial : R → Prop) (fold : R → α → R → Prop)
-    (hp : FoldRepeat.Insts.RusthammerParser.parse_with pi ii fi parser input cursor ParseContext.FINAL
-      ⦃ result => Spec.unboundedFoldRepeat input (fun start => Spec.completed (child start))
+    (hp : FoldRepeat.Insts.RusthammerParser_traitsParser.parse_with pi ii fi parser input cursor ByteOrder.Big
+      ⦃ result => Spec.unboundedFoldRepeat input (fun start => Spec.satisfies (child start))
         initial fold min cursor result ⦄) :
-    DirectParser.parse (FoldRepeat.Insts.RusthammerParser pi ii fi) parser input cursor
+    parser_traits.Parser.parse.default (FoldRepeat.Insts.RusthammerParser_traitsParser pi ii fi) parser input cursor
       ⦃ result => Spec.unboundedFoldRepeatComplete input child initial fold min cursor result ⦄ := by
-  apply complete_spec (FoldRepeat.Insts.RusthammerParser pi ii fi) parser input cursor
+  apply complete_spec (FoldRepeat.Insts.RusthammerParser_traitsParser pi ii fi) parser input cursor
     (Spec.unboundedFoldRepeatComplete input child initial fold min cursor)
-  change FoldRepeat.Insts.RusthammerParser.parse_with pi ii fi parser input cursor ParseContext.FINAL
+  change FoldRepeat.Insts.RusthammerParser_traitsParser.parse_with pi ii fi parser input cursor ByteOrder.Big
     ⦃ outcome => _ ⦄
   step with hp as ⟨outcome, houtcome⟩
   cases outcome with
-  | Success next state => exact ⟨.Ok (next, state), houtcome, rfl⟩
-  | Error error => exact ⟨.Err error, houtcome, rfl⟩
-  | NeedMore =>
-    by_cases hv : Spec.validCursor input cursor
-    · simp only [Spec.unboundedFoldRepeat, Spec.accumulated, Spec.unboundedRepetition, if_pos hv] at houtcome
-      rcases houtcome with ⟨_, _, _, _, parsed, _, heq⟩
-      cases parsed with
-      | Err _ => cases heq
-      | Ok pair => cases pair; cases heq
-    · simp [Spec.unboundedFoldRepeat, Spec.accumulated, Spec.unboundedRepetition, hv] at houtcome
-
+  | Ok pair =>
+    rcases pair with ⟨next, state⟩
+    exact ⟨.Ok (next, state), houtcome, rfl⟩
+  | Err error => exact ⟨.Err error, houtcome, rfl⟩
 end RustHammer.Proofs

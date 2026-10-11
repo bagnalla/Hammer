@@ -1,29 +1,23 @@
 // Exercise the actual library using the same corpus and protocol as the scope probe.
 #![allow(dead_code)]
 
+#[allow(unused_imports)] // Crate-root re-exports are only partially used by this driver.
 #[path = "../../src/lib.rs"]
 mod rusthammer;
 use rusthammer::*;
 fn main() {
     use std::io::{self, BufRead, Write};
-    fn order(flags: u8) -> Order {
-        Order {
-            bit: if flags & 2 != 0 {
-                BitOrder::HighFirst
-            } else {
-                BitOrder::LowFirst
-            },
-            byte: if flags & 1 != 0 {
-                ByteOrder::Big
-            } else {
-                ByteOrder::Little
-            },
+    fn order(flags: u8) -> ByteOrder {
+        assert_ne!(flags & 2, 0, "v1 supports high-first bit traversal only");
+        if flags & 1 != 0 {
+            ByteOrder::Big
+        } else {
+            ByteOrder::Little
         }
     }
-    fn failure<T>(outcome: ParseOutcome<T>) -> String {
+    fn failure<T>(outcome: Result<(Cursor, T), ParseError>) -> String {
         match outcome {
-            ParseOutcome::Error(ParseError::Unaligned) => "U".into(),
-            ParseOutcome::Error(ParseError::UnexpectedEnd) => "E".into(),
+            Err(ParseError::UnexpectedEnd) => "E".into(),
             _ => panic!("unexpected differential-test outcome"),
         }
     }
@@ -47,23 +41,17 @@ fn main() {
                     byte: args[0],
                     bit: args[1] as u8,
                 };
-                let ctx = ParseContext {
-                    order: order(args[2] as u8),
-                    status: InputStatus::Final,
-                };
+                let ctx = order(args[2] as u8);
                 match Bits::new(args[3] as u8)
                     .unwrap()
                     .parse_with(&input, cursor, ctx)
                 {
-                    ParseOutcome::Success(c, value) => format!("1 {} {} {value}", c.byte, c.bit),
+                    Ok((c, value)) => format!("1 {} {} {value}", c.byte, c.bit),
                     other => failure(other),
                 }
             }
             "N" => {
-                let ctx = ParseContext {
-                    order: order(args[0] as u8),
-                    status: InputStatus::Final,
-                };
+                let ctx = order(args[0] as u8);
                 let widths = [
                     args[3] as u8,
                     args[4] as u8,
@@ -80,7 +68,7 @@ fn main() {
                 )
                 .unwrap()
                 {
-                    ParseOutcome::Success(end, (a, (b, (c, d)), e)) => {
+                    Ok((end, (a, (b, (c, d)), e))) => {
                         let rank = 8 * end.byte + end.bit as usize;
                         format!("1 {rank} {a} {b} {c} {d} {e}")
                     }
@@ -103,21 +91,21 @@ fn seq<P, Q>(first: P, second: Q) -> Seq<P, Q> {
 fn nested(
     input: &[u8],
     widths: [u8; 5],
-    outer: Order,
-    inner: Order,
-    context: ParseContext,
-) -> Option<ParseOutcome<(u64, (u64, (u64, u64)), u64)>> {
+    outer: ByteOrder,
+    inner: ByteOrder,
+    context: ByteOrder,
+) -> Option<Result<(Cursor, (u64, (u64, (u64, u64)), u64)), ParseError>> {
     let [a, b, c, d, e] = widths.map(field);
     let parser = seq(
         a,
         seq(
-            WithOrder {
-                order: outer,
+            WithByteOrder {
+                byte_order: outer,
                 parser: seq(
                     b,
                     seq(
-                        WithOrder {
-                            order: inner,
+                        WithByteOrder {
+                            byte_order: inner,
                             parser: c,
                         },
                         d,
@@ -128,10 +116,7 @@ fn nested(
         ),
     );
     Some(match parser.parse_with(input, START, context) {
-        ParseOutcome::Success(next, (a, (middle, e))) => {
-            ParseOutcome::Success(next, (a, middle, e))
-        }
-        ParseOutcome::Error(error) => ParseOutcome::Error(error),
-        ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+        Ok((next, (a, (middle, e)))) => Ok((next, (a, middle, e))),
+        Err(error) => Err(error),
     })
 }

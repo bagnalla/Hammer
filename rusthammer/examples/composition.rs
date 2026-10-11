@@ -1,7 +1,4 @@
-use rusthammer::{
-    Bits, ConfigError, Cursor, Epsilon, Fail, ParseContext, ParseError, ParseOutcome, Parser,
-    TryMap,
-};
+use rusthammer::{Bits, ByteOrder, ConfigError, Cursor, Epsilon, Fail, ParseError, Parser, TryMap};
 
 #[derive(Debug, PartialEq)]
 enum Mode {
@@ -10,7 +7,7 @@ enum Mode {
 }
 
 // A checked conversion constructs a typed value only for supported encodings.
-fn decode_mode(input: &[u8], context: ParseContext) -> ParseOutcome<Mode> {
+fn decode_mode(input: &[u8], byte_order: ByteOrder) -> Result<(Cursor, Mode), ParseError> {
     let mode = TryMap {
         parser: Bits::new(8).unwrap(),
         map: |value| match value {
@@ -19,23 +16,17 @@ fn decode_mode(input: &[u8], context: ParseContext) -> ParseOutcome<Mode> {
             _ => Err(()),
         },
     };
-    mode.parse_with(input, Cursor::start(), context)
+    mode.parse_with(input, Cursor::start(), byte_order)
 }
 
 fn main() -> Result<(), ConfigError> {
     assert_eq!(
-        decode_mode(&[1], ParseContext::FINAL),
-        ParseOutcome::Success(Cursor { byte: 1, bit: 0 }, Mode::Read)
+        decode_mode(&[1], ByteOrder::Big),
+        Ok((Cursor { byte: 1, bit: 0 }, Mode::Read))
     );
-    assert_eq!(
-        decode_mode(&[3], ParseContext::FINAL),
-        ParseOutcome::Error(ParseError::Mismatch)
-    );
-    assert_eq!(
-        decode_mode(&[], ParseContext::PARTIAL),
-        ParseOutcome::NeedMore
-    );
-    println!("mode: {:?}", decode_mode(&[2], ParseContext::FINAL));
+    assert_eq!(decode_mode(&[3], ByteOrder::Big), Err(ParseError::Mismatch));
+
+    println!("mode: {:?}", decode_mode(&[2], ByteOrder::Big));
 
     // Narrow a nine-bit wire field with a standard checked integer conversion.
     let byte = TryMap {
@@ -51,10 +42,10 @@ fn main() -> Result<(), ConfigError> {
         Err(ParseError::Mismatch)
     );
 
-    // These grammars never read input, even on a partial buffer.
+    // These grammars never read input.
     assert_eq!(
-        Epsilon.parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
-        ParseOutcome::Success(Cursor::start(), ())
+        Epsilon.parse_with(&[], Cursor::start(), ByteOrder::Big),
+        Ok((Cursor::start(), ()))
     );
     assert_eq!(
         Fail::<Mode>::new().parse(&[], Cursor::start()),

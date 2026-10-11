@@ -28,9 +28,9 @@ def bitmapPredicate (set : ByteSet) (excluded : Bool) (value : U8) : Prop :=
 instance (set : ByteSet) (excluded : Bool) : DecidablePred (bitmapPredicate set excluded) :=
   fun _ => by unfold bitmapPredicate; infer_instance
 
-abbrev bitmapOutcome (input : Slice U8) (status : InputStatus)
+abbrev bitmapOutcome (input : Slice U8)
     (set : ByteSet) (excluded : Bool) :=
-  Partial.verify (fun cursor => Partial.primitive status (byteOutcome input cursor))
+  Contracts.verify (fun cursor => Contracts.primitive (byteOutcome input cursor))
     (bitmapPredicate set excluded)
 
 abbrev bitmapComplete (input : Slice U8) (set : ByteSet) (excluded : Bool) :=
@@ -44,10 +44,10 @@ def byteSetPredicate (bytes : List U8) (excluded : Bool) (value : U8) : Prop :=
 instance (bytes : List U8) (excluded : Bool) : DecidablePred (byteSetPredicate bytes excluded) :=
   fun value => by unfold byteSetPredicate; infer_instance
 
-/-- A set parser inherits all byte decoding, cursor, and finality rules. -/
-abbrev byteSetOutcome (input : Slice U8) (status : InputStatus)
+/-- A set parser inherits all byte decoding, cursor, and error rules. -/
+abbrev byteSetOutcome (input : Slice U8)
     (bytes : List U8) (excluded : Bool) :=
-  Partial.verify (fun cursor => Partial.primitive status (byteOutcome input cursor))
+  Contracts.verify (fun cursor => Contracts.primitive (byteOutcome input cursor))
     (byteSetPredicate bytes excluded)
 
 abbrev byteSetComplete (input : Slice U8) (bytes : List U8) (excluded : Bool) :=

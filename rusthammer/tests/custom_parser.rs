@@ -1,40 +1,44 @@
 use rusthammer::{
-    And, Bind, BitOrder, Bits, ButNot, Byte, ByteOrder, Choice, Cursor, Difference, Eval,
-    FoldRepeat, FoldSepBy, Grammar, Ignore, IntRange, Left, Literal, Map, Middle, Not, Optional,
-    Order, ParseContext, ParseOutcome, Right, Seq, TryMap, Verify, WithOrder, Xor,
+    And, Bind, Bits, ButNot, Byte, ByteOrder, Choice, Cursor, Difference, FoldRepeat, FoldSepBy,
+    Ignore, IntRange, Left, Literal, Map, Middle, Not, Optional, ParseError, Parser, Right, Seq,
+    TryMap, Verify, WithByteOrder, Xor,
 };
 
-#[derive(Default)]
-struct Trace(Vec<(u8, Cursor, ParseContext)>);
-
-// No Eval<Direct> implementation: accidental calls through Parser cannot compile.
-struct Observe<P>(u8, P);
-
-impl<'input, P: Grammar<'input>> Grammar<'input> for Observe<P> {
-    type Output = P::Output;
+thread_local! {
+    static TRACE: std::cell::RefCell<Vec<(u8, Cursor, ByteOrder)>> = const { std::cell::RefCell::new(Vec::new()) };
+}
+fn trace() -> Vec<(u8, Cursor, ByteOrder)> {
+    TRACE.with(|trace| trace.borrow().clone())
+}
+fn clear_trace() {
+    TRACE.with(|trace| trace.borrow_mut().clear());
 }
 
-impl<'input, P: Eval<'input, Trace>> Eval<'input, Trace> for Observe<P> {
-    fn eval(
+// A custom parser records child execution without a library execution-state parameter.
+struct Observe<P>(u8, P);
+
+impl<'input, P: Parser<'input>> Parser<'input> for Observe<P> {
+    type Output = P::Output;
+
+    fn parse_with(
         &self,
-        backend: &mut Trace,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
-        backend.0.push((self.0, cursor, context));
-        self.1.eval(backend, input, cursor, context)
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
+        TRACE.with(|trace| trace.borrow_mut().push((self.0, cursor, byte_order)));
+        self.1.parse_with(input, cursor, byte_order)
     }
 }
 
-fn run<'input, P: Eval<'input, Trace>>(parser: P, input: &'input [u8], ids: &[u8]) {
-    let mut trace = Trace::default();
-    let _ = parser.eval(&mut trace, input, Cursor::start(), ParseContext::FINAL);
-    assert_eq!(trace.0.iter().map(|entry| entry.0).collect::<Vec<_>>(), ids);
+fn run<'input, P: Parser<'input>>(parser: P, input: &'input [u8], ids: &[u8]) {
+    clear_trace();
+    let _ = parser.parse_with(input, Cursor::start(), ByteOrder::Big);
+    assert_eq!(trace().iter().map(|entry| entry.0).collect::<Vec<_>>(), ids);
 }
 
 #[test]
-fn sequence_selection_references_and_callbacks_keep_the_backend() {
+fn sequence_selection_references_and_callbacks_preserve_call_order() {
     let a = Observe(1, Byte);
     let b = Observe(2, Byte);
     run(
@@ -77,12 +81,15 @@ fn sequence_selection_references_and_callbacks_keep_the_backend() {
         parser: &a,
         map: Owned,
     };
-    let mut trace = Trace::default();
-    match parser.eval(&mut trace, b"a", Cursor::start(), ParseContext::FINAL) {
-        ParseOutcome::Success(_, value) => assert_eq!(value.0, b'a'),
+    clear_trace();
+    match parser.parse_with(b"a", Cursor::start(), ByteOrder::Big) {
+        Ok(parsed) => {
+            let (_, value) = parsed;
+            assert_eq!(value.0, b'a')
+        }
         _ => panic!("expected success"),
     }
-    assert_eq!(trace.0.len(), 1);
+    assert_eq!(trace().len(), 1);
     run(
         TryMap {
             parser: &a,
@@ -153,45 +160,38 @@ fn backtracking_keeps_bookkeeping_but_restores_the_cursor() {
         first: Not { parser: &a },
         second: &b,
     };
-    let mut trace = Trace::default();
+    clear_trace();
     assert_eq!(
-        parser.eval(&mut trace, b"b", Cursor::start(), ParseContext::FINAL),
-        ParseOutcome::Success(Cursor { byte: 1, bit: 0 }, ((), b'b'))
+        parser.parse_with(b"b", Cursor::start(), ByteOrder::Big),
+        Ok((Cursor { byte: 1, bit: 0 }, ((), b'b')))
     );
     assert_eq!(
-        trace.0,
+        trace(),
         vec![
-            (1, Cursor::start(), ParseContext::FINAL),
-            (2, Cursor::start(), ParseContext::FINAL)
+            (1, Cursor::start(), ByteOrder::Big),
+            (2, Cursor::start(), ByteOrder::Big)
         ]
     );
 }
 
 #[test]
-fn scopes_change_context_while_retaining_execution_state() {
+fn scopes_change_byte_order_while_retaining_execution_state() {
     let parser = Seq {
-        first: WithOrder {
+        first: WithByteOrder {
             parser: Observe(1, Bits::new(8).unwrap()),
-            order: Order {
-                bit: BitOrder::LowFirst,
-                byte: ByteOrder::Little,
-            },
+            byte_order: ByteOrder::Little,
         },
         second: Observe(2, Byte),
     };
-    let mut trace = Trace::default();
-    let result = parser.eval(&mut trace, &[1, 2], Cursor::start(), ParseContext::PARTIAL);
-    assert!(matches!(result, ParseOutcome::Success(_, _)));
-    assert_eq!(trace.0[0].2.order, parser.first.order);
-    assert_eq!(trace.0[0].2.status, ParseContext::PARTIAL.status);
-    assert_eq!(
-        trace.0[1],
-        (2, Cursor { byte: 1, bit: 0 }, ParseContext::PARTIAL)
-    );
+    clear_trace();
+    let result = parser.parse_with(&[1, 2], Cursor::start(), ByteOrder::Big);
+    assert!(matches!(result, Ok((_, _))));
+    assert_eq!(trace()[0].2, parser.first.byte_order);
+    assert_eq!(trace()[1], (2, Cursor { byte: 1, bit: 0 }, ByteOrder::Big));
 }
 
 #[test]
-fn repetition_and_separator_helpers_keep_the_backend() {
+fn repetition_and_separator_helpers_preserve_call_order() {
     let a = Observe(1, Literal::new(8, b'a'.into()).unwrap());
     let comma = Observe(2, Literal::new(8, b','.into()).unwrap());
     run(

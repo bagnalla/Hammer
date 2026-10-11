@@ -1,27 +1,23 @@
-use rusthammer::{Eval, Grammar};
 #[path = "../examples/support/marker.rs"]
 mod marker_example;
 
 use marker_example::{parse_marker, Marker};
 use rusthammer::{
-    Bits, Choice, ConfigError, Cursor, End, Literal, ParseContext, ParseError, ParseOutcome,
-    Parser, Seq, TakeAligned,
+    Bits, ByteOrder, Choice, ConfigError, Cursor, End, Literal, ParseError, Parser, Seq,
+    TakeAligned,
 };
 
 struct MustNotRun;
 
-impl<'input> Grammar<'input> for MustNotRun {
+impl<'input> Parser<'input> for MustNotRun {
     type Output = u64;
-}
 
-impl<'input, Backend> Eval<'input, Backend> for MustNotRun {
-    fn eval(
+    fn parse_with(
         &self,
-        _: &mut Backend,
         _: &'input [u8],
         _: Cursor,
-        _: ParseContext,
-    ) -> ParseOutcome<u64> {
+        _: ByteOrder,
+    ) -> Result<(Cursor, u64), ParseError> {
         panic!("ordered choice evaluated an unreachable branch");
     }
 }

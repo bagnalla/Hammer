@@ -1,6 +1,5 @@
 use rusthammer::{
-    BeU16, BitOrder, Bits, ByteOrder, Cursor, Order, Parser, Recognize, Seq, SkipBits, WithOrder,
-    WithSpan,
+    BeU16, Bits, ByteOrder, Cursor, Parser, Recognize, Seq, SkipBits, WithByteOrder, WithSpan,
 };
 
 fn main() {
@@ -21,11 +20,8 @@ fn main() {
     println!("Recognize: original bytes {:?}", span.as_bytes().unwrap());
 
     let input = [0x96];
-    let parser = WithOrder {
-        order: Order {
-            bit: BitOrder::LowFirst,
-            byte: ByteOrder::Little,
-        },
+    let parser = WithByteOrder {
+        byte_order: ByteOrder::Little,
         parser: Seq {
             first: WithSpan {
                 parser: Bits::new(3).unwrap(),
@@ -34,13 +30,12 @@ fn main() {
         },
     };
     let (_, ((value, span), ())) = parser.parse(&input, Cursor::start()).unwrap();
-    assert_eq!(value, 6);
+    assert_eq!(value, 4);
     assert_eq!(span.as_bytes(), None);
-    assert_eq!(span.bit_order(), BitOrder::LowFirst);
+
     println!(
-        "Partial span: value {value}, {:?} to {:?}, {:?}",
+        "Partial-byte span: value {value}, {:?} to {:?}",
         span.start(),
-        span.end(),
-        span.bit_order()
+        span.end()
     );
 }

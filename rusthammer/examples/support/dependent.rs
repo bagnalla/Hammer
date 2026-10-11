@@ -1,9 +1,7 @@
 //! Small count-prefixed formats, shared by examples, native tests, and extraction.
 #[cfg(rusthammer_verify)]
 use crate as rusthammer;
-use rusthammer::{
-    Bind, Bits, Cursor, Eval, Grammar, ParseContext, ParseOutcome, Parser, TakeAligned, TryMap,
-};
+use rusthammer::{Bind, Bits, ByteOrder, Cursor, ParseError, Parser, TakeAligned, TryMap};
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
@@ -22,12 +20,7 @@ fn fixed_bits(width: u8) -> Bits {
 #[derive(Clone, Copy)]
 pub struct CountPrefix;
 
-impl<'input> Grammar<'input> for CountPrefix {
-    type Output = usize;
-}
-
-// Construct this closure outside the lifetime/backend-generic method: the pinned
-// Aeneas cannot infer its unused Backend argument. See probes/backend_closure.rs.
+// Share the checked header construction with the extracted format proof.
 fn count_parser() -> TryMap<Bits, impl Fn(u64) -> Result<usize, ()>> {
     TryMap {
         parser: fixed_bits(8),
@@ -42,26 +35,31 @@ fn count_parser() -> TryMap<Bits, impl Fn(u64) -> Result<usize, ()>> {
     }
 }
 
-impl<'input, Backend> Eval<'input, Backend> for CountPrefix {
-    fn eval(
+impl<'input> Parser<'input> for CountPrefix {
+    type Output = usize;
+
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<usize> {
-        count_parser().eval(backend, input, cursor, context)
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, usize), ParseError> {
+        count_parser().parse_with(input, cursor, byte_order)
     }
 }
 
 /// Read the count, then return exactly that many aligned bytes, borrowing the input.
 /// This parses a prefix; compose with `End` when the format forbids trailing bytes.
-pub fn payload(input: &[u8], cursor: Cursor, context: ParseContext) -> ParseOutcome<&[u8]> {
+pub fn payload(
+    input: &[u8],
+    cursor: Cursor,
+    byte_order: ByteOrder,
+) -> Result<(Cursor, &[u8]), ParseError> {
     Bind {
         parser: CountPrefix,
         then: |count| TakeAligned { count },
     }
-    .parse_with(input, cursor, context)
+    .parse_with(input, cursor, byte_order)
 }
 
 /// Read the count, then collect that many four-bit numbers in order.
@@ -69,12 +67,12 @@ pub fn payload(input: &[u8], cursor: Cursor, context: ParseContext) -> ParseOutc
 pub fn fields(
     input: &[u8],
     cursor: Cursor,
-    context: ParseContext,
-) -> ParseOutcome<alloc::vec::Vec<u64>> {
+    byte_order: ByteOrder,
+) -> Result<(Cursor, alloc::vec::Vec<u64>), ParseError> {
     let element = fixed_bits(4);
     Bind {
         parser: CountPrefix,
         then: |count| rusthammer::Repeat::exact(element, count),
     }
-    .parse_with(input, cursor, context)
+    .parse_with(input, cursor, byte_order)
 }

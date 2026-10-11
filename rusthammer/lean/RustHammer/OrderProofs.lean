@@ -8,19 +8,6 @@ open Aeneas Aeneas.Std Result WP
 namespace RustHammer.Proofs
 open Code
 
-theorem fragment_offset_spec (bit take : U8) (order : BitOrder)
-    (hb : bit.val < 8) (ht : 0 < take.val ∧ take.val ≤ 8 - bit.val) :
-    fragment_offset bit take order ⦃ offset =>
-      offset.val = (match order with | .HighFirst => bit.val | .LowFirst => 8 - bit.val - take.val) ∧
-      offset.val < 8 ∧ offset.val + take.val ≤ 8 ⦄ := by
-  cases order with
-  | HighFirst => simp only [fragment_offset, spec_ok]; exact ⟨trivial, hb, by omega⟩
-  | LowFirst =>
-    unfold fragment_offset
-    step as ⟨available, ha⟩
-    step as ⟨offset, ho⟩
-    exact ⟨by omega, by omega, by omega⟩
-
 theorem advance_fragment_spec (input : Slice U8) (cursor : Cursor) (take : U8)
     (hb : cursor.bit.val < 8) (hi : cursor.byte.val < input.val.length)
     (ht : 0 < take.val ∧ take.val ≤ 8 - cursor.bit.val) :
@@ -80,7 +67,7 @@ theorem append_fragment_spec (value fragment : U64) (done take : U8) (order : By
 
 /-- The accumulator is bounded by consumed width. The remaining mathematical
 field, weighted according to byte order, completes the specified original value. -/
-theorem fragments_loop_spec (input : Slice U8) (cursor : Cursor) (width : U8) (order : Order)
+theorem fragments_loop_spec (input : Slice U8) (cursor : Cursor) (width : U8) (order : ByteOrder)
     (hw : width.val ≤ 64) (hc : Spec.validCursor input cursor) :
     read_fragments_loop0 input width order cursor width 0#u64
       ⦃ result => if Spec.position cursor + width.val ≤ 8 * input.val.length then
@@ -92,7 +79,7 @@ theorem fragments_loop_spec (input : Slice U8) (cursor : Cursor) (width : U8) (o
       Spec.validCursor input next ∧ remaining.val ≤ width.val ∧
       value.val < 2 ^ (width.val - remaining.val) ∧
       Spec.position next + remaining.val = Spec.position cursor + width.val ∧
-      (match order.byte with
+      (match order with
       | .Big => value.val * 2 ^ remaining.val +
           Ordering.unsigned input order (Spec.position next) remaining.val
       | .Little => value.val + 2 ^ (width.val - remaining.val) *
@@ -107,7 +94,7 @@ theorem fragments_loop_spec (input : Slice U8) (cursor : Cursor) (width : U8) (o
         omega
       simp only [hz, bne_self_eq_false, Bool.false_eq_true, ↓reduceIte, if_pos hfit, Ordering.success]
       refine ⟨next, value, rfl, hcur, by omega, ?_⟩
-      cases ho : order.byte <;> simpa [hzn, ho] using hdecode
+      cases ho : order <;> simpa [hzn, ho] using hdecode
     · have hrpos : 0 < remaining.val := by scalar_tac
       simp only [bne_iff_ne, hz, ne_eq, not_false_eq_true, ↓reduceIte]
       by_cases he : next.byte = input.len
@@ -127,22 +114,17 @@ theorem fragments_loop_spec (input : Slice U8) (cursor : Cursor) (width : U8) (o
         have ht : 0 < take.val ∧ take.val ≤ remaining.val ∧ take.val ≤ 8 - next.bit.val := by
           have hb := hcur.1
           omega
-        step with fragment_offset_spec next.bit take order.bit hcur.1 ⟨ht.1, ht.2.2⟩
-          as ⟨offset, hoff, hoffb, hofft⟩
-        have hphysical : Spec.validCursor input { next with bit := offset } := by
-          change offset.val < 8 ∧ 8 * next.byte.val + offset.val ≤ 8 * input.val.length
+        have hphysicalFit : Spec.position next + take.val ≤ 8 * input.val.length := by
+          change 8 * next.byte.val + next.bit.val + take.val ≤ 8 * input.val.length
           omega
-        have hphysicalFit : Spec.position { next with bit := offset } + take.val ≤ 8 * input.val.length := by
-          change 8 * next.byte.val + offset.val + take.val ≤ 8 * input.val.length
-          omega
-        step with read_bits_success input { next with bit := offset } { width := take }
-          (by change take.val ≤ 64; omega) hphysical hphysicalFit as ⟨parsed, hparsed⟩
+        step with read_bits_success input next { width := take }
+          (by change take.val ≤ 64; omega) hcur hphysicalFit as ⟨parsed, hparsed⟩
         rcases hparsed with ⟨physicalEnd, fragment, rfl, _, _, hfragment⟩
         have hf : fragment.val < 2 ^ take.val := by
           rw [hfragment]
           exact unsignedBits_lt_pow _ _ _
         step as ⟨done, hdone⟩
-        step with append_fragment_spec value fragment done take order.byte
+        step with append_fragment_spec value fragment done take order
           ⟨ht.1, by omega⟩ (by omega) (by simpa [hdone] using hacc) hf
           as ⟨acc, happend, haccbound⟩
         step with advance_fragment_spec input next take hcur.1 hi ⟨ht.1, ht.2.2⟩
@@ -153,28 +135,20 @@ theorem fragments_loop_spec (input : Slice U8) (cursor : Cursor) (width : U8) (o
           unfold Ordering.fragmentWidth Spec.position
           have hb := hcur.1
           omega
-        have hfragmentStart : Ordering.fragmentStart order.bit (Spec.position next) take.val =
-            Spec.position { next with bit := offset } := by
-          unfold Ordering.fragmentStart Spec.position
-          have hb := hcur.1
-          have hdiv : (8 * next.byte.val + next.bit.val) / 8 = next.byte.val := by omega
-          have hmod : (8 * next.byte.val + next.bit.val) % 8 = next.bit.val := by omega
-          rw [hdiv, hmod, hoff]
-          rfl
         have hunsigned : Ordering.unsigned input order (Spec.position next) remaining.val =
-            match order.byte with
+            match (generalizing := false) order with
             | .Big => fragment.val * 2 ^ rest.val + Ordering.unsigned input order (Spec.position after) rest.val
             | .Little => fragment.val + 2 ^ take.val * Ordering.unsigned input order (Spec.position after) rest.val := by
           rw [Ordering.unsigned, if_neg (by omega)]
           dsimp only
-          rw [htWidth, hfragmentStart,
+          rw [htWidth,
             ← hfragment, ← hrest, ← hafterpos]
           rfl
         refine ⟨hafterBit, hafterBound, by omega, ?_, by omega, ?_, by omega⟩
         · simpa only [hdoneNext] using haccbound
         · have hremaining : remaining.val = take.val + rest.val := by omega
           rw [hunsigned] at hdecode
-          cases ho : order.byte <;> simp only [ho] at hdecode happend ⊢
+          cases ho : order <;> simp only [ho] at hdecode happend ⊢
           · rw [happend]
             rw [hremaining, Nat.pow_add] at hdecode
             nlinarith only [hdecode]
@@ -182,9 +156,9 @@ theorem fragments_loop_spec (input : Slice U8) (cursor : Cursor) (width : U8) (o
             rw [hdone] at *
             nlinarith only [hdecode]
   · refine ⟨hc, by omega, by simp, by omega, ?_⟩
-    cases order.byte <;> simp
+    cases order <;> simp
 
-theorem read_fragments_spec (input : Slice U8) (cursor : Cursor) (width : U8) (order : Order)
+theorem read_fragments_spec (input : Slice U8) (cursor : Cursor) (width : U8) (order : ByteOrder)
     (hw : width.val ≤ 64) :
     read_fragments input cursor width order
       ⦃ result => Ordering.outcome input cursor width order result ⦄ := by
@@ -211,68 +185,17 @@ theorem read_fragments_spec (input : Slice U8) (cursor : Cursor) (width : U8) (o
         have hnonzero : cursor.bit ≠ 0#u8 := by scalar_tac
         simp [hbit, heq, hnonzero, spec_ok]
 
-theorem read_ordered_bits_spec (input : Slice U8) (cursor : Cursor) (parser : Bits) (order : Order)
+theorem read_ordered_bits_spec (input : Slice U8) (cursor : Cursor) (parser : Bits) (order : ByteOrder)
     (hw : Spec.validBits parser) :
     read_ordered_bits input cursor parser order
       ⦃ result => Ordering.outcome input cursor parser.width order result ⦄ := by
-  rcases order with ⟨bit, byte⟩
-  cases bit <;> cases byte <;> simp only [read_ordered_bits]
-  · have h := read_bits_spec input cursor parser hw
-    simpa only [← Ordering.outcome_default, Order.DEFAULT] using h
-  all_goals exact read_fragments_spec input cursor parser.width _ hw
-
-theorem read_bit_ordered_success (input : Slice U8) (cursor : Cursor) (order : BitOrder)
-    (hb : cursor.bit.val < 8) (hi : cursor.byte.val < input.val.length) :
-    read_bit_ordered input cursor order
-      ⦃ result => Ordering.bitSuccess input cursor order result ⦄ := by
   cases order with
-  | HighFirst =>
-    simpa only [read_bit, Ordering.bitSuccess, Spec.bitSuccess] using
-      read_bit_success input cursor hb hi
-  | LowFirst =>
-    have hbitBound : ¬cursor.bit ≥ 8#u8 := by scalar_tac
-    have hbyteBound : ¬cursor.byte ≥ input.len := by scalar_tac
-    simp only [read_bit_ordered, hbitBound, hbyteBound, ↓reduceIte]
-    step as ⟨byte, hbyteValue⟩
-    step as ⟨shifted, hshifted, hshiftedBv⟩
-    step as ⟨masked, hmasked, hmaskedBv⟩
-    split
-    · step as ⟨next, hnext⟩
-      simp only [Ordering.bitSuccess]
-      refine ⟨_, _, rfl, ?_, ?_, ?_⟩
-      · scalar_tac
-      · scalar_tac
-      · simp_all [Nat.testBit]
-        apply Bool.eq_iff_iff.mpr
-        simp only [bne_iff_ne, beq_iff_eq]
-        scalar_tac
-    · step as ⟨next, hnext⟩
-      simp only [Ordering.bitSuccess]
-      refine ⟨_, _, rfl, ?_, ?_, ?_⟩
-      · scalar_tac
-      · scalar_tac
-      · simp_all [Nat.testBit]
-        apply Bool.eq_iff_iff.mpr
-        simp only [bne_iff_ne, beq_iff_eq]
-        scalar_tac
-
-theorem read_bit_ordered_spec (input : Slice U8) (cursor : Cursor) (order : BitOrder) :
-    read_bit_ordered input cursor order
-      ⦃ result => Ordering.bitOutcome input cursor order result ⦄ := by
-  unfold Ordering.bitOutcome
-  by_cases h : cursor.bit.val < 8 ∧ cursor.byte.val < input.val.length
-  · simpa only [if_pos h] using read_bit_ordered_success input cursor order h.1 h.2
-  · simp only [if_neg h]
-    by_cases hbit : cursor.bit ≥ 8#u8
-    · have hbad : ¬cursor.bit.val < 8 := by scalar_tac
-      simp [read_bit_ordered, hbit, hbad, spec_ok]
-    · have hbyte : cursor.byte ≥ input.len := by scalar_tac
-      simp only [read_bit_ordered, hbit, hbyte, ↓reduceIte]
-      by_cases heq : cursor.byte = input.len <;>
-        by_cases hzero : cursor.bit = 0#u8 <;>
-        simp_all [spec_ok]
+  | Big =>
+    simpa only [read_ordered_bits, Ordering.outcome_default] using
+      read_bits_spec input cursor parser hw
+  | Little =>
+    exact read_fragments_spec input cursor parser.width .Little hw
 
 #print axioms read_ordered_bits_spec
-#print axioms read_bit_ordered_spec
 
 end RustHammer.Proofs

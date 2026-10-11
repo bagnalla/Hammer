@@ -1,9 +1,8 @@
-use rusthammer::{Eval, Grammar};
 use std::cell::Cell;
 
 use rusthammer::{
-    Bit, Bits, Choice, Cursor, End, Epsilon, Fail, Map, Not, Optional, ParseContext, ParseError,
-    ParseOutcome, Parser, Seq, TakeAligned, TryMap,
+    Bit, Bits, ByteOrder, Choice, Cursor, Epsilon, Fail, Map, Not, Optional, ParseError, Parser,
+    Seq, TakeAligned, TryMap,
 };
 
 #[test]
@@ -18,20 +17,16 @@ fn epsilon_preserves_any_raw_cursor_in_both_modes() {
                 bit: u8::MAX,
             },
         ] {
-            for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
+            for byte_order in [ByteOrder::Big] {
                 assert_eq!(
-                    Epsilon.parse_with(input, cursor, context),
-                    ParseOutcome::Success(cursor, ())
+                    Epsilon.parse_with(input, cursor, byte_order),
+                    Ok((cursor, ()))
                 );
             }
             assert_eq!(Epsilon.parse(input, cursor), Ok((cursor, ())));
         }
     }
     // Empty success does not wait for end-of-input confirmation.
-    assert_eq!(
-        End.parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
-        ParseOutcome::NeedMore
-    );
 }
 
 #[test]
@@ -52,11 +47,11 @@ fn fail_is_copyable_without_output_bounds_and_always_rejects() {
                 bit: u8::MAX,
             },
         ] {
-            for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
+            for byte_order in [ByteOrder::Big] {
                 for grammar in [&parser, &copied, &default] {
                     assert!(matches!(
-                        grammar.parse_with(input, cursor, context),
-                        ParseOutcome::Error(ParseError::Mismatch)
+                        grammar.parse_with(input, cursor, byte_order),
+                        Err(ParseError::Mismatch)
                     ));
                     assert!(matches!(
                         grammar.parse(input, cursor),
@@ -94,8 +89,8 @@ fn empty_and_failing_grammars_compose_with_control_flow() {
         Optional {
             parser: Fail::<bool>::new()
         }
-        .parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
-        ParseOutcome::Success(Cursor::start(), None)
+        .parse_with(&[], Cursor::start(), ByteOrder::Big),
+        Ok((Cursor::start(), None))
     );
     assert_eq!(
         Not { parser: Epsilon }.parse(&[], Cursor::start()),
@@ -123,22 +118,22 @@ fn empty_and_failing_grammars_compose_with_control_flow() {
 fn repetition_handles_empty_success_and_definite_rejection() {
     use rusthammer::Repeat;
 
-    for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
+    for byte_order in [ByteOrder::Big] {
         assert_eq!(
-            Repeat::exact(Epsilon, 3).parse_with(&[], Cursor::start(), context),
-            ParseOutcome::Success(Cursor::start(), vec![(); 3])
+            Repeat::exact(Epsilon, 3).parse_with(&[], Cursor::start(), byte_order),
+            Ok((Cursor::start(), vec![(); 3]))
         );
         assert_eq!(
-            Repeat::at_least(Epsilon, 0).parse_with(&[], Cursor::start(), context),
-            ParseOutcome::Error(ParseError::NonProgress)
+            Repeat::at_least(Epsilon, 0).parse_with(&[], Cursor::start(), byte_order),
+            Err(ParseError::NonProgress)
         );
         assert_eq!(
-            Repeat::at_least(Fail::<bool>::new(), 0).parse_with(&[], Cursor::start(), context),
-            ParseOutcome::Success(Cursor::start(), vec![])
+            Repeat::at_least(Fail::<bool>::new(), 0).parse_with(&[], Cursor::start(), byte_order),
+            Ok((Cursor::start(), vec![]))
         );
         assert_eq!(
-            Repeat::at_least(Fail::<bool>::new(), 1).parse_with(&[], Cursor::start(), context),
-            ParseOutcome::Error(ParseError::Mismatch)
+            Repeat::at_least(Fail::<bool>::new(), 1).parse_with(&[], Cursor::start(), byte_order),
+            Err(ParseError::Mismatch)
         );
     }
 }
@@ -149,14 +144,14 @@ fn checked_integer_conversion_preserves_consumption_and_rejects_overflow() {
         parser: Bits::new(9).unwrap(),
         map: u8::try_from,
     };
-    for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
+    for byte_order in [ByteOrder::Big] {
         assert_eq!(
-            parser.parse_with(&[0x7f, 0x80], Cursor::start(), context),
-            ParseOutcome::Success(Cursor { byte: 1, bit: 1 }, 255)
+            parser.parse_with(&[0x7f, 0x80], Cursor::start(), byte_order),
+            Ok((Cursor { byte: 1, bit: 1 }, 255))
         );
         assert_eq!(
-            parser.parse_with(&[0x80, 0x00], Cursor::start(), context),
-            ParseOutcome::Error(ParseError::Mismatch)
+            parser.parse_with(&[0x80, 0x00], Cursor::start(), byte_order),
+            Err(ParseError::Mismatch)
         );
     }
     assert_eq!(
@@ -170,21 +165,19 @@ fn checked_integer_conversion_preserves_consumption_and_rejects_overflow() {
 }
 
 #[test]
-fn checked_mapping_skips_callbacks_after_every_child_error_and_need_more() {
+fn checked_mapping_skips_callbacks_after_every_child_error() {
     struct Reject(ParseError);
-    impl<'input> Grammar<'input> for Reject {
-        type Output = bool;
-    }
 
-    impl<'input, Backend> Eval<'input, Backend> for Reject {
-        fn eval(
+    impl<'input> Parser<'input> for Reject {
+        type Output = bool;
+
+        fn parse_with(
             &self,
-            _: &mut Backend,
             _: &'input [u8],
             _: Cursor,
-            _: ParseContext,
-        ) -> ParseOutcome<bool> {
-            ParseOutcome::Error(self.0)
+            _: ByteOrder,
+        ) -> Result<(Cursor, bool), ParseError> {
+            Err(self.0)
         }
     }
     fn unused(_: bool) -> Result<(), ()> {
@@ -203,10 +196,10 @@ fn checked_mapping_skips_callbacks_after_every_child_error_and_need_more() {
             parser: Reject(error),
             map: unused,
         };
-        for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
+        for byte_order in [ByteOrder::Big] {
             assert_eq!(
-                parser.parse_with(&[], Cursor::start(), context),
-                ParseOutcome::Error(error)
+                parser.parse_with(&[], Cursor::start(), byte_order),
+                Err(error)
             );
         }
         assert_eq!(parser.parse(&[], Cursor::start()), Err(error));
@@ -215,10 +208,7 @@ fn checked_mapping_skips_callbacks_after_every_child_error_and_need_more() {
         parser: Bit,
         map: unused,
     };
-    assert_eq!(
-        parser.parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
-        ParseOutcome::NeedMore
-    );
+
     assert_eq!(
         parser.parse(&[], Cursor::start()),
         Err(ParseError::UnexpectedEnd)
@@ -253,10 +243,7 @@ fn checked_mapping_calls_once_and_is_copyable_with_nonclone_outputs_and_errors()
         Err(ParseError::Mismatch)
     );
     assert_eq!(calls.get(), 2);
-    assert_eq!(
-        parser.parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
-        ParseOutcome::NeedMore
-    );
+
     assert_eq!(calls.get(), 2);
 }
 
@@ -270,26 +257,12 @@ fn conversion_rejection_allows_choice_to_retry_at_the_original_cursor() {
         },
         second: Bit,
     };
-    for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
+    for byte_order in [ByteOrder::Big] {
         assert_eq!(
-            parser.parse_with(&[0x50], Cursor { byte: 0, bit: 1 }, context),
-            ParseOutcome::Success(Cursor { byte: 0, bit: 2 }, true)
+            parser.parse_with(&[0x50], Cursor { byte: 0, bit: 1 }, byte_order),
+            Ok((Cursor { byte: 0, bit: 2 }, true))
         );
     }
-    let wait = Choice {
-        first: TryMap {
-            parser: Bits::new(9).unwrap(),
-            map: |_| Err::<(), _>(()),
-        },
-        second: Map {
-            parser: Epsilon,
-            map: |_| panic!("fallback ran after NeedMore"),
-        },
-    };
-    assert_eq!(
-        wait.parse_with(&[0x80], Cursor::start(), ParseContext::PARTIAL),
-        ParseOutcome::NeedMore
-    );
 }
 
 #[test]

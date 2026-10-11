@@ -1,97 +1,50 @@
-use super::{Cursor, ParseContext, ParseError, ParseOutcome};
+use super::{ByteOrder, Cursor, ParseError};
 
-/// A typed grammar, independent of the backend used to execute it.
+/// Execute a typed parser directly on a complete, immutable input buffer.
 ///
-/// The output can borrow from the input or from the grammar's configuration.
-/// Implementing this trait alone does not provide an execution capability.
-pub trait Grammar<'input> {
+/// Outputs may borrow the input or independently borrowed configuration; they
+/// need neither `Copy` nor `Clone`. Bits are traversed high first. Byte order
+/// controls the significance of successive physical-byte fragments in a field.
+///
+/// From a valid entry cursor, supported parsers must return a valid cursor at
+/// or after that entry on success. Choice and lookahead may restore cursors
+/// internally. Unbounded repetition additionally requires strict advancement.
+/// These are implementation contracts, not properties enforced by this trait:
+/// proofs of custom parsers and callbacks must establish their own contracts,
+/// including termination and freedom from panics. Callbacks may have effects;
+/// restoring a cursor does not undo them.
+pub trait Parser<'input> {
     type Output;
-}
 
-/// Execute a grammar with a selected backend and its invocation-local state.
-///
-/// The [`Direct`] backend runs each node's Rust parsing code, with combinators
-/// calling their children's [`eval`](Eval::eval) methods as needed. This is
-/// *direct execution*: the grammar is evaluated through ordinary function calls,
-/// with no separate grammar-compilation step or memoization of parse results.
-///
-/// Every child invocation must use `eval` with the same backend, including
-/// lookahead, retries, and parsers constructed by `Bind`. Calling `parse` or
-/// `parse_with` inside an evaluator would start a separate direct execution.
-/// Backtracking restores the cursor, not backend bookkeeping.
-///
-/// Input and immutable ordering/finality context are separate from mutable
-/// execution state so returned values can borrow the input independently.
-/// Implementations propagate `NeedMore` before trying alternatives or deciding
-/// absence; on final input they return success or an error, never `NeedMore`.
-///
-/// A backend that caches parse results must ensure cached entries remain valid
-/// for the input snapshot and grammar configuration being parsed. For example,
-/// it can clear the cache at the start of each top-level parse. This trait does
-/// not enforce that association; it is the backend's responsibility.
-pub trait Eval<'input, Backend>: Grammar<'input> {
-    fn eval(
-        &self,
-        backend: &mut Backend,
-        input: &'input [u8],
-        cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output>;
-}
-
-/// The backend for direct execution through Rust calls, with no retained state.
-///
-/// [`Parser::parse`] and [`Parser::parse_with`] use this backend automatically.
-#[derive(Clone, Copy, Debug, Default)]
-pub struct Direct;
-
-/// Convenience entry points for grammars that support direct interpretation.
-///
-/// This trait is implemented automatically from `Eval<Direct>`. Custom parsers
-/// implement `Grammar` and `Eval`, rather than overriding these entry points.
-pub trait Parser<'input>: Eval<'input, Direct> {
-    /// Start direct execution with explicit ordering and input finality.
-    ///
-    /// A partial parse can succeed without reaching EOF. To retry `NeedMore`,
-    /// supply the accumulated input and original cursor. Parsers retain no buffer
-    /// or continuation. Retrying can rerun callbacks; effects are not rolled back.
+    /// Parse with explicit byte order. Exhaustion returns `UnexpectedEnd`.
+    /// Children receive the same order unless wrapped in `WithByteOrder`.
     fn parse_with(
         &self,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
-        self.eval(&mut Direct, input, cursor, context)
-    }
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError>;
 
-    /// Parse a complete buffer with high-first bits and big byte order.
-    /// A custom evaluator's unexpected `NeedMore` becomes `UnexpectedEnd`.
+    /// Parse with big byte order. Use `End` to require consuming the whole buffer.
     fn parse(
         &self,
         input: &'input [u8],
         cursor: Cursor,
     ) -> Result<(Cursor, Self::Output), ParseError> {
-        self.parse_with(input, cursor, ParseContext::FINAL)
-            .into_complete()
+        self.parse_with(input, cursor, ByteOrder::Big)
     }
 }
 
-impl<'input, P: Eval<'input, Direct>> Parser<'input> for P {}
-
-/// Reuse a parser by shared reference, preserving both entry points and its output
-/// type. The parser reference's lifetime is independent of the input lifetime.
-impl<'input, P: Grammar<'input>> Grammar<'input> for &P {
+/// Reuse a parser by reference, with a lifetime independent of the input.
+impl<'input, P: Parser<'input>> Parser<'input> for &P {
     type Output = P::Output;
-}
 
-impl<'input, Backend, P: Eval<'input, Backend>> Eval<'input, Backend> for &P {
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
-        P::eval(*self, backend, input, cursor, context)
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
+        P::parse_with(*self, input, cursor, byte_order)
     }
 }

@@ -18,9 +18,18 @@ failures, distinguishing remaining callback/cleanup/source-shape limitations
 from the supported interface.
 
 Run `python3 tools/check_direct_v1.py --aeneas-dir /path/to/pinned/aeneas` from
-`rusthammer/`. This is compatibility evidence for the pending migration, not a
-production implementation or a new correctness proof. The other probes below
+`rusthammer/`. This probe records compatibility evidence. The production migration is checked
+separately by `tools/verify.py` and its retained correctness proofs. The other probes below
 retain their historical API assumptions and do not override the v1 scope.
+
+## Historical probes and reproduction
+
+Probes below that import `Grammar`, `Eval`, `Direct`, `ParseContext`, `BitOrder`,
+`Seek`, or permutation APIs target the pre-v1 baseline. Run their recorded
+commands in a separate checkout at `c5c2643`; do not restore those APIs in the
+current library. The production Cargo consumer has been ported and remains an
+active verification gate. The direct-v1 probe keeps its own isolated models and
+controls, including the intentionally failing old backend closure.
 
 ## Diagnostic annotations
 
@@ -57,13 +66,9 @@ supported. No production float API or extraction-tool change is included.
 
 ## Typed permutation
 
-The [permutation corpus](permutation/README.md) compares the production tuple
-implementation with C Hammer, including ambiguous prefixes, nullable/optional
-entries, declaration-order values, and unaligned starts. It also records the
-source shapes that passed the pinned extraction tools. The initial candidate
-was replaced by production code; the normal verifier now checks both library
-MIR stages, every tuple implementation, and downstream permutation examples.
-The optional C comparison runs with `python3 tools/check_permutation_c.py`.
+The [permutation corpus](permutation/README.md) records the excluded pre-v1
+implementation. Reproduce it and `tools/check_permutation_c.py` in a checkout of
+`c5c2643`; the current production verifier has no permutation roots.
 
 ## Constructor functions and opaque returns
 

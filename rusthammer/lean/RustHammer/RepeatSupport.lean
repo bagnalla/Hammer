@@ -1,5 +1,5 @@
 import RustHammer.RepeatSpec
-import RustHammer.PartialProofs
+import RustHammer.ParserProofs
 
 open RustHammer.Code.grammar.repeat
   RustHammer.Code.input_types

@@ -1,26 +1,23 @@
-use super::super::{Cursor, Eval, Grammar, ParseContext, ParseError, ParseOutcome};
+use super::super::{ByteOrder, Cursor, ParseError, Parser};
 
 use core::marker::PhantomData;
 
 /// Succeed with `()` without reading input or validating the supplied cursor.
-/// Unlike `End`, this accepts at any position, including on partial input.
+/// Unlike `End`, this accepts at any position.
 /// Unbounded repetition rejects this parser's empty success with `NonProgress`.
 #[derive(Clone, Copy)]
 pub struct Epsilon;
 
-impl<'input> Grammar<'input> for Epsilon {
+impl<'input> Parser<'input> for Epsilon {
     type Output = ();
-}
 
-impl<'input, Backend> Eval<'input, Backend> for Epsilon {
-    fn eval(
+    fn parse_with(
         &self,
-        _: &mut Backend,
         _: &'input [u8],
         cursor: Cursor,
-        _: ParseContext,
-    ) -> ParseOutcome<()> {
-        ParseOutcome::Success(cursor, ())
+        _: ByteOrder,
+    ) -> Result<(Cursor, ()), ParseError> {
+        Ok((cursor, ()))
     }
 }
 
@@ -54,19 +51,16 @@ impl<T> Clone for Fail<T> {
     }
 }
 
-impl<'input, T> Grammar<'input> for Fail<T> {
+impl<'input, T> Parser<'input> for Fail<T> {
     type Output = T;
-}
 
-impl<'input, Backend, T> Eval<'input, Backend> for Fail<T> {
-    fn eval(
+    fn parse_with(
         &self,
-        _: &mut Backend,
         _: &'input [u8],
         _: Cursor,
-        _: ParseContext,
-    ) -> ParseOutcome<T> {
-        ParseOutcome::Error(ParseError::Mismatch)
+        _: ByteOrder,
+    ) -> Result<(Cursor, T), ParseError> {
+        Err(ParseError::Mismatch)
     }
 }
 
@@ -75,7 +69,6 @@ impl<'input, Backend, T> Eval<'input, Backend> for Fail<T> {
 /// The first success wins. After a recoverable failure, the second parser starts
 /// at the original cursor and its result is returned unchanged. Other errors
 /// propagate immediately. A later failure outside this choice does not revisit it.
-/// `NeedMore` propagates immediately, preserving priority of the first alternative.
 /// Cursor backtracking does not undo effects in custom parsers with interior state.
 #[derive(Clone, Copy)]
 pub struct Choice<P, Q> {
@@ -84,7 +77,7 @@ pub struct Choice<P, Q> {
 }
 
 /// Construct a [`Choice`], checking that both grammars have the same output type.
-/// Each child retains its backend capabilities; no parser runs during construction.
+/// No parser runs during construction.
 ///
 /// ```
 /// use rusthammer::{choice, map, BeU16, Byte, Cursor, Parser};
@@ -101,40 +94,35 @@ pub struct Choice<P, Q> {
 /// ```
 pub fn choice<'input, P, Q>(first: P, second: Q) -> Choice<P, Q>
 where
-    P: Grammar<'input>,
-    Q: Grammar<'input, Output = P::Output>,
+    P: Parser<'input>,
+    Q: Parser<'input, Output = P::Output>,
 {
     Choice { first, second }
 }
 
-impl<'input, P, Q> Grammar<'input> for Choice<P, Q>
+impl<'input, P, Q> Parser<'input> for Choice<P, Q>
 where
-    P: Grammar<'input>,
-    Q: Grammar<'input, Output = P::Output>,
+    P: Parser<'input>,
+    Q: Parser<'input, Output = P::Output>,
 {
     type Output = P::Output;
-}
 
-impl<'input, Backend, P, Q> Eval<'input, Backend> for Choice<P, Q>
-where
-    P: Eval<'input, Backend>,
-    Q: Eval<'input, Backend, Output = P::Output>,
-{
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
-        match self.first.eval(backend, input, cursor, context) {
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
-            ParseOutcome::Success(next, value) => ParseOutcome::Success(next, value),
-            ParseOutcome::Error(error) => {
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
+        match self.first.parse_with(input, cursor, byte_order) {
+            Ok(parsed) => {
+                let (next, value) = parsed;
+                Ok((next, value))
+            }
+            Err(error) => {
                 if error.is_recoverable() {
-                    self.second.eval(backend, input, cursor, context)
+                    self.second.parse_with(input, cursor, byte_order)
                 } else {
-                    ParseOutcome::Error(error)
+                    Err(error)
                 }
             }
         }
@@ -150,39 +138,40 @@ fn match_length_allows(first: Cursor, second: Cursor, allow_equal: bool) -> bool
             && (first.bit > second.bit || (allow_equal && first.bit == second.bit)))
 }
 
-fn restrict_match<'input, Backend, P, Q>(
-    backend: &mut Backend,
+fn restrict_match<'input, P, Q>(
     first: &P,
     second: &Q,
     input: &'input [u8],
     cursor: Cursor,
-    context: ParseContext,
+    byte_order: ByteOrder,
     allow_equal: bool,
-) -> ParseOutcome<P::Output>
+) -> Result<(Cursor, P::Output), ParseError>
 where
-    P: Eval<'input, Backend>,
-    Q: Eval<'input, Backend>,
+    P: Parser<'input>,
+    Q: Parser<'input>,
 {
-    match first.eval(backend, input, cursor, context) {
-        ParseOutcome::NeedMore => ParseOutcome::NeedMore,
-        ParseOutcome::Error(error) => ParseOutcome::Error(error),
-        ParseOutcome::Success(next, value) => match second.eval(backend, input, cursor, context) {
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
-            ParseOutcome::Error(error) => {
-                if error.is_recoverable() {
-                    ParseOutcome::Success(next, value)
-                } else {
-                    ParseOutcome::Error(error)
+    match first.parse_with(input, cursor, byte_order) {
+        Err(error) => Err(error),
+        Ok(parsed) => {
+            let (next, value) = parsed;
+            match second.parse_with(input, cursor, byte_order) {
+                Err(error) => {
+                    if error.is_recoverable() {
+                        Ok((next, value))
+                    } else {
+                        Err(error)
+                    }
+                }
+                Ok(parsed) => {
+                    let (other, _other_value) = parsed;
+                    if match_length_allows(next, other, allow_equal) {
+                        Ok((next, value))
+                    } else {
+                        Err(ParseError::Mismatch)
+                    }
                 }
             }
-            ParseOutcome::Success(other, _other_value) => {
-                if match_length_allows(next, other, allow_equal) {
-                    ParseOutcome::Success(next, value)
-                } else {
-                    ParseOutcome::Error(ParseError::Mismatch)
-                }
-            }
-        },
+        }
     }
 }
 
@@ -191,16 +180,14 @@ where
 /// Corresponds to Hammer's `h_butnot`. Run `first`, then on success run `second`
 /// from the original cursor. Recoverable second-child rejection accepts the
 /// first value and cursor; two successes accept only when the first is longer.
-/// Otherwise return `Mismatch`. Every attempted child's fatal error or
-/// `NeedMore` propagates. The second output is discarded and may have any type.
+/// Otherwise return `Mismatch`. Every attempted child's fatal error propagates. The second
+/// output is discarded and may have any type.
 ///
 /// Cursor validation is delegated to children, as with `Choice`. Endpoints are
 /// ordered by byte index, then bit offset; normalized forward matches therefore
 /// compare exact consumed bit lengths, without overflowing a bit count. Custom
 /// parsers must respect that cursor convention. Speculative effects are not undone.
-/// For seeking children this compares signed net displacement from the common
-/// start: a later endpoint wins, even if both endpoints precede the start.
-/// Internal excursions, repeated reads, and skipped bytes are not counted separately.
+/// Internal reads and skipped bytes are not counted separately.
 ///
 /// ```
 /// use rusthammer::{ButNot, ByteIn, BytePattern, Cursor, Parser};
@@ -218,42 +205,27 @@ pub struct ButNot<P, Q> {
     pub second: Q,
 }
 
-impl<'input, P, Q> Grammar<'input> for ButNot<P, Q>
+impl<'input, P, Q> Parser<'input> for ButNot<P, Q>
 where
-    P: Grammar<'input>,
-    Q: Grammar<'input>,
+    P: Parser<'input>,
+    Q: Parser<'input>,
 {
     type Output = P::Output;
-}
 
-impl<'input, Backend, P, Q> Eval<'input, Backend> for ButNot<P, Q>
-where
-    P: Eval<'input, Backend>,
-    Q: Eval<'input, Backend>,
-{
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
-        restrict_match(
-            backend,
-            &self.first,
-            &self.second,
-            input,
-            cursor,
-            context,
-            false,
-        )
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
+        restrict_match(&self.first, &self.second, input, cursor, byte_order, false)
     }
 }
 
 /// Keep the first match if the second rejects or matches no more bits.
 ///
 /// Corresponds to Hammer's `h_difference`. This has `ButNot`'s evaluation order,
-/// output, cursor, error, and incompleteness rules, but also accepts equal-length
+/// output, cursor, and error rules, but also accepts equal-length
 /// successes. Both children run from the original cursor. Their outputs may have
 /// different types. This operation is not ordinary language-set subtraction.
 #[derive(Clone, Copy)]
@@ -262,35 +234,20 @@ pub struct Difference<P, Q> {
     pub second: Q,
 }
 
-impl<'input, P, Q> Grammar<'input> for Difference<P, Q>
+impl<'input, P, Q> Parser<'input> for Difference<P, Q>
 where
-    P: Grammar<'input>,
-    Q: Grammar<'input>,
+    P: Parser<'input>,
+    Q: Parser<'input>,
 {
     type Output = P::Output;
-}
 
-impl<'input, Backend, P, Q> Eval<'input, Backend> for Difference<P, Q>
-where
-    P: Eval<'input, Backend>,
-    Q: Eval<'input, Backend>,
-{
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
-        restrict_match(
-            backend,
-            &self.first,
-            &self.second,
-            input,
-            cursor,
-            context,
-            true,
-        )
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
+        restrict_match(&self.first, &self.second, input, cursor, byte_order, true)
     }
 }
 
@@ -299,7 +256,7 @@ where
 /// Corresponds to Hammer's `h_xor`. Run `first`; on success or recoverable
 /// rejection, run `second` from the original cursor. Two successes return
 /// `Mismatch`, regardless of their lengths. Two recoverable rejections return
-/// the second error. Fatal errors and `NeedMore` from attempted children
+/// the second error. Fatal errors from attempted children
 /// propagate immediately. Cursor validation is delegated to children, and
 /// speculative effects are not undone.
 ///
@@ -318,46 +275,39 @@ pub struct Xor<P, Q> {
     pub second: Q,
 }
 
-impl<'input, P, Q> Grammar<'input> for Xor<P, Q>
+impl<'input, P, Q> Parser<'input> for Xor<P, Q>
 where
-    P: Grammar<'input>,
-    Q: Grammar<'input, Output = P::Output>,
+    P: Parser<'input>,
+    Q: Parser<'input, Output = P::Output>,
 {
     type Output = P::Output;
-}
 
-impl<'input, Backend, P, Q> Eval<'input, Backend> for Xor<P, Q>
-where
-    P: Eval<'input, Backend>,
-    Q: Eval<'input, Backend, Output = P::Output>,
-{
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
-        match self.first.eval(backend, input, cursor, context) {
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
-            ParseOutcome::Error(error) => {
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
+        match self.first.parse_with(input, cursor, byte_order) {
+            Err(error) => {
                 if error.is_recoverable() {
-                    self.second.eval(backend, input, cursor, context)
+                    self.second.parse_with(input, cursor, byte_order)
                 } else {
-                    ParseOutcome::Error(error)
+                    Err(error)
                 }
             }
-            ParseOutcome::Success(next, value) => {
-                match self.second.eval(backend, input, cursor, context) {
-                    ParseOutcome::NeedMore => ParseOutcome::NeedMore,
-                    ParseOutcome::Success(_other_cursor, _other_value) => {
-                        ParseOutcome::Error(ParseError::Mismatch)
+            Ok(parsed) => {
+                let (next, value) = parsed;
+                match self.second.parse_with(input, cursor, byte_order) {
+                    Ok(parsed) => {
+                        let (_other_cursor, _other_value) = parsed;
+                        Err(ParseError::Mismatch)
                     }
-                    ParseOutcome::Error(error) => {
+                    Err(error) => {
                         if error.is_recoverable() {
-                            ParseOutcome::Success(next, value)
+                            Ok((next, value))
                         } else {
-                            ParseOutcome::Error(error)
+                            Err(error)
                         }
                     }
                 }
@@ -366,7 +316,7 @@ where
     }
 }
 
-/// Parse an optional value, preserving `NeedMore` on partial input.
+/// Parse an optional value.
 ///
 /// Success preserves the child's cursor and wraps its output in `Some`.
 /// Recoverable rejection returns `None` at the original cursor, even if the child
@@ -378,7 +328,7 @@ pub struct Optional<P> {
 }
 
 /// Construct an [`Optional`] node without evaluating or constraining its child.
-/// Evaluation preserves `NeedMore` and treats recoverable rejection as absence.
+/// Parsing treats recoverable rejection as absence.
 ///
 /// ```
 /// use rusthammer::{optional, Byte, Cursor, Optional, Parser};
@@ -389,26 +339,25 @@ pub const fn optional<P>(parser: P) -> Optional<P> {
     Optional { parser }
 }
 
-impl<'input, P: Grammar<'input>> Grammar<'input> for Optional<P> {
+impl<'input, P: Parser<'input>> Parser<'input> for Optional<P> {
     type Output = Option<P::Output>;
-}
 
-impl<'input, Backend, P: Eval<'input, Backend>> Eval<'input, Backend> for Optional<P> {
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
-        match self.parser.eval(backend, input, cursor, context) {
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
-            ParseOutcome::Success(next, value) => ParseOutcome::Success(next, Some(value)),
-            ParseOutcome::Error(error) => {
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
+        match self.parser.parse_with(input, cursor, byte_order) {
+            Ok(parsed) => {
+                let (next, value) = parsed;
+                Ok((next, Some(value)))
+            }
+            Err(error) => {
                 if error.is_recoverable() {
-                    ParseOutcome::Success(cursor, None)
+                    Ok((cursor, None))
                 } else {
-                    ParseOutcome::Error(error)
+                    Err(error)
                 }
             }
         }
@@ -418,34 +367,33 @@ impl<'input, Backend, P: Eval<'input, Backend>> Eval<'input, Backend> for Option
 /// Positive lookahead, corresponding to Hammer's `h_and`.
 ///
 /// Run the child once. Success returns `()` at the original cursor, discarding
-/// the child's output. Every child error and `NeedMore` propagates unchanged. Lookahead restores
+/// the child's output. Every child error propagates unchanged. Lookahead restores
 /// only the cursor; it does not undo effects in custom parsers with interior state.
 #[derive(Clone, Copy)]
 pub struct And<P> {
     pub parser: P,
 }
 
-impl<'input, P: Grammar<'input>> Grammar<'input> for And<P> {
+impl<'input, P: Parser<'input>> Parser<'input> for And<P> {
     type Output = ();
-}
 
-impl<'input, Backend, P: Eval<'input, Backend>> Eval<'input, Backend> for And<P> {
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<()> {
-        match self.parser.eval(backend, input, cursor, context) {
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
-            ParseOutcome::Success(_, _) => ParseOutcome::Success(cursor, ()),
-            ParseOutcome::Error(error) => ParseOutcome::Error(error),
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, ()), ParseError> {
+        match self.parser.parse_with(input, cursor, byte_order) {
+            Ok(parsed) => {
+                let (_, _) = parsed;
+                Ok((cursor, ()))
+            }
+            Err(error) => Err(error),
         }
     }
 }
 
-/// Negative lookahead, preserving `NeedMore` on partial input and corresponding to Hammer's `h_not`.
+/// Negative lookahead, corresponding to Hammer's `h_not`.
 ///
 /// Run the child once. Child success returns `Mismatch`; recoverable rejection
 /// returns `()` at the original cursor. Cursor and alignment errors propagate.
@@ -455,26 +403,25 @@ pub struct Not<P> {
     pub parser: P,
 }
 
-impl<'input, P: Grammar<'input>> Grammar<'input> for Not<P> {
+impl<'input, P: Parser<'input>> Parser<'input> for Not<P> {
     type Output = ();
-}
 
-impl<'input, Backend, P: Eval<'input, Backend>> Eval<'input, Backend> for Not<P> {
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<()> {
-        match self.parser.eval(backend, input, cursor, context) {
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
-            ParseOutcome::Success(_, _) => ParseOutcome::Error(ParseError::Mismatch),
-            ParseOutcome::Error(error) => {
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, ()), ParseError> {
+        match self.parser.parse_with(input, cursor, byte_order) {
+            Ok(parsed) => {
+                let (_, _) = parsed;
+                Err(ParseError::Mismatch)
+            }
+            Err(error) => {
                 if error.is_recoverable() {
-                    ParseOutcome::Success(cursor, ())
+                    Ok((cursor, ()))
                 } else {
-                    ParseOutcome::Error(error)
+                    Err(error)
                 }
             }
         }

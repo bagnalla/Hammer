@@ -1,6 +1,6 @@
 # RustHammer input, byte ordering, and spans
 
-Status: v1 contract revised 2026-10-10; implementation migration pending.
+Status: v1 input, byte-order, and span implementation and proofs migrated.
 The [MAVLink 2 target](rusthammer.md#target-application-mavlink-2-packet-parsing)
 uses complete inputs, high-first bit traversal, and little-endian numeric fields.
 High-first-only traversal and forward successful consumption are adopted v1
@@ -117,8 +117,8 @@ alignment requirement; removing scope guards does not add implicit padding.
 The scope proof becomes delegation plus restoration of the enclosing argument,
 with no direction-change cases. The [direct-v1 probe](../rusthammer/probes/direct_v1/README.md)
 checks `ByteOrder`/`WithByteOrder`, unaligned scopes, and borrowed spans through
-both MIR stages and ordinary dependency use. Production semantics/proofs still
-need migration, without old wrapper aliases or hidden bit-order parameters.
+both MIR stages and ordinary dependency use. The production semantics and proofs now use the same interface, without old
+wrapper aliases or hidden bit-order parameters.
 
 ## Primitive and combinator policy
 
@@ -177,7 +177,16 @@ Lookahead can inspect beyond its returned cursor, and `SkipBits` can consume
 without reading. CRC validation can inspect a span's byte view without moving
 the parser cursor; no seeking capability is needed.
 
-## Production implementation and evidence
+## Current implementation and evidence
+
+The production core uses `Result`, `ByteOrder`, and direct `Parser` execution.
+`WithByteOrder` delegates without guards; spans store only input and endpoints.
+High-first decoding and geometry, both byte orders, unaligned fields, raw-cursor
+errors, forward consumption, and retained application contracts are proved.
+The [main verification record](rusthammer.md#verification-and-proof-maintenance)
+tracks the migrated roots, retired claims, and current checks.
+
+## Historical pre-v1 implementation and evidence
 
 This section records the pre-v1 ordering increment. References to finality,
 backend support, low-first fields, direction-change guards, and then-planned
@@ -318,8 +327,8 @@ verification as though all of those cases should still be accepted.
 
 ## Implementation order
 
-Follow the [main migration sequence](rusthammer.md#first-version-scope-and-next-steps).
-For input, ordering, and spans:
+The [main migration sequence](rusthammer.md#first-version-scope-and-next-steps)
+implements the following input, ordering, and span changes:
 
 1. Retain `Cursor`, `ByteOrder`, and `BitSpan`. Remove finality/outcome wrappers,
    `BitOrder`, combined `Order`, and direction stored in spans. Use `Result` and
@@ -341,5 +350,6 @@ For input, ordering, and spans:
 
 The earlier ordering probes are historical evidence. The new direct-v1 probe
 checks representative source forms through both MIR stages and ordinary
-dependency extraction, with strict Lean checking. The full production migration
-still requires regeneration, the retained proof build, and axiom auditing.
+dependency extraction, with strict Lean checking. The production verifier now regenerates the migrated core, builds its retained
+proofs, and audits the selected theorem roots. Reproduce the earlier probes
+against `c5c2643` when they import retired interfaces.

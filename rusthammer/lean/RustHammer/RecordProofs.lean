@@ -37,13 +37,13 @@ private abbrev fieldsParser : Seq Bits (Seq Bits Bits) :=
   { first := Spec.recordParser.version,
     second := { first := Spec.recordParser.flags, second := Spec.recordParser.length } }
 
-private abbrev fieldsInst := Seq.Insts.RusthammerParserInputPair
-  Bits.Insts.RusthammerParserInputU64
-  (Seq.Insts.RusthammerParserInputPair
-    Bits.Insts.RusthammerParserInputU64 Bits.Insts.RusthammerParserInputU64)
+private abbrev fieldsInst := Seq.Insts.RusthammerParser_traitsParserInputPair
+  Bits.Insts.RusthammerParser_traitsParserInputU64
+  (Seq.Insts.RusthammerParser_traitsParserInputPair
+    Bits.Insts.RusthammerParser_traitsParserInputU64 Bits.Insts.RusthammerParser_traitsParserInputU64)
 
 private abbrev predicateInst :=
-  ParserInputRecordParserRecord.parse_with.closure.Insts.CoreOpsFunctionFnTupleShared0PairU64PairU64U64Bool
+  record_header.closure.Insts.CoreOpsFunctionFnTupleShared0PairU64PairU64U64Bool
 
 /-- Relational sequencing of three numeric fields gives the header's fixed byte layout. -/
 theorem record_fields_decode (input : Slice U8) (cursor : Cursor)
@@ -103,24 +103,25 @@ theorem record_fields_decode (input : Slice U8) (cursor : Cursor)
 
 theorem record_header_fields_spec (input : Slice U8) (cursor : Cursor)
     (hvalid : Spec.validCursor input cursor) (haligned : cursor.bit.val = 0) :
-    fieldsInst.parse_with fieldsParser input cursor ParseContext.FINAL
-      ⦃ result => Spec.completed (Spec.recordHeaderOutcome input cursor) result ⦄ := by
-  let bi := Bits.Insts.RusthammerParserInputU64
+    fieldsInst.parse_with fieldsParser input cursor ByteOrder.Big
+      ⦃ result => Spec.satisfies (Spec.recordHeaderOutcome input cursor) result ⦄ := by
+  let bi := Bits.Insts.RusthammerParser_traitsParserInputU64
   have hv (start : Cursor) := bits_spec Spec.recordParser.version input start (by decide)
   have hf (start : Cursor) := bits_spec Spec.recordParser.flags input start (by decide)
   have hl (start : Cursor) := bits_spec Spec.recordParser.length input start (by decide)
   have htail (start : Cursor) := seq_spec bi bi fieldsParser.second input start
     (fun start => Spec.bitsOutcome input start 5#u8)
     (fun start => Spec.bitsOutcome input start 16#u8) hf hl
-  change Seq.Insts.RusthammerParserInputPair.parse_with bi
-    (Seq.Insts.RusthammerParserInputPair bi bi) fieldsParser input cursor ParseContext.FINAL
-    ⦃ result => Spec.completed (Spec.recordHeaderOutcome input cursor) result ⦄
-  step with seq_spec bi (Seq.Insts.RusthammerParserInputPair bi bi) fieldsParser input cursor
+  change Seq.Insts.RusthammerParser_traitsParserInputPair.parse_with bi
+    (Seq.Insts.RusthammerParser_traitsParserInputPair bi bi) fieldsParser input cursor ByteOrder.Big
+    ⦃ result => Spec.satisfies (Spec.recordHeaderOutcome input cursor) result ⦄
+  step with seq_spec bi (Seq.Insts.RusthammerParser_traitsParserInputPair bi bi) fieldsParser input cursor
     (fun start => Spec.bitsOutcome input start 3#u8)
     (Spec.sequence (fun start => Spec.bitsOutcome input start 5#u8)
       (fun start => Spec.bitsOutcome input start 16#u8)) hv htail as ⟨outcome, houtcome⟩
-  rcases houtcome with ⟨result, hresult, rfl⟩
-  simp only [Spec.completed_embed]
+  rcases houtcome with ⟨result, hresult, heq⟩
+  subst outcome
+  simp only [Spec.satisfies_iff]
   exact record_fields_decode input cursor result hvalid haligned hresult
 
 theorem record_predicate_spec (fields : Spec.HeaderFields) :
@@ -138,19 +139,20 @@ theorem record_predicate_spec (fields : Spec.HeaderFields) :
 /-- The private payload helper has no configuration assumption on the requested count. -/
 theorem record_body_spec (input : Slice U8) (cursor : Cursor) (version flags : U64) (count : Usize)
     (hvalid : Spec.validCursor input cursor) (haligned : cursor.bit.val = 0) :
-    DirectRun.record_example.parse_record_body input cursor version flags count ParseContext.FINAL
-      ⦃ result => Spec.completed (Spec.recordBodyOutcome input cursor version flags count) result ⦄ := by
+    record_example.parse_record_body input cursor version flags count ByteOrder.Big
+      ⦃ result => Spec.satisfies (Spec.recordBodyOutcome input cursor version flags count) result ⦄ := by
   have hparts : cursor.bit.val < 8 ∧ cursor.byte.val ≤ input.val.length ∧
       (cursor.byte.val = input.val.length → cursor.bit.val = 0) := by
     unfold Spec.validCursor Spec.position at hvalid
     omega
-  rw [DirectRun.record_example.parse_record_body_eq]
-  step with seq_spec TakeAligned.Insts.RusthammerParserInputSharedInputSliceU8
-    End.Insts.RusthammerParserInputTuple { first := { count }, second := () } input cursor
+  rw [record_example.parse_record_body]
+  step with seq_spec TakeAligned.Insts.RusthammerParser_traitsParserInputSharedInputSliceU8
+    End.Insts.RusthammerParser_traitsParserInputTuple { first := { count }, second := () } input cursor
     (fun start => Spec.takeAlignedOutcome input start count) (Spec.endOutcome input)
     (fun start => take_aligned_parser_spec { count } input start) (end_spec input)
     as ⟨outcome, houtcome⟩
-  rcases houtcome with ⟨fields, hfields, rfl⟩
+  rcases houtcome with ⟨fields, hfields, heq⟩
+  subst outcome
   rcases hfields with ⟨taken, htaken, hrest⟩
   simp only [Spec.takeAlignedOutcome, if_pos hparts, if_pos haligned] at htaken
   by_cases hfit : cursor.byte.val + count.val ≤ input.val.length
@@ -168,9 +170,9 @@ theorem record_body_spec (input : Slice U8) (cursor : Cursor) (version flags : U
       simp only [if_pos hend] at hended
       cases hended
       cases hrest
-      change (ok (.Success next { version, flags, payload }) : Result (ParseOutcome Record))
-        ⦃ result => Spec.completed (Spec.recordBodyOutcome input cursor version flags count) result ⦄
-      simp only [spec_ok, Spec.completed_success]
+      change (ok (.Ok (next, { version, flags, payload })) : Result (Spec.ParseResult Record))
+        ⦃ result => Spec.satisfies (Spec.recordBodyOutcome input cursor version flags count) result ⦄
+      simp only [spec_ok, Spec.satisfies_success]
       simp only [Spec.recordBodyOutcome, if_pos hfit, if_pos hexact,
         Spec.recordBodySuccess]
       exact ⟨next, { version, flags, payload }, rfl, by omega, by simp [hbit], rfl, rfl, hpayload⟩
@@ -180,22 +182,23 @@ theorem record_body_spec (input : Slice U8) (cursor : Cursor) (version flags : U
       simp only [if_neg hnotend] at hended
       cases hended
       cases hrest
-      simp [Spec.completedResult,Spec.recordBodyOutcome, hfit, hexact, spec_ok]
+      simp [Spec.recordBodyOutcome, hfit, hexact, spec_ok]
   · simp only [if_neg hfit] at htaken
     cases htaken
     cases hrest
-    simp [Spec.completedResult,Spec.recordBodyOutcome, hfit, spec_ok]
+    simp [Spec.recordBodyOutcome, hfit, spec_ok]
 
 /-- The complete parser satisfies the format contract for all inputs and raw cursors. -/
 theorem record_parser_spec (parser : RecordParser) (input : Slice U8) (cursor : Cursor)
     (hconfig : Spec.validRecordParser parser) :
-    RecordParser.Insts.RusthammerParserInputRecord.parse_with parser input cursor ParseContext.FINAL
-      ⦃ result => Spec.completed (Spec.recordOutcome input cursor) result ⦄ := by
+    RecordParser.Insts.RusthammerParser_traitsParserInputRecord.parse_with parser input cursor ByteOrder.Big
+      ⦃ result => Spec.satisfies (Spec.recordOutcome input cursor) result ⦄ := by
   change parser = Spec.recordParser at hconfig
   subst parser
-  rw [RecordParser.Insts.RusthammerParserInputRecord.parse_with_eq]
+  rw [RecordParser.Insts.RusthammerParser_traitsParserInputRecord.parse_with]
   step with take_aligned_parser_spec { count := 0#usize } input cursor as ⟨checkedOutcome, hcheckedOutcome⟩
-  rcases hcheckedOutcome with ⟨checked, hchecked, rfl⟩
+  rcases hcheckedOutcome with ⟨checked, hchecked, heq⟩
+  subst checkedOutcome
   have hparts : (cursor.bit.val < 8 ∧ cursor.byte.val ≤ input.val.length ∧
       (cursor.byte.val = input.val.length → cursor.bit.val = 0)) ↔
       Spec.validCursor input cursor := by
@@ -210,12 +213,14 @@ theorem record_parser_spec (parser : RecordParser) (input : Slice U8) (cursor : 
         omega
       simp only [if_pos haligned, UScalar.ofNatCore_val_eq, Nat.add_zero, if_pos hbyte] at hchecked
       rcases hchecked with ⟨checkedNext, empty, rfl, _, _, _⟩
-      simp only [Spec.completedResult]
+
+      simp only [record_header, bind_ok]
       step with verify_spec fieldsInst predicateInst { parser := fieldsParser, predicate := () }
         input cursor (Spec.recordHeaderOutcome input) Spec.recordHeaderAllowed
         (record_header_fields_spec input cursor hvalid haligned)
         (fun _ fields _ => record_predicate_spec fields) as ⟨headerOutcome, hheaderOutcome⟩
-      rcases hheaderOutcome with ⟨header, hheader, rfl⟩
+      rcases hheaderOutcome with ⟨header, hheader, heq⟩
+      subst headerOutcome
       rcases hheader with ⟨raw, hraw, hheader⟩
       by_cases hheaderFit : cursor.byte.val + 3 ≤ input.val.length
       · simp only [Spec.recordHeaderOutcome, if_pos hheaderFit] at hraw
@@ -228,11 +233,13 @@ theorem record_parser_spec (parser : RecordParser) (input : Slice U8) (cursor : 
           have hformat : Spec.recordVersion input cursor = 1 ∧
               Spec.recordLength input cursor ≤ 1024 := by
             exact ⟨hversion.symm.trans hallowed.1, by omega⟩
-          dsimp only [Spec.completedResult]
+
           step with UScalar.cast_inBounds_spec .Usize length (by scalar_tac) as ⟨count, hcount⟩
           step with record_body_spec input next version flags count hnext hnextBit as ⟨outcome, houtcome⟩
-          rcases houtcome with ⟨result, hresult, rfl⟩
-          simp only [Spec.completed_embed]
+          rcases houtcome with ⟨result, hresult, heq⟩
+          subst outcome
+
+          simp only [Spec.satisfies_iff]
           simp only [Spec.recordOutcome, if_pos hvalid, if_pos haligned, if_pos hheaderFit,
             if_pos hformat]
           simp only [Spec.recordBodyOutcome, hnextByte, hcount, hlength] at hresult
@@ -252,25 +259,25 @@ theorem record_parser_spec (parser : RecordParser) (input : Slice U8) (cursor : 
           have hformat : ¬(Spec.recordVersion input cursor = 1 ∧
               Spec.recordLength input cursor ≤ 1024) := by
             simpa only [Spec.recordHeaderAllowed, hversion, hlength] using hallowed
-          simp only [Spec.completedResult, spec_ok, Spec.completed_error]
+          simp only [spec_ok, Spec.satisfies_error]
           simp only [Spec.recordOutcome, if_pos hvalid, if_pos haligned, if_pos hheaderFit, if_neg hformat]
       · simp only [Spec.recordHeaderOutcome, if_neg hheaderFit] at hraw
         cases hraw
         cases hheader
-        simp only [Spec.completedResult, spec_ok, Spec.completed_error]
+        simp only [spec_ok, Spec.satisfies_error]
         simp only [Spec.recordOutcome, if_pos hvalid, if_pos haligned, if_neg hheaderFit]
     · simp only [if_neg haligned] at hchecked
       cases hchecked
-      simp only [Spec.completedResult, spec_ok, Spec.completed_error]
+      simp only [spec_ok, Spec.satisfies_error]
       simp only [Spec.recordOutcome, if_pos hvalid, if_neg haligned]
   · simp only [if_neg hvalid] at hchecked
     cases hchecked
-    simp [Spec.completedResult, spec_ok, Spec.recordOutcome, hvalid]
+    simp [spec_ok, Spec.recordOutcome, hvalid]
 
 theorem record_spec (input : Slice U8) (cursor : Cursor) (parser : RecordParser)
     (hconfig : Spec.validRecordParser parser) :
     parse_record input cursor parser ⦃ result => Spec.recordOutcome input cursor result ⦄ := by
-  exact complete_spec RecordParser.Insts.RusthammerParserInputRecord parser input cursor
+  exact complete_spec RecordParser.Insts.RusthammerParser_traitsParserInputRecord parser input cursor
     (Spec.recordOutcome input cursor) (record_parser_spec parser input cursor hconfig)
 
 /-- Every aligned record satisfying the format's version, bound, and exact length is accepted. -/

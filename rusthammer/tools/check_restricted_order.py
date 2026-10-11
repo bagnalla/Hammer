@@ -65,7 +65,7 @@ def scope_policy(length, args):
     return None
 
 
-def compare(hammer, driver=None, work=WORK):
+def compare(hammer, driver=None, work=WORK, corpus=None):
     """Compare this corpus against either the probe or a supplied library driver."""
     adapter = work / "c-adapter.so"
     # Reuse only the C reader/grammar adapter, not the superseded Rust probe or
@@ -84,7 +84,7 @@ def compare(hammer, driver=None, work=WORK):
     library.order_read.restype = None
     library.order_nested.argtypes = [ptr, C.c_size_t, C.c_uint8, C.c_uint8, C.c_uint8, ptr, outptr]
     library.order_nested.restype = None
-    corpus = iter(cases())
+    corpus = iter(cases() if corpus is None else corpus)
     counts = {"fields_agree": 0, "scopes_agree": 0, "scope_rejections": 0, "rejected_c_successes": 0}
     while batch := list(islice(corpus, 4096)):
         requests = [f"{kind} {data.hex() or '-'} {' '.join(map(str, args))}" for kind, data, args in batch]

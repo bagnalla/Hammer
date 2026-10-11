@@ -1,14 +1,13 @@
 # RustHammer version 1: design and verification plan
 
-Status: plan revised 2026-10-10; implementation migration pending on
-`rusthammer-v1-simplify`, branched from `rusthammer-dev` at `c5c2643`
-(`Before simplification`). The direct-only, complete-input scope and additional
-MAVLink-driven simplifications are adopted. The baseline implementation still has
-the excluded capabilities; this document specifies the migration, not completed
-implementation or proof work.
+Status: v1 core migration implemented on `rusthammer-v1-simplify`, branched
+from `rusthammer-dev` at `c5c2643` (`Before simplification`). Plans were committed
+at `3052099`; the extraction probe was committed at `8c08046`. The retained Rust
+implementation, examples, Cargo consumer, generated Lean, and proofs now use the
+single direct parser interface, complete inputs, and high-first traversal.
 
 RustHammer is a typed Rust parser-combinator library whose implementation is
-translated through Charon and Aeneas and verified in Lean. Version 1 will support
+translated through Charon and Aeneas and verified in Lean. Version 1 supports
 **direct execution of nonrecursive grammars over complete immutable inputs**.
 **MAVLink 2 packet parsing is the target application for version 1.** Use its
 requirements to choose the initial library scope and demonstrate verification
@@ -25,12 +24,17 @@ not evidence that the new interface has already been extracted or proved.
 
 ## Resume here
 
-The plan revision is committed at `3052099`. The focused
-[direct-v1 probe](../rusthammer/probes/direct_v1/README.md) now passes the selected
-interface and adapted MAVLink grammar through both MIR stages and a Cargo
-consumer. Next, migrate the library, examples, downstream fixtures, generated
-Lean, and proofs together. Do not add new combinator families during that
-migration.
+The simplified core and retained proofs are migrated. The
+[README](../rusthammer/README.md) and [overview](../rusthammer/OVERVIEW.md) describe
+the current implementation. The [direct-v1 probe](../rusthammer/probes/direct_v1/README.md)
+remains the record of supported source forms and remaining extraction failures.
+
+Next is the v1 application/release scope review: select dialect/message metadata,
+decide whether unsigned framing is sufficient for the first release, and review
+packaging and supported environments. Typed payloads or signature-field parsing
+would be separate verified increments; cryptographic authentication remains an
+application responsibility. No deferred backend, streaming, diagnostic,
+permutation, seeking, float, or recursion work gates this review.
 
 | Document | Role in v1 |
 | --- | --- |
@@ -40,7 +44,7 @@ migration.
 | [Diagnostics investigation](rusthammer-diagnostics.md) | Deferred reporting research; no production hooks or reporting state in v1. |
 | [Backend research](rusthammer-backends.md) | Historical boundary and deferred packrat research; no v1 compatibility requirement. |
 | [Recursion research](rusthammer-recursive-rules.md) | Deferred construction and extraction investigations, outside v1. |
-| [Prototype README](../rusthammer/README.md) and [overview](../rusthammer/OVERVIEW.md) | Document the implementation currently in the tree until migrated. |
+| [Prototype README](../rusthammer/README.md) and [overview](../rusthammer/OVERVIEW.md) | Document the current direct-only implementation and proof coverage. |
 | [Compatibility probes](../rusthammer/probes/README.md) | Reproductions and known limits of the pinned tools. |
 | [Direct-v1 probe](../rusthammer/probes/direct_v1/README.md) | Completed interface/extraction check; supported forms and remaining failures, without new correctness proofs. |
 
@@ -207,7 +211,7 @@ pub trait Parser<'input> {
 }
 ```
 
-This signature passes the private probe; it is not yet the public implementation.
+This is the implemented public interface, checked by the probe and production verifier.
 `parse_with` is the execution operation implemented by primitives, combinators, custom
 parsers, and reference forwarding. Every child call uses it with the active
 byte order; `parse` supplies big byte order. Bit traversal is always high-first.
@@ -291,51 +295,36 @@ without changing the parser cursor or requiring `Seek`.
 
 ## First-version scope and next steps
 
-1. **Revise plans (this change).** Record direct-only/complete-input semantics,
-   the MAVLink target and acceptance scope, retained capabilities, removed APIs,
-   proof obligations, and deferred research. The additional cuts are adopted;
-   migrate only retained families.
-   Keep implementation documentation explicit about the pending migration.
-2. **Check the simplified source shapes (complete, 2026-10-10).** The private
-   [probe report](../rusthammer/probes/direct_v1/README.md#results) records passing
-   single-trait inference, `Result`, reference forwarding, opaque returns,
-   method-local callbacks, owned/borrowed outputs, `Bind`, byte-order scopes,
-   and adapted MAVLink framing/CRC. Both MIR stages and the Cargo consumer pass
-   extraction and strict Lean checking. The old backend-closure failure is
-   reproduced alongside passing backend-free callbacks. Borrowed callbacks,
-   cleanup moves, and other unsupported source shapes remain isolated controls.
-   This completes the compatibility check, not the production proof migration.
-3. **Migrate Rust and callers as one core change.** Update input types, parser
-   traits, retained grammar families and shared examples, native tests, extraction
-   roots, and the Cargo consumer. Replace outcomes at primitive and combinator
-   sites, not merely at the outer entry point. Audit EOF, truncation, callback
-   timing, ownership, and forward consumption. Remove excluded exports, nodes,
-   helpers, fixtures, and roots as part of this change. Replace backend tests with
-   direct composition/custom-parser tests where they still protect a retained contract.
-   Retain high-first complete-input coverage for supported families from mixed
-   tests; delete cases whose sole purpose is an excluded feature or mode. Keep
-   MAVLink framing and CRC unchanged.
-4. **Migrate specifications and proofs against regenerated code.** Reuse the
-   mathematical decoding, cursor, high-first span geometry, byte ordering, and
-   CRC specifications. Port result-based primitive, composition, repetition, and
-   application contracts; establish forward-consumption preservation under child
-   contracts. Remove redundant state/finality adapters after covering retained
-   claims. Retire excluded feature/application proofs and audit roots explicitly,
-   preserving their baseline evidence instead of porting dead v1 code. This step
-   completes the same core increment as step 3; a Rust-only passing build is
-   insufficient.
-5. **Verify and document the resulting implementation.** Run the full production
-   verifier in both allocation configurations, both MIR stages, and the ordinary
-   downstream crate. Review baseline final/high-first versus new-result boundary
-   cases and retained application contracts. Check that excluded APIs and hidden
-   compatibility paths are absent from the production surface. Update
-   README/overview examples and extraction-limit notes, record remaining
-   workarounds and actual counts, and mark the migration complete only after the
-   full proof and axiom checks pass.
-6. **Finish the v1 scope review.** Check the selected MAVLink coverage and any
-   small conveniences against concrete uses and extraction evidence. Review the
-   public API, supported callback forms, resource assumptions, and release packaging.
-   New capabilities require their own implementation and verification increment.
+1. **Plan revision — complete.** Direct-only/complete-input semantics, the MAVLink
+   target, retained capabilities, exclusions, proof obligations, and deferred
+   research are recorded in this plan and its supporting documents.
+2. **Extraction probe — complete.** The [probe report](../rusthammer/probes/direct_v1/README.md#results)
+   records single-trait inference, `Result`, reference forwarding, opaque returns,
+   method-local callbacks, owned/borrowed outputs, `Bind`, byte-order scopes, and
+   adapted MAVLink framing/CRC through both MIR stages and a Cargo consumer.
+   Controls retain the distinct borrowed-callback and cleanup failures.
+3. **Rust and callers — migrated.** All retained families, shared examples, native
+   tests, extraction roots, and consumer entries use direct `Parser` calls and
+   ordinary results. Excluded APIs and their dedicated fixtures are removed.
+   The tests retain complete-input/high-first behavior, callback and drop timing,
+   borrow identity, error precedence, and empty/raw-cursor boundaries.
+4. **Specifications and proofs — migrated.** Generated code is regenerated from
+   Rust. Retained decoding, ordering, span geometry, repetition/fold, constructor,
+   match, record, and MAVLink proofs build. Backend state projections and result
+   finality conversions are gone. `ParserSpec`/`ParserProofs` hold direct contracts;
+   `Spec.satisfies` is an ordinary result-witness relation, with no input status or
+   outcome conversion. `ForwardProofs` establishes cursor preservation under
+   explicit child/factory contracts and for the MAVLink frame relation. CRC model
+   and implementation proofs remain unchanged.
+5. **Verification and documentation — complete.** The production verifier covers both
+   allocation configurations and MIR stages, ordinary downstream extraction,
+   strict Lean compilation, and selected theorem axiom checks. C comparisons
+   cover retained primitive/match semantics and high-first ordering. Current
+   results are recorded below; no retired feature is counted as verified v1 code.
+6. **Application/release scope review — next.** Select supported MAVLink metadata
+   and review whether more application coverage is needed, then public API,
+   callback support, resource assumptions, packaging, and supported environments.
+   New capabilities require their own specification and verification increment.
 
 A temporary baseline checkout may help compare native behavior; it must not
 become a second implementation shipped in the crate. Retained research probes
@@ -352,6 +341,22 @@ audits. These are baseline results, not claims about a migrated implementation.
 Test and theorem counts may shrink when excluded capabilities are removed;
 acceptance depends on retained semantic coverage, not matching those counts.
 
+The migrated implementation passed the production verifier on 2026-10-10 with
+the pinned tools below:
+
+- Native tests: 213 without `alloc` and 247 with `alloc`, including 35 and 40
+  doctests respectively; downstream consumer tests: 22 and 25 respectively.
+- Library extraction through promoted and optimized MIR, and 51 ordinary Cargo
+  consumer extraction roots, including shared MAVLink framing and CRC validation.
+- Full Lean proof build and additional generated-code checks with warnings as
+  errors and `autoImplicit=false`; 131 selected theorem axiom audits passed using
+  only standard Lean axioms, with no project admissions or opaque stand-ins.
+- C comparisons: 577,065 primitive cases, 1,879,635 match cases, 50,530 high-first
+  ordered-field cases, and 1,144 nested byte-order scope cases, all passing.
+
+These results cover the retained v1 implementation. The independent MAVLink CRC
+specification and implementation proof files are unchanged by the migration.
+
 | Existing proof area | Migration obligation |
 | --- | --- |
 | `DirectState`, `Direct`, `DirectEquations`, `BackendProofs` | Replace state projection and generic-backend contracts with direct parser equations/contracts. Retain child order and recoverable rollback claims. |
@@ -361,6 +366,30 @@ acceptance depends on retained semantic coverage, not matching those counts.
 | Permutation/tuple, seek/offset, and low-first/scope-guard proofs | Retire from the v1 build and theorem audit with their excluded source. Retain baseline research/history; preserve shared arithmetic and retained high-first claims. |
 | Shared applications | Reprove retained extracted parsers, including truncated frames, borrowed payload contents, and exact consumption. Retire the offset-seeking example rather than adding a substitute seek API. |
 | MAVLink CRC | Retain the independent CRC model and implementation proof; port framing composition and success/error properties without weakening checksum validation. |
+
+The proof retirement inventory is explicit:
+
+- Delete `DirectState`, `Direct`, and `DirectEquations`; generated parser methods
+  now execute directly. `BackendProofs.seq_eval_spec` and `choice_eval_spec` are
+  replaced by direct `ParserProofs` contracts. Constructor sequencing is now
+  `Constructors.seq_parse_spec`.
+- Rename `PartialSpec`/`PartialProofs` to `ParserSpec`/`ParserProofs`; retain their
+  complete-input combinator claims. Retire `classify_*`, incomplete propagation,
+  and impossible-`NeedMore` lemmas. Result-witness lemmas replace finality adapters.
+- Retire `PartialRecordSpec`/`PartialRecordProofs`. Their complete-input header,
+  marker, and record claims remain in `RecordProofs` and `ControlProofs`; their
+  partial-input/EOF-waiting claims are outside v1.
+- Delete `PermutationSpec`, `PermutationProofs`, `PermutationTupleProofs`,
+  `SeekSpec`, `SeekArithmetic`, `SeekProofs`, `SeekProperties`, `OffsetSpec`, and
+  `OffsetProofs`. Preserve shared forward arithmetic and the general match
+  endpoint/displacement theorem and audit.
+- Remove `BitSpan.bit_order`, low-first span geometry, `fragment_offset_spec`,
+  ordered-bit direction cases, and scope guard/state theorems. High-first bit
+  proofs remain in `Proofs`/`CompleteProofs`; byte-order decoding remains in
+  `Order*`; transparent scoping is `Ordering.with_byte_order_spec`.
+- Preserve all substantive MAVLink framing, payload, checksum, constructor, and
+  success/truncation contracts. Only status/guard helper lemmas and impossible
+  incomplete outcomes are retired. The two CRC files are unchanged.
 
 The exclusions intentionally remove tests and theorem roots for permutation,
 seeking/offset applications, low-first order, and input/backend modes. Document
@@ -403,7 +432,7 @@ Keep the pinned tools during this migration:
 | Aeneas | `557eff83ecef5083b98a52a94ca7fae63d6c1dab` |
 | Charon | `c8f15d7d658c86a95658f71ad99cddd4be002e04` |
 
-The expected simplification is fewer trait dictionaries, no generic backend
+The implementation now has fewer trait dictionaries, no generic backend
 argument or unit-state projection, no incomplete-input branches or finality
 conversions, one physical bit direction, and fewer production parser/proof
 families. There are no diagnostic metadata gates in the v1 completion path.
@@ -443,9 +472,10 @@ settled. Select the supported dialect/message metadata and any expansion beyond
 the initial unsigned framing example into typed payload or signature-field
 parsing. Cryptographic verification and replay state remain application concerns.
 The focused probe settles the tested single-trait inference/extraction forms,
-byte-order-only interface, and adapted MAVLink callback shapes. Carry its
-supported source forms and remaining-workaround checks into the migration;
-the actual production implementation and retained proofs still need porting.
+byte-order-only interface, and adapted MAVLink callback shapes. The production
+migration carries those supported forms into the library and consumer. Named
+borrowed-output adapters, whole-payload moves, and closure
+forwarding remain where required by the pinned tools.
 
 Collection does not promise recoverable allocation failure, and logical
 termination does not prove physical stack or memory bounds. Keep those limits

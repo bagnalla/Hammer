@@ -1,4 +1,4 @@
-import RustHammer.PartialSpec
+import RustHammer.ParserSpec
 
 open RustHammer.Code.input_types
 
@@ -30,7 +30,7 @@ def skipBitsOutcome (input : Slice U8) (cursor : Cursor) (bits : Usize)
       | .Err error => .Err error
 
 /-- Tell reports and preserves the supplied cursor after validating it.
-Input finality has no bearing on its result. -/
+The input position determines its result. -/
 def tellOutcome (input : Slice U8) (cursor : Cursor) (result : ParseResult Cursor) : Prop :=
   if validCursor input cursor then result = .Ok (cursor, cursor)
   else result = .Err .InvalidCursor

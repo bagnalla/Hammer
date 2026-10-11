@@ -6,9 +6,8 @@
 #[cfg(rusthammer_verify)]
 use crate as rusthammer;
 use rusthammer::{
-    bind, map, seq, verify, BitOrder, BitSpan, Bits, Byte, ByteIn, ByteNotIn, ByteOrder, Cursor,
-    Eval, Grammar, Map, Order, ParseContext, ParseOutcome, Right, Seq, TakeAligned, WithOrder,
-    WithSpan,
+    bind, map, seq, verify, BitSpan, Bits, Byte, ByteIn, ByteNotIn, ByteOrder, Cursor, Map,
+    ParseError, Parser, Right, Seq, TakeAligned, WithByteOrder, WithSpan,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -42,8 +41,7 @@ type HeaderFields =
     Seq<Seq<Byte, Seq<ByteIn, Byte>>, Seq<Seq<Byte, Seq<ByteNotIn, ByteNotIn>>, Bits>>;
 type HeaderValues = ((u8, (u8, u8)), ((u8, (u8, u8)), u64));
 
-// Define callbacks outside backend-generic functions: the pinned extractor
-// cannot infer an unused Backend parameter on generated closure implementations.
+// Concrete helper types keep the composed header readable.
 fn header() -> Map<HeaderFields, impl Fn(HeaderValues) -> Header> {
     let length_and_flags = seq(Byte, seq(ByteIn::new(&[0]), Byte));
     let sender = seq(Byte, seq(ByteNotIn::new(&[0]), ByteNotIn::new(&[0])));
@@ -73,8 +71,7 @@ fn header() -> Map<HeaderFields, impl Fn(HeaderValues) -> Header> {
 /// Compatibility flags are retained without imposing restrictions.
 ///
 /// The returned cursor points just past the checksum. Use `Left { first: parser,
-/// second: End }` for a buffer that must contain exactly one frame. For partial
-/// input, retry `NeedMore` with the accumulated buffer and the original cursor.
+/// second: End }` for a buffer that must contain exactly one frame.
 /// The CRC lookup should be pure, since retries can call it again.
 pub fn mavlink_v2<F: Fn(u32) -> Option<u8>>(crc_extra: F) -> MavlinkV2<F> {
     MavlinkV2 { crc_extra }
@@ -87,25 +84,21 @@ pub struct MavlinkV2<F> {
     crc_extra: F,
 }
 
-impl<'input, F> Grammar<'input> for MavlinkV2<F> {
-    type Output = Packet<'input>;
-}
-
-impl<'a, Backend, F: Fn(u32) -> Option<u8>> Eval<'a, Backend> for MavlinkV2<F> {
-    fn eval(
+impl<'a, F: Fn(u32) -> Option<u8>> Parser<'a> for MavlinkV2<F> {
+    type Output = Packet<'a>;
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'a [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
-        frame_grammar::<Backend>(&self.crc_extra).eval(backend, input, cursor, context)
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
+        frame_grammar(&self.crc_extra).parse_with(input, cursor, byte_order)
     }
 }
 
-fn frame_grammar<'a, Backend>(
+fn frame_grammar<'a>(
     crc_extra: impl Fn(u32) -> Option<u8>,
-) -> impl Eval<'a, Backend, Output = Packet<'a>> {
+) -> impl Parser<'a, Output = Packet<'a>> {
     // Bind makes the payload's length depend on the decoded header.
     let body = bind(header(), payload_factory());
 
@@ -115,11 +108,8 @@ fn frame_grammar<'a, Backend>(
     );
     let packet = PacketFields { parser: checked };
 
-    WithOrder {
-        order: Order {
-            bit: BitOrder::HighFirst,
-            byte: ByteOrder::Little,
-        },
+    WithByteOrder {
+        byte_order: ByteOrder::Little,
         parser: Right {
             // The empty read checks alignment; the magic byte is outside the CRC span.
             first: seq(TakeAligned { count: 0 }, ByteIn::new(&[0xfd])),
@@ -151,32 +141,29 @@ fn checksum_predicate(
 }
 
 // Named adapters preserve input borrows without the borrowed-output closures
-// that the pinned Aeneas cannot translate. Both execute with the same backend.
+// that the pinned Aeneas cannot translate. Both preserve the caller's byte order.
 struct Payload {
     header: Header,
 }
 
-impl<'input> Grammar<'input> for Payload {
+impl<'input> Parser<'input> for Payload {
     type Output = (Header, &'input [u8]);
-}
 
-impl<'input, Backend> Eval<'input, Backend> for Payload {
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
         let parser = TakeAligned {
             count: usize::from(self.header.payload_length),
         };
-        match parser.eval(backend, input, cursor, context) {
-            ParseOutcome::Success(next, payload) => {
-                ParseOutcome::Success(next, (self.header, payload))
+        match parser.parse_with(input, cursor, byte_order) {
+            Ok(parsed) => {
+                let (next, payload) = parsed;
+                Ok((next, (self.header, payload)))
             }
-            ParseOutcome::Error(error) => ParseOutcome::Error(error),
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+            Err(error) => Err(error),
         }
     }
 }
@@ -185,35 +172,32 @@ struct PacketFields<P> {
     parser: P,
 }
 
-impl<'input, P> Grammar<'input> for PacketFields<P> {
-    type Output = Packet<'input>;
-}
-
-impl<'input, Backend, P> Eval<'input, Backend> for PacketFields<P>
+impl<'input, P> Parser<'input> for PacketFields<P>
 where
-    P: Eval<'input, Backend, Output = (((Header, &'input [u8]), BitSpan<'input>), u16)>,
+    P: Parser<'input, Output = (((Header, &'input [u8]), BitSpan<'input>), u16)>,
 {
-    fn eval(
+    type Output = Packet<'input>;
+
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
-        match self.parser.eval(backend, input, cursor, context) {
-            ParseOutcome::Success(next, fields) => {
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
+        match self.parser.parse_with(input, cursor, byte_order) {
+            Ok(parsed) => {
+                let (next, fields) = parsed;
                 let (((header, payload), _span), checksum) = fields;
-                ParseOutcome::Success(
+                Ok((
                     next,
                     Packet {
                         header,
                         payload,
                         checksum,
                     },
-                )
+                ))
             }
-            ParseOutcome::Error(error) => ParseOutcome::Error(error),
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+            Err(error) => Err(error),
         }
     }
 }

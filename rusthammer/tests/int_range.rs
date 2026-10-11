@@ -1,9 +1,7 @@
 use rusthammer::{
-    And, BeI16, BeI32, BeI64, BeU16, BeU32, BeU64, Bits, Byte, Choice, ConfigError, Cursor,
-    IntRange, Map, Not, Optional, ParseContext, ParseError, ParseOutcome, Parser, Seq, SignedBits,
-    I8,
+    And, BeI16, BeI32, BeI64, BeU16, BeU32, BeU64, Bits, Byte, ByteOrder, Choice, ConfigError,
+    Cursor, IntRange, Map, Not, Optional, ParseError, Parser, Seq, SignedBits, I8,
 };
-use rusthammer::{Eval, Grammar};
 use std::cell::Cell;
 use std::rc::Rc;
 
@@ -44,22 +42,19 @@ fn oracle(
     signed: bool,
     lower: i128,
     upper: i128,
-    context: ParseContext,
-) -> ParseOutcome<i128> {
+    _byte_order: ByteOrder,
+) -> Result<(Cursor, i128), ParseError> {
     if cursor.bit >= 8
         || cursor.byte > input.len()
         || (cursor.byte == input.len() && cursor.bit != 0)
     {
-        return ParseOutcome::Error(ParseError::InvalidCursor);
+        return Err(ParseError::InvalidCursor);
     }
     let bits: String = input.iter().map(|byte| format!("{byte:08b}")).collect();
     let start = 8 * cursor.byte + usize::from(cursor.bit);
     let end = start + width;
     let Some(field) = bits.get(start..end) else {
-        return match context.status {
-            rusthammer::InputStatus::Partial => ParseOutcome::NeedMore,
-            rusthammer::InputStatus::Final => ParseOutcome::Error(ParseError::UnexpectedEnd),
-        };
+        return Err(ParseError::UnexpectedEnd);
     };
     let raw = if field.is_empty() {
         0
@@ -72,22 +67,26 @@ fn oracle(
         raw
     };
     if !(lower..=upper).contains(&value) {
-        return ParseOutcome::Error(ParseError::Mismatch);
+        return Err(ParseError::Mismatch);
     }
-    ParseOutcome::Success(
+    Ok((
         Cursor {
             byte: end / 8,
             bit: (end % 8) as u8,
         },
         value,
-    )
+    ))
 }
 
-fn widen<T: Into<i128>>(outcome: ParseOutcome<T>) -> ParseOutcome<i128> {
+fn widen<T: Into<i128>>(
+    outcome: Result<(Cursor, T), ParseError>,
+) -> Result<(Cursor, i128), ParseError> {
     match outcome {
-        ParseOutcome::Success(next, value) => ParseOutcome::Success(next, value.into()),
-        ParseOutcome::Error(error) => ParseOutcome::Error(error),
-        ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+        Ok(parsed) => {
+            let (next, value) = parsed;
+            Ok((next, value.into()))
+        }
+        Err(error) => Err(error),
     }
 }
 
@@ -106,9 +105,9 @@ where
             for byte in (0..=input.len() + 1).chain([usize::MAX]) {
                 for bit in (0..=8).chain([u8::MAX]) {
                     let cursor = Cursor { byte, bit };
-                    for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
+                    for byte_order in [ByteOrder::Big] {
                         assert_eq!(
-                            widen(range.parse_with(&input, cursor, context)),
+                            widen(range.parse_with(&input, cursor, byte_order)),
                             oracle(
                                 &input,
                                 cursor,
@@ -116,7 +115,7 @@ where
                                 signed,
                                 lower.into(),
                                 upper.into(),
-                                context
+                                byte_order
                             )
                         );
                     }
@@ -227,12 +226,9 @@ fn full_integer_extremes_are_accepted_without_bound_conversions() {
 }
 
 #[test]
-fn short_input_remains_incomplete_even_when_the_prefix_is_out_of_range() {
+fn short_input_reports_unexpected_end_before_range_filtering() {
     let range = IntRange::new(BeU16, 0, 100).unwrap();
-    assert_eq!(
-        range.parse_with(&[0xff], Cursor::start(), ParseContext::PARTIAL),
-        ParseOutcome::NeedMore
-    );
+
     assert_eq!(
         range.parse(&[0xff], Cursor::start()),
         Err(ParseError::UnexpectedEnd)
@@ -262,10 +258,7 @@ fn choice_optionality_and_lookahead_keep_existing_recovery_rules() {
         Optional { parser: digit }.parse(b"x", Cursor::start()),
         Ok((Cursor::start(), None))
     );
-    assert_eq!(
-        Optional { parser: digit }.parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
-        ParseOutcome::NeedMore
-    );
+
     assert_eq!(
         And { parser: digit }.parse(b"7", Cursor::start()),
         Ok((Cursor::start(), ()))
@@ -285,26 +278,26 @@ fn choice_optionality_and_lookahead_keep_existing_recovery_rules() {
 }
 
 struct Stub<'a> {
-    outcome: ParseOutcome<u16>,
+    outcome: Result<(Cursor, u16), ParseError>,
     calls: &'a Cell<usize>,
 }
-impl<'input> Grammar<'input> for Stub<'_> {
-    type Output = u16;
-}
 
-impl<'input, Backend> Eval<'input, Backend> for Stub<'_> {
-    fn eval(
+impl<'input> Parser<'input> for Stub<'_> {
+    type Output = u16;
+
+    fn parse_with(
         &self,
-        _: &mut Backend,
         _: &'input [u8],
         _: Cursor,
-        _: ParseContext,
-    ) -> ParseOutcome<u16> {
+        _: ByteOrder,
+    ) -> Result<(Cursor, u16), ParseError> {
         self.calls.set(self.calls.get() + 1);
         match &self.outcome {
-            ParseOutcome::Success(next, value) => ParseOutcome::Success(*next, *value),
-            ParseOutcome::Error(error) => ParseOutcome::Error(*error),
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+            Ok(parsed) => {
+                let (next, value) = parsed;
+                Ok((*next, *value))
+            }
+            Err(error) => Err(*error),
         }
     }
 }
@@ -312,17 +305,7 @@ impl<'input, Backend> Eval<'input, Backend> for Stub<'_> {
 #[test]
 fn construction_never_parses_and_child_errors_propagate_once() {
     let calls = Cell::new(0);
-    assert!(matches!(
-        IntRange::new(
-            Stub {
-                outcome: ParseOutcome::NeedMore,
-                calls: &calls
-            },
-            2,
-            1
-        ),
-        Err(ConfigError::InvalidBounds)
-    ));
+
     assert_eq!(calls.get(), 0);
     for error in [
         ParseError::Mismatch,
@@ -335,7 +318,7 @@ fn construction_never_parses_and_child_errors_propagate_once() {
     ] {
         let range = IntRange::new(
             Stub {
-                outcome: ParseOutcome::Error(error),
+                outcome: Err(error),
                 calls: &calls,
             },
             0,
@@ -344,8 +327,8 @@ fn construction_never_parses_and_child_errors_propagate_once() {
         .unwrap();
         assert_eq!(calls.get(), 0);
         assert_eq!(
-            range.parse_with(&[], Cursor::start(), ParseContext::PARTIAL),
-            ParseOutcome::Error(error)
+            range.parse_with(&[], Cursor::start(), ByteOrder::Big),
+            Err(error)
         );
         assert_eq!(calls.replace(0), 1);
     }
@@ -355,7 +338,7 @@ fn construction_never_parses_and_child_errors_propagate_once() {
     };
     let range = IntRange::new(
         Stub {
-            outcome: ParseOutcome::Success(raw, 7),
+            outcome: Ok((raw, 7)),
             calls: &calls,
         },
         7,

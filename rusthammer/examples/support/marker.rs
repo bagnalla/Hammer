@@ -1,13 +1,10 @@
 //! Example marker format, shared by runnable examples, native tests, and extraction.
 #[cfg(rusthammer_verify)]
 use crate as rusthammer;
-use rusthammer::{
-    Choice, ConfigError, Cursor, End, Eval, Grammar, Literal, ParseContext, ParseError,
-    ParseOutcome, Parser, Seq,
-};
+use rusthammer::{ByteOrder, Choice, ConfigError, Cursor, End, Literal, ParseError, Parser, Seq};
 
 /// A complete marker is either the two bytes `CA FE` or the single byte `CA`.
-/// Build the grammar once, then reuse it. Partial input waits for confirmation of EOF.
+/// Build the grammar once, then reuse it. The grammar requires complete consumption.
 #[derive(Clone, Copy)]
 pub struct Marker {
     parser: Seq<Choice<Literal, Literal>, End>,
@@ -34,22 +31,21 @@ impl Marker {
     }
 }
 
-impl<'input> Grammar<'input> for Marker {
+impl<'input> Parser<'input> for Marker {
     type Output = u64;
-}
 
-impl<'input, Backend> Eval<'input, Backend> for Marker {
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<u64> {
-        match self.parser.eval(backend, input, cursor, context) {
-            ParseOutcome::Success(next, (value, ())) => ParseOutcome::Success(next, value),
-            ParseOutcome::Error(error) => ParseOutcome::Error(error),
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, u64), ParseError> {
+        match self.parser.parse_with(input, cursor, byte_order) {
+            Ok(parsed) => {
+                let (next, (value, ())) = parsed;
+                Ok((next, value))
+            }
+            Err(error) => Err(error),
         }
     }
 }

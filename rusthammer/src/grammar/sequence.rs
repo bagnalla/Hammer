@@ -1,16 +1,16 @@
-use super::super::{Cursor, Eval, Grammar, ParseContext, ParseOutcome};
+use super::super::{ByteOrder, Cursor, ParseError, Parser};
 
 /// Run two parsers in order, returning their typed outputs as a pair.
-/// Errors and `NeedMore` propagate unchanged. No caller-owned cursor is mutated.
+/// Errors propagate unchanged. No caller-owned cursor is mutated.
 #[derive(Clone, Copy)]
 pub struct Seq<P, Q> {
     pub first: P,
     pub second: Q,
 }
 
-/// Construct a [`Seq`], retaining both children and their backend capabilities.
-/// Construction has no grammar bounds; evaluation requires both children to
-/// support the chosen backend. Shared child references are accepted.
+/// Construct a [`Seq`], retaining both children.
+/// Construction has no trait bounds; parsing requires both children to implement
+/// `Parser`. Shared child references are accepted.
 ///
 /// ```
 /// use rusthammer::{seq, BeU16, Byte, Cursor, Parser, Seq};
@@ -22,29 +22,24 @@ pub const fn seq<P, Q>(first: P, second: Q) -> Seq<P, Q> {
     Seq { first, second }
 }
 
-impl<'input, P: Grammar<'input>, Q: Grammar<'input>> Grammar<'input> for Seq<P, Q> {
+impl<'input, P: Parser<'input>, Q: Parser<'input>> Parser<'input> for Seq<P, Q> {
     type Output = (P::Output, Q::Output);
-}
 
-impl<'input, Backend, P: Eval<'input, Backend>, Q: Eval<'input, Backend>> Eval<'input, Backend>
-    for Seq<P, Q>
-{
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
-        match self.first.eval(backend, input, cursor, context) {
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
-            ParseOutcome::Error(error) => ParseOutcome::Error(error),
-            ParseOutcome::Success(next, first) => {
-                match self.second.eval(backend, input, next, context) {
-                    ParseOutcome::NeedMore => ParseOutcome::NeedMore,
-                    ParseOutcome::Error(error) => ParseOutcome::Error(error),
-                    ParseOutcome::Success(end, second) => {
-                        ParseOutcome::Success(end, (first, second))
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
+        match self.first.parse_with(input, cursor, byte_order) {
+            Err(error) => Err(error),
+            Ok(parsed) => {
+                let (next, first) = parsed;
+                match self.second.parse_with(input, next, byte_order) {
+                    Err(error) => Err(error),
+                    Ok(parsed) => {
+                        let (end, second) = parsed;
+                        Ok((end, (first, second)))
                     }
                 }
             }
@@ -55,8 +50,8 @@ impl<'input, Backend, P: Eval<'input, Backend>, Q: Eval<'input, Backend>> Eval<'
 /// Use a parsed value to construct the next parser, returning that parser's output.
 ///
 /// `then` takes ownership of the first output and runs exactly once after success.
-/// Its parser runs at that success cursor with the same input and context. Errors
-/// and `NeedMore` from either stage propagate unchanged; a first-stage failure
+/// Its parser runs at that success cursor with the same input and byte order. Errors from
+/// either stage propagate unchanged; a first-stage failure
 /// skips the factory. Outputs and the constructed parser need neither `Copy` nor
 /// `Clone`. Copying this combinator depends only on its stored parser and factory.
 ///
@@ -89,8 +84,7 @@ pub struct Bind<P, F> {
 }
 
 /// Construct a [`Bind`], inferring the factory argument from the child's output.
-/// The factory is stored without being called. Both grammar types can support
-/// any backend; construction does not require `Eval<Direct>`.
+/// The factory is stored without being called. Both parser types implement `Parser`.
 ///
 /// ```
 /// use rusthammer::{bind, Byte, Cursor, Parser, TakeAligned};
@@ -100,47 +94,39 @@ pub struct Bind<P, F> {
 /// ```
 pub fn bind<'input, P, F, Q>(parser: P, then: F) -> Bind<P, F>
 where
-    P: Grammar<'input>,
+    P: Parser<'input>,
     F: Fn(P::Output) -> Q,
-    Q: Grammar<'input>,
+    Q: Parser<'input>,
 {
     Bind { parser, then }
 }
 
-impl<'input, P, F, Q> Grammar<'input> for Bind<P, F>
+impl<'input, P, F, Q> Parser<'input> for Bind<P, F>
 where
-    P: Grammar<'input>,
+    P: Parser<'input>,
     F: Fn(P::Output) -> Q,
-    Q: Grammar<'input>,
+    Q: Parser<'input>,
 {
     type Output = Q::Output;
-}
 
-impl<'input, Backend, P, F, Q> Eval<'input, Backend> for Bind<P, F>
-where
-    P: Eval<'input, Backend>,
-    F: Fn(P::Output) -> Q,
-    Q: Eval<'input, Backend>,
-{
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
-        match self.parser.eval(backend, input, cursor, context) {
-            ParseOutcome::Success(next, value) => {
-                (self.then)(value).eval(backend, input, next, context)
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
+        match self.parser.parse_with(input, cursor, byte_order) {
+            Ok(parsed) => {
+                let (next, value) = parsed;
+                (self.then)(value).parse_with(input, next, byte_order)
             }
-            ParseOutcome::Error(error) => ParseOutcome::Error(error),
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+            Err(error) => Err(error),
         }
     }
 }
 
 /// Run both parsers in order, keeping the first value and the final cursor.
-/// Both children must succeed; errors and `NeedMore` propagate as in `Seq`.
+/// Both children must succeed; errors propagate as in `Seq`.
 /// Outputs are moved or discarded and need neither `Copy` nor `Clone`.
 #[derive(Clone, Copy)]
 pub struct Left<P, Q> {
@@ -148,39 +134,34 @@ pub struct Left<P, Q> {
     pub second: Q,
 }
 
-impl<'input, P: Grammar<'input>, Q: Grammar<'input>> Grammar<'input> for Left<P, Q> {
+impl<'input, P: Parser<'input>, Q: Parser<'input>> Parser<'input> for Left<P, Q> {
     type Output = P::Output;
-}
 
-impl<'input, Backend, P: Eval<'input, Backend>, Q: Eval<'input, Backend>> Eval<'input, Backend>
-    for Left<P, Q>
-{
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
         let sequence = Seq {
             first: &self.first,
             second: &self.second,
         };
-        match sequence.eval(backend, input, cursor, context) {
+        match sequence.parse_with(input, cursor, byte_order) {
             // Keep tuple destructuring separate for Aeneas dependency extraction;
-            // see InputStatus::classify and probes/cross_crate/README.md.
-            ParseOutcome::Success(next, values) => {
+            // see probes/direct_v1/README.md.
+            Ok(parsed) => {
+                let (next, values) = parsed;
                 let (first, _) = values;
-                ParseOutcome::Success(next, first)
+                Ok((next, first))
             }
-            ParseOutcome::Error(error) => ParseOutcome::Error(error),
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+            Err(error) => Err(error),
         }
     }
 }
 
 /// Run both parsers in order, keeping the second value and the final cursor.
-/// Both children must succeed; errors and `NeedMore` propagate as in `Seq`.
+/// Both children must succeed; errors propagate as in `Seq`.
 /// Outputs are moved or discarded and need neither `Copy` nor `Clone`.
 #[derive(Clone, Copy)]
 pub struct Right<P, Q> {
@@ -188,40 +169,35 @@ pub struct Right<P, Q> {
     pub second: Q,
 }
 
-impl<'input, P: Grammar<'input>, Q: Grammar<'input>> Grammar<'input> for Right<P, Q> {
+impl<'input, P: Parser<'input>, Q: Parser<'input>> Parser<'input> for Right<P, Q> {
     type Output = Q::Output;
-}
 
-impl<'input, Backend, P: Eval<'input, Backend>, Q: Eval<'input, Backend>> Eval<'input, Backend>
-    for Right<P, Q>
-{
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
         let sequence = Seq {
             first: &self.first,
             second: &self.second,
         };
-        match sequence.eval(backend, input, cursor, context) {
+        match sequence.parse_with(input, cursor, byte_order) {
             // Keep tuple destructuring separate for Aeneas dependency extraction;
-            // see InputStatus::classify and probes/cross_crate/README.md.
-            ParseOutcome::Success(next, values) => {
+            // see probes/direct_v1/README.md.
+            Ok(parsed) => {
+                let (next, values) = parsed;
                 let (_, second) = values;
-                ParseOutcome::Success(next, second)
+                Ok((next, second))
             }
-            ParseOutcome::Error(error) => ParseOutcome::Error(error),
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+            Err(error) => Err(error),
         }
     }
 }
 
 /// Run `left`, `parser`, and `right` in order, keeping the middle value and the
 /// final cursor. All three must succeed, including the discarded delimiters.
-/// Errors and `NeedMore` propagate as in `Seq`; outputs need no `Copy` or `Clone`.
+/// Errors propagate as in `Seq`; outputs need no `Copy` or `Clone`.
 #[derive(Clone, Copy)]
 pub struct Middle<L, P, R> {
     pub left: L,
@@ -229,27 +205,17 @@ pub struct Middle<L, P, R> {
     pub right: R,
 }
 
-impl<'input, L: Grammar<'input>, P: Grammar<'input>, R: Grammar<'input>> Grammar<'input>
+impl<'input, L: Parser<'input>, P: Parser<'input>, R: Parser<'input>> Parser<'input>
     for Middle<L, P, R>
 {
     type Output = P::Output;
-}
 
-impl<
-        'input,
-        Backend,
-        L: Eval<'input, Backend>,
-        P: Eval<'input, Backend>,
-        R: Eval<'input, Backend>,
-    > Eval<'input, Backend> for Middle<L, P, R>
-{
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<Self::Output> {
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, Self::Output), ParseError> {
         let sequence = Seq {
             first: &self.left,
             second: Seq {
@@ -257,43 +223,42 @@ impl<
                 second: &self.right,
             },
         };
-        match sequence.eval(backend, input, cursor, context) {
+        match sequence.parse_with(input, cursor, byte_order) {
             // Keep tuple destructuring separate for Aeneas dependency extraction;
-            // see InputStatus::classify and probes/cross_crate/README.md.
-            ParseOutcome::Success(next, values) => {
+            // see probes/direct_v1/README.md.
+            Ok(parsed) => {
+                let (next, values) = parsed;
                 let (_, (middle, _)) = values;
-                ParseOutcome::Success(next, middle)
+                Ok((next, middle))
             }
-            ParseOutcome::Error(error) => ParseOutcome::Error(error),
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+            Err(error) => Err(error),
         }
     }
 }
 
 /// Run a parser, consuming its match and replacing its successful output with `()`.
-/// Child errors and `NeedMore` propagate unchanged. The child still constructs
+/// Child errors propagate unchanged. The child still constructs
 /// its output before it is discarded, including any allocations or callback effects.
 #[derive(Clone, Copy)]
 pub struct Ignore<P> {
     pub parser: P,
 }
 
-impl<'input, P: Grammar<'input>> Grammar<'input> for Ignore<P> {
+impl<'input, P: Parser<'input>> Parser<'input> for Ignore<P> {
     type Output = ();
-}
 
-impl<'input, Backend, P: Eval<'input, Backend>> Eval<'input, Backend> for Ignore<P> {
-    fn eval(
+    fn parse_with(
         &self,
-        backend: &mut Backend,
         input: &'input [u8],
         cursor: Cursor,
-        context: ParseContext,
-    ) -> ParseOutcome<()> {
-        match self.parser.eval(backend, input, cursor, context) {
-            ParseOutcome::Success(next, _) => ParseOutcome::Success(next, ()),
-            ParseOutcome::Error(error) => ParseOutcome::Error(error),
-            ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+        byte_order: ByteOrder,
+    ) -> Result<(Cursor, ()), ParseError> {
+        match self.parser.parse_with(input, cursor, byte_order) {
+            Ok(parsed) => {
+                let (next, _) = parsed;
+                Ok((next, ()))
+            }
+            Err(error) => Err(error),
         }
     }
 }

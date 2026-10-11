@@ -1,7 +1,7 @@
 use core::fmt::Debug;
 use rusthammer::{
-    BeI16, BeI32, BeI64, BeU16, BeU32, BeU64, Byte, Choice, Cursor, Optional, ParseContext,
-    ParseError, ParseOutcome, Parser, Seq, Verify, I8,
+    BeI16, BeI32, BeI64, BeU16, BeU32, BeU64, Byte, ByteOrder, Choice, Cursor, Optional,
+    ParseError, Parser, Seq, Verify, I8,
 };
 
 // Decode a binary string with i128 arithmetic, independently of Bits and
@@ -11,22 +11,19 @@ fn oracle(
     cursor: Cursor,
     width: usize,
     signed: bool,
-    context: ParseContext,
-) -> ParseOutcome<i128> {
+    _byte_order: ByteOrder,
+) -> Result<(Cursor, i128), ParseError> {
     if cursor.bit >= 8
         || cursor.byte > input.len()
         || (cursor.byte == input.len() && cursor.bit != 0)
     {
-        return ParseOutcome::Error(ParseError::InvalidCursor);
+        return Err(ParseError::InvalidCursor);
     }
     let text: String = input.iter().map(|byte| format!("{byte:08b}")).collect();
     let start = cursor.byte * 8 + usize::from(cursor.bit);
     let end = start + width;
     let Some(field) = text.get(start..end) else {
-        return match context.status {
-            rusthammer::InputStatus::Partial => ParseOutcome::NeedMore,
-            rusthammer::InputStatus::Final => ParseOutcome::Error(ParseError::UnexpectedEnd),
-        };
+        return Err(ParseError::UnexpectedEnd);
     };
     let unsigned = i128::from_str_radix(field, 2).unwrap();
     let value = if signed && field.starts_with('1') {
@@ -34,20 +31,24 @@ fn oracle(
     } else {
         unsigned
     };
-    ParseOutcome::Success(
+    Ok((
         Cursor {
             byte: end / 8,
             bit: (end % 8) as u8,
         },
         value,
-    )
+    ))
 }
 
-fn widen<T: Into<i128>>(result: ParseOutcome<T>) -> ParseOutcome<i128> {
+fn widen<T: Into<i128>>(
+    result: Result<(Cursor, T), ParseError>,
+) -> Result<(Cursor, i128), ParseError> {
     match result {
-        ParseOutcome::Success(next, value) => ParseOutcome::Success(next, value.into()),
-        ParseOutcome::Error(error) => ParseOutcome::Error(error),
-        ParseOutcome::NeedMore => ParseOutcome::NeedMore,
+        Ok(parsed) => {
+            let (next, value) = parsed;
+            Ok((next, value.into()))
+        }
+        Err(error) => Err(error),
     }
 }
 
@@ -68,17 +69,19 @@ where
             for byte in (0..=input.len() + 1).chain([usize::MAX]) {
                 for bit in (0..=8).chain([u8::MAX]) {
                     let cursor = Cursor { byte, bit };
-                    for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
+                    for byte_order in [ByteOrder::Big] {
                         assert_eq!(
-                            widen(parser.parse_with(input, cursor, context)),
-                            oracle(input, cursor, width, signed, context),
-                            "input={input:?}, cursor={cursor:?}, context={context:?}"
+                            widen(parser.parse_with(input, cursor, byte_order)),
+                            oracle(input, cursor, width, signed, byte_order),
+                            "input={input:?}, cursor={cursor:?}, byte_order={byte_order:?}"
                         );
                     }
-                    let expected = match oracle(input, cursor, width, signed, ParseContext::FINAL) {
-                        ParseOutcome::Success(next, value) => Ok((next, value)),
-                        ParseOutcome::Error(error) => Err(error),
-                        ParseOutcome::NeedMore => unreachable!(),
+                    let expected = match oracle(input, cursor, width, signed, ByteOrder::Big) {
+                        Ok(parsed) => {
+                            let (next, value) = parsed;
+                            Ok((next, value))
+                        }
+                        Err(error) => Err(error),
                     };
                     assert_eq!(
                         parser
@@ -93,7 +96,7 @@ where
 }
 
 #[test]
-fn every_reader_matches_the_oracle_for_truncation_finality_and_raw_cursors() {
+fn every_reader_matches_the_oracle_for_truncation_and_raw_cursors() {
     check_cursors(Byte, 8, false);
     check_cursors(I8, 8, true);
     check_cursors(BeU16, 16, false);
@@ -153,10 +156,10 @@ where
                 .collect();
             let cursor = Cursor { byte: 1, bit };
             let next = Cursor { byte: N + 1, bit };
-            for context in [ParseContext::PARTIAL, ParseContext::FINAL] {
+            for byte_order in [ByteOrder::Big] {
                 assert_eq!(
-                    copied.parse_with(&input, cursor, context),
-                    ParseOutcome::Success(next, decode(*field))
+                    copied.parse_with(&input, cursor, byte_order),
+                    Ok((next, decode(*field)))
                 );
             }
             assert_eq!(parser.parse(&input, cursor), Ok((next, decode(*field))));
@@ -212,10 +215,6 @@ fn typed_sequence_retries_from_its_original_cursor() {
     let input = [0x12, 0x34, 0xff, 0xfd];
     for length in 0..input.len() {
         assert_eq!(
-            parser.parse_with(&input[..length], Cursor::start(), ParseContext::PARTIAL),
-            ParseOutcome::NeedMore
-        );
-        assert_eq!(
             parser.parse(&input[..length], Cursor::start()),
             Err(ParseError::UnexpectedEnd)
         );
@@ -223,8 +222,8 @@ fn typed_sequence_retries_from_its_original_cursor() {
     let typed: (Cursor, (u16, i16)) = parser.parse(&input, Cursor::start()).unwrap();
     assert_eq!(typed, (Cursor { byte: 4, bit: 0 }, (0x1234, -3)));
     assert_eq!(
-        parser.parse_with(&input, Cursor::start(), ParseContext::PARTIAL),
-        ParseOutcome::Success(typed.0, typed.1)
+        parser.parse_with(&input, Cursor::start(), ByteOrder::Big),
+        Ok((typed.0, typed.1))
     );
 }
 
@@ -246,10 +245,7 @@ fn typed_predicates_and_recovery_keep_existing_control_semantics() {
         optional.parse(&[1, 2], Cursor::start()),
         Ok((Cursor::start(), None))
     );
-    assert_eq!(
-        optional.parse_with(&[1, 2], Cursor::start(), ParseContext::PARTIAL),
-        ParseOutcome::NeedMore
-    );
+
     assert_eq!(
         optional.parse(&[], Cursor { byte: 0, bit: 1 }),
         Err(ParseError::InvalidCursor)

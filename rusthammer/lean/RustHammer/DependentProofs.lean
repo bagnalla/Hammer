@@ -15,9 +15,9 @@ namespace RustHammer.Proofs
 open Code
 
 private abbrev countInst :=
-  dependent_examples.CountPrefix.Insts.RusthammerParserInputUsize
+  dependent_examples.CountPrefix.Insts.RusthammerParser_traitsParserInputUsize
 private abbrev checkInst :=
-  dependent_examples.ParserInputCountPrefixUsize.parse_with.closure.Insts.CoreOpsFunctionFnTupleU64ResultUsizeTuple
+  dependent_examples.count_parser.closure.Insts.CoreOpsFunctionFnTupleU64ResultUsizeTuple
 private abbrev payloadFactory :=
   dependent_examples.payload.closure.Insts.CoreOpsFunctionFnTupleUsizeTakeAligned
 private abbrev fieldsFactory :=
@@ -48,27 +48,26 @@ private theorem checked_count_spec (value : U64) :
   · have hv : ¬value ≤ 64#u64 := by scalar_tac
     simp [hv, checkedCount, h, spec_ok]
 
-private theorem primitive_success {α : Type} (status : InputStatus)
+private theorem primitive_success {α : Type}
     (contract : Spec.ParseResult α → Prop) (next : Cursor) (value : α)
-    (h : Partial.primitive status contract (.Success next value)) : contract (.Ok (next, value)) := by
+    (h : Contracts.primitive contract (.Ok (next, value))) : contract (.Ok (next, value)) := by
   rcases h with ⟨parsed, hparsed, heq⟩
   cases parsed with
-  | Ok pair => cases pair; cases status <;> simp_all [Partial.primitiveResult, Spec.completedResult]
-  | Err error => cases status <;> cases error <;> simp_all [Partial.primitiveResult, Spec.completedResult]
+  | Ok pair => cases pair; simp_all []
+  | Err error => cases error <;> simp_all []
 
-private theorem count_prefix_decode (input : Slice U8) (cursor : Cursor) (status : InputStatus)
-    (outcome : ParseOutcome Usize)
-    (h : Partial.tryMap (fun start => Partial.primitive status (Spec.bitsOutcome input start 8#u8))
-      checkedCount cursor outcome) : Spec.countPrefix input cursor status outcome := by
-  rcases h with ⟨parsed, ⟨raw, hraw, rfl⟩, hrest⟩
+private theorem count_prefix_decode (input : Slice U8) (cursor : Cursor)
+    (outcome : Spec.ParseResult Usize)
+    (h : Contracts.tryMap (fun start => Contracts.primitive (Spec.bitsOutcome input start 8#u8))
+      checkedCount cursor outcome) : Spec.countPrefix input cursor outcome := by
+  rcases h with ⟨parsed, ⟨raw, hraw, heq⟩, hrest⟩
+  subst parsed
   by_cases hv : Spec.validCursor input cursor
   · simp only [Spec.bitsOutcome, if_pos hv, UScalar.ofNatCore_val_eq] at hraw
     by_cases hfit : Spec.position cursor + 8 ≤ 8 * input.val.length
     · simp only [if_pos hfit] at hraw
       rcases hraw with ⟨next, value, rfl, hn, hpos, hvalue⟩
-      have heq : Partial.primitiveResult status (.Ok (next, value)) = .Success next value := by
-        cases status <;> rfl
-      rw [heq] at hrest
+      simp only [] at hrest
       rcases hrest with ⟨converted, hconverted, hrest⟩
       have hvalue' : value.val = Spec.countValue input cursor := hvalue
       by_cases hcount : value.val ≤ 64
@@ -85,69 +84,70 @@ private theorem count_prefix_decode (input : Slice U8) (cursor : Cursor) (status
     · simp only [if_neg hfit] at hraw
       subst raw
       simp only [Spec.countPrefix, if_pos hv, if_neg hfit]
-      cases status <;> simpa only [Partial.primitiveResult, Spec.completedResult] using hrest
+      simpa only [] using hrest
   · simp only [Spec.bitsOutcome, if_neg hv] at hraw
     subst raw
     simp only [Spec.countPrefix, if_neg hv]
-    cases status <;> simpa only [Partial.primitiveResult, Spec.completedResult] using hrest
+    simpa only [] using hrest
 
 /-- Checked decoding and the cast are total, including all invalid/truncated inputs. -/
-theorem count_prefix_with_spec (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
-    countInst.parse_with () input cursor (Spec.defaultContext status)
-      ⦃ result => Spec.countPrefix input cursor status result ⦄ := by
-  change dependent_examples.CountPrefix.Insts.RusthammerParserInputUsize.parse_with () input cursor (Spec.defaultContext status)
-    ⦃ result => Spec.countPrefix input cursor status result ⦄
-  rw [dependent_examples.CountPrefix.Insts.RusthammerParserInputUsize.parse_with_eq]
+theorem count_prefix_with_spec (input : Slice U8) (cursor : Cursor) :
+    countInst.parse_with () input cursor ByteOrder.Big
+      ⦃ result => Spec.countPrefix input cursor result ⦄ := by
+  change dependent_examples.CountPrefix.Insts.RusthammerParser_traitsParserInputUsize.parse_with () input cursor ByteOrder.Big
+    ⦃ result => Spec.countPrefix input cursor result ⦄
+  rw [dependent_examples.CountPrefix.Insts.RusthammerParser_traitsParserInputUsize.parse_with]
+  unfold dependent_examples.count_parser
   step with fixed_bits_spec 8#u8 (by decide) as ⟨configured, hconfigured⟩
   simp only [hconfigured]
-  step with try_map_with_spec Bits.Insts.RusthammerParserInputU64 checkInst
-    { parser := { width := 8#u8 }, map := () } input cursor (Spec.defaultContext status)
-    (fun start => Partial.primitive status (Spec.bitsOutcome input start 8#u8)) checkedCount
-    (bits_with_spec { width := 8#u8 } input cursor status (by decide))
+  step with try_map_with_spec Bits.Insts.RusthammerParser_traitsParserInputU64 checkInst
+    { parser := { width := 8#u8 }, map := () } input cursor ByteOrder.Big
+    (fun start => Contracts.primitive (Spec.bitsOutcome input start 8#u8)) checkedCount
+    (bits_with_spec { width := 8#u8 } input cursor (by decide))
     (fun _ value _ => checked_count_spec value) as ⟨outcome, houtcome⟩
-  exact count_prefix_decode input cursor status outcome houtcome
+  exact count_prefix_decode input cursor outcome houtcome
 
 /-- The extracted application uses the generic Bind contract, with a proven
 factory and the already verified borrowed-payload parser. -/
-theorem dependent_payload_spec (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
-    dependent_examples.payload input cursor (Spec.defaultContext status)
-      ⦃ result => Spec.dependentPayload input cursor status result ⦄ := by
+theorem dependent_payload_spec (input : Slice U8) (cursor : Cursor) :
+    dependent_examples.payload input cursor ByteOrder.Big
+      ⦃ result => Spec.dependentPayload input cursor result ⦄ := by
   unfold dependent_examples.payload
-  apply bind_with_spec countInst payloadFactory TakeAligned.Insts.RusthammerParserInputSharedInputSliceU8
-    { parser := (), «then» := () } input cursor (Spec.defaultContext status)
-    (fun start => Spec.countPrefix input start status)
-    (fun count start => Partial.primitive status (Spec.takeAlignedOutcome input start count))
-    (fun count parser => parser = { count }) (count_prefix_with_spec input cursor status)
+  apply bind_with_spec countInst payloadFactory TakeAligned.Insts.RusthammerParser_traitsParserInputSharedInputSliceU8
+    { parser := (), «then» := () } input cursor ByteOrder.Big
+    (fun start => Spec.countPrefix input start)
+    (fun count start => Contracts.primitive (Spec.takeAlignedOutcome input start count))
+    (fun count parser => parser = { count }) (count_prefix_with_spec input cursor)
   · intro next value _
     simp [dependent_examples.payload.closure.Insts.CoreOpsFunctionFnTupleUsizeTakeAligned.call, spec_ok]
   · intro next value child _ hc
     subst child
-    exact take_aligned_with_spec { count := value } input next status
+    exact take_aligned_with_spec { count := value } input next
 
-theorem dependent_fields_spec (input : Slice U8) (cursor : Cursor) (status : InputStatus) :
-    dependent_examples.fields input cursor (Spec.defaultContext status)
-      ⦃ result => Spec.dependentFields input cursor status result ⦄ := by
+theorem dependent_fields_spec (input : Slice U8) (cursor : Cursor) :
+    dependent_examples.fields input cursor ByteOrder.Big
+      ⦃ result => Spec.dependentFields input cursor result ⦄ := by
   unfold dependent_examples.fields
   step with fixed_bits_spec 4#u8 (by decide) as ⟨configured, hconfigured⟩
   simp only [hconfigured]
-  apply bind_with_spec countInst fieldsFactory (Repeat.Insts.RusthammerParserInputVec Bits.Insts.RusthammerParserInputU64)
-    { parser := (), «then» := { width := 4#u8 } } input cursor (Spec.defaultContext status)
-    (fun start => Spec.countPrefix input start status)
+  apply bind_with_spec countInst fieldsFactory (Repeat.Insts.RusthammerParser_traitsParserInputVec Bits.Insts.RusthammerParser_traitsParserInputU64)
+    { parser := (), «then» := { width := 4#u8 } } input cursor ByteOrder.Big
+    (fun start => Spec.countPrefix input start)
     (fun count start => Spec.repeatN
-      (fun pos => Partial.primitive status (Spec.bitsOutcome input pos 4#u8)) count.val start)
+      (fun pos => Contracts.primitive (Spec.bitsOutcome input pos 4#u8)) count.val start)
     (fun count parser => parser = { parser := { width := 4#u8 }, bounds := { min := count, max := some count } })
-    (count_prefix_with_spec input cursor status)
+    (count_prefix_with_spec input cursor)
   · intro next value _
     simp [dependent_examples.fields.closure.Insts.CoreOpsFunctionFnTupleUsizeRepeatBits.call,
       Repeat.exact, RepeatBounds.exact, spec_ok]
   · intro next count child _ hc
     subst child
-    exact repeat_exact_with_spec Bits.Insts.RusthammerParserInputU64 { width := 4#u8 } count input next (Spec.defaultContext status)
-      (fun pos => Partial.primitive status (Spec.bitsOutcome input pos 4#u8))
-      (fun pos => bits_with_spec { width := 4#u8 } input pos status (by decide))
+    exact repeat_exact_with_spec Bits.Insts.RusthammerParser_traitsParserInputU64 { width := 4#u8 } count input next ByteOrder.Big
+      (fun pos => Contracts.primitive (Spec.bitsOutcome input pos 4#u8))
+      (fun pos => bits_with_spec { width := 4#u8 } input pos (by decide))
 
-theorem count_prefix_success (input : Slice U8) (cursor next : Cursor) (status : InputStatus) (count : Usize)
-    (h : Spec.countPrefix input cursor status (.Success next count)) :
+theorem count_prefix_success (input : Slice U8) (cursor next : Cursor) (count : Usize)
+    (h : Spec.countPrefix input cursor (.Ok (next, count))) :
     Spec.validCursor input cursor ∧ Spec.validCursor input next ∧
     Spec.position next = Spec.position cursor + 8 ∧ count.val = Spec.countValue input cursor ∧ count.val ≤ 64 := by
   unfold Spec.countPrefix at h
@@ -161,20 +161,20 @@ theorem count_prefix_success (input : Slice U8) (cursor next : Cursor) (status :
         cases heq
         exact ⟨hv, ha, hp, hvv, by omega⟩
       next => cases h
-    next => cases status <;> simp_all [Partial.primitiveResult, Spec.completedResult]
+    next => simp_all []
   next => cases h
 
 /-- Successful byte payloads have exactly the advertised bounded length, preserve
 the original contents, and consume one count byte plus that many payload bytes. -/
-theorem dependent_payload_success (input : Slice U8) (cursor next : Cursor) (status : InputStatus)
-    (payload : Slice U8) (h : Spec.dependentPayload input cursor status (.Success next payload)) :
+theorem dependent_payload_success (input : Slice U8) (cursor next : Cursor)
+    (payload : Slice U8) (h : Spec.dependentPayload input cursor (.Ok (next, payload))) :
     cursor.bit.val = 0 ∧ next.bit.val = 0 ∧
     payload.val.length = Spec.countValue input cursor ∧ payload.val.length ≤ 64 ∧
     next.byte.val = cursor.byte.val + 1 + payload.val.length ∧
     payload.val = (input.val.drop (cursor.byte.val + 1)).take (Spec.countValue input cursor) := by
   rcases bind_success_children _ _ cursor next payload h with ⟨middle, count, hc, hp⟩
-  rcases count_prefix_success input cursor middle status count hc with ⟨hv, hm, hpos, hvalue, hbound⟩
-  have hbody := primitive_success status _ next payload hp
+  rcases count_prefix_success input cursor middle count hc with ⟨hv, hm, hpos, hvalue, hbound⟩
+  have hbody := primitive_success _ next payload hp
   unfold Spec.takeAlignedOutcome at hbody
   split at hbody
   next hvalid =>
@@ -198,17 +198,17 @@ theorem dependent_payload_success (input : Slice U8) (cursor next : Cursor) (sta
 
 /-- Counted elements consume four bits each, including when the final cursor is
 inside a byte. Their ordered values are specified by the repetition relation. -/
-theorem dependent_fields_success (input : Slice U8) (cursor next : Cursor) (status : InputStatus)
-    (values : alloc.vec.Vec U64) (h : Spec.dependentFields input cursor status (.Success next values)) :
+theorem dependent_fields_success (input : Slice U8) (cursor next : Cursor)
+    (values : alloc.vec.Vec U64) (h : Spec.dependentFields input cursor (.Ok (next, values))) :
     values.val.length = Spec.countValue input cursor ∧ values.val.length ≤ 64 ∧
     Spec.position next = Spec.position cursor + 8 + values.val.length * 4 := by
   rcases bind_success_children _ _ cursor next values h with ⟨middle, count, hc, hp⟩
-  rcases count_prefix_success input cursor middle status count hc with ⟨_, _, hpos, hvalue, hbound⟩
+  rcases count_prefix_success input cursor middle count hc with ⟨_, _, hpos, hvalue, hbound⟩
   rcases hp with ⟨hlen, hchain⟩
   have hconsume := repetitions_advance _ 4 middle next values.val
     (by
       intro start after value h
-      have hbits := primitive_success status _ after value h
+      have hbits := primitive_success _ after value h
       unfold Spec.bitsOutcome at hbits
       split at hbits
       · split at hbits

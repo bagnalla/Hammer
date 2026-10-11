@@ -10,7 +10,7 @@ open Code
 
 /-- Ordinary repetition is the constant-contract specialization of the indexed
 attempt sequence. This preserves all existing repetition specifications. -/
-theorem indexed_repetitions_constant {α : Type} (child : Cursor → ParseOutcome α → Prop)
+theorem indexed_repetitions_constant {α : Type} (child : Cursor → Spec.ParseResult α → Prop)
     (cursor : Cursor) (values : List α) (next : Cursor) :
     Spec.indexedRepetitions (fun _ => child) cursor values next ↔
       Spec.repetitions child cursor values next := by
@@ -24,39 +24,39 @@ theorem indexed_repetitions_constant {α : Type} (child : Cursor → ParseOutcom
     | empty => exact Spec.indexedRepetitions.empty _
     | append _ last ih => exact Spec.indexedRepetitions.append ih last
 
-theorem bounded_iterations_constant {α : Type} (child : Cursor → ParseOutcome α → Prop)
-    (min max : Nat) (cursor : Cursor) (outcome : ParseOutcome (List α)) :
+theorem bounded_iterations_constant {α : Type} (child : Cursor → Spec.ParseResult α → Prop)
+    (min max : Nat) (cursor : Cursor) (outcome : Spec.ParseResult (List α)) :
     Spec.boundedIterations (fun _ => child) min max cursor outcome ↔
       Spec.boundedRepetition child min max cursor outcome := by
   cases outcome <;> simp only [Spec.boundedIterations, Spec.boundedRepetition, indexed_repetitions_constant]
 
 theorem unbounded_iterations_constant {α : Type} (input : Slice U8)
-    (child : Cursor → ParseOutcome α → Prop) (min : Nat) (cursor : Cursor)
-    (outcome : ParseOutcome (List α)) :
+    (child : Cursor → Spec.ParseResult α → Prop) (min : Nat) (cursor : Cursor)
+    (outcome : Spec.ParseResult (List α)) :
     Spec.unboundedIterations input (fun _ => child) min cursor outcome ↔
       Spec.unboundedRepetition input child min cursor outcome := by
   cases outcome <;> simp only [Spec.unboundedIterations, Spec.unboundedRepetition, indexed_repetitions_constant]
 
 /-- Finite repetition terminates by the remaining permitted calls. The storage
 invariant and step contract concern only reachable prefixes and child successes. -/
-theorem repeat_run_bounded_spec {P A α R : Type} (pi : DirectParser P α)
+theorem repeat_run_bounded_spec {P A α R : Type} (pi : parser_traits.Parser P α)
     (ai : RepeatAccumulator A α R) (parser : P) (min max : Usize) (accumulator : A)
-    (input : Slice U8) (cursor : Cursor) (context : ParseContext)
-    (hbounds : min.val ≤ max.val) (child : Cursor → ParseOutcome α → Prop)
+    (input : Slice U8) (cursor : Cursor) (context : ByteOrder)
+    (hbounds : min.val ≤ max.val) (child : Cursor → Spec.ParseResult α → Prop)
     (invariant : List α → R → Prop)
     (hp : ∀ start, pi.parse_with parser input start context ⦃ result => child start result ⦄)
     (hi : ai.init accumulator ⦃ result => invariant [] result ⦄)
     (hs : ∀ values next after value state,
-      Spec.repetitions child cursor values next → child next (.Success after value) →
+      Spec.repetitions child cursor values next → child next (.Ok (after, value)) →
       values.length < max.val → invariant values state →
       ai.step accumulator state value ⦃ result => invariant (values ++ [value]) result ⦄) :
-    DirectRun.repeat_run pi ai parser { min, max := some max } accumulator input cursor context
+    grammar.repeat.repeat_run pi ai parser { min, max := some max } accumulator input cursor context
       ⦃ result => Spec.accumulated invariant
         (Spec.boundedRepetition child min.val max.val cursor) result ⦄ := by
-  rw [DirectRun.repeat_run_eq]
+  rw [grammar.repeat.repeat_run]
   step with repeat_run_with_bounded_spec pi pi ai parser parser min max accumulator input cursor context
     hbounds (fun _ => child) invariant
-    (by intro count start; rw [DirectRun.repeat_parse_eq]; split <;> exact hp start) hi
+    (by intro count start; rw [grammar.repeat.repeat_parse]; split <;> exact hp start) hi
     (by
       intro values next after value state hprefix hchild hlen hstate
       exact hs values next after value state
@@ -66,24 +66,24 @@ theorem repeat_run_bounded_spec {P A α R : Type} (pi : DirectParser P α)
 
 /-- Unbounded repetition terminates by remaining input bits. The accumulator step
 runs only after progress and representation checks, including the count limit. -/
-theorem repeat_run_unbounded_spec {P A α R : Type} (pi : DirectParser P α)
+theorem repeat_run_unbounded_spec {P A α R : Type} (pi : parser_traits.Parser P α)
     (ai : RepeatAccumulator A α R) (parser : P) (min : Usize) (accumulator : A)
-    (input : Slice U8) (cursor : Cursor) (context : ParseContext)
-    (child : Cursor → ParseOutcome α → Prop) (invariant : List α → R → Prop)
+    (input : Slice U8) (cursor : Cursor) (context : ByteOrder)
+    (child : Cursor → Spec.ParseResult α → Prop) (invariant : List α → R → Prop)
     (hp : ∀ start, pi.parse_with parser input start context ⦃ result => child start result ⦄)
     (hi : ai.init accumulator ⦃ result => invariant [] result ⦄)
     (hs : ∀ values next after value state,
       Spec.repetitions (Spec.advancing input child) cursor values next →
-      Spec.advancing input child next (.Success after value) →
+      Spec.advancing input child next (.Ok (after, value)) →
       values.length < Usize.max → invariant values state →
       ai.step accumulator state value ⦃ result => invariant (values ++ [value]) result ⦄) :
-    DirectRun.repeat_run pi ai parser { min, max := none } accumulator input cursor context
+    grammar.repeat.repeat_run pi ai parser { min, max := none } accumulator input cursor context
       ⦃ result => Spec.accumulated invariant
         (Spec.unboundedRepetition input child min.val cursor) result ⦄ := by
-  rw [DirectRun.repeat_run_eq]
+  rw [grammar.repeat.repeat_run]
   step with repeat_run_with_unbounded_spec pi pi ai parser parser min accumulator input cursor context
     (fun _ => child) invariant
-    (by intro count start; rw [DirectRun.repeat_parse_eq]; split <;> exact hp start) hi
+    (by intro count start; rw [grammar.repeat.repeat_parse]; split <;> exact hp start) hi
     (by
       intro values next after value state hprefix hchild hlen hstate
       exact hs values next after value state
@@ -92,13 +92,13 @@ theorem repeat_run_unbounded_spec {P A α R : Type} (pi : DirectParser P α)
   cases outcome <;> simpa only [Spec.accumulated, unbounded_iterations_constant] using houtcome
 
 /-- For collection, the stored vector is exactly the logical prefix. -/
-theorem accumulated_collection {α : Type} (contract : ParseOutcome (List α) → Prop)
-    (outcome : ParseOutcome (alloc.vec.Vec α)) :
+theorem accumulated_collection {α : Type} (contract : Spec.ParseResult (List α) → Prop)
+    (outcome : Spec.ParseResult (alloc.vec.Vec α)) :
     Spec.accumulated (fun values (state : alloc.vec.Vec α) => state.val = values) contract outcome ↔
       contract (Spec.collectedValues outcome) := by
   cases outcome with
-  | Success next state => simp [Spec.accumulated, Spec.collectedValues]
-  | Error _ => rfl
-  | NeedMore => rfl
-
+  | Ok pair =>
+    rcases pair with ⟨next, state⟩
+    simp [Spec.accumulated, Spec.collectedValues]
+  | Err _ => rfl
 end RustHammer.Proofs
