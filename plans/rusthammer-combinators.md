@@ -71,9 +71,9 @@ Different names do not require different parsing algorithms or independent proof
 
 Retain concrete grammar nodes and an associated output type for each input
 lifetime. The target places that type directly on `Parser<'input>` and removes
-`Grammar` and `Eval`. Check inference and extraction for this shape before
-migrating all constructors; use a separate output-only trait only if concrete
-failed cases justify retaining it.
+`Grammar` and `Eval`. The [direct-v1 probe](../rusthammer/probes/direct_v1/README.md)
+checks all seven generic helpers and representative uses at both MIR stages and
+through a Cargo consumer; no separate output-only trait is needed for those cases.
 
 Free `seq`, `choice`, `optional`, `map`, `try_map`, `verify`, and `bind` helpers
 continue to return nodes such as `Seq<P, Q>` or `Map<P, F>`. Construction only
@@ -91,17 +91,20 @@ lifetime relationships; they no longer need to preserve multiple backends.
 
 The [constructor probes](../rusthammer/probes/constructors/README.md) and
 [constructor proofs](../rusthammer/lean/RustHammer/ConstructorProofs.lean)
-record the old boundary's compatibility and construction equations. Recheck the
-single-trait shape for owned/borrowed results, references, non-`Clone` outputs,
-opaque returns, and ordinary downstream use. Remove backend-only fixtures after
-retaining useful construction and ownership coverage. Port the equations and
+record the old boundary's compatibility and construction equations. The new
+probe rechecks the single-trait shape for owned/borrowed results, references,
+non-`Clone` outputs, opaque returns, and ordinary downstream use. Remove
+backend-only fixtures after retaining useful construction and ownership coverage.
+Port the equations and
 contract-transport proof to the actual new constructors.
 
-Backend-free callback creation is expected to avoid the unused-backend type
-argument problem, but must be checked with the pinned tools. Borrowed identity
-mapping and borrowed accumulators have independent extraction failures. Do not
-remove their named adapters or workaround comments without reproducing the
-intended source form successfully.
+The tested backend-free method-local callbacks pass, while the old unused-backend
+type-argument failure still reproduces. External factories are no longer required
+solely for that parameter in the tested shapes. Borrowed identity mapping still
+fails; borrowed accumulators remain a separate limitation. Keep named adapters
+and whole-payload `Result` moves, and check each migrated source form. The new
+probe also records function-item, borrowed-loop, and nested-predicate limitations;
+it does not establish unrestricted callback extraction.
 
 ## Core combinator families
 

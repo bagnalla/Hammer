@@ -115,9 +115,10 @@ remain supported inside byte-order scopes. `TakeAligned` still enforces its own
 alignment requirement; removing scope guards does not add implicit padding.
 
 The scope proof becomes delegation plus restoration of the enclosing argument,
-with no direction-change cases. New exact names/signatures are checked in the
-focused extraction probe before implementation, without retaining old wrapper
-aliases or hidden bit-order parameters.
+with no direction-change cases. The [direct-v1 probe](../rusthammer/probes/direct_v1/README.md)
+checks `ByteOrder`/`WithByteOrder`, unaligned scopes, and borrowed spans through
+both MIR stages and ordinary dependency use. Production semantics/proofs still
+need migration, without old wrapper aliases or hidden bit-order parameters.
 
 ## Primitive and combinator policy
 
@@ -338,6 +339,7 @@ For input, ordering, and spans:
    boundaries, exact frame consumption, and CRC validation. Scope guards and
    low-first tests no longer describe supported behavior.
 
-The retained probe results are historical evidence. The new source forms still
-need both MIR stages, ordinary dependency extraction, the full Lean build, and
-axiom auditing before the migration is complete.
+The earlier ordering probes are historical evidence. The new direct-v1 probe
+checks representative source forms through both MIR stages and ordinary
+dependency extraction, with strict Lean checking. The full production migration
+still requires regeneration, the retained proof build, and axiom auditing.

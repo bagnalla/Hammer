@@ -25,10 +25,12 @@ not evidence that the new interface has already been extracted or proved.
 
 ## Resume here
 
-The first change on this branch is the plan revision. Next, check the proposed
-combined interface with a small extraction probe, then migrate the library,
-examples, downstream fixtures, generated Lean, and proofs together. Do not add
-new combinator families during that migration.
+The plan revision is committed at `3052099`. The focused
+[direct-v1 probe](../rusthammer/probes/direct_v1/README.md) now passes the selected
+interface and adapted MAVLink grammar through both MIR stages and a Cargo
+consumer. Next, migrate the library, examples, downstream fixtures, generated
+Lean, and proofs together. Do not add new combinator families during that
+migration.
 
 | Document | Role in v1 |
 | --- | --- |
@@ -40,6 +42,7 @@ new combinator families during that migration.
 | [Recursion research](rusthammer-recursive-rules.md) | Deferred construction and extraction investigations, outside v1. |
 | [Prototype README](../rusthammer/README.md) and [overview](../rusthammer/OVERVIEW.md) | Document the implementation currently in the tree until migrated. |
 | [Compatibility probes](../rusthammer/probes/README.md) | Reproductions and known limits of the pinned tools. |
+| [Direct-v1 probe](../rusthammer/probes/direct_v1/README.md) | Completed interface/extraction check; supported forms and remaining failures, without new correctness proofs. |
 
 ## Target application: MAVLink 2 packet parsing
 
@@ -150,8 +153,8 @@ Remove from the v1 design and implementation:
 
 - Backend selection, `Eval<'input, Backend>`, `Direct`, mutable generic backend
   plumbing, backend-specific implementations, and backend-only tests.
-- The separate output-only `Grammar` trait in favor of one parser trait, subject
-  to the focused extraction/inference check below.
+- The separate output-only `Grammar` trait in favor of one parser trait. The
+  focused extraction/inference probe supports this shape.
 - `InputStatus`, `ParseOutcome`, `NeedMore`, retry/finality classification, and
   complete-outcome conversion wrappers. Use `Result` throughout parsing.
 - `ParseContext`, combined `Order`, `BitOrder`, and `WithOrder`. Pass `ByteOrder`
@@ -181,7 +184,7 @@ migration, not prerequisites for the target framing parser.
 
 ## Parsing interface
 
-The target interface to check before broad implementation is:
+The target interface checked by the focused probe is:
 
 ```rust,ignore
 pub trait Parser<'input> {
@@ -204,17 +207,18 @@ pub trait Parser<'input> {
 }
 ```
 
-This is a proposed signature, not yet the public implementation. `parse_with`
-is the execution operation implemented by primitives, combinators, custom
+This signature passes the private probe; it is not yet the public implementation.
+`parse_with` is the execution operation implemented by primitives, combinators, custom
 parsers, and reference forwarding. Every child call uses it with the active
 byte order; `parse` supplies big byte order. Bit traversal is always high-first.
 `WithByteOrder { parser, byte_order }` overrides byte order for its child without
 alignment guards. This retains the useful byte-order scope and removes the
 combined context; per-reader-only byte order is not part of this migration.
-Construction helpers continue to return concrete nodes. Use `Parser` bounds where output relationships or
-callback inference require them, without adding bounds to constructors that
-only store fields. Check those inference cases explicitly before settling the
-removal of `Grammar`.
+Construction helpers continue to return concrete nodes. Use `Parser` bounds
+where output relationships or callback inference require them, without adding
+bounds to constructors that
+only store fields. The probe checks all seven generic construction helpers and
+their representative uses without retaining `Grammar`.
 
 Keep the input slice separate from the cursor and parser reference so outputs
 can borrow input independently. A factory may return a concrete node with an
@@ -292,15 +296,15 @@ without changing the parser cursor or requiring `Seek`.
    proof obligations, and deferred research. The additional cuts are adopted;
    migrate only retained families.
    Keep implementation documentation explicit about the pending migration.
-2. **Check the simplified source shapes.** In a small private probe, exercise
-   the single trait, `Result` returns, constructor inference, `&P` forwarding,
-   opaque returns, and callback creation inside a lifetime-generic parser without
-   a backend parameter. Include owned non-`Clone` results, borrowed slices, a
-   `Bind` factory, and `ByteOrder`/`WithByteOrder` with little-endian fields.
-   Check promoted MIR, optimized MIR, and ordinary Cargo dependency use, then
-   Lean type-check the generated code.
-   Compare the backend-closure reproduction; report which workaround actually
-   becomes unnecessary. Keep unrelated borrowed-callback failures separate.
+2. **Check the simplified source shapes (complete, 2026-10-10).** The private
+   [probe report](../rusthammer/probes/direct_v1/README.md#results) records passing
+   single-trait inference, `Result`, reference forwarding, opaque returns,
+   method-local callbacks, owned/borrowed outputs, `Bind`, byte-order scopes,
+   and adapted MAVLink framing/CRC. Both MIR stages and the Cargo consumer pass
+   extraction and strict Lean checking. The old backend-closure failure is
+   reproduced alongside passing backend-free callbacks. Borrowed callbacks,
+   cleanup moves, and other unsupported source shapes remain isolated controls.
+   This completes the compatibility check, not the production proof migration.
 3. **Migrate Rust and callers as one core change.** Update input types, parser
    traits, retained grammar families and shared examples, native tests, extraction
    roots, and the Cargo consumer. Replace outcomes at primitive and combinator
@@ -403,8 +407,10 @@ The expected simplification is fewer trait dictionaries, no generic backend
 argument or unit-state projection, no incomplete-input branches or finality
 conversions, one physical bit direction, and fewer production parser/proof
 families. There are no diagnostic metadata gates in the v1 completion path.
-These are design expectations to check, not a claim that every Aeneas limitation
-disappears.
+The new probe confirms the tested single-trait forms and method-local callbacks
+translate; it does not show that every Aeneas limitation disappears. Its 11
+native tests, 16 passing translations, and 16 expected failure checks support
+the interface choice without establishing new semantic theorems.
 
 Borrowed callbacks and locally returned static diagnostic metadata have failures
 in parser/backend-free reproductions. `Result` still has enum payloads, so the
@@ -436,8 +442,10 @@ The additional feature cuts and application/core authentication boundary are
 settled. Select the supported dialect/message metadata and any expansion beyond
 the initial unsigned framing example into typed payload or signature-field
 parsing. Cryptographic verification and replay state remain application concerns.
-The next probe must settle the single-trait inference/extraction forms and check
-the byte-order-only interface and the actual MAVLink callback shapes.
+The focused probe settles the tested single-trait inference/extraction forms,
+byte-order-only interface, and adapted MAVLink callback shapes. Carry its
+supported source forms and remaining-workaround checks into the migration;
+the actual production implementation and retained proofs still need porting.
 
 Collection does not promise recoverable allocation failure, and logical
 termination does not prove physical stack or memory bounds. Keep those limits

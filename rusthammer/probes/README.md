@@ -6,6 +6,22 @@ mapping probe includes the actual library source to exercise a concrete callback
 The `cross_crate` fixture instead uses a normal Cargo dependency and is checked
 by the local verification command.
 
+## Simplified direct-only version 1
+
+The [direct-v1 probe](direct_v1/README.md) checks the selected single
+`Parser<'input>` trait, `Result`, fixed high-first traversal, and `ByteOrder`.
+Constructor inference, method-local callbacks, opaque returns, independent
+borrows, owned outputs, an adapted MAVLink framing/CRC grammar, and an ordinary
+Cargo consumer pass both MIR stages and strict Lean checking. Eleven native
+tests pass; the runner records 16 passing translations and 16 specific expected
+failures, distinguishing remaining callback/cleanup/source-shape limitations
+from the supported interface.
+
+Run `python3 tools/check_direct_v1.py --aeneas-dir /path/to/pinned/aeneas` from
+`rusthammer/`. This is compatibility evidence for the pending migration, not a
+production implementation or a new correctness proof. The other probes below
+retain their historical API assumptions and do not override the v1 scope.
+
 ## Diagnostic annotations
 
 The [diagnostics investigation](diagnostics/README.md) checks scoped observer

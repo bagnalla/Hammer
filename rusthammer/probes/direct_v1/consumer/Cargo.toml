@@ -1,0 +1,11 @@
+[package]
+name = "rusthammer_direct_v1_consumer"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+path = "lib.rs"
+
+[dependencies]
+rusthammer_direct_v1_probe = { path = ".." }

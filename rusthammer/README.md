@@ -1898,9 +1898,10 @@ the verified `Bind` combinator.
 ## Next increments
 
 Follow the [v1 migration plan](../plans/rusthammer.md#first-version-scope-and-next-steps)
-on `rusthammer-v1-simplify`. Check the extraction/inference shape of one
-`Parser<'input>` trait returning `Result`, with explicit `ByteOrder` and fixed
-high-first traversal. Then migrate retained source, shared examples, tests,
+on `rusthammer-v1-simplify`. The [direct-v1 probe](probes/direct_v1/README.md) now
+checks one `Parser<'input>` trait returning `Result`, explicit `ByteOrder`, fixed
+high-first traversal, and adapted MAVLink framing/CRC at both MIR stages and
+through a Cargo consumer. Next, migrate retained source, shared examples, tests,
 downstream consumers, generated Lean, and proofs as one verified core increment.
 
 Remove `Grammar` / `Eval<Backend>` / `Direct`, finality/outcome wrappers, combined
