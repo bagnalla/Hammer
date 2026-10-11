@@ -52,33 +52,37 @@ def endOutcome (input : Slice U8) (cursor : Cursor) (result : ParseResult Unit) 
 /-- The first success or fatal error wins. A recoverable error selects the second
 relation at the original cursor; its result, including any error, is preserved. -/
 def choice {α : Type} (first second : Cursor → ParseResult α → Prop)
-    (cursor : Cursor) (result : ParseResult α) : Prop :=
+    (cursor : Cursor) (outcome : ParseResult α) : Prop :=
   ∃ left, first cursor left ∧ match left with
-    | .Ok pair => result = .Ok pair
-    | .Err error => if recoverable error then second cursor result else result = .Err error
+    | .Ok (next, value) => outcome = .Ok (next, value)
+    | .Err error =>
+      if recoverable error then second cursor outcome else outcome = .Err error
 
 /-- Optional parsing preserves a present value and its consumption. Ordinary input
 rejection means absence at the original cursor; fatal errors remain errors. -/
 def optional {α : Type} (child : Cursor → ParseResult α → Prop)
-    (cursor : Cursor) (result : ParseResult (Option α)) : Prop :=
-  (∃ next value, child cursor (.Ok (next, value)) ∧ result = .Ok (next, some value)) ∨
-  (∃ error, child cursor (.Err error) ∧ recoverable error ∧ result = .Ok (cursor, none)) ∨
-  (∃ error, child cursor (.Err error) ∧ ¬recoverable error ∧ result = .Err error)
+    (cursor : Cursor) (outcome : ParseResult (Option α)) : Prop :=
+  ∃ parsed, child cursor parsed ∧ match parsed with
+    | .Ok (next, value) => outcome = .Ok (next, some value)
+    | .Err error => if recoverable error then outcome = .Ok (cursor, none)
+      else outcome = .Err error
 
 /-- Positive lookahead asserts child success and discards its value and consumption.
 Every child error is preserved. -/
 def and {α : Type} (child : Cursor → ParseResult α → Prop)
-    (cursor : Cursor) (result : ParseResult Unit) : Prop :=
-  (∃ next value, child cursor (.Ok (next, value)) ∧ result = .Ok (cursor, ())) ∨
-  (∃ error, child cursor (.Err error) ∧ result = .Err error)
+    (cursor : Cursor) (outcome : ParseResult Unit) : Prop :=
+  ∃ parsed, child cursor parsed ∧ match parsed with
+    | .Err error => outcome = .Err error
+    | .Ok (_, _) => outcome = .Ok (cursor, ())
 
 /-- Negative lookahead asserts ordinary child rejection at the original cursor.
 A match becomes mismatch; cursor and alignment errors cannot establish absence. -/
 def not {α : Type} (child : Cursor → ParseResult α → Prop)
-    (cursor : Cursor) (result : ParseResult Unit) : Prop :=
-  (∃ error, child cursor (.Err error) ∧ recoverable error ∧ result = .Ok (cursor, ())) ∨
-  (∃ next value, child cursor (.Ok (next, value)) ∧ result = .Err .Mismatch) ∨
-  (∃ error, child cursor (.Err error) ∧ ¬recoverable error ∧ result = .Err error)
+    (cursor : Cursor) (outcome : ParseResult Unit) : Prop :=
+  ∃ parsed, child cursor parsed ∧ match parsed with
+    | .Ok (_, _) => outcome = .Err .Mismatch
+    | .Err error => if recoverable error then outcome = .Ok (cursor, ())
+      else outcome = .Err error
 
 /-- A marker tries `CA FE`, then `CA`, and requires the exact end of input. -/
 def markerParser : Seq (Choice Literal Literal) End :=

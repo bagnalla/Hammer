@@ -191,11 +191,26 @@ python3 tools/verify.py --aeneas-dir /path/to/aeneas
 
 The verifier checks formatting, both allocation configurations, promoted and
 optimized MIR extraction, the normal Cargo [consumer](probes/cross_crate/lib.rs),
-strict Lean compilation, and the selected theorem axiom audit. Optional local
-Lake package overrides can be supplied with `--lean-packages path/to/packages.json`.
+strict Lean compilation, and an automatic axiom audit of every production Lean
+declaration. Optional local Lake package overrides can be supplied with
+`--lean-packages path/to/packages.json`.
 Tool revisions are pinned in the repository; Aeneas and Charon binaries must
 match those revisions. The generated [Rusthammer.lean](lean/RustHammer/Rusthammer.lean)
 is regenerated from Rust, never maintained by hand.
+
+The [Lean auditor](lean/ProofAudit.lean) discovers all modules under
+`lean/RustHammer/` plus `lean/RustHammer.lean`, including private and generated
+declarations. It uses Lean's axiom-dependency API directly and accepts only
+`propext`, `Classical.choice`, and `Quot.sound`. No theorem-name list or printed
+diagnostic parsing is needed. To check existing extracted code, run from `lean/`:
+
+```sh
+lake build
+lake exe proof-audit
+```
+
+The full verifier also runs isolated audit regression tests, including deliberate
+axioms and admissions confined to temporary fixtures outside the development.
 
 With a locally built C Hammer library, the compatibility subsets can also be checked:
 

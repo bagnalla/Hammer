@@ -86,27 +86,21 @@ theorem repeat_final_spec {P α : Type} (pi : parser_traits.Parser P α) (parser
     (input : Slice U8) (cursor : Cursor) (hconfig : Spec.validRepeat parser)
     (child : Cursor → Spec.ParseResult α → Prop)
     (hp : ∀ start, pi.parse_with parser.parser input start ByteOrder.Big
-      ⦃ result => Spec.satisfies (child start) result ⦄) :
+      ⦃ result => child start result ⦄) :
     Repeat.Insts.RusthammerParser_traitsParserInputVec.parse_with pi parser input cursor ByteOrder.Big
-      ⦃ result => Spec.satisfies
-        (Spec.boundedRepeatComplete child parser.bounds.min.val max.val cursor) result ⦄ := by
-  step with repeat_with_spec pi parser max hmax input cursor ByteOrder.Big hconfig
-    (fun start => Spec.satisfies (child start)) hp as ⟨outcome, houtcome⟩
-  cases outcome with
-  | Ok pair =>
-    rcases pair with ⟨next, values⟩
-    exact ⟨.Ok (next, values), houtcome, rfl⟩
-  | Err error => exact ⟨.Err error, houtcome, rfl⟩
+      ⦃ result => Spec.boundedRepeat child parser.bounds.min.val max.val cursor result ⦄ := by
+  exact repeat_with_spec pi parser max hmax input cursor ByteOrder.Big hconfig child hp
+
 theorem repeat_spec {P α : Type} (pi : parser_traits.Parser P α) (parser : Repeat P)
     (max : Usize) (hmax : parser.bounds.max = some max)
     (input : Slice U8) (cursor : Cursor) (hconfig : Spec.validRepeat parser)
     (child : Cursor → Spec.ParseResult α → Prop)
     (hp : ∀ start, pi.parse_with parser.parser input start ByteOrder.Big
-      ⦃ result => Spec.satisfies (child start) result ⦄) :
+      ⦃ result => child start result ⦄) :
     parser_traits.Parser.parse.default (Repeat.Insts.RusthammerParser_traitsParserInputVec pi) parser input cursor
-      ⦃ result => Spec.boundedRepeatComplete child parser.bounds.min.val max.val cursor result ⦄ := by
+      ⦃ result => Spec.boundedRepeat child parser.bounds.min.val max.val cursor result ⦄ := by
   exact complete_spec (Repeat.Insts.RusthammerParser_traitsParserInputVec pi) parser input cursor
-    (Spec.boundedRepeatComplete child parser.bounds.min.val max.val cursor)
+    (Spec.boundedRepeat child parser.bounds.min.val max.val cursor)
     (repeat_final_spec pi parser max hmax input cursor hconfig child hp)
 
 /-- Equal bounds give precisely the original independent exact-count contract. -/
@@ -146,27 +140,22 @@ theorem repeat_exact_success_length {α : Type} (child : Cursor → Spec.ParseRe
 theorem repeat_exact_final_spec {P α : Type} (pi : parser_traits.Parser P α) (parser : P) (count : Usize)
     (input : Slice U8) (cursor : Cursor) (child : Cursor → Spec.ParseResult α → Prop)
     (hp : ∀ start, pi.parse_with parser input start ByteOrder.Big
-      ⦃ result => Spec.satisfies (child start) result ⦄) :
-    Repeat.Insts.RusthammerParser_traitsParserInputVec.parse_with pi { parser, bounds := { min := count, max := some count } }
-      input cursor ByteOrder.Big
-      ⦃ result => Spec.satisfies (Spec.repeatNComplete child count.val cursor) result ⦄ := by
-  step with repeat_exact_with_spec pi parser count input cursor ByteOrder.Big
-    (fun start => Spec.satisfies (child start)) hp as ⟨outcome, houtcome⟩
-  cases outcome with
-  | Ok pair =>
-    rcases pair with ⟨next, values⟩
-    exact ⟨.Ok (next, values), houtcome, rfl⟩
-  | Err error => exact ⟨.Err error, houtcome, rfl⟩
+      ⦃ result => child start result ⦄) :
+    Repeat.Insts.RusthammerParser_traitsParserInputVec.parse_with pi
+      { parser, bounds := { min := count, max := some count } } input cursor ByteOrder.Big
+      ⦃ result => Spec.repeatN child count.val cursor result ⦄ := by
+  exact repeat_exact_with_spec pi parser count input cursor ByteOrder.Big child hp
+
 theorem repeat_exact_complete_spec {P α : Type} (pi : parser_traits.Parser P α) (parser : P) (count : Usize)
     (input : Slice U8) (cursor : Cursor) (child : Cursor → Spec.ParseResult α → Prop)
     (hp : ∀ start, pi.parse_with parser input start ByteOrder.Big
-      ⦃ result => Spec.satisfies (child start) result ⦄) :
+      ⦃ result => child start result ⦄) :
     parser_traits.Parser.parse.default (Repeat.Insts.RusthammerParser_traitsParserInputVec pi)
       { parser, bounds := { min := count, max := some count } } input cursor
-      ⦃ result => Spec.repeatNComplete child count.val cursor result ⦄ := by
+      ⦃ result => Spec.repeatN child count.val cursor result ⦄ := by
   exact complete_spec (Repeat.Insts.RusthammerParser_traitsParserInputVec pi)
     { parser, bounds := { min := count, max := some count } } input cursor
-    (Spec.repeatNComplete child count.val cursor)
+    (Spec.repeatN child count.val cursor)
     (repeat_exact_final_spec pi parser count input cursor child hp)
 
 /-- Zero maximum requires no correctness or termination assumption about the child. -/
@@ -229,7 +218,7 @@ theorem repeat_bits_with_spec (parser : Bits) (min max : Usize) (input : Slice U
     Repeat.Insts.RusthammerParser_traitsParserInputVec.parse_with Bits.Insts.RusthammerParser_traitsParserInputU64
       { parser, bounds := { min, max := some max } } input cursor ByteOrder.Big
       ⦃ result => Spec.boundedRepeat
-        (fun start => Contracts.primitive (Spec.bitsOutcome input start parser.width))
+        (fun start => Spec.bitsOutcome input start parser.width)
         min.val max.val cursor result ⦄ := by
   exact repeat_with_spec Bits.Insts.RusthammerParser_traitsParserInputU64 { parser, bounds := { min, max := some max } } max rfl input cursor ByteOrder.Big
     (by simpa [Spec.validRepeat, Spec.validRepeatBounds] using hbounds) _ (fun start => bits_with_spec parser input start hconfig)
@@ -240,7 +229,7 @@ theorem repeat_payloads_with_spec (parser : TakeAligned) (min max : Usize) (inpu
     Repeat.Insts.RusthammerParser_traitsParserInputVec.parse_with
       TakeAligned.Insts.RusthammerParser_traitsParserInputSharedInputSliceU8 { parser, bounds := { min, max := some max } } input cursor ByteOrder.Big
       ⦃ result => Spec.boundedRepeat
-        (fun start => Contracts.primitive (Spec.takeAlignedOutcome input start parser.count))
+        (fun start => Spec.takeAlignedOutcome input start parser.count)
         min.val max.val cursor result ⦄ := by
   exact repeat_with_spec TakeAligned.Insts.RusthammerParser_traitsParserInputSharedInputSliceU8
     { parser, bounds := { min, max := some max } } max rfl input cursor ByteOrder.Big (by simpa [Spec.validRepeat, Spec.validRepeatBounds] using hbounds) _

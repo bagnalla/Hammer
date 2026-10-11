@@ -22,7 +22,7 @@ theorem bind_with_spec {P F Q α β : Type} (pi : parser_traits.Parser P α)
     (hq : ∀ next value child, first cursor (.Ok (next, value)) → constructed value child →
       qi.parse_with child input next context ⦃ result => second value next result ⦄) :
     Bind.Insts.RusthammerParser_traitsParser.parse_with pi fi qi parser input cursor context
-      ⦃ result => Contracts.bind first second cursor result ⦄ := by
+      ⦃ result => Spec.bind first second cursor result ⦄ := by
   rw [Bind.Insts.RusthammerParser_traitsParser.parse_with]
   step with hp as ⟨parsed, hparsed⟩
   cases parsed with
@@ -38,40 +38,25 @@ theorem bind_final_spec {P F Q α β : Type} (pi : parser_traits.Parser P α)
     (parser : Bind P F) (input : Slice U8) (cursor : Cursor)
     (first : Cursor → Spec.ParseResult α → Prop) (second : α → Cursor → Spec.ParseResult β → Prop)
     (constructed : α → Q → Prop)
-    (hp : pi.parse_with parser.parser input cursor ByteOrder.Big ⦃ result => Spec.satisfies (first cursor) result ⦄)
+    (hp : pi.parse_with parser.parser input cursor ByteOrder.Big ⦃ result => first cursor result ⦄)
     (hf : ∀ next value, first cursor (.Ok (next, value)) →
       fi.call parser.then value ⦃ result => constructed value result ⦄)
     (hq : ∀ next value child, first cursor (.Ok (next, value)) → constructed value child →
-      qi.parse_with child input next ByteOrder.Big ⦃ result => Spec.satisfies (second value next) result ⦄) :
+      qi.parse_with child input next ByteOrder.Big ⦃ result => second value next result ⦄) :
     Bind.Insts.RusthammerParser_traitsParser.parse_with pi fi qi parser input cursor ByteOrder.Big
-      ⦃ result => Spec.satisfies (Spec.bind first second cursor) result ⦄ := by
-  rw [Bind.Insts.RusthammerParser_traitsParser.parse_with]
-  step with hp as ⟨outcome, houtcome⟩
-  rcases houtcome with ⟨parsed, hparsed, heq⟩
-  subst outcome
-
-  cases parsed with
-  | Err error =>
-    simp only [spec_ok, Spec.satisfies_error]
-    exact ⟨.Err error, hparsed, rfl⟩
-  | Ok pair =>
-    rcases pair with ⟨next, value⟩
-
-    step with hf next value hparsed as ⟨child, hchild⟩
-    step with hq next value child hparsed hchild as ⟨outcome, hcompleted⟩
-    rcases hcompleted with ⟨result, hresult, houtcome⟩
-    exact ⟨result, ⟨.Ok (next, value), hparsed, hresult⟩, houtcome⟩
+      ⦃ result => Spec.bind first second cursor result ⦄ := by
+  exact bind_with_spec pi fi qi parser input cursor ByteOrder.Big first second constructed hp hf hq
 
 theorem bind_spec {P F Q α β : Type} (pi : parser_traits.Parser P α)
     (fi : core.ops.function.Fn F α Q) (qi : parser_traits.Parser Q β)
     (parser : Bind P F) (input : Slice U8) (cursor : Cursor)
     (first : Cursor → Spec.ParseResult α → Prop) (second : α → Cursor → Spec.ParseResult β → Prop)
     (constructed : α → Q → Prop)
-    (hp : pi.parse_with parser.parser input cursor ByteOrder.Big ⦃ result => Spec.satisfies (first cursor) result ⦄)
+    (hp : pi.parse_with parser.parser input cursor ByteOrder.Big ⦃ result => first cursor result ⦄)
     (hf : ∀ next value, first cursor (.Ok (next, value)) →
       fi.call parser.then value ⦃ result => constructed value result ⦄)
     (hq : ∀ next value child, first cursor (.Ok (next, value)) → constructed value child →
-      qi.parse_with child input next ByteOrder.Big ⦃ result => Spec.satisfies (second value next) result ⦄) :
+      qi.parse_with child input next ByteOrder.Big ⦃ result => second value next result ⦄) :
     parser_traits.Parser.parse.default (Bind.Insts.RusthammerParser_traitsParser pi fi qi) parser input cursor
       ⦃ result => Spec.bind first second cursor result ⦄ :=
   complete_spec (Bind.Insts.RusthammerParser_traitsParser pi fi qi) parser input cursor
@@ -91,7 +76,7 @@ theorem bind_first_error {P F Q α β : Type} (pi : parser_traits.Parser P α)
 
 theorem bind_success_children {α β : Type} (first : Cursor → Spec.ParseResult α → Prop)
     (second : α → Cursor → Spec.ParseResult β → Prop) (cursor next : Cursor) (value : β)
-    (h : Contracts.bind first second cursor (.Ok (next, value))) :
+    (h : Spec.bind first second cursor (.Ok (next, value))) :
     ∃ middle prior, first cursor (.Ok (middle, prior)) ∧ second prior middle (.Ok (next, value)) := by
   rcases h with ⟨parsed, hparsed, hrest⟩
   cases parsed with

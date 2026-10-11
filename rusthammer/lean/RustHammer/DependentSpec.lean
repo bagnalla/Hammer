@@ -30,15 +30,15 @@ aligned bytes. The payload is a slice of the original input; trailing input is
 permitted. Alignment is checked only after successful count decoding. -/
 def dependentPayload (input : Slice U8) (cursor : Cursor)
     (outcome : Spec.ParseResult (Slice U8)) : Prop :=
-  Contracts.bind (fun start => countPrefix input start)
-    (fun count start => Contracts.primitive (takeAlignedOutcome input start count)) cursor outcome
+  Spec.bind (fun start => countPrefix input start)
+    (fun count start => (takeAlignedOutcome input start count)) cursor outcome
 
 /-- The element format instead contains `count` four-bit numbers, in order.
 Natural-number count and bit positions specify exact consumption and values. -/
 def dependentFields (input : Slice U8) (cursor : Cursor)
     (outcome : Spec.ParseResult (alloc.vec.Vec U64)) : Prop :=
-  Contracts.bind (fun start => countPrefix input start)
+  Spec.bind (fun start => countPrefix input start)
     (fun count start => repeatN
-      (fun pos => Contracts.primitive (bitsOutcome input pos 4#u8)) count.val start) cursor outcome
+      (fun pos => bitsOutcome input pos 4#u8) count.val start) cursor outcome
 
 end RustHammer.Spec

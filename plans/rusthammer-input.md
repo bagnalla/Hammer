@@ -185,6 +185,10 @@ High-first decoding and geometry, both byte orders, unaligned fields, raw-cursor
 errors, forward consumption, and retained application contracts are proved.
 The [main verification record](rusthammer.md#verification-and-proof-maintenance)
 tracks the migrated roots, retired claims, and current checks.
+Arbitrary-byte-order parser proofs now live in their numeric, byte, and position
+family modules; default-order proofs specialize them. For example, the
+[integer proofs](../rusthammer/lean/RustHammer/IntegerProofs.lean) share one pair
+of narrowing helpers for signed and unsigned values.
 
 ## Historical pre-v1 implementation and evidence
 
@@ -211,9 +215,9 @@ The [specification](../rusthammer/lean/RustHammer/OrderSpec.lean) expresses nume
 values with unbounded arithmetic over physical fragments.
 [Reader proofs](../rusthammer/lean/RustHammer/OrderProofs.lean) establish decoded
 values, exact consumption, invalid-cursor and exhaustion behavior, termination,
-and arithmetic safety. [Parser proofs](../rusthammer/lean/RustHammer/OrderParserProofs.lean)
-cover every order and finality, including signed/native narrowing, literals,
-patterns, and byte sets. [Scope proofs](../rusthammer/lean/RustHammer/OrderScopeProofs.lean)
+and arithmetic safety. At that point, `OrderParserProofs` covered every order and
+finality, including signed/native narrowing, literals, patterns, and byte sets.
+[Scope proofs](../rusthammer/lean/RustHammer/OrderScopeProofs.lean)
 cover both guards, context propagation, and same-direction transparency without
 assuming a child contract when entry is rejected. Generic combinator theorems
 accept arbitrary contexts; all existing default-order format proofs are retained.

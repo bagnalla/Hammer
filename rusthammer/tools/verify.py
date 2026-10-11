@@ -11,65 +11,6 @@ AENEAS_REV = "557eff83ecef5083b98a52a94ca7fae63d6c1dab"
 CHARON_REV = "c8f15d7d658c86a95658f71ad99cddd4be002e04"
 ROOT = Path(__file__).resolve().parents[1]
 
-ORDER_THEOREMS = (
-    "RustHammer.Ordering.unsigned_default",
-    "RustHammer.Proofs.read_ordered_bits_spec",
-    "RustHammer.Proofs.bit_spec",
-    *(f"RustHammer.Ordering.{name}" for name in (
-        "with_byte_order_spec",
-        "bits_with_spec", "bit_with_spec", "literal_with_spec", "signed_bits_with_spec",
-        "byte_with_spec", "i8_with_spec", "be_u16_with_spec", "be_u32_with_spec",
-        "be_u64_with_spec", "be_i16_with_spec", "be_i32_with_spec", "be_i64_with_spec",
-        "byte_pattern_with_spec", "byte_in_with_spec", "byte_not_in_with_spec",
-        "take_aligned_with_spec", "skip_bits_with_spec", "tell_with_spec", "end_with_spec",
-    )),
-)
-
-PARSER_THEOREMS = tuple(f"RustHammer.Proofs.{name}" for name in (
-    "seq_with_spec", "choice_with_spec", "optional_with_spec", "and_with_spec",
-    "not_with_spec", "map_with_spec", "verify_with_spec", "bind_with_spec",
-    "try_map_with_spec", "parser_ref_with_spec", "parser_ref_spec",
-    "repeat_run_with_bounded_spec", "repeat_run_with_unbounded_spec",
-    "match_endpoint_order_displacement",
-))
-
-SPAN_THEOREMS = tuple(f"RustHammer.Span.{name}" for name in (
-    "cursor_valid_spec", "new_spec", "checked_success", "input_spec", "start_spec",
-    "end_spec", "clone_spec", "is_empty_spec", "as_bytes_spec",
-    "with_span_with_spec", "recognize_with_spec",
-    "with_span_complete_spec", "recognize_complete_spec",
-    "with_span_clone_spec", "recognize_clone_spec", "capture_success",
-    "offset_physical", "physical_offset", "physical_injective", "consumed_length",
-    "bits_distinct", "mem_bits", "selected_in_input", "high_same_byte",
-    "interior_byte", "crossing_start", "crossing_end", "aligned_region",
-))
-
-CONSTRUCTOR_THEOREMS = tuple(f"RustHammer.Constructors.{name}" for name in (
-    "seq_eq", "choice_eq", "optional_eq", "map_eq", "try_map_eq", "verify_eq", "bind_eq",
-    "reuse_spec", "seq_parse_spec",
-))
-
-MAVLINK_THEOREMS = tuple(f"RustHammer.Mavlink.{name}" for name in (
-    "crc_rounds_spec", "crc_accumulate_spec", "crc_buffer_spec", "crc_spec",
-    "header_constructor", "header_spec", "payload_spec", "body_spec", "checksum_spec",
-    "checksum_predicate_spec", "fields_spec", "checked_spec", "packet_spec",
-    "frame_constructor", "frame_parser_spec", "mavlink_spec", "heartbeat_lookup_spec",
-    "header_success", "frame_success",
-    "payload_truncated",
-))
-
-FORWARD_THEOREMS = tuple(f"RustHammer.Forward.{name}" for name in (
-    "primitive", "bit", "literal", "matched_bytes", "byte_pattern",
-    "bits", "signed_bits", "unsigned_integer", "signed_integer",
-    "take_aligned", "skip_bits", "epsilon", "fail",
-    "tell", "end_of_input", "sequence", "bind",
-    "map", "try_map", "verify", "choice",
-    "optional", "and", "not", "left",
-    "right", "middle", "ignore", "match_restriction",
-    "exclusive", "capture", "recognize", "indexed_repetitions",
-    "bounded_iterations", "unbounded_iterations", "accumulated", "mavlink",
-))
-
 
 def output(*args, cwd=None):
     return subprocess.check_output(args, cwd=cwd, text=True).strip()
@@ -86,27 +27,6 @@ def translate(aeneas, llbc, destination, namespace):
         "-namespace", namespace, "-abort-on-error", "-warnings-as-errors",
         "-no-progress-bar", llbc,
     )
-
-
-def audit_proofs(lake_args=()):
-    theorems = (ORDER_THEOREMS + PARSER_THEOREMS + SPAN_THEOREMS
-                + CONSTRUCTOR_THEOREMS
-                + MAVLINK_THEOREMS + FORWARD_THEOREMS)
-    audit = ROOT / "target" / "proof-axioms.lean"
-    audit.write_text("import RustHammer\n" + "".join(
-        f"#print axioms {name}\n" for name in theorems
-    ))
-    result = output("lake", *lake_args, "env", "lean", "-DwarningAsError=true", "-DautoImplicit=false", audit,
-                    cwd=ROOT / "lean")
-    audits = re.findall(
-        r"'([^']+)' (?:depends on axioms: \[([^]]*)\]|does not depend on any axioms)", result,
-    )
-    if {name for name, _ in audits} != set(theorems):
-        raise RuntimeError(f"missing proof axiom audit:\n{result}")
-    for name, axioms in audits:
-        if set(filter(None, map(str.strip, axioms.split(",")))) - {"propext", "Classical.choice", "Quot.sound"}:
-            raise RuntimeError(f"unexpected axioms in {name}: {axioms}")
-    print(f"Proof axiom audit: {len(audits)} theorems use only standard Lean axioms.", flush=True)
 
 
 def main():
@@ -297,11 +217,12 @@ def main():
     compatibility_files = [optimized / "lean" / "Rusthammer.lean", consumer_lean]
 
     # Check project code only; dependency models remain part of the trust boundary.
-    for path in [*(ROOT / "lean" / "RustHammer").glob("*.lean"), *compatibility_files]:
+    for path in [*(ROOT / "lean" / "RustHammer").rglob("*.lean"), *compatibility_files]:
         if re.search(r"\b(?:sorry|admit)\b|^\s*(?:axiom|opaque)\s", path.read_text(), re.M):
             parser.error(f"unproved or opaque declaration in {path}")
     run("lake", *lake_args, "build", cwd=ROOT / "lean")
-    audit_proofs(lake_args)
+    run("lake", *lake_args, "exe", "proof-audit", cwd=ROOT / "lean")
+    run("lake", *lake_args, "env", "python3", ROOT / "tools" / "test_proof_audit.py", cwd=ROOT / "lean")
     for path in compatibility_files:
         run("lake", *lake_args, "env", "lean", "-DwarningAsError=true", "-DautoImplicit=false", path, cwd=ROOT / "lean")
 

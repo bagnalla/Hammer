@@ -30,7 +30,7 @@ theorem left_with_spec {P Q α β : Type} (pi : parser_traits.Parser P α) (qi :
     (hp : ∀ start, pi.parse_with parser.first input start context ⦃ result => first start result ⦄)
     (hq : ∀ start, qi.parse_with parser.second input start context ⦃ result => second start result ⦄) :
     Left.Insts.RusthammerParser_traitsParser.parse_with pi qi parser input cursor context
-      ⦃ result => Contracts.left first second cursor result ⦄ := by
+      ⦃ result => Spec.left first second cursor result ⦄ := by
   rw [Left.Insts.RusthammerParser_traitsParser.parse_with]
   step with seq_with_spec (Shared0P.Insts.RusthammerParser_traitsParser pi) (Shared0P.Insts.RusthammerParser_traitsParser qi)
     { first := parser.first, second := parser.second } input cursor context first second hp hq
@@ -46,33 +46,20 @@ theorem left_final_spec {P Q α β : Type} (pi : parser_traits.Parser P α) (qi 
     (parser : Left P Q) (input : Slice U8) (cursor : Cursor)
     (first : Cursor → Spec.ParseResult α → Prop) (second : Cursor → Spec.ParseResult β → Prop)
     (hp : ∀ start, pi.parse_with parser.first input start ByteOrder.Big
-      ⦃ result => Spec.satisfies (first start) result ⦄)
+      ⦃ result => first start result ⦄)
     (hq : ∀ start, qi.parse_with parser.second input start ByteOrder.Big
-      ⦃ result => Spec.satisfies (second start) result ⦄) :
+      ⦃ result => second start result ⦄) :
     Left.Insts.RusthammerParser_traitsParser.parse_with pi qi parser input cursor ByteOrder.Big
-      ⦃ result => Spec.satisfies (Spec.left first second cursor) result ⦄ := by
-  rw [Left.Insts.RusthammerParser_traitsParser.parse_with]
-  step with seq_spec (Shared0P.Insts.RusthammerParser_traitsParser pi) (Shared0P.Insts.RusthammerParser_traitsParser qi)
-    { first := parser.first, second := parser.second } input cursor first second hp hq
-    as ⟨outcome, houtcome⟩
-  rcases houtcome with ⟨parsed, hparsed, heq⟩
-  subst outcome
-  cases parsed with
-  | Err error =>
-    simp only [spec_ok, Spec.satisfies_error]
-    exact ⟨.Err error, hparsed, rfl⟩
-  | Ok pair =>
-    rcases pair with ⟨next, a, b⟩
-
-    exact ⟨.Ok (next, a), ⟨.Ok (next, (a, b)), hparsed, a, rfl, rfl⟩, rfl⟩
+      ⦃ result => Spec.left first second cursor result ⦄ := by
+  exact left_with_spec pi qi parser input cursor ByteOrder.Big first second hp hq
 
 theorem left_spec {P Q α β : Type} (pi : parser_traits.Parser P α) (qi : parser_traits.Parser Q β)
     (parser : Left P Q) (input : Slice U8) (cursor : Cursor)
     (first : Cursor → Spec.ParseResult α → Prop) (second : Cursor → Spec.ParseResult β → Prop)
     (hp : ∀ start, pi.parse_with parser.first input start ByteOrder.Big
-      ⦃ result => Spec.satisfies (first start) result ⦄)
+      ⦃ result => first start result ⦄)
     (hq : ∀ start, qi.parse_with parser.second input start ByteOrder.Big
-      ⦃ result => Spec.satisfies (second start) result ⦄) :
+      ⦃ result => second start result ⦄) :
     parser_traits.Parser.parse.default (Left.Insts.RusthammerParser_traitsParser pi qi) parser input cursor
       ⦃ result => Spec.left first second cursor result ⦄ :=
   complete_spec (Left.Insts.RusthammerParser_traitsParser pi qi) parser input cursor
@@ -84,7 +71,7 @@ theorem right_with_spec {P Q α β : Type} (pi : parser_traits.Parser P α) (qi 
     (hp : ∀ start, pi.parse_with parser.first input start context ⦃ result => first start result ⦄)
     (hq : ∀ start, qi.parse_with parser.second input start context ⦃ result => second start result ⦄) :
     Right.Insts.RusthammerParser_traitsParser.parse_with pi qi parser input cursor context
-      ⦃ result => Contracts.right first second cursor result ⦄ := by
+      ⦃ result => Spec.right first second cursor result ⦄ := by
   rw [Right.Insts.RusthammerParser_traitsParser.parse_with]
   step with seq_with_spec (Shared0P.Insts.RusthammerParser_traitsParser pi) (Shared0P.Insts.RusthammerParser_traitsParser qi)
     { first := parser.first, second := parser.second } input cursor context first second hp hq
@@ -100,33 +87,20 @@ theorem right_final_spec {P Q α β : Type} (pi : parser_traits.Parser P α) (qi
     (parser : Right P Q) (input : Slice U8) (cursor : Cursor)
     (first : Cursor → Spec.ParseResult α → Prop) (second : Cursor → Spec.ParseResult β → Prop)
     (hp : ∀ start, pi.parse_with parser.first input start ByteOrder.Big
-      ⦃ result => Spec.satisfies (first start) result ⦄)
+      ⦃ result => first start result ⦄)
     (hq : ∀ start, qi.parse_with parser.second input start ByteOrder.Big
-      ⦃ result => Spec.satisfies (second start) result ⦄) :
+      ⦃ result => second start result ⦄) :
     Right.Insts.RusthammerParser_traitsParser.parse_with pi qi parser input cursor ByteOrder.Big
-      ⦃ result => Spec.satisfies (Spec.right first second cursor) result ⦄ := by
-  rw [Right.Insts.RusthammerParser_traitsParser.parse_with]
-  step with seq_spec (Shared0P.Insts.RusthammerParser_traitsParser pi) (Shared0P.Insts.RusthammerParser_traitsParser qi)
-    { first := parser.first, second := parser.second } input cursor first second hp hq
-    as ⟨outcome, houtcome⟩
-  rcases houtcome with ⟨parsed, hparsed, heq⟩
-  subst outcome
-  cases parsed with
-  | Err error =>
-    simp only [spec_ok, Spec.satisfies_error]
-    exact ⟨.Err error, hparsed, rfl⟩
-  | Ok pair =>
-    rcases pair with ⟨next, a, b⟩
-
-    exact ⟨.Ok (next, b), ⟨.Ok (next, (a, b)), hparsed, b, rfl, rfl⟩, rfl⟩
+      ⦃ result => Spec.right first second cursor result ⦄ := by
+  exact right_with_spec pi qi parser input cursor ByteOrder.Big first second hp hq
 
 theorem right_spec {P Q α β : Type} (pi : parser_traits.Parser P α) (qi : parser_traits.Parser Q β)
     (parser : Right P Q) (input : Slice U8) (cursor : Cursor)
     (first : Cursor → Spec.ParseResult α → Prop) (second : Cursor → Spec.ParseResult β → Prop)
     (hp : ∀ start, pi.parse_with parser.first input start ByteOrder.Big
-      ⦃ result => Spec.satisfies (first start) result ⦄)
+      ⦃ result => first start result ⦄)
     (hq : ∀ start, qi.parse_with parser.second input start ByteOrder.Big
-      ⦃ result => Spec.satisfies (second start) result ⦄) :
+      ⦃ result => second start result ⦄) :
     parser_traits.Parser.parse.default (Right.Insts.RusthammerParser_traitsParser pi qi) parser input cursor
       ⦃ result => Spec.right first second cursor result ⦄ :=
   complete_spec (Right.Insts.RusthammerParser_traitsParser pi qi) parser input cursor
@@ -141,13 +115,13 @@ theorem middle_with_spec {L P R α β γ : Type}
     (hp : ∀ start, pi.parse_with parser.parser input start context ⦃ result => child start result ⦄)
     (hr : ∀ start, ri.parse_with parser.right input start context ⦃ result => after start result ⦄) :
     Middle.Insts.RusthammerParser_traitsParser.parse_with li pi ri parser input cursor context
-      ⦃ result => Contracts.middle before child after cursor result ⦄ := by
+      ⦃ result => Spec.middle before child after cursor result ⦄ := by
   rw [Middle.Insts.RusthammerParser_traitsParser.parse_with]
   step with seq_with_spec (Shared0P.Insts.RusthammerParser_traitsParser li)
     (Seq.Insts.RusthammerParser_traitsParserInputPair (Shared0P.Insts.RusthammerParser_traitsParser pi)
       (Shared0P.Insts.RusthammerParser_traitsParser ri))
     { first := parser.left, second := { first := parser.parser, second := parser.right } }
-    input cursor context before (Contracts.sequence child after) hl
+    input cursor context before (Spec.sequence child after) hl
     (fun start => seq_with_spec (Shared0P.Insts.RusthammerParser_traitsParser pi)
       (Shared0P.Insts.RusthammerParser_traitsParser ri)
       { first := parser.parser, second := parser.right } input start context child after hp hr)
@@ -165,33 +139,14 @@ theorem middle_final_spec {L P R α β γ : Type}
     (before : Cursor → Spec.ParseResult α → Prop) (child : Cursor → Spec.ParseResult β → Prop)
     (after : Cursor → Spec.ParseResult γ → Prop)
     (hl : ∀ start, li.parse_with parser.left input start ByteOrder.Big
-      ⦃ result => Spec.satisfies (before start) result ⦄)
+      ⦃ result => before start result ⦄)
     (hp : ∀ start, pi.parse_with parser.parser input start ByteOrder.Big
-      ⦃ result => Spec.satisfies (child start) result ⦄)
+      ⦃ result => child start result ⦄)
     (hr : ∀ start, ri.parse_with parser.right input start ByteOrder.Big
-      ⦃ result => Spec.satisfies (after start) result ⦄) :
+      ⦃ result => after start result ⦄) :
     Middle.Insts.RusthammerParser_traitsParser.parse_with li pi ri parser input cursor ByteOrder.Big
-      ⦃ result => Spec.satisfies (Spec.middle before child after cursor) result ⦄ := by
-  rw [Middle.Insts.RusthammerParser_traitsParser.parse_with]
-  step with seq_spec (Shared0P.Insts.RusthammerParser_traitsParser li)
-    (Seq.Insts.RusthammerParser_traitsParserInputPair (Shared0P.Insts.RusthammerParser_traitsParser pi)
-      (Shared0P.Insts.RusthammerParser_traitsParser ri))
-    { first := parser.left, second := { first := parser.parser, second := parser.right } }
-    input cursor before (Spec.sequence child after) hl
-    (fun start => seq_spec (Shared0P.Insts.RusthammerParser_traitsParser pi)
-      (Shared0P.Insts.RusthammerParser_traitsParser ri)
-      { first := parser.parser, second := parser.right } input start child after hp hr)
-    as ⟨outcome, houtcome⟩
-  rcases houtcome with ⟨parsed, hparsed, heq⟩
-  subst outcome
-  cases parsed with
-  | Err error =>
-    simp only [spec_ok, Spec.satisfies_error]
-    exact ⟨.Err error, hparsed, rfl⟩
-  | Ok pair =>
-    rcases pair with ⟨next, a, b, c⟩
-
-    exact ⟨.Ok (next, b), ⟨.Ok (next, (a, (b, c))), hparsed, b, rfl, rfl⟩, rfl⟩
+      ⦃ result => Spec.middle before child after cursor result ⦄ := by
+  exact middle_with_spec li pi ri parser input cursor ByteOrder.Big before child after hl hp hr
 
 theorem middle_spec {L P R α β γ : Type}
     (li : parser_traits.Parser L α) (pi : parser_traits.Parser P β) (ri : parser_traits.Parser R γ) (parser : Middle L P R)
@@ -199,11 +154,11 @@ theorem middle_spec {L P R α β γ : Type}
     (before : Cursor → Spec.ParseResult α → Prop) (child : Cursor → Spec.ParseResult β → Prop)
     (after : Cursor → Spec.ParseResult γ → Prop)
     (hl : ∀ start, li.parse_with parser.left input start ByteOrder.Big
-      ⦃ result => Spec.satisfies (before start) result ⦄)
+      ⦃ result => before start result ⦄)
     (hp : ∀ start, pi.parse_with parser.parser input start ByteOrder.Big
-      ⦃ result => Spec.satisfies (child start) result ⦄)
+      ⦃ result => child start result ⦄)
     (hr : ∀ start, ri.parse_with parser.right input start ByteOrder.Big
-      ⦃ result => Spec.satisfies (after start) result ⦄) :
+      ⦃ result => after start result ⦄) :
     parser_traits.Parser.parse.default (Middle.Insts.RusthammerParser_traitsParser li pi ri) parser input cursor
       ⦃ result => Spec.middle before child after cursor result ⦄ :=
   complete_spec (Middle.Insts.RusthammerParser_traitsParser li pi ri) parser input cursor
@@ -215,7 +170,7 @@ theorem ignore_with_spec {P α : Type} (pi : parser_traits.Parser P α) (parser 
     (child : Cursor → Spec.ParseResult α → Prop)
     (hp : pi.parse_with parser.parser input cursor context ⦃ result => child cursor result ⦄) :
     Ignore.Insts.RusthammerParser_traitsParserInputTuple.parse_with pi parser input cursor context
-      ⦃ result => Contracts.ignore child cursor result ⦄ := by
+      ⦃ result => Spec.ignore child cursor result ⦄ := by
   rw [Ignore.Insts.RusthammerParser_traitsParserInputTuple.parse_with]
   step with hp as ⟨parsed, hparsed⟩
   cases parsed with
@@ -227,26 +182,15 @@ theorem ignore_with_spec {P α : Type} (pi : parser_traits.Parser P α) (parser 
 theorem ignore_final_spec {P α : Type} (pi : parser_traits.Parser P α) (parser : Ignore P)
     (input : Slice U8) (cursor : Cursor) (child : Cursor → Spec.ParseResult α → Prop)
     (hp : pi.parse_with parser.parser input cursor ByteOrder.Big
-      ⦃ result => Spec.satisfies (child cursor) result ⦄) :
+      ⦃ result => child cursor result ⦄) :
     Ignore.Insts.RusthammerParser_traitsParserInputTuple.parse_with pi parser input cursor ByteOrder.Big
-      ⦃ result => Spec.satisfies (Spec.ignore child cursor) result ⦄ := by
-  rw [Ignore.Insts.RusthammerParser_traitsParserInputTuple.parse_with]
-  step with hp as ⟨outcome, houtcome⟩
-  rcases houtcome with ⟨parsed, hparsed, heq⟩
-  subst outcome
-
-  cases parsed with
-  | Err error =>
-    simp only [spec_ok, Spec.satisfies_error]
-    exact ⟨.Err error, hparsed, rfl⟩
-  | Ok pair =>
-    rcases pair with ⟨next, value⟩
-    exact ⟨.Ok (next, ()), ⟨.Ok (next, value), hparsed, (), rfl, rfl⟩, rfl⟩
+      ⦃ result => Spec.ignore child cursor result ⦄ := by
+  exact ignore_with_spec pi parser input cursor ByteOrder.Big child hp
 
 theorem ignore_spec {P α : Type} (pi : parser_traits.Parser P α) (parser : Ignore P)
     (input : Slice U8) (cursor : Cursor) (child : Cursor → Spec.ParseResult α → Prop)
     (hp : pi.parse_with parser.parser input cursor ByteOrder.Big
-      ⦃ result => Spec.satisfies (child cursor) result ⦄) :
+      ⦃ result => child cursor result ⦄) :
     parser_traits.Parser.parse.default (Ignore.Insts.RusthammerParser_traitsParserInputTuple pi) parser input cursor
       ⦃ result => Spec.ignore child cursor result ⦄ :=
   complete_spec (Ignore.Insts.RusthammerParser_traitsParserInputTuple pi) parser input cursor
@@ -255,7 +199,7 @@ theorem ignore_spec {P α : Type} (pi : parser_traits.Parser P α) (parser : Ign
 /-- A successful mapping keeps the child's success cursor. -/
 theorem map_success_value {α β : Type} (child : Cursor → Spec.ParseResult α → Prop)
     (mapping : α → β → Prop) (cursor next : Cursor) (mapped : β)
-    (h : Contracts.map child mapping cursor (.Ok (next, mapped))) :
+    (h : Spec.map child mapping cursor (.Ok (next, mapped))) :
     ∃ value, child cursor (.Ok (next, value)) ∧ mapping value mapped := by
   rcases h with ⟨parsed, hparsed, hresult⟩
   cases parsed with
@@ -269,7 +213,7 @@ theorem map_success_value {α β : Type} (child : Cursor → Spec.ParseResult α
 /-- A successful sequence witnesses both child successes and their shared cursor. -/
 theorem sequence_success_children {α β : Type} (first : Cursor → Spec.ParseResult α → Prop)
     (second : Cursor → Spec.ParseResult β → Prop) (cursor next : Cursor) (a : α) (b : β)
-    (h : Contracts.sequence first second cursor (.Ok (next, (a, b)))) :
+    (h : Spec.sequence first second cursor (.Ok (next, (a, b)))) :
     ∃ middle, first cursor (.Ok (middle, a)) ∧ second middle (.Ok (next, b)) := by
   rcases h with ⟨left, hleft, hresult⟩
   cases left with
@@ -286,7 +230,7 @@ theorem sequence_success_children {α β : Type} (first : Cursor → Spec.ParseR
 
 theorem left_success_children {α β : Type} (first : Cursor → Spec.ParseResult α → Prop)
     (second : Cursor → Spec.ParseResult β → Prop) (cursor next : Cursor) (value : α)
-    (h : Contracts.left first second cursor (.Ok (next, value))) :
+    (h : Spec.left first second cursor (.Ok (next, value))) :
     ∃ middle other, first cursor (.Ok (middle, value)) ∧ second middle (.Ok (next, other)) := by
   rcases map_success_value _ _ _ _ _ h with ⟨⟨a, b⟩, hseq, rfl⟩
   obtain ⟨middle, hfirst, hsecond⟩ := sequence_success_children _ _ _ _ value b hseq
@@ -294,7 +238,7 @@ theorem left_success_children {α β : Type} (first : Cursor → Spec.ParseResul
 
 theorem right_success_children {α β : Type} (first : Cursor → Spec.ParseResult α → Prop)
     (second : Cursor → Spec.ParseResult β → Prop) (cursor next : Cursor) (value : β)
-    (h : Contracts.right first second cursor (.Ok (next, value))) :
+    (h : Spec.right first second cursor (.Ok (next, value))) :
     ∃ middle other, first cursor (.Ok (middle, other)) ∧ second middle (.Ok (next, value)) := by
   rcases map_success_value _ _ _ _ _ h with ⟨⟨a, b⟩, hseq, rfl⟩
   obtain ⟨middle, hfirst, hsecond⟩ := sequence_success_children _ _ _ _ a value hseq
@@ -303,7 +247,7 @@ theorem right_success_children {α β : Type} (first : Cursor → Spec.ParseResu
 theorem middle_success_children {α β γ : Type} (before : Cursor → Spec.ParseResult α → Prop)
     (child : Cursor → Spec.ParseResult β → Prop) (after : Cursor → Spec.ParseResult γ → Prop)
     (cursor next : Cursor) (value : β)
-    (h : Contracts.middle before child after cursor (.Ok (next, value))) :
+    (h : Spec.middle before child after cursor (.Ok (next, value))) :
     ∃ first second a c, before cursor (.Ok (first, a)) ∧
       child first (.Ok (second, value)) ∧ after second (.Ok (next, c)) := by
   rcases map_success_value _ _ _ _ _ h with ⟨⟨a, b, c⟩, hseq, rfl⟩
@@ -312,7 +256,7 @@ theorem middle_success_children {α β γ : Type} (before : Cursor → Spec.Pars
   exact ⟨first, second, a, c, hbefore, hchild, hafter⟩
 
 theorem ignore_success_cursor {α : Type} (child : Cursor → Spec.ParseResult α → Prop)
-    (cursor next : Cursor) (h : Contracts.ignore child cursor (.Ok (next, ()))) :
+    (cursor next : Cursor) (h : Spec.ignore child cursor (.Ok (next, ()))) :
     ∃ value, child cursor (.Ok (next, value)) := by
   obtain ⟨value, hchild, _⟩ := map_success_value _ _ _ _ _ h
   exact ⟨value, hchild⟩

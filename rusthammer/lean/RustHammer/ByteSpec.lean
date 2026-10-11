@@ -1,4 +1,4 @@
-import RustHammer.ParserSpec
+import RustHammer.ControlSpec
 
 open RustHammer.Code.input_types
 
@@ -27,7 +27,7 @@ def matchBytes (input : Slice U8) :
     List U8 → Cursor → Spec.ParseResult Unit → Prop
   | [], cursor, outcome => outcome = .Ok (cursor, ())
   | expected :: rest, cursor, outcome =>
-    ∃ decoded, Contracts.primitive (byteOutcome input cursor) decoded ∧
+    ∃ decoded, (byteOutcome input cursor) decoded ∧
       match decoded with
       | .Ok (next, value) => if value = expected then matchBytes input rest next outcome
           else outcome = .Err .Mismatch
@@ -39,8 +39,4 @@ def bytePatternOutcome (input : Slice U8) (pattern : Slice U8)
   match outcome with
   | .Ok (next, output) => output = pattern ∧ matchBytes input pattern.val cursor (.Ok (next, ()))
   | .Err error => matchBytes input pattern.val cursor (.Err error)
-def bytePatternComplete (input pattern : Slice U8) (cursor : Cursor)
-    (result : ParseResult (Slice U8)) : Prop :=
-  bytePatternOutcome input pattern cursor (result)
-
 end RustHammer.Spec

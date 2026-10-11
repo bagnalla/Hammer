@@ -1,5 +1,5 @@
 import RustHammer.RepeatSupport
-import RustHammer.IterationSpec
+import RustHammer.RepeatSpec
 
 open RustHammer.Code.grammar.repeat
   RustHammer.Code.input_types

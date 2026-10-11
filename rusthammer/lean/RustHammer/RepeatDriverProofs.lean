@@ -8,35 +8,6 @@ open Aeneas Aeneas.Std Result WP
 namespace RustHammer.Proofs
 open Code
 
-/-- Ordinary repetition is the constant-contract specialization of the indexed
-attempt sequence. This preserves all existing repetition specifications. -/
-theorem indexed_repetitions_constant {α : Type} (child : Cursor → Spec.ParseResult α → Prop)
-    (cursor : Cursor) (values : List α) (next : Cursor) :
-    Spec.indexedRepetitions (fun _ => child) cursor values next ↔
-      Spec.repetitions child cursor values next := by
-  constructor
-  · intro h
-    induction h with
-    | empty => exact Spec.repetitions.empty _
-    | append _ last ih => exact Spec.repetitions.append ih last
-  · intro h
-    induction h with
-    | empty => exact Spec.indexedRepetitions.empty _
-    | append _ last ih => exact Spec.indexedRepetitions.append ih last
-
-theorem bounded_iterations_constant {α : Type} (child : Cursor → Spec.ParseResult α → Prop)
-    (min max : Nat) (cursor : Cursor) (outcome : Spec.ParseResult (List α)) :
-    Spec.boundedIterations (fun _ => child) min max cursor outcome ↔
-      Spec.boundedRepetition child min max cursor outcome := by
-  cases outcome <;> simp only [Spec.boundedIterations, Spec.boundedRepetition, indexed_repetitions_constant]
-
-theorem unbounded_iterations_constant {α : Type} (input : Slice U8)
-    (child : Cursor → Spec.ParseResult α → Prop) (min : Nat) (cursor : Cursor)
-    (outcome : Spec.ParseResult (List α)) :
-    Spec.unboundedIterations input (fun _ => child) min cursor outcome ↔
-      Spec.unboundedRepetition input child min cursor outcome := by
-  cases outcome <;> simp only [Spec.unboundedIterations, Spec.unboundedRepetition, indexed_repetitions_constant]
-
 /-- Finite repetition terminates by the remaining permitted calls. The storage
 invariant and step contract concern only reachable prefixes and child successes. -/
 theorem repeat_run_bounded_spec {P A α R : Type} (pi : parser_traits.Parser P α)
@@ -54,15 +25,9 @@ theorem repeat_run_bounded_spec {P A α R : Type} (pi : parser_traits.Parser P �
       ⦃ result => Spec.accumulated invariant
         (Spec.boundedRepetition child min.val max.val cursor) result ⦄ := by
   rw [grammar.repeat.repeat_run]
-  step with repeat_run_with_bounded_spec pi pi ai parser parser min max accumulator input cursor context
+  exact repeat_run_with_bounded_spec pi pi ai parser parser min max accumulator input cursor context
     hbounds (fun _ => child) invariant
-    (by intro count start; rw [grammar.repeat.repeat_parse]; split <;> exact hp start) hi
-    (by
-      intro values next after value state hprefix hchild hlen hstate
-      exact hs values next after value state
-        ((indexed_repetitions_constant child cursor values next).mp hprefix) hchild hlen hstate)
-    as ⟨outcome, houtcome⟩
-  cases outcome <;> simpa only [Spec.accumulated, bounded_iterations_constant] using houtcome
+    (by intro count start; rw [grammar.repeat.repeat_parse]; split <;> exact hp start) hi hs
 
 /-- Unbounded repetition terminates by remaining input bits. The accumulator step
 runs only after progress and representation checks, including the count limit. -/
@@ -81,15 +46,9 @@ theorem repeat_run_unbounded_spec {P A α R : Type} (pi : parser_traits.Parser P
       ⦃ result => Spec.accumulated invariant
         (Spec.unboundedRepetition input child min.val cursor) result ⦄ := by
   rw [grammar.repeat.repeat_run]
-  step with repeat_run_with_unbounded_spec pi pi ai parser parser min accumulator input cursor context
+  exact repeat_run_with_unbounded_spec pi pi ai parser parser min accumulator input cursor context
     (fun _ => child) invariant
-    (by intro count start; rw [grammar.repeat.repeat_parse]; split <;> exact hp start) hi
-    (by
-      intro values next after value state hprefix hchild hlen hstate
-      exact hs values next after value state
-        ((indexed_repetitions_constant (Spec.advancing input child) cursor values next).mp hprefix)
-        hchild hlen hstate) as ⟨outcome, houtcome⟩
-  cases outcome <;> simpa only [Spec.accumulated, unbounded_iterations_constant] using houtcome
+    (by intro count start; rw [grammar.repeat.repeat_parse]; split <;> exact hp start) hi hs
 
 /-- For collection, the stored vector is exactly the logical prefix. -/
 theorem accumulated_collection {α : Type} (contract : Spec.ParseResult (List α) → Prop)

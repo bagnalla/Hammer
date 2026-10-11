@@ -59,8 +59,7 @@ def matchBytes (input : Slice U8) (context : ByteOrder) :
     List U8 → Cursor → Spec.ParseResult Unit → Prop
   | [], cursor, result => result = .Ok (cursor, ())
   | expected :: rest, cursor, result =>
-    ∃ decoded, Contracts.primitive
-      (unsignedIntegerOutcome .U8 input cursor context) decoded ∧
+    ∃ decoded, (unsignedIntegerOutcome .U8 input cursor context) decoded ∧
       match decoded with
       | .Ok (next, value) => if value = expected then matchBytes input context rest next result
           else result = .Err .Mismatch
@@ -70,4 +69,31 @@ def bytePatternOutcome (input : Slice U8) (context : ByteOrder) (pattern : Slice
   match result with
   | .Ok (next, output) => output = pattern ∧ matchBytes input context pattern.val cursor (.Ok (next, ()))
   | .Err error => matchBytes input context pattern.val cursor (.Err error)
+@[simp] theorem byte_outcome_default (input : Slice U8) (cursor : Cursor)
+    (result : Spec.ParseResult U8) :
+    unsignedIntegerOutcome .U8 input cursor .Big result ↔ Spec.byteOutcome input cursor result := by
+  simp only [unsignedIntegerOutcome, unsignedIntegerSuccess, Spec.byteOutcome,
+    Spec.byteSuccess, unsigned_default, UScalarTy.U8_numBits_eq]
+
+@[simp] theorem match_bytes_default (input : Slice U8) (pattern : List U8) (cursor : Cursor)
+    (result : Spec.ParseResult Unit) :
+    matchBytes input .Big pattern cursor result ↔ Spec.matchBytes input pattern cursor result := by
+  induction pattern generalizing cursor result with
+  | nil => rfl
+  | cons expected rest ih =>
+    simp only [matchBytes, Spec.matchBytes, byte_outcome_default]
+    apply exists_congr
+    intro decoded
+    cases decoded with
+    | Err error => rfl
+    | Ok pair =>
+      rcases pair with ⟨next, value⟩
+      simp only [ih]
+
+@[simp] theorem byte_pattern_default (input : Slice U8) (pattern : Slice U8) (cursor : Cursor)
+    (result : Spec.ParseResult (Slice U8)) :
+    bytePatternOutcome input .Big pattern cursor result ↔
+      Spec.bytePatternOutcome input pattern cursor result := by
+  cases result <;> simp only [bytePatternOutcome, Spec.bytePatternOutcome, match_bytes_default]
+
 end RustHammer.Ordering

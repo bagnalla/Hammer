@@ -86,6 +86,7 @@ the specification.
 | [probes/cross_crate/](probes/cross_crate/) | Normal Cargo consumer exercising supported public forms |
 | [lean/RustHammer/](lean/RustHammer/) | Generated code, independent specifications, and proofs |
 | [tools/verify.py](tools/verify.py) | Native, extraction, Lean, and axiom verification gates |
+| [lean/ProofAudit.lean](lean/ProofAudit.lean) | Automatic axiom audit of all production Lean declarations |
 
 The core is `no_std`, has no dependencies, and forbids unsafe Rust. Application
 formats are not library API. Research probes are separate from production source.
@@ -120,7 +121,7 @@ restrictions and their controls are recorded in the [direct-v1 probe](probes/dir
 | Area | Specifications and proofs |
 | --- | --- |
 | Cursor, bit and payload primitives | `Spec`, `Proofs`, `BitsSpec`, `BitsProofs`, `CompleteProofs` |
-| Direct composition and callbacks | `ParserSpec`, `ParserProofs`, `Control*`, `Selection*`, `Composition*`, `Bind*` |
+| Direct composition and callbacks | `Spec`, `CompleteProofs`, `ParserProofs`, `Control*`, `Selection*`, `Composition*`, `Bind*` |
 | Numeric interpretation | `Order*`, `SignedBits*`, `Integer*`, `IntRange*` |
 | Bytes and positions | `Byte*`, `ByteSet*`, `Position*`, `Match*` |
 | Borrowed spans | `SpanSpec`, `SpanProofs` |
@@ -142,6 +143,15 @@ execution under a dialect callback contract. Success establishes exact framing
 consumption, aligned endpoints, header constraints, the original payload interval,
 and the checksum over precisely the transmitted header/payload interval.
 
+Combinators have one relational specification in `Spec`; execution proofs apply
+it directly to the Rust result. There are no identity result witnesses or separate
+complete-input specifications. Implementation proofs accept arbitrary byte-order
+contexts, with default-order theorems as specializations. Numeric family modules
+contain both versions together. `RepeatSpec` defines one indexed repetition
+relation; ordinary repetition ignores the index, while separated lists use it to
+distinguish the first item from later separator/item attempts. Bounded and
+unbounded stopping conditions remain distinct, as do their termination arguments.
+
 The migration removes backend projection/state equations, input-finality
 conversion, incomplete-input lemmas, seek/offset proofs, permutation proofs,
 low-first geometry, and changed-direction scope guards. Retained complete-input,
@@ -154,9 +164,19 @@ maps the removed and retained proof areas. The earlier evidence remains at
 From `rusthammer/`, run `python3 tools/verify.py --aeneas-dir /path/to/aeneas`.
 It checks formatting, tests with and without `alloc`, both MIR stages, consumer
 roots, full Lean compilation, absence of admissions/opaque project declarations,
-and standard-only axioms for selected theorem roots. `lake build` in `lean/`
-checks the current extracted definitions without regenerating them. Local package
-overrides are supported for existing Aeneas/Lean dependency checkouts.
+and standard-only axioms for every production Lean declaration. `lake build` in
+`lean/` builds the root and all source modules recursively without regenerating
+Rust extraction. `lake exe proof-audit` then discovers those modules and audits
+their compiled declarations using `Lean.collectAxioms`. Module ownership selects
+the declarations, including private helpers and generated definitions; dependency
+axioms are checked transitively. The three standard axioms are the only explicit
+allowlist. Local package overrides are supported for existing Aeneas/Lean
+dependency checkouts.
+
+The verifier also exercises the auditor with temporary fixtures: permitted
+axioms, unused private axioms in newly discovered modules, admitted proofs,
+transitive dependency axioms, and missing or empty developments. These fixtures
+are outside the production proof modules.
 
 The trust boundary includes the pinned Rust compiler, Charon, Aeneas, its
 standard-library models, and Lean's kernel. Proofs do not establish physical

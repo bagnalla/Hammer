@@ -311,14 +311,17 @@ without changing the parser cursor or requiring `Seek`.
 4. **Specifications and proofs — migrated.** Generated code is regenerated from
    Rust. Retained decoding, ordering, span geometry, repetition/fold, constructor,
    match, record, and MAVLink proofs build. Backend state projections and result
-   finality conversions are gone. `ParserSpec`/`ParserProofs` hold direct contracts;
-   `Spec.satisfies` is an ordinary result-witness relation, with no input status or
-   outcome conversion. `ForwardProofs` establishes cursor preservation under
-   explicit child/factory contracts and for the MAVLink frame relation. CRC model
+   finality conversions are gone. Combinator contracts live in `Spec` and apply
+   directly to results, without identity witnesses or complete-input adapters.
+   General byte-order proofs are primary; default-order theorems specialize them.
+   Plain repetition specializes the shared indexed relation. `ForwardProofs`
+   establishes cursor preservation under explicit child/factory contracts and for
+   the MAVLink frame relation. CRC model
    and implementation proofs remain unchanged.
 5. **Verification and documentation — complete.** The production verifier covers both
    allocation configurations and MIR stages, ordinary downstream extraction,
-   strict Lean compilation, and selected theorem axiom checks. C comparisons
+   strict Lean compilation, and automatic axiom checks for all production Lean
+   declarations. C comparisons
    cover retained primitive/match semantics and high-first ordering. Current
    results are recorded below; no retired feature is counted as verified v1 code.
 6. **Application/release scope review — next.** Select supported MAVLink metadata
@@ -371,11 +374,12 @@ The proof retirement inventory is explicit:
 
 - Delete `DirectState`, `Direct`, and `DirectEquations`; generated parser methods
   now execute directly. `BackendProofs.seq_eval_spec` and `choice_eval_spec` are
-  replaced by direct `ParserProofs` contracts. Constructor sequencing is now
-  `Constructors.seq_parse_spec`.
-- Rename `PartialSpec`/`PartialProofs` to `ParserSpec`/`ParserProofs`; retain their
-  complete-input combinator claims. Retire `classify_*`, incomplete propagation,
-  and impossible-`NeedMore` lemmas. Result-witness lemmas replace finality adapters.
+  replaced by `Proofs.seq_with_spec` and `Proofs.choice_with_spec`. Constructor
+  sequencing is now `Constructors.seq_parse_spec`.
+- Retain the complete-input combinator claims from `PartialSpec`/`PartialProofs`.
+  Retire `classify_*`, incomplete propagation, and impossible-`NeedMore` lemmas.
+  After the initial direct-only migration, consolidate `ParserSpec` into the
+  family specifications under `Spec` and remove the identity result witnesses.
 - Retire `PartialRecordSpec`/`PartialRecordProofs`. Their complete-input header,
   marker, and record claims remain in `RecordProofs` and `ControlProofs`; their
   partial-input/EOF-waiting claims are outside v1.
@@ -390,6 +394,59 @@ The proof retirement inventory is explicit:
 - Preserve all substantive MAVLink framing, payload, checksum, constructor, and
   success/truncation contracts. Only status/guard helper lemmas and impossible
   incomplete outcomes are retired. The two CRC files are unchanged.
+
+The subsequent proof simplification removes four sources of duplication:
+
+- `Spec.satisfies`, `Contracts.primitive`, and `Contracts.endOutcome` were identity
+  wrappers. Contracts now describe the returned `ParseResult` directly. The
+  redundant `*Complete` relations and `Forward.primitive` wrapper theorem retire
+  with them; the substantive cursor-preservation theorems remain audited.
+- `Spec` is the sole namespace for combinator semantics. The former `Contracts`
+  relations and their duplicate `Spec` versions are consolidated, preserving
+  child order, callback premises, recoverable rollback, and fatal errors.
+- Arbitrary-byte-order implementation proofs live with each parser family.
+  Default-order proofs specialize them instead of redoing the implementation
+  reasoning. `OrderParserProofs` is removed; independent numeric models and their
+  proved default-order equivalences remain.
+- `RepeatSpec` owns the indexed iteration semantics. Plain repetition is an
+  abbreviation with a constant child contract, so `IterationSpec` and the
+  constant/indexed conversion lemmas disappear. Bounded and unbounded stopping,
+  forward progress, count overflow, and accumulator obligations are preserved.
+
+This changes only handwritten specifications, proofs, and their documentation
+and audit inventory. It retains the Aeneas execution result and its totality
+obligations, independent protocol/CRC models, and explicit callback contracts.
+
+The simplified proof suite initially passed the production verifier on 2026-10-10
+with the same native tests, downstream tests, and extraction coverage listed above.
+At that stage, all 130 remaining selected theorem axiom audits passed with standard
+Lean axioms only. The change from 131 removed only the identity-wrapper theorem
+`Forward.primitive`. The generated Lean and the independent CRC specification
+and implementation proofs are unchanged.
+
+The axiom audit now discovers the whole production development automatically.
+`lake build` includes all source modules under `RustHammer`, even if a new module
+is not yet imported by the root. `ProofAudit.lean` discovers and imports the same
+source tree, selects declarations by their defining module, and calls
+`Lean.collectAxioms` directly. It checks definitions and private/generated helpers
+as well as handwritten theorems. Only `propext`, `Classical.choice`, and
+`Quot.sound` are permitted; unexpected dependencies, missing compiled modules,
+and empty audits fail. `verify.py` invokes this Lean executable and checks its
+exit status, without named theorem inventories or parsing printed diagnostics.
+The redundant inline `#print axioms` command is removed from the production proofs.
+
+Regression fixtures verify discovery, private declarations, admitted proofs,
+transitive dependencies, the permitted axioms, and missing/empty inputs. They
+create deliberate failures only in temporary test modules. The audit is a check
+of the assumptions of existing declarations; required API/semantic coverage
+remains a separate review obligation.
+
+The production verifier passed again on 2026-10-10 with the automatic audit:
+4,042 declarations across 62 modules, including 2,441 theorems and generated
+helpers, use only the permitted axioms. All eight auditor regression tests pass;
+native tests, both MIR stages, downstream extraction, and strict Lean compilation
+retain the coverage recorded above. These counts are reported observations, not
+hardcoded audit targets.
 
 The exclusions intentionally remove tests and theorem roots for permutation,
 seeking/offset applications, low-first order, and input/backend modes. Document
@@ -417,9 +474,10 @@ from `rusthammer/lean/` checks proofs without regenerating Rust extraction.
 
 The verifier must continue to check formatting, Rust tests with and without
 `alloc`, promoted/optimized extraction, downstream extraction and strict Lean
-checking, the complete proof build, and admitted/opaque declarations and theorem
-axioms. Maintain an explicit audit list for the retained contracts; do not obtain
-a passing run by silently removing failing retained theorem roots.
+checking, the complete proof build, and admitted/opaque declarations and axiom
+dependencies. Discover every production Lean module and audit all of its
+declarations automatically. Preserve the retained contracts and their semantic
+coverage when refactoring; do not weaken the audit policy to admit failing proofs.
 
 ## Aeneas compatibility evidence
 

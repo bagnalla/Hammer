@@ -80,42 +80,55 @@ theorem sign_extend_spec (value : U64) (width : U8)
       simp only [Spec.signedValue, if_neg hnonzero, if_neg hlarge]
       omega
 
-/-- Total signed decoding reuses the unsigned field's safety and termination proof. -/
-theorem signed_bits_with_spec (parser : SignedBits) (input : Slice U8) (cursor : Cursor) (hconfig : Spec.validSignedBits parser) :
-    SignedBits.Insts.RusthammerParser_traitsParserInputI64.parse_with parser input cursor ByteOrder.Big
-      ⦃ result => Contracts.primitive (Spec.signedBitsOutcome input cursor parser.bits.width) result ⦄ := by
+end RustHammer.Proofs
+
+namespace RustHammer.Ordering
+open Code Proofs
+
+theorem signed_bits_with_spec (parser : SignedBits) (input : Slice U8) (cursor : Cursor)
+    (context : ByteOrder) (hconfig : Spec.validSignedBits parser) :
+    SignedBits.Insts.RusthammerParser_traitsParserInputI64.parse_with parser input cursor context
+      ⦃ result => signedBitsOutcome input cursor parser.bits.width context result ⦄ := by
   rw [SignedBits.Insts.RusthammerParser_traitsParserInputI64.parse_with]
-  step with bits_with_spec parser.bits input cursor hconfig as ⟨outcome, houtcome⟩
-  rcases houtcome with ⟨parsed, hparsed, heq⟩
-  subst outcome
+  step with bits_with_spec parser.bits input cursor context hconfig as ⟨parsed, hparsed⟩
   by_cases hvalid : Spec.validCursor input cursor
   · by_cases hfit : Spec.position cursor + parser.bits.width.val ≤ 8 * input.val.length
-    · simp only [Spec.bitsOutcome, if_pos hvalid, if_pos hfit] at hparsed
+    · simp only [Ordering.outcome, if_pos hvalid, if_pos hfit] at hparsed
       rcases hparsed with ⟨next, value, rfl, hnext, hpos, hvalue⟩
 
       step with sign_extend_spec value parser.bits.width hconfig
-        (by rw [hvalue]; exact unsignedBits_lt_pow _ _ _) as ⟨signed, hsigned⟩
-      refine ⟨.Ok (next, signed), ?_, rfl⟩
-      simp only [Spec.signedBitsOutcome, if_pos hvalid, if_pos hfit]
+        (by rw [hvalue]; exact unsigned_bound _ _ _ _) as ⟨signed, hsigned⟩
+      simp only [signedBitsOutcome, if_pos hvalid, if_pos hfit]
       exact ⟨next, signed, rfl, hnext, hpos, by simpa [hvalue] using hsigned⟩
     · have heq : parsed = .Err .UnexpectedEnd := by
-        simpa only [Spec.bitsOutcome, if_pos hvalid, if_neg hfit] using hparsed
+        simpa only [Ordering.outcome, if_pos hvalid, if_neg hfit] using hparsed
       subst parsed
       simp only [spec_ok]
-      all_goals exact ⟨.Err .UnexpectedEnd,
-        by simp only [Spec.signedBitsOutcome, if_pos hvalid, if_neg hfit], rfl⟩
+      all_goals simp only [signedBitsOutcome, if_pos hvalid, if_neg hfit]
   · have heq : parsed = .Err .InvalidCursor := by
-      simpa only [Spec.bitsOutcome, if_neg hvalid] using hparsed
+      simpa only [Ordering.outcome, if_neg hvalid] using hparsed
     subst parsed
     simp only [spec_ok]
-    all_goals exact ⟨.Err .InvalidCursor,
-      by simp only [Spec.signedBitsOutcome, if_neg hvalid], rfl⟩
+    all_goals simp only [signedBitsOutcome, if_neg hvalid]
+
+end RustHammer.Ordering
+
+namespace RustHammer.Proofs
+open Code
+
+/-- Total signed decoding reuses the unsigned field's safety and termination proof. -/
+theorem signed_bits_with_spec (parser : SignedBits) (input : Slice U8) (cursor : Cursor) (hconfig : Spec.validSignedBits parser) :
+    SignedBits.Insts.RusthammerParser_traitsParserInputI64.parse_with parser input cursor ByteOrder.Big
+      ⦃ result => Spec.signedBitsOutcome input cursor parser.bits.width result ⦄ := by
+  simpa only [Ordering.signedBitsOutcome, Ordering.signedBitsSuccess,
+    Spec.signedBitsOutcome, Spec.signedBitsSuccess, Ordering.unsigned_default] using
+    Ordering.signed_bits_with_spec parser input cursor .Big hconfig
 
 theorem signed_bits_final_spec (parser : SignedBits) (input : Slice U8) (cursor : Cursor)
     (hconfig : Spec.validSignedBits parser) :
     SignedBits.Insts.RusthammerParser_traitsParserInputI64.parse_with parser input cursor ByteOrder.Big
-      ⦃ result => Spec.satisfies (Spec.signedBitsOutcome input cursor parser.bits.width) result ⦄ := by
-  simpa only [ByteOrder.Big, Contracts.primitive, Spec.satisfies] using
+      ⦃ result => Spec.signedBitsOutcome input cursor parser.bits.width result ⦄ := by
+  simpa only [ByteOrder.Big] using
     signed_bits_with_spec parser input cursor hconfig
 
 theorem signed_bits_spec (parser : SignedBits) (input : Slice U8) (cursor : Cursor)

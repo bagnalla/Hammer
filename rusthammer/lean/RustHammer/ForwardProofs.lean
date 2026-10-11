@@ -15,13 +15,6 @@ def Preserves {α : Type} (input : Slice U8)
   ∀ start next value, Spec.validCursor input start → child start (.Ok (next, value)) →
     Spec.validCursor input next ∧ Spec.position start ≤ Spec.position next
 
-theorem primitive {α : Type} (input : Slice U8)
-    (child : Cursor → Spec.ParseResult α → Prop) (hp : Preserves input child) :
-    Preserves input (fun start => Contracts.primitive (child start)) := by
-  rintro start next value hv ⟨result, hc, heq⟩
-  subst result
-  exact hp _ _ _ hv hc
-
 theorem bit (input : Slice U8) : Preserves input (Spec.bitOutcome input) := by
   intro start next value _ h
   unfold Spec.bitOutcome at h
@@ -102,7 +95,7 @@ theorem matched_bytes (input : Slice U8) (order : ByteOrder) (pattern : List U8)
       rcases pair with ⟨middle, byte⟩
       dsimp only at hr
       split at hr
-      · have hm := primitive input _ (unsigned_integer input .U8 order) _ _ _ hv hd
+      · have hm := unsigned_integer input .U8 order _ _ _ hv hd
         have hn := ih _ _ _ hm.1 hr
         exact ⟨hn.1, hm.2.trans hn.2⟩
       · cases hr
@@ -133,16 +126,16 @@ theorem skip_bits (input : Slice U8) (count : Usize) :
     Preserves input (fun start => Spec.skipBitsOutcome input start count) := by
   intro start next value _ h
   cases value
-  have hp := Proofs.skip_bits_success input start next count ⟨_, h, rfl⟩
+  have hp := Proofs.skip_bits_success input start next count h
   exact ⟨hp.2.1, by omega⟩
 
-theorem epsilon (input : Slice U8) : Preserves input Contracts.epsilon := by
+theorem epsilon (input : Slice U8) : Preserves input Spec.epsilon := by
   rintro start next value hv h
   cases h
   exact ⟨hv, le_rfl⟩
 
 theorem fail (input : Slice U8) (α : Type) :
-    Preserves input (fun _ => @Contracts.fail α) := by
+    Preserves input (fun _ => @Spec.fail α) := by
   intro start next value hv h
   cases h
 
@@ -162,7 +155,7 @@ theorem end_of_input (input : Slice U8) : Preserves input (Spec.endOutcome input
 theorem sequence {α β : Type} (input : Slice U8)
     (first : Cursor → Spec.ParseResult α → Prop) (second : Cursor → Spec.ParseResult β → Prop)
     (hf : Preserves input first) (hs : Preserves input second) :
-    Preserves input (Contracts.sequence first second) := by
+    Preserves input (Spec.sequence first second) := by
   rintro start next ⟨a, b⟩ hv h
   obtain ⟨middle, hfirst, hsecond⟩ := Proofs.sequence_success_children _ _ _ _ _ _ h
   have hm := hf _ _ _ hv hfirst
@@ -174,7 +167,7 @@ theorem bind {α β : Type} (input : Slice U8)
     (first : Cursor → Spec.ParseResult α → Prop)
     (second : α → Cursor → Spec.ParseResult β → Prop)
     (hf : Preserves input first) (hs : ∀ value, Preserves input (second value)) :
-    Preserves input (Contracts.bind first second) := by
+    Preserves input (Spec.bind first second) := by
   intro start next value hv h
   obtain ⟨middle, prior, hfirst, hsecond⟩ := Proofs.bind_success_children _ _ _ _ _ h
   have hm := hf _ _ _ hv hfirst
@@ -183,7 +176,7 @@ theorem bind {α β : Type} (input : Slice U8)
 
 theorem map {α β : Type} (input : Slice U8) (child : Cursor → Spec.ParseResult α → Prop)
     (mapping : α → β → Prop) (hp : Preserves input child) :
-    Preserves input (Contracts.map child mapping) := by
+    Preserves input (Spec.map child mapping) := by
   intro start next value hv h
   obtain ⟨prior, hchild, _⟩ := Proofs.map_success_value _ _ _ _ _ h
   exact hp _ _ prior hv hchild
@@ -191,14 +184,14 @@ theorem map {α β : Type} (input : Slice U8) (child : Cursor → Spec.ParseResu
 theorem try_map {α β ε : Type} (input : Slice U8)
     (child : Cursor → Spec.ParseResult α → Prop)
     (mapping : α → core.result.Result β ε → Prop) (hp : Preserves input child) :
-    Preserves input (Contracts.tryMap child mapping) := by
+    Preserves input (Spec.tryMap child mapping) := by
   intro start next value hv h
   obtain ⟨prior, hchild, _⟩ := Proofs.try_map_success_child _ _ _ _ _ h
   exact hp _ _ prior hv hchild
 
 theorem verify {α : Type} (input : Slice U8) (child : Cursor → Spec.ParseResult α → Prop)
     (predicate : α → Prop) [DecidablePred predicate] (hp : Preserves input child) :
-    Preserves input (Contracts.verify child predicate) := by
+    Preserves input (Spec.verify child predicate) := by
   rintro start next value hv ⟨parsed, hc, hr⟩
   cases parsed with
   | Err error => cases hr
@@ -212,7 +205,7 @@ theorem verify {α : Type} (input : Slice U8) (child : Cursor → Spec.ParseResu
 theorem choice {α : Type} (input : Slice U8)
     (first second : Cursor → Spec.ParseResult α → Prop)
     (hf : Preserves input first) (hs : Preserves input second) :
-    Preserves input (Contracts.choice first second) := by
+    Preserves input (Spec.choice first second) := by
   rintro start next value hv ⟨parsed, hc, hr⟩
   cases parsed with
   | Ok pair => cases hr; exact hf _ _ _ hv hc
@@ -224,7 +217,7 @@ theorem choice {α : Type} (input : Slice U8)
 
 theorem optional {α : Type} (input : Slice U8)
     (child : Cursor → Spec.ParseResult α → Prop) (hp : Preserves input child) :
-    Preserves input (Contracts.optional child) := by
+    Preserves input (Spec.optional child) := by
   rintro start next value hv ⟨parsed, hc, hr⟩
   cases parsed with
   | Ok pair => cases pair; cases hr; exact hp _ _ _ hv hc
@@ -235,14 +228,14 @@ theorem optional {α : Type} (input : Slice U8)
     · cases hr
 
 theorem and (input : Slice U8) {α : Type} (child : Cursor → Spec.ParseResult α → Prop) :
-    Preserves input (Contracts.and child) := by
+    Preserves input (Spec.and child) := by
   rintro start next value hv ⟨parsed, _, hr⟩
   cases parsed with
   | Ok pair => cases pair; cases hr; exact ⟨hv, le_rfl⟩
   | Err error => cases hr
 
 theorem not (input : Slice U8) {α : Type} (child : Cursor → Spec.ParseResult α → Prop) :
-    Preserves input (Contracts.not child) := by
+    Preserves input (Spec.not child) := by
   rintro start next value hv ⟨parsed, _, hr⟩
   cases parsed with
   | Ok pair => cases pair; cases hr
@@ -255,36 +248,36 @@ theorem not (input : Slice U8) {α : Type} (child : Cursor → Spec.ParseResult 
 theorem left {α β : Type} (input : Slice U8)
     (first : Cursor → Spec.ParseResult α → Prop) (second : Cursor → Spec.ParseResult β → Prop)
     (hf : Preserves input first) (hs : Preserves input second) :
-    Preserves input (Contracts.left first second) :=
+    Preserves input (Spec.left first second) :=
   map input _ _ (sequence input first second hf hs)
 
 theorem right {α β : Type} (input : Slice U8)
     (first : Cursor → Spec.ParseResult α → Prop) (second : Cursor → Spec.ParseResult β → Prop)
     (hf : Preserves input first) (hs : Preserves input second) :
-    Preserves input (Contracts.right first second) :=
+    Preserves input (Spec.right first second) :=
   map input _ _ (sequence input first second hf hs)
 
 theorem middle {α β γ : Type} (input : Slice U8)
     (first : Cursor → Spec.ParseResult α → Prop) (child : Cursor → Spec.ParseResult β → Prop)
     (last : Cursor → Spec.ParseResult γ → Prop)
     (hf : Preserves input first) (hc : Preserves input child) (hl : Preserves input last) :
-    Preserves input (Contracts.middle first child last) :=
+    Preserves input (Spec.middle first child last) :=
   map input _ _ (sequence input first _ hf (sequence input child last hc hl))
 
 theorem ignore {α : Type} (input : Slice U8) (child : Cursor → Spec.ParseResult α → Prop)
-    (hp : Preserves input child) : Preserves input (Contracts.ignore child) := map input _ _ hp
+    (hp : Preserves input child) : Preserves input (Spec.ignore child) := map input _ _ hp
 
 theorem match_restriction {α β : Type} (input : Slice U8) (allowEqual : Bool)
     (first : Cursor → Spec.ParseResult α → Prop) (second : Cursor → Spec.ParseResult β → Prop)
     (hf : Preserves input first) :
-    Preserves input (Contracts.matchRestriction allowEqual first second) := by
+    Preserves input (Spec.matchRestriction allowEqual first second) := by
   intro start next value hv h
   exact hf _ _ _ hv (Proofs.match_restriction_success _ _ _ _ _ _ h).1
 
 theorem exclusive {α : Type} (input : Slice U8)
     (first second : Cursor → Spec.ParseResult α → Prop)
     (hf : Preserves input first) (hs : Preserves input second) :
-    Preserves input (Contracts.exclusive first second) := by
+    Preserves input (Spec.exclusive first second) := by
   intro start next value hv h
   rcases Proofs.xor_success _ _ _ _ _ h with h | h
   · exact hf _ _ _ hv h.1

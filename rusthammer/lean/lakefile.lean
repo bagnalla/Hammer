@@ -9,4 +9,9 @@ package rusthammer where
   moreLeanArgs := #["-DwarningAsError=true", "-DautoImplicit=false"]
 
 @[default_target]
-lean_lib RustHammer
+lean_lib RustHammer where
+  globs := #[.andSubmodules `RustHammer]
+
+lean_exe «proof-audit» where
+  root := `ProofAudit
+  supportInterpreter := true

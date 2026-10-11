@@ -37,17 +37,14 @@ theorem flags_spec (input : Slice U8) (cursor : Cursor) :
     { parser := { first := (), second := { first := (), second := () } }, map := () }
   let mi := Map.Insts.RusthammerParser_traitsParser (Seq.Insts.RusthammerParser_traitsParserInputPair bi pair) fi
   have hfinal : mi.parse_with parser input cursor ByteOrder.Big
-      ⦃ result => Spec.satisfies (Spec.flagsOutcome input cursor) result ⦄ := by
+      ⦃ result => Spec.flagsOutcome input cursor result ⦄ := by
     change Map.Insts.RusthammerParser_traitsParser.parse_with
       (Seq.Insts.RusthammerParser_traitsParserInputPair bi pair) fi parser input cursor ByteOrder.Big
-        ⦃ result => Spec.satisfies (Spec.flagsOutcome input cursor) result ⦄
+        ⦃ result => Spec.flagsOutcome input cursor result ⦄
     step with map_spec (Seq.Insts.RusthammerParser_traitsParserInputPair bi pair) fi parser
       input cursor (Spec.sequence (Spec.bitOutcome input)
         (Spec.sequence (Spec.bitOutcome input) (Spec.bitOutcome input))) mapping hfields hf
-      as ⟨outcome, houtcome⟩
-    rcases houtcome with ⟨result, hresult, heq⟩
-    subst outcome
-    simp only [Spec.satisfies_iff]
+      as ⟨result, hresult⟩
     rcases hresult with ⟨fields, hfields, hmapped⟩
     cases fields with
     | Err error =>

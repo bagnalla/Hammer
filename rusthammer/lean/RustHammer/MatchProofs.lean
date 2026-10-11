@@ -78,7 +78,7 @@ theorem restrict_match_with_spec {P Q α β : Type} (pi : parser_traits.Parser P
     (hp : pi.parse_with p input cursor context ⦃ result => first cursor result ⦄)
     (hq : qi.parse_with q input cursor context ⦃ result => second cursor result ⦄) :
     grammar.control.restrict_match pi qi p q input cursor context allowEqual
-      ⦃ result => Contracts.matchRestriction allowEqual first second cursor result ⦄ := by
+      ⦃ result => Spec.matchRestriction allowEqual first second cursor result ⦄ := by
   rw [grammar.control.restrict_match]
   step with hp as ⟨left, hleft⟩
   cases left with
@@ -113,7 +113,7 @@ theorem but_not_with_spec {P Q α β : Type} (pi : parser_traits.Parser P α) (q
     (hp : pi.parse_with parser.first input cursor context ⦃ result => first cursor result ⦄)
     (hq : qi.parse_with parser.second input cursor context ⦃ result => second cursor result ⦄) :
     ButNot.Insts.RusthammerParser_traitsParser.parse_with pi qi parser input cursor context
-      ⦃ result => Contracts.matchRestriction false first second cursor result ⦄ := by
+      ⦃ result => Spec.matchRestriction false first second cursor result ⦄ := by
   exact restrict_match_with_spec pi qi parser.first parser.second input cursor context false first second hp hq
 
 theorem difference_with_spec {P Q α β : Type} (pi : parser_traits.Parser P α) (qi : parser_traits.Parser Q β)
@@ -122,7 +122,7 @@ theorem difference_with_spec {P Q α β : Type} (pi : parser_traits.Parser P α)
     (hp : pi.parse_with parser.first input cursor context ⦃ result => first cursor result ⦄)
     (hq : qi.parse_with parser.second input cursor context ⦃ result => second cursor result ⦄) :
     Difference.Insts.RusthammerParser_traitsParser.parse_with pi qi parser input cursor context
-      ⦃ result => Contracts.matchRestriction true first second cursor result ⦄ := by
+      ⦃ result => Spec.matchRestriction true first second cursor result ⦄ := by
   exact restrict_match_with_spec pi qi parser.first parser.second input cursor context true first second hp hq
 
 theorem xor_with_spec {P Q α : Type} (pi : parser_traits.Parser P α) (qi : parser_traits.Parser Q α)
@@ -131,7 +131,7 @@ theorem xor_with_spec {P Q α : Type} (pi : parser_traits.Parser P α) (qi : par
     (hp : pi.parse_with parser.first input cursor context ⦃ result => first cursor result ⦄)
     (hq : qi.parse_with parser.second input cursor context ⦃ result => second cursor result ⦄) :
     Xor.Insts.RusthammerParser_traitsParser.parse_with pi qi parser input cursor context
-      ⦃ result => Contracts.exclusive first second cursor result ⦄ := by
+      ⦃ result => Spec.exclusive first second cursor result ⦄ := by
   rw [Xor.Insts.RusthammerParser_traitsParser.parse_with]
   step with hp as ⟨left, hleft⟩
   cases left with
@@ -166,56 +166,44 @@ theorem xor_with_spec {P Q α : Type} (pi : parser_traits.Parser P α) (qi : par
 theorem restrict_match_final_spec {P Q α β : Type} (pi : parser_traits.Parser P α) (qi : parser_traits.Parser Q β)
     (p : P) (q : Q) (input : Slice U8) (cursor : Cursor) (allowEqual : Bool)
     (first : Cursor → Spec.ParseResult α → Prop) (second : Cursor → Spec.ParseResult β → Prop)
-    (hp : pi.parse_with p input cursor ByteOrder.Big ⦃ result => Spec.satisfies (first cursor) result ⦄)
-    (hq : qi.parse_with q input cursor ByteOrder.Big ⦃ result => Spec.satisfies (second cursor) result ⦄) :
+    (hp : pi.parse_with p input cursor ByteOrder.Big ⦃ result => first cursor result ⦄)
+    (hq : qi.parse_with q input cursor ByteOrder.Big ⦃ result => second cursor result ⦄) :
     grammar.control.restrict_match pi qi p q input cursor ByteOrder.Big allowEqual
-      ⦃ result => Spec.satisfies (Spec.matchRestriction allowEqual first second cursor) result ⦄ := by
-  step with restrict_match_with_spec pi qi p q input cursor ByteOrder.Big allowEqual
-    (fun start => Spec.satisfies (first start)) (fun start => Spec.satisfies (second start)) hp hq
-    as ⟨result, hresult⟩
-  cases result with
-  | Ok pair =>
-    rcases pair with ⟨next, value⟩
-    exact ⟨.Ok (next, value), hresult, rfl⟩
-  | Err error => exact ⟨.Err error, hresult, rfl⟩
+      ⦃ result => Spec.matchRestriction allowEqual first second cursor result ⦄ := by
+  exact restrict_match_with_spec pi qi p q input cursor ByteOrder.Big allowEqual first second hp hq
+
 theorem xor_final_spec {P Q α : Type} (pi : parser_traits.Parser P α) (qi : parser_traits.Parser Q α)
     (parser : Xor P Q) (input : Slice U8) (cursor : Cursor)
     (first second : Cursor → Spec.ParseResult α → Prop)
-    (hp : pi.parse_with parser.first input cursor ByteOrder.Big ⦃ result => Spec.satisfies (first cursor) result ⦄)
-    (hq : qi.parse_with parser.second input cursor ByteOrder.Big ⦃ result => Spec.satisfies (second cursor) result ⦄) :
+    (hp : pi.parse_with parser.first input cursor ByteOrder.Big ⦃ result => first cursor result ⦄)
+    (hq : qi.parse_with parser.second input cursor ByteOrder.Big ⦃ result => second cursor result ⦄) :
     Xor.Insts.RusthammerParser_traitsParser.parse_with pi qi parser input cursor ByteOrder.Big
-      ⦃ result => Spec.satisfies (Spec.exclusive first second cursor) result ⦄ := by
-  step with xor_with_spec pi qi parser input cursor ByteOrder.Big
-    (fun start => Spec.satisfies (first start)) (fun start => Spec.satisfies (second start)) hp hq
-    as ⟨result, hresult⟩
-  cases result with
-  | Ok pair =>
-    rcases pair with ⟨next, value⟩
-    exact ⟨.Ok (next, value), hresult, rfl⟩
-  | Err error => exact ⟨.Err error, hresult, rfl⟩
+      ⦃ result => Spec.exclusive first second cursor result ⦄ := by
+  exact xor_with_spec pi qi parser input cursor ByteOrder.Big first second hp hq
+
 theorem but_not_final_spec {P Q α β : Type} (pi : parser_traits.Parser P α) (qi : parser_traits.Parser Q β)
     (parser : ButNot P Q) (input : Slice U8) (cursor : Cursor)
     (first : Cursor → Spec.ParseResult α → Prop) (second : Cursor → Spec.ParseResult β → Prop)
-    (hp : pi.parse_with parser.first input cursor ByteOrder.Big ⦃ result => Spec.satisfies (first cursor) result ⦄)
-    (hq : qi.parse_with parser.second input cursor ByteOrder.Big ⦃ result => Spec.satisfies (second cursor) result ⦄) :
+    (hp : pi.parse_with parser.first input cursor ByteOrder.Big ⦃ result => first cursor result ⦄)
+    (hq : qi.parse_with parser.second input cursor ByteOrder.Big ⦃ result => second cursor result ⦄) :
     ButNot.Insts.RusthammerParser_traitsParser.parse_with pi qi parser input cursor ByteOrder.Big
-      ⦃ result => Spec.satisfies (Spec.matchRestriction false first second cursor) result ⦄ := by
+      ⦃ result => Spec.matchRestriction false first second cursor result ⦄ := by
   exact restrict_match_final_spec pi qi parser.first parser.second input cursor false first second hp hq
 
 theorem difference_final_spec {P Q α β : Type} (pi : parser_traits.Parser P α) (qi : parser_traits.Parser Q β)
     (parser : Difference P Q) (input : Slice U8) (cursor : Cursor)
     (first : Cursor → Spec.ParseResult α → Prop) (second : Cursor → Spec.ParseResult β → Prop)
-    (hp : pi.parse_with parser.first input cursor ByteOrder.Big ⦃ result => Spec.satisfies (first cursor) result ⦄)
-    (hq : qi.parse_with parser.second input cursor ByteOrder.Big ⦃ result => Spec.satisfies (second cursor) result ⦄) :
+    (hp : pi.parse_with parser.first input cursor ByteOrder.Big ⦃ result => first cursor result ⦄)
+    (hq : qi.parse_with parser.second input cursor ByteOrder.Big ⦃ result => second cursor result ⦄) :
     Difference.Insts.RusthammerParser_traitsParser.parse_with pi qi parser input cursor ByteOrder.Big
-      ⦃ result => Spec.satisfies (Spec.matchRestriction true first second cursor) result ⦄ := by
+      ⦃ result => Spec.matchRestriction true first second cursor result ⦄ := by
   exact restrict_match_final_spec pi qi parser.first parser.second input cursor true first second hp hq
 
 theorem but_not_spec {P Q α β : Type} (pi : parser_traits.Parser P α) (qi : parser_traits.Parser Q β)
     (parser : ButNot P Q) (input : Slice U8) (cursor : Cursor)
     (first : Cursor → Spec.ParseResult α → Prop) (second : Cursor → Spec.ParseResult β → Prop)
-    (hp : pi.parse_with parser.first input cursor ByteOrder.Big ⦃ result => Spec.satisfies (first cursor) result ⦄)
-    (hq : qi.parse_with parser.second input cursor ByteOrder.Big ⦃ result => Spec.satisfies (second cursor) result ⦄) :
+    (hp : pi.parse_with parser.first input cursor ByteOrder.Big ⦃ result => first cursor result ⦄)
+    (hq : qi.parse_with parser.second input cursor ByteOrder.Big ⦃ result => second cursor result ⦄) :
     parser_traits.Parser.parse.default (ButNot.Insts.RusthammerParser_traitsParser pi qi) parser input cursor
       ⦃ result => Spec.matchRestriction false first second cursor result ⦄ := by
   exact complete_spec _ parser input cursor _ (but_not_final_spec pi qi parser input cursor first second hp hq)
@@ -223,8 +211,8 @@ theorem but_not_spec {P Q α β : Type} (pi : parser_traits.Parser P α) (qi : p
 theorem difference_spec {P Q α β : Type} (pi : parser_traits.Parser P α) (qi : parser_traits.Parser Q β)
     (parser : Difference P Q) (input : Slice U8) (cursor : Cursor)
     (first : Cursor → Spec.ParseResult α → Prop) (second : Cursor → Spec.ParseResult β → Prop)
-    (hp : pi.parse_with parser.first input cursor ByteOrder.Big ⦃ result => Spec.satisfies (first cursor) result ⦄)
-    (hq : qi.parse_with parser.second input cursor ByteOrder.Big ⦃ result => Spec.satisfies (second cursor) result ⦄) :
+    (hp : pi.parse_with parser.first input cursor ByteOrder.Big ⦃ result => first cursor result ⦄)
+    (hq : qi.parse_with parser.second input cursor ByteOrder.Big ⦃ result => second cursor result ⦄) :
     parser_traits.Parser.parse.default (Difference.Insts.RusthammerParser_traitsParser pi qi) parser input cursor
       ⦃ result => Spec.matchRestriction true first second cursor result ⦄ := by
   exact complete_spec _ parser input cursor _ (difference_final_spec pi qi parser input cursor first second hp hq)
@@ -232,8 +220,8 @@ theorem difference_spec {P Q α β : Type} (pi : parser_traits.Parser P α) (qi 
 theorem xor_spec {P Q α : Type} (pi : parser_traits.Parser P α) (qi : parser_traits.Parser Q α)
     (parser : Xor P Q) (input : Slice U8) (cursor : Cursor)
     (first second : Cursor → Spec.ParseResult α → Prop)
-    (hp : pi.parse_with parser.first input cursor ByteOrder.Big ⦃ result => Spec.satisfies (first cursor) result ⦄)
-    (hq : qi.parse_with parser.second input cursor ByteOrder.Big ⦃ result => Spec.satisfies (second cursor) result ⦄) :
+    (hp : pi.parse_with parser.first input cursor ByteOrder.Big ⦃ result => first cursor result ⦄)
+    (hq : qi.parse_with parser.second input cursor ByteOrder.Big ⦃ result => second cursor result ⦄) :
     parser_traits.Parser.parse.default (Xor.Insts.RusthammerParser_traitsParser pi qi) parser input cursor
       ⦃ result => Spec.exclusive first second cursor result ⦄ := by
   exact complete_spec _ parser input cursor _ (xor_final_spec pi qi parser input cursor first second hp hq)
@@ -243,7 +231,7 @@ rejects recoverably or satisfies the selected consumed-length relation. -/
 theorem match_restriction_success {α β : Type} (allowEqual : Bool)
     (first : Cursor → Spec.ParseResult α → Prop) (second : Cursor → Spec.ParseResult β → Prop)
     (cursor next : Cursor) (value : α)
-    (h : Contracts.matchRestriction allowEqual first second cursor (.Ok (next, value))) :
+    (h : Spec.matchRestriction allowEqual first second cursor (.Ok (next, value))) :
     first cursor (.Ok (next, value)) ∧
       ((∃ error, Spec.recoverable error ∧ second cursor (.Err error)) ∨
        ∃ other otherValue, second cursor (.Ok (other, otherValue)) ∧
@@ -271,7 +259,7 @@ theorem match_restriction_success {α β : Type} (allowEqual : Bool)
 with a recoverable rejection from the other child at the same start. -/
 theorem xor_success {α : Type} (first second : Cursor → Spec.ParseResult α → Prop)
     (cursor next : Cursor) (value : α)
-    (h : Contracts.exclusive first second cursor (.Ok (next, value))) :
+    (h : Spec.exclusive first second cursor (.Ok (next, value))) :
     (first cursor (.Ok (next, value)) ∧
       ∃ error, Spec.recoverable error ∧ second cursor (.Err error)) ∨
     (second cursor (.Ok (next, value)) ∧

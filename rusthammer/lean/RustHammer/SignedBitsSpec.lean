@@ -1,4 +1,4 @@
-import RustHammer.ParserSpec
+import RustHammer.ControlSpec
 
 open RustHammer.Code.grammar.numeric
   RustHammer.Code.input_types

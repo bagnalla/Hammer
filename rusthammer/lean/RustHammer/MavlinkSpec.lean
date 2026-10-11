@@ -20,25 +20,25 @@ abbrev CheckedFields := ((Header × Slice U8) × BitSpan) × U16
 
 /-- Numeric decoding uses the existing mathematical bit-position specification. -/
 def byteOutcome (input : Slice U8) (ctx : ByteOrder) (start : Cursor) :=
-  Contracts.primitive (Ordering.unsignedIntegerOutcome .U8 input start ctx)
+  (Ordering.unsignedIntegerOutcome .U8 input start ctx)
 
 def bitsOutcome (input : Slice U8) (ctx : ByteOrder) (width : U8) (start : Cursor) :=
-  Contracts.primitive (Ordering.outcome input start width ctx)
+  (Ordering.outcome input start width ctx)
 
 def takeOutcome (input : Slice U8) (_ctx : ByteOrder) (count : Usize) (start : Cursor) :=
-  Contracts.primitive (Spec.takeAlignedOutcome input start count)
+  (Spec.takeAlignedOutcome input start count)
 
 /-- The six one-byte fields precede the 24-bit message ID. Constraints are checked
 at their wire positions, before any later field is read. -/
 def headerFields (input : Slice U8) (ctx : ByteOrder) :=
-  Contracts.sequence
-    (Contracts.sequence (byteOutcome input ctx)
-      (Contracts.sequence (Contracts.verify (byteOutcome input ctx) (· = 0#u8))
+  Spec.sequence
+    (Spec.sequence (byteOutcome input ctx)
+      (Spec.sequence (Spec.verify (byteOutcome input ctx) (· = 0#u8))
         (byteOutcome input ctx)))
-    (Contracts.sequence
-      (Contracts.sequence (byteOutcome input ctx)
-        (Contracts.sequence (Contracts.verify (byteOutcome input ctx) (· ≠ 0#u8))
-          (Contracts.verify (byteOutcome input ctx) (· ≠ 0#u8))))
+    (Spec.sequence
+      (Spec.sequence (byteOutcome input ctx)
+        (Spec.sequence (Spec.verify (byteOutcome input ctx) (· ≠ 0#u8))
+          (Spec.verify (byteOutcome input ctx) (· ≠ 0#u8))))
       (bitsOutcome input ctx 24#u8))
 
 def headerValue (fields : HeaderValues) : Header :=
@@ -48,21 +48,21 @@ def headerValue (fields : HeaderValues) : Header :=
     message_id := ⟨fields.2.2.bv.setWidth 32⟩ }
 
 def headerOutcome (input : Slice U8) (ctx : ByteOrder) :=
-  Contracts.map (headerFields input ctx) (fun fields result => result = headerValue fields)
+  Spec.map (headerFields input ctx) (fun fields result => result = headerValue fields)
 
 def payloadOutcome (input : Slice U8) (ctx : ByteOrder) (header : Header) :=
-  Contracts.map (takeOutcome input ctx (UScalar.cast .Usize header.payload_length))
+  Spec.map (takeOutcome input ctx (UScalar.cast .Usize header.payload_length))
     (fun payload result => result = (header, payload))
 
 def bodyOutcome (input : Slice U8) (ctx : ByteOrder) :=
-  Contracts.bind (headerOutcome input ctx) (payloadOutcome input ctx)
+  Spec.bind (headerOutcome input ctx) (payloadOutcome input ctx)
 
 def capturedBody (input : Slice U8) (ctx : ByteOrder) (start : Cursor)
     (result : Spec.ParseResult ((Header × Slice U8) × BitSpan)) : Prop :=
   Span.capture input start (bodyOutcome input ctx start) result
 
 def checksumOutcome (input : Slice U8) (ctx : ByteOrder) :=
-  Contracts.map (bitsOutcome input ctx 16#u8)
+  Spec.map (bitsOutcome input ctx 16#u8)
     (fun value result => result = (⟨value.bv.setWidth 16⟩ : U16))
 
 /-- The dialect supplies CRC_EXTRA. The checksum covers the exact transmitted
@@ -76,14 +76,14 @@ def checksumValid (lookup : U32 → Option U8) (fields : CheckedFields) : Prop :
       extra
 
 def checkedOutcome (input : Slice U8) (ctx : ByteOrder) (lookup : U32 → Option U8) :=
-  Contracts.verify (Contracts.sequence (capturedBody input ctx) (checksumOutcome input ctx))
+  Spec.verify (Spec.sequence (capturedBody input ctx) (checksumOutcome input ctx))
     (checksumValid lookup)
 
 def packetValue (fields : CheckedFields) : Packet :=
   { header := fields.1.1.1, payload := fields.1.1.2, checksum := fields.2 }
 
 def packetOutcome (input : Slice U8) (ctx : ByteOrder) (lookup : U32 → Option U8) :=
-  Contracts.map (checkedOutcome input ctx lookup) (fun fields result => result = packetValue fields)
+  Spec.map (checkedOutcome input ctx lookup) (fun fields result => result = packetValue fields)
 
 /-- One frame starts aligned, has marker 0xfd, and ends just after its checksum.
 This relation specifies all success and error outcomes; it
@@ -91,9 +91,9 @@ does not require EOF, decode message fields, or accept signed frames. -/
 def frameOutcome (input : Slice U8) (_ctx : ByteOrder) (lookup : U32 → Option U8)
     (start : Cursor) : Spec.ParseResult Packet → Prop :=
   let wire := wireOrder
-  Contracts.right
-      (Contracts.sequence (takeOutcome input wire 0#usize)
-        (Contracts.verify (byteOutcome input wire) (· = 253#u8)))
+  Spec.right
+      (Spec.sequence (takeOutcome input wire 0#usize)
+        (Spec.verify (byteOutcome input wire) (· = 253#u8)))
       (packetOutcome input wire lookup) start
 
 end

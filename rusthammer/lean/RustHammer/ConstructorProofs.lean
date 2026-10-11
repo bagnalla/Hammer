@@ -58,7 +58,7 @@ theorem seq_parse_spec {P Q α β : Type} (pi : Parser P α) (qi : Parser Q β)
     (hq : ∀ start, qi.parse_with second input start order ⦃ result => right start result ⦄) :
     (do let parser ← Code.grammar.sequence.seq first second
         Seq.Insts.RusthammerParser_traitsParserInputPair.parse_with pi qi parser input cursor order)
-      ⦃ result => Contracts.sequence left right cursor result ⦄ := by
+      ⦃ result => Spec.sequence left right cursor result ⦄ := by
   apply reuse_spec (Code.grammar.sequence.seq first second)
     (Code.grammar.sequence.Seq.mk first second) (seq_eq first second)
   exact Proofs.seq_with_spec pi qi ⟨first, second⟩ input cursor order left right hp hq

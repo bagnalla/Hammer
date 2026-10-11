@@ -13,7 +13,7 @@ open Code
 /-- Output selection implements the independent separator/item contract. -/
 theorem separated_tail_of_right {α β : Type} (item : Cursor → Spec.ParseResult α → Prop)
     (separator : Cursor → Spec.ParseResult β → Prop) (cursor : Cursor) (outcome : Spec.ParseResult α)
-    (h : Contracts.right separator item cursor outcome) : Spec.separatedTail item separator cursor outcome := by
+    (h : Spec.right separator item cursor outcome) : Spec.separatedTail item separator cursor outcome := by
   rcases h with ⟨parsed, hsequence, hmapped⟩
   rcases hsequence with ⟨separated, hseparator, hitem⟩
   cases separated with

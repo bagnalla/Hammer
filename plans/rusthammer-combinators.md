@@ -480,9 +480,12 @@ record actual extraction support without imposing `Copy`/`Clone` on all outputs.
 The [historical main plan](rusthammer-pre-v1.md) records completed increments and
 then-current counts. Remove excluded tests/theorem roots explicitly, preserving
 high-first complete-input, callback, borrowing, and ownership coverage for
-retained families. General contracts formerly in `Partial*` now live in `ParserSpec` and
-`ParserProofs`. Complete-input claims for retained parsers are preserved; excluded
-proof roots and their replacements are listed in the main plan.
+retained families. General contracts formerly in `Partial*` now live in the family
+specification modules under `Spec`, without a separate `Contracts` namespace or
+identity result wrappers. Default-order proofs specialize the general rules;
+plain and separated repetition share indexed iteration semantics. Complete-input
+claims for retained parsers are preserved; excluded proof roots and their
+replacements are listed in the main plan.
 
 Small length/count/ASCII-whitespace conveniences can be selected
 independently. Diagnostics, permutation, seeking, recursion, floats, packrat, and

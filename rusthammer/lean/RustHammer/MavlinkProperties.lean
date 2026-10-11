@@ -7,19 +7,9 @@ namespace RustHammer.Mavlink
 noncomputable section
 open Classical
 
-private theorem primitive_success {α : Type}
-    (contract : Spec.ParseResult α → Prop) (next : Cursor) (value : α)
-    (h : Contracts.primitive contract (.Ok (next, value))) :
-    contract (.Ok (next, value)) := by
-  rcases h with ⟨parsed, hparsed, heq⟩
-  cases parsed with
-  | Ok pair => cases pair; simp_all []
-  | Err error =>
-    cases error <;> simp_all []
-
 private theorem verify_success {α : Type} (child : Cursor → Spec.ParseResult α → Prop)
     (predicate : α → Prop) [DecidablePred predicate] (start next : Cursor) (value : α)
-    (h : Contracts.verify child predicate start (.Ok (next, value))) :
+    (h : Spec.verify child predicate start (.Ok (next, value))) :
     child start (.Ok (next, value)) ∧ predicate value := by
   obtain ⟨outcome, houtcome, hrest⟩ := h
   cases outcome with
@@ -39,8 +29,8 @@ private theorem byte_success (input : Slice U8) (ctx : ByteOrder)
     (start next : Cursor) (value : U8)
     (h : byteOutcome input ctx start (.Ok (next, value))) :
     Spec.validCursor input next ∧ Spec.position next = Spec.position start + 8 := by
-  have hr := primitive_success _ next value h
-  unfold Ordering.unsignedIntegerOutcome at hr
+  have hr := h
+  unfold byteOutcome Ordering.unsignedIntegerOutcome at hr
   split at hr
   · split at hr
     · obtain ⟨last, result, heq, hv, hp, _⟩ := hr
@@ -53,8 +43,8 @@ private theorem bits_success (input : Slice U8) (ctx : ByteOrder) (width : U8)
     (start next : Cursor) (value : U64)
     (h : bitsOutcome input ctx width start (.Ok (next, value))) :
     Spec.validCursor input next ∧ Spec.position next = Spec.position start + width.val := by
-  have hr := primitive_success _ next value h
-  unfold Ordering.outcome at hr
+  have hr := h
+  unfold bitsOutcome Ordering.outcome at hr
   split at hr
   · split at hr
     · obtain ⟨last, result, heq, hv, hp, _⟩ := hr
@@ -68,8 +58,8 @@ private theorem take_success (input : Slice U8) (ctx : ByteOrder) (count : Usize
     (h : takeOutcome input ctx count start (.Ok (next, payload))) :
     start.bit.val = 0 ∧ next.byte.val = start.byte.val + count.val ∧ next.bit = 0#u8 ∧
       payload.val = (input.val.drop start.byte.val).take count.val := by
-  have hr := primitive_success _ next payload h
-  unfold Spec.takeAlignedOutcome at hr
+  have hr := h
+  unfold takeOutcome Spec.takeAlignedOutcome at hr
   split at hr
   · split at hr
     · rename_i ha
@@ -176,12 +166,12 @@ theorem payload_truncated (header : Header) (input : Slice U8) (start : Cursor)
     payloadInst.parse_with ⟨header⟩ input start ctx ⦃ result => result =
       .Err .UnexpectedEnd ⦄ := by
   step with payload_spec ⟨header⟩ input start ctx as ⟨result, hr⟩
-  obtain ⟨outcome, ⟨raw, hraw, houtcome⟩, hrest⟩ := hr
+  obtain ⟨raw, hraw, hrest⟩ := hr
   have hcount : (UScalar.cast .Usize header.payload_length).val = header.payload_length.val := by
     scalar_tac
   have hbounds : start.bit.val < 8 ∧ start.byte.val ≤ input.val.length ∧
       (start.byte.val = input.val.length → start.bit.val = 0) := by omega
-  simp only [Spec.takeAlignedOutcome, if_pos hbounds, if_pos ha, hcount,
+  simp only [takeOutcome, Spec.takeAlignedOutcome, if_pos hbounds, if_pos ha, hcount,
     if_neg (Nat.not_le_of_lt hshort)] at hraw
   subst raw
   simp_all only []

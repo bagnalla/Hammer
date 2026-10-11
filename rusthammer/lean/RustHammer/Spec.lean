@@ -11,23 +11,6 @@ open flags_example
 
 abbrev ParseResult (α : Type) := core.result.Result (Cursor × α) ParseError
 
-/-- A relational contract with an explicit result witness. -/
-def satisfies {α : Type} (contract : ParseResult α → Prop) (outcome : ParseResult α) : Prop :=
-  ∃ result, contract result ∧ outcome = result
-
-@[simp] theorem satisfies_success {α : Type} (contract : ParseResult α → Prop)
-    (cursor : Cursor) (value : α) :
-    satisfies contract (.Ok (cursor, value)) ↔ contract (.Ok (cursor, value)) := by
-  simp [satisfies]
-
-@[simp] theorem satisfies_error {α : Type} (contract : ParseResult α → Prop)
-    (error : ParseError) : satisfies contract (.Err error) ↔ contract (.Err error) := by
-  simp [satisfies]
-
-@[simp] theorem satisfies_iff {α : Type} (contract : ParseResult α → Prop)
-    (result : ParseResult α) : satisfies contract result ↔ contract result := by
-  simp [satisfies]
-
 /-- Logical bit position uses unbounded naturals, independently of machine arithmetic. -/
 def position (cursor : Cursor) : Nat := 8 * cursor.byte.val + cursor.bit.val
 

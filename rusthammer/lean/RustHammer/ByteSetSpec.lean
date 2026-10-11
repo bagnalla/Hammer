@@ -30,11 +30,8 @@ instance (set : ByteSet) (excluded : Bool) : DecidablePred (bitmapPredicate set 
 
 abbrev bitmapOutcome (input : Slice U8)
     (set : ByteSet) (excluded : Bool) :=
-  Contracts.verify (fun cursor => Contracts.primitive (byteOutcome input cursor))
+  Spec.verify (fun cursor => byteOutcome input cursor)
     (bitmapPredicate set excluded)
-
-abbrev bitmapComplete (input : Slice U8) (set : ByteSet) (excluded : Bool) :=
-  verify (byteOutcome input) (bitmapPredicate set excluded)
 
 /-- Literal list membership; order and duplicates have no semantic effect.
 Exclusion negates only the predicate, after a byte has been decoded. -/
@@ -47,10 +44,7 @@ instance (bytes : List U8) (excluded : Bool) : DecidablePred (byteSetPredicate b
 /-- A set parser inherits all byte decoding, cursor, and error rules. -/
 abbrev byteSetOutcome (input : Slice U8)
     (bytes : List U8) (excluded : Bool) :=
-  Contracts.verify (fun cursor => Contracts.primitive (byteOutcome input cursor))
+  Spec.verify (fun cursor => byteOutcome input cursor)
     (byteSetPredicate bytes excluded)
-
-abbrev byteSetComplete (input : Slice U8) (bytes : List U8) (excluded : Bool) :=
-  verify (byteOutcome input) (byteSetPredicate bytes excluded)
 
 end RustHammer.Spec

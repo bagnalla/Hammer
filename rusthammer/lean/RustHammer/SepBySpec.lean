@@ -1,4 +1,4 @@
-import RustHammer.IterationSpec
+import RustHammer.RepeatSpec
 import RustHammer.FoldRepeatSpec
 
 open RustHammer.Code.grammar.repeat
@@ -57,29 +57,5 @@ def unboundedFoldSepBy {α β R : Type} (input : Slice U8) (item : Cursor → Sp
     (separator : Cursor → Spec.ParseResult β → Prop) (initial : R → Prop) (fold : R → α → R → Prop)
     (min : Nat) (cursor : Cursor) (outcome : Spec.ParseResult R) : Prop :=
   accumulated (folds initial fold) (unboundedIterations input (separatedAttempt item separator) min cursor) outcome
-
-def boundedSepByComplete {α β : Type} (item : Cursor → ParseResult α → Prop)
-    (separator : Cursor → ParseResult β → Prop) (min max : Nat)
-    (cursor : Cursor) (result : ParseResult (alloc.vec.Vec α)) : Prop :=
-  boundedSepBy (fun start => satisfies (item start)) (fun start => satisfies (separator start))
-    min max cursor (result)
-
-def unboundedSepByComplete {α β : Type} (input : Slice U8) (item : Cursor → ParseResult α → Prop)
-    (separator : Cursor → ParseResult β → Prop) (min : Nat)
-    (cursor : Cursor) (result : ParseResult (alloc.vec.Vec α)) : Prop :=
-  unboundedSepBy input (fun start => satisfies (item start)) (fun start => satisfies (separator start))
-    min cursor (result)
-
-def boundedFoldSepByComplete {α β R : Type} (item : Cursor → ParseResult α → Prop)
-    (separator : Cursor → ParseResult β → Prop) (initial : R → Prop) (fold : R → α → R → Prop)
-    (min max : Nat) (cursor : Cursor) (result : ParseResult R) : Prop :=
-  boundedFoldSepBy (fun start => satisfies (item start)) (fun start => satisfies (separator start))
-    initial fold min max cursor (result)
-
-def unboundedFoldSepByComplete {α β R : Type} (input : Slice U8) (item : Cursor → ParseResult α → Prop)
-    (separator : Cursor → ParseResult β → Prop) (initial : R → Prop) (fold : R → α → R → Prop)
-    (min : Nat) (cursor : Cursor) (result : ParseResult R) : Prop :=
-  unboundedFoldSepBy input (fun start => satisfies (item start)) (fun start => satisfies (separator start))
-    initial fold min cursor (result)
 
 end RustHammer.Spec

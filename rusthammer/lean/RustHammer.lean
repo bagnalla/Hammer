@@ -14,7 +14,7 @@ import RustHammer.IntRangeProofs
 import RustHammer.ByteSetProofs
 import RustHammer.PositionProofs
 import RustHammer.MatchProofs
-import RustHammer.OrderParserProofs
+import RustHammer.OrderScopeProofs
 import RustHammer.SpanProofs
 import RustHammer.ConstructorProofs
 import RustHammer.MavlinkProperties

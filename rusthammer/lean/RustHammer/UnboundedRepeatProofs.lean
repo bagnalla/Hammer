@@ -33,27 +33,22 @@ theorem repeat_unbounded_with_spec {P α : Type} (pi : parser_traits.Parser P α
 theorem repeat_unbounded_final_spec {P α : Type} (pi : parser_traits.Parser P α) (parser : P) (min : Usize)
     (input : Slice U8) (cursor : Cursor) (child : Cursor → Spec.ParseResult α → Prop)
     (hp : ∀ start, pi.parse_with parser input start ByteOrder.Big
-      ⦃ result => Spec.satisfies (child start) result ⦄) :
-    Repeat.Insts.RusthammerParser_traitsParserInputVec.parse_with pi { parser, bounds := { min, max := none } }
-      input cursor ByteOrder.Big
-      ⦃ result => Spec.satisfies (Spec.unboundedRepeatComplete input child min.val cursor) result ⦄ := by
-  step with repeat_unbounded_with_spec pi parser min input cursor ByteOrder.Big
-    (fun start => Spec.satisfies (child start)) hp as ⟨outcome, houtcome⟩
-  cases outcome with
-  | Ok pair =>
-    rcases pair with ⟨next, values⟩
-    exact ⟨.Ok (next, values), houtcome, rfl⟩
-  | Err error => exact ⟨.Err error, houtcome, rfl⟩
+      ⦃ result => child start result ⦄) :
+    Repeat.Insts.RusthammerParser_traitsParserInputVec.parse_with pi
+      { parser, bounds := { min, max := none } } input cursor ByteOrder.Big
+      ⦃ result => Spec.unboundedRepeat input child min.val cursor result ⦄ := by
+  exact repeat_unbounded_with_spec pi parser min input cursor ByteOrder.Big child hp
+
 theorem repeat_unbounded_spec {P α : Type} (pi : parser_traits.Parser P α) (parser : P) (min : Usize)
     (input : Slice U8) (cursor : Cursor) (child : Cursor → Spec.ParseResult α → Prop)
     (hp : ∀ start, pi.parse_with parser input start ByteOrder.Big
-      ⦃ result => Spec.satisfies (child start) result ⦄) :
+      ⦃ result => child start result ⦄) :
     parser_traits.Parser.parse.default (Repeat.Insts.RusthammerParser_traitsParserInputVec pi)
       { parser, bounds := { min, max := none } } input cursor
-      ⦃ result => Spec.unboundedRepeatComplete input child min.val cursor result ⦄ := by
+      ⦃ result => Spec.unboundedRepeat input child min.val cursor result ⦄ := by
   exact complete_spec (Repeat.Insts.RusthammerParser_traitsParserInputVec pi)
     { parser, bounds := { min, max := none } } input cursor
-    (Spec.unboundedRepeatComplete input child min.val cursor)
+    (Spec.unboundedRepeat input child min.val cursor)
     (repeat_unbounded_final_spec pi parser min input cursor child hp)
 
 /-- Invalid initial cursors are rejected without any child-parser assumptions. -/
@@ -86,16 +81,16 @@ theorem repeat_unbounded_success_properties {α : Type} (input : Slice U8)
     (h : Spec.unboundedRepeat input child min cursor (.Ok (next, values))) :
     min ≤ values.val.length ∧ Spec.position cursor + values.val.length ≤ Spec.position next := by
   by_cases hv : Spec.validCursor input cursor
-  · simp only [Spec.unboundedRepeat, Spec.collectedValues, Spec.unboundedRepetition, if_pos hv] at h
+  · simp only [Spec.unboundedRepeat, Spec.collectedValues, Spec.unboundedRepetition, Spec.unboundedIterations, if_pos hv] at h
     exact ⟨h.1, advancing_repetitions_consumption input child cursor next values.val h.2.1⟩
-  · simp [Spec.unboundedRepeat, Spec.collectedValues, Spec.unboundedRepetition, hv] at h
+  · simp [Spec.unboundedRepeat, Spec.collectedValues, Spec.unboundedRepetition, Spec.unboundedIterations, hv] at h
 
 theorem repeat_unbounded_bits_with_spec (parser : Bits) (min : Usize) (input : Slice U8)
     (cursor : Cursor) (hconfig : Spec.validBits parser) :
     Repeat.Insts.RusthammerParser_traitsParserInputVec.parse_with Bits.Insts.RusthammerParser_traitsParserInputU64
       { parser, bounds := { min, max := none } } input cursor ByteOrder.Big
       ⦃ result => Spec.unboundedRepeat input
-        (fun start => Contracts.primitive (Spec.bitsOutcome input start parser.width))
+        (fun start => Spec.bitsOutcome input start parser.width)
         min.val cursor result ⦄ := by
   exact repeat_unbounded_with_spec Bits.Insts.RusthammerParser_traitsParserInputU64 parser min input cursor ByteOrder.Big
     _ (fun start => bits_with_spec parser input start hconfig)
@@ -105,7 +100,7 @@ theorem repeat_unbounded_payloads_with_spec (parser : TakeAligned) (min : Usize)
     Repeat.Insts.RusthammerParser_traitsParserInputVec.parse_with
       TakeAligned.Insts.RusthammerParser_traitsParserInputSharedInputSliceU8 { parser, bounds := { min, max := none } }
       input cursor ByteOrder.Big ⦃ result => Spec.unboundedRepeat input
-        (fun start => Contracts.primitive (Spec.takeAlignedOutcome input start parser.count))
+        (fun start => Spec.takeAlignedOutcome input start parser.count)
         min.val cursor result ⦄ := by
   exact repeat_unbounded_with_spec TakeAligned.Insts.RusthammerParser_traitsParserInputSharedInputSliceU8
     parser min input cursor ByteOrder.Big _ (fun start => take_aligned_with_spec parser input start)

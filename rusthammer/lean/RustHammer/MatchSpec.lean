@@ -1,4 +1,4 @@
-import RustHammer.ParserSpec
+import RustHammer.ControlSpec
 
 open RustHammer.Code.input_types
 
@@ -16,7 +16,7 @@ abbrev matchEndpointOrder (allowEqual : Bool) (first second : Cursor) : Prop :=
 
 end RustHammer.Spec
 
-namespace RustHammer.Contracts
+namespace RustHammer.Spec
 open Code
 
 /-- Compare matches from the same cursor. First rejection short-circuits; the
@@ -45,21 +45,5 @@ def exclusive {α : Type} (first second : Cursor → Spec.ParseResult α → Pro
       | .Ok (_, _) => outcome = .Err .Mismatch
       | .Err error =>
         if Spec.recoverable error then outcome = .Ok (next, value) else outcome = .Err error
-
-end RustHammer.Contracts
-
-namespace RustHammer.Spec
-open Code
-
-def matchRestriction {α β : Type} (allowEqual : Bool)
-    (first : Cursor → ParseResult α → Prop) (second : Cursor → ParseResult β → Prop)
-    (cursor : Cursor) (result : ParseResult α) : Prop :=
-  Contracts.matchRestriction allowEqual (fun start => satisfies (first start))
-    (fun start => satisfies (second start)) cursor (result)
-
-def exclusive {α : Type} (first second : Cursor → ParseResult α → Prop)
-    (cursor : Cursor) (result : ParseResult α) : Prop :=
-  Contracts.exclusive (fun start => satisfies (first start)) (fun start => satisfies (second start))
-    cursor (result)
 
 end RustHammer.Spec

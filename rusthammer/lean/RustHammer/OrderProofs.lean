@@ -196,6 +196,4 @@ theorem read_ordered_bits_spec (input : Slice U8) (cursor : Cursor) (parser : Bi
   | Little =>
     exact read_fragments_spec input cursor parser.width .Little hw
 
-#print axioms read_ordered_bits_spec
-
 end RustHammer.Proofs

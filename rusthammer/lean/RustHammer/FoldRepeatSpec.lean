@@ -36,14 +36,4 @@ def unboundedFoldRepeat {α R : Type} (input : Slice U8) (child : Cursor → Spe
     (cursor : Cursor) (outcome : Spec.ParseResult R) : Prop :=
   accumulated (folds initial step) (unboundedRepetition input child min cursor) outcome
 
-def boundedFoldRepeatComplete {α R : Type} (child : Cursor → ParseResult α → Prop)
-    (initial : R → Prop) (step : R → α → R → Prop) (min max : Nat)
-    (cursor : Cursor) (result : ParseResult R) : Prop :=
-  boundedFoldRepeat (fun start => satisfies (child start)) initial step min max cursor (result)
-
-def unboundedFoldRepeatComplete {α R : Type} (input : Slice U8) (child : Cursor → ParseResult α → Prop)
-    (initial : R → Prop) (step : R → α → R → Prop) (min : Nat)
-    (cursor : Cursor) (result : ParseResult R) : Prop :=
-  unboundedFoldRepeat input (fun start => satisfies (child start)) initial step min cursor (result)
-
 end RustHammer.Spec

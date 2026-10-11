@@ -101,23 +101,22 @@ theorem tell_clone_spec (parser : Tell) :
 theorem skip_bits_with_spec (parser : SkipBits) (input : Slice U8)
     (cursor : Cursor) :
     SkipBits.Insts.RusthammerParser_traitsParserInputTuple.parse_with parser input cursor ByteOrder.Big
-      ⦃ result => Contracts.primitive (Spec.skipBitsOutcome input cursor parser.bits) result ⦄ := by
+      ⦃ result => Spec.skipBitsOutcome input cursor parser.bits result ⦄ := by
   rw [SkipBits.Insts.RusthammerParser_traitsParserInputTuple.parse_with]
   step with advance_cursor_spec input.len cursor parser.bits as ⟨advanced, hadvanced⟩
   cases advanced with
   | Ok next =>
     simp only [spec_ok]
-    exact ⟨.Ok (next, ()), ⟨.Ok next, hadvanced, rfl⟩, rfl⟩
+    exact ⟨.Ok next, hadvanced, rfl⟩
   | Err error =>
     simp only [spec_ok]
-    exact ⟨.Err error, ⟨.Err error, hadvanced, rfl⟩, rfl⟩
+    exact ⟨.Err error, hadvanced, rfl⟩
 
 theorem skip_bits_spec (parser : SkipBits) (input : Slice U8) (cursor : Cursor) :
     parser_traits.Parser.parse.default SkipBits.Insts.RusthammerParser_traitsParserInputTuple parser input cursor
       ⦃ result => Spec.skipBitsOutcome input cursor parser.bits result ⦄ := by
   apply complete_spec
-  simpa only [SkipBits.Insts.RusthammerParser_traitsParserInputTuple.parse_with, ByteOrder.Big,
-    Contracts.primitive, Spec.satisfies] using
+  simpa only [SkipBits.Insts.RusthammerParser_traitsParserInputTuple.parse_with, ByteOrder.Big] using
     skip_bits_with_spec parser input cursor
 
 private theorem normalized_position_injective (first second : Cursor)
@@ -145,18 +144,18 @@ theorem advance_cursor_zero_spec (length : Usize) (cursor : Cursor) :
 
 theorem tell_with_spec (input : Slice U8) (cursor : Cursor) :
     Tell.Insts.RusthammerParser_traitsParserInputCursor.parse_with () input cursor ByteOrder.Big
-      ⦃ result => Spec.satisfies (Spec.tellOutcome input cursor) result ⦄ := by
+      ⦃ result => Spec.tellOutcome input cursor result ⦄ := by
   rw [Tell.Insts.RusthammerParser_traitsParserInputCursor.parse_with]
   step with advance_cursor_zero_spec input.len cursor as ⟨advanced, hadvanced⟩
   by_cases hv : Spec.validCursor input cursor
   · have heq : advanced = .Ok cursor := by
       simpa only [Spec.validPosition, Slice.len_val, if_pos hv] using hadvanced
     simp only [heq, spec_ok]
-    exact ⟨.Ok (cursor, cursor), by rw [Spec.tellOutcome, if_pos hv], rfl⟩
+    simp only [Spec.tellOutcome, if_pos hv]
   · have heq : advanced = .Err .InvalidCursor := by
       simpa only [Spec.validPosition, Slice.len_val, if_neg hv] using hadvanced
     simp only [heq, spec_ok]
-    exact ⟨.Err .InvalidCursor, by rw [Spec.tellOutcome, if_neg hv], rfl⟩
+    simp only [Spec.tellOutcome, if_neg hv]
 
 theorem tell_spec (input : Slice U8) (cursor : Cursor) :
     parser_traits.Parser.parse.default Tell.Insts.RusthammerParser_traitsParserInputCursor () input cursor
@@ -166,9 +165,8 @@ theorem tell_spec (input : Slice U8) (cursor : Cursor) :
 
 theorem skip_bits_final_spec (parser : SkipBits) (input : Slice U8) (cursor : Cursor) :
     SkipBits.Insts.RusthammerParser_traitsParserInputTuple.parse_with parser input cursor ByteOrder.Big
-      ⦃ result => Spec.satisfies (Spec.skipBitsOutcome input cursor parser.bits) result ⦄ := by
-  simpa only [SkipBits.Insts.RusthammerParser_traitsParserInputTuple.parse_with, ByteOrder.Big,
-    Contracts.primitive, Spec.satisfies] using
+      ⦃ result => Spec.skipBitsOutcome input cursor parser.bits result ⦄ := by
+  simpa only [SkipBits.Insts.RusthammerParser_traitsParserInputTuple.parse_with, ByteOrder.Big] using
     skip_bits_with_spec parser input cursor
 
 theorem skip_bits_zero_with_spec (input : Slice U8) (cursor : Cursor) :
@@ -185,10 +183,10 @@ theorem skip_bits_zero_with_spec (input : Slice U8) (cursor : Cursor) :
     simp [heq, hv, spec_ok]
 
 theorem skip_bits_success (input : Slice U8) (cursor next : Cursor) (bits : Usize)
-    (h : Contracts.primitive (Spec.skipBitsOutcome input cursor bits) (.Ok (next, ()))) :
+    (h : (Spec.skipBitsOutcome input cursor bits) (.Ok (next, ()))) :
     Spec.validCursor input cursor ∧ Spec.validCursor input next ∧
       Spec.position next = Spec.position cursor + bits.val := by
-  rcases h with ⟨parsed, ⟨advanced, hadvanced, rfl⟩, heq⟩
+  rcases h with ⟨advanced, hadvanced, heq⟩
   cases advanced with
   | Err error => cases error <;> cases heq
   | Ok after =>
@@ -206,3 +204,19 @@ theorem skip_bits_success (input : Slice U8) (cursor next : Cursor) (bits : Usiz
     · cases hadvanced
 
 end RustHammer.Proofs
+
+namespace RustHammer.Ordering
+open Code Proofs
+
+theorem skip_bits_with_spec (parser : SkipBits) (input : Slice U8) (cursor : Cursor)
+    (context : ByteOrder) :
+    SkipBits.Insts.RusthammerParser_traitsParserInputTuple.parse_with parser input cursor context
+      ⦃ result => Spec.skipBitsOutcome input cursor parser.bits result ⦄ := by
+  exact Proofs.skip_bits_with_spec parser input cursor
+
+theorem tell_with_spec (input : Slice U8) (cursor : Cursor) (context : ByteOrder) :
+    Tell.Insts.RusthammerParser_traitsParserInputCursor.parse_with () input cursor context
+      ⦃ result => Spec.tellOutcome input cursor result ⦄ := by
+  exact Proofs.tell_with_spec input cursor
+
+end RustHammer.Ordering

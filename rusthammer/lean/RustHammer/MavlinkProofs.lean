@@ -1,6 +1,8 @@
 import RustHammer.MavlinkSpec
 import RustHammer.MavlinkCrcProofs
-import RustHammer.OrderParserProofs
+import RustHammer.ByteSetProofs
+import RustHammer.PositionProofs
+import RustHammer.OrderScopeProofs
 import RustHammer.BindProofs
 import RustHammer.SelectionProofs
 import RustHammer.SpanProofs
@@ -56,7 +58,7 @@ theorem in_spec (parser : ByteIn) (expected : U8)
     (hrep : Spec.bitmapRepresents parser.set [expected])
     (input : Slice U8) (cursor : Cursor) (ctx : ByteOrder) :
     inInst.parse_with parser input cursor ctx
-      ⦃ result => Contracts.verify (byteOutcome input ctx) (· = expected) cursor result ⦄ := by
+      ⦃ result => Spec.verify (byteOutcome input ctx) (· = expected) cursor result ⦄ := by
   have hp : Spec.bitmapPredicate parser.set false = (· = expected) := by
     funext value
     apply propext
@@ -69,7 +71,7 @@ theorem in_spec (parser : ByteIn) (expected : U8)
 theorem nonzero_spec (parser : ByteNotIn) (hrep : Spec.bitmapRepresents parser.set [0#u8])
     (input : Slice U8) (cursor : Cursor) (ctx : ByteOrder) :
     notInInst.parse_with parser input cursor ctx
-      ⦃ result => Contracts.verify (byteOutcome input ctx) (· ≠ 0#u8) cursor result ⦄ := by
+      ⦃ result => Spec.verify (byteOutcome input ctx) (· ≠ 0#u8) cursor result ⦄ := by
   have hp : Spec.bitmapPredicate parser.set true = (· ≠ 0#u8) := by
     funext value
     apply propext
@@ -258,7 +260,7 @@ def frameConfig {F : Type} (parser : FrameParser F) : Prop :=
 theorem fields_spec (parser : FieldsParser) (hp : fieldsConfig parser)
     (input : Slice U8) (cursor : Cursor) (ctx : ByteOrder) :
     fieldsInst.parse_with parser input cursor ctx
-      ⦃ result => Contracts.sequence (capturedBody input ctx) (checksumOutcome input ctx)
+      ⦃ result => Spec.sequence (capturedBody input ctx) (checksumOutcome input ctx)
         cursor result ⦄ := by
   apply Proofs.seq_with_spec
   · intro start
