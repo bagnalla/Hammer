@@ -285,6 +285,19 @@ describes decoding and rejection conditions. The
 This provides both valid-input acceptance and correctness of returned results,
 together with the rejection contract.
 
+The [MAVLink specification](lean/RustHammer/MavlinkSpec.lean) describes the
+unsigned MAVLink 2 frame grammar, including little-endian numeric decoding and
+partial-input outcomes. Its [parser proof](lean/RustHammer/MavlinkProofs.lean)
+connects that contract to the extracted example. The
+[success properties](lean/RustHammer/MavlinkProperties.lean) establish exact
+consumption of `12 + payload_length` bytes, the payload's input slice, and the
+checksum interval excluding magic and the checksum itself. The
+[CRC proof](lean/RustHammer/MavlinkCrcProofs.lean) establishes termination and
+agreement with the reflected `0x8408` bit-vector specification for arbitrary
+byte slices, including the dialect's final `CRC_EXTRA` byte. The dialect callback
+needs a total-correctness contract; the example's HEARTBEAT lookup is proved
+separately. Payload decoding and signed frames are outside this example.
+
 ## Verification workflow and limits
 
 **The verification pipeline checks several different kinds of evidence.** From
@@ -300,7 +313,7 @@ promoted-MIR translation. We have not separately proved equivalence between
 compiler stages.
 
 At the snapshot described here, the pipeline checks 66 consumer entry points and
-audits the axiom dependencies of 178 selected theorem roots. That is an audit
+audits the axiom dependencies of 200 selected theorem roots. That is an audit
 count, not the total number of theorems. Project files contain no admitted
 obligations or project-defined axioms. Native tests and C comparisons provide
 additional evidence, including pointer identity and destructor behavior.

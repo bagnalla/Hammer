@@ -2,22 +2,22 @@
 
 ## Project Structure & Module Organization
 
-Hammer is a C99 parser-combinator library. `src/hammer.h` defines the public API;
-`src/parsers/` implements combinators, `src/backends/` contains parsing engines,
-and `src/bindings/` provides Python, Java, C++, and Go interfaces. C tests live in
-`tests/`, including `tests/parsers/` and `tests/backends/`. `examples/` contains
-protocol parsers; `docs/assets/` holds documentation images. Build logic lives in
-`SConstruct` and `src/SConscript`; maintenance tools live in `tools/`.
+- `src/` contains the C library: `hammer.h` exposes the API, `parsers/` implements combinators, `backends/` implements parsing engines, and `bindings/` contains language wrappers.
+- `tests/` holds C tests, grouped under `parsers/` and `backends/` with shared infrastructure.
+- `rusthammer/` contains the experimental Rust core: `src/grammar/`, feature-oriented `tests/`, runnable `examples/`, and Lean specifications/proofs under `lean/`.
+- `examples/` contains C demos and protocol fixtures; `docs/assets/` contains documentation assets. `tools/` provides development utilities, and `plans/` records RustHammer designs.
 
 ## Build, Test, and Development Commands
 
-Install GCC, SCons, pkg-config, and GLib development headers (`libglib2.0-dev` on
-Ubuntu). Run commands from the repository root:
+C prerequisites are GCC, SCons, pkg-config, and GLib development headers. From the repository root:
 
-- `scons`: build optimized libraries and the test executable under `build/opt/`.
-- `scons test`: build and run the core C suite.
-- `scons --variant=debug test`: build and test with debugging symbols.
-- `scons bindings=all test`: build and test all language bindings; see
-  [DEVELOPMENT.md](DEVELOPMENT.md) for their dependencies.
-- `scons bindings=python testpython`: test just the Python binding.
-- `doxygen Doxyfile`: generate API documentation in `docs/html/`.
+- `scons` builds optimized libraries under `build/opt/`.
+- `scons --variant=debug test` builds and runs the C suite with debug symbols.
+- `scons bindings=all test` tests the library and bindings; install binding-specific dependencies listed in `DEVELOPMENT.md`.
+- `doxygen Doxyfile` generates documentation under `docs/html/`.
+
+From `rusthammer/`, use the pinned Rust toolchain:
+
+- `cargo test --no-default-features` and `cargo test --features alloc` exercise both allocation configurations.
+- `cargo run --example flags` runs a sample grammar.
+- `python3 tools/verify.py --aeneas-dir /path/to/aeneas` checks formatting, tests, extraction, and Lean proofs; matching Aeneas/Charon revisions are required.

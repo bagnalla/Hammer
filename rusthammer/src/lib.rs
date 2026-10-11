@@ -91,5 +91,10 @@ mod marker_example;
 #[path = "../examples/support/record.rs"]
 mod record_example;
 
+#[cfg(rusthammer_verify)]
+#[allow(dead_code)]
+#[path = "../examples/support/mavlink.rs"]
+mod mavlink_example;
+
 #[cfg(feature = "alloc")]
 extern crate alloc;

@@ -70,7 +70,8 @@ The prototype supports:
 
 Verified application examples live in [`examples/support/`](examples/support/):
 a three-bit `Flags` header, a complete `CA FE` / `CA` marker grammar, a bounded
-record with a borrowed payload, and count-prefixed formats built with `Bind`.
+record with a borrowed payload, count-prefixed formats built with `Bind`, and
+unsigned MAVLink 2 frames with CRC validation.
 Their types, parsing helpers, and format limits belong to those examples and
 are absent from the public library API. Runnable examples, native tests, and
 Lean extraction share each format's source.
@@ -105,6 +106,7 @@ cargo run --example bytes
 cargo run --example marker
 cargo run --example matches
 cargo run --example record
+cargo run --example mavlink
 cargo run --example lookahead
 cargo run --example input_status
 cargo run --example selection
@@ -116,6 +118,27 @@ cargo run --features alloc --example separated
 cargo run --no-default-features --example dependent
 cargo run --features alloc --example dependent
 ```
+
+The [`mavlink` example](examples/mavlink.rs) parses unsigned MAVLink 2 frames with
+a borrowed payload and validates the checksum using a caller-supplied dialect
+`CRC_EXTRA` lookup. Its [grammar](examples/support/mavlink.rs) demonstrates `Bind`
+for the payload length, `WithOrder` for little-endian fields, and `WithSpan` plus
+`Verify` for checksum coverage. The sample lookup supports HEARTBEAT. Signed
+frames and unknown incompatibility flags are rejected; message payload decoding
+is left to the caller.
+
+The [Lean parser proof](lean/RustHammer/MavlinkProofs.lean) covers the extracted
+example's direct execution for arbitrary buffers, cursors, input finality, and
+ambient ordering. The [frame properties](lean/RustHammer/MavlinkProperties.lean)
+establish aligned success, exact consumption of `12 + payload_length` bytes,
+the borrowed payload's location, sender/flag constraints, and CRC coverage from
+the length byte through the transmitted payload. Final input cannot produce
+`NeedMore`; truncated payloads request more data on partial input and report
+`UnexpectedEnd` on final input. The [CRC proof](lean/RustHammer/MavlinkCrcProofs.lean)
+covers arbitrary byte slices and the final `CRC_EXTRA`, against a separate
+bit-vector specification. A custom dialect callback must terminate and implement
+the stated lookup; the HEARTBEAT lookup is proved separately. These proofs do not
+cover message-payload decoding or signatures.
 
 The `flags` example parses `101` from the start of `0b1010_0000` and returns:
 
@@ -1874,9 +1897,13 @@ The [seeking design](../plans/rusthammer-seeking.md) records its production API,
 proofs, span endpoint intervals, repetition's net-progress checks, and ordering scopes.
 Diagnostic annotations will label parser occurrences and optionally record where
 they were constructed, while preserving parsing behavior.
-The next recommended step is the [diagnostics design and extraction
-investigation](../plans/rusthammer.md#diagnostic-annotations). It has not started;
-the API, collection mechanism, and first-version inclusion remain open.
+The [diagnostics investigation](../plans/rusthammer-diagnostics.md) now records
+scoped reporting rules, private observer hooks, and preservation proofs checked
+against both MIR translations. [Downstream probes](probes/diagnostics/README.md)
+pass with caller-supplied borrowed metadata; constructing and returning static
+string metadata still has a minimized extraction failure. Next settle that gate,
+report storage, and backend migration. No production API has been added, and
+first-version inclusion remains open.
 Deferred actions and a dedicated `h_dispatch` counterpart are omitted from the
 intended API. Named parse-local value storage is outside the first version, with
 its longer-term role undecided pending a concrete use case. Explicit typed values,

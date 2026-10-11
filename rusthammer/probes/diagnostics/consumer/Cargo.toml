@@ -1,0 +1,16 @@
+[package]
+name = "rusthammer_diagnostic_consumer"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+path = "lib.rs"
+
+[features]
+default = []
+alloc = ["rusthammer/alloc", "rusthammer_diagnostic_probe/alloc"]
+
+[dependencies]
+rusthammer = { path = "../../.." }
+rusthammer_diagnostic_probe = { path = ".." }

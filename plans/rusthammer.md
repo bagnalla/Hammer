@@ -39,6 +39,7 @@ according to the work being resumed:
 | [Deferred recursion writeup](rusthammer-recursive-rules.md) | Proposed fixed-point construction, extraction diagnosis, unproved translation-soundness obligations, and retained packrat evidence. Not a prerequisite for the first version. |
 | [Input plan](rusthammer-input.md#matched-input-spans) | Implemented `BitSpan`, `Recognize`, and `WithSpan`, their physical-bit meaning, and the permanent ordering restriction. |
 | [Seeking design](rusthammer-seeking.md) | Implemented API, C differences, composition audit, arithmetic/evaluation/application proofs, and extraction evidence. |
+| [Diagnostics investigation](rusthammer-diagnostics.md) | Proposed scoped reporting semantics, backend hooks, private preservation proofs, and the static-metadata extraction gate. No production API yet. |
 | [C implementation issue log](../docs/c-implementation-issues.md) | Absolute bit-position limits, seeking beyond EOF, and wrapped backward lengths, with reproducers. These quirks do not define Rust semantics. |
 | [Combinator plan](rusthammer-combinators.md) | Implemented and proposed families, Hammer counterparts, constructor/return-type policy, and the rule against temporary production APIs or implementations. |
 | [Prototype README](../rusthammer/README.md) | Current usage, source/proof map, verification commands, and proof-model limits. |
@@ -150,13 +151,17 @@ Seeking is included in the first version.
 
 Continue from the existing nonrecursive API:
 
-1. The latest recommendation is a small [diagnostics design and extraction
-   investigation](#diagnostic-annotations). It has not started; the public API,
-   collection mechanism, and first-version inclusion remain open. Specify the
-   diagnostic information and selection rules, investigate instrumentation at
-   the backend boundary, and check preservation of parsing behavior before
-   implementing a public API. Length-counted elements, length-prefixed bytes,
-   and ASCII whitespace remain smaller follow-up conveniences built from the core.
+1. The [diagnostics investigation](rusthammer-diagnostics.md) is complete as a
+   private feasibility increment. Scoped collection, bounded borrowed reports,
+   both MIR stages, ordinary downstream examples, and preservation proofs pass
+   for caller-supplied metadata. A Boolean no-op mark avoids a unit-return
+   translation defect. Returning locally constructed static string metadata
+   still fails extraction, even in a minimal parser-free example; the
+   [probe report](../rusthammer/probes/diagnostics/README.md) preserves the controls.
+   Next settle that static-metadata gate, durable storage, and the backend-hook
+   migration before exporting diagnostics. The public API and first-version
+   inclusion remain open. Length-counted elements, length-prefixed bytes, and
+   ASCII whitespace remain smaller follow-up conveniences built from the core.
 2. Specify and implement selected operations using the current core, with
    compositional proofs and ordinary downstream examples. Preserve typed
    outputs, borrowing, partial-input behavior, and the backend boundary.
@@ -219,11 +224,13 @@ files without regenerating them.
 
 Use the pinned Rust `nightly-2026-09-17`, Lean `v4.31.0`, and the
 [Aeneas/Charon revisions](#aeneas-compatibility-evidence) enforced by the runner.
-The pinned local extraction checkout is `rusthammer/target/extraction-tools/aeneas/`,
-including its `charon/` subdirectory. From `rusthammer/`, pass
-`--aeneas-dir target/extraction-tools/aeneas` to runners whose default remains
-`~/source/aeneas/`; `~/source/nom/` is a design reference. Updating to an unpinned
-tool revision is a separate compatibility task.
+The earlier extraction checkout was `rusthammer/target/extraction-tools/aeneas/`,
+including its `charon/` subdirectory; it may be absent in a fresh workspace.
+The diagnostics investigation used the matching checkout at
+`/home/alex/source/rosette/aeneas/`. Pass the available pinned checkout with
+`--aeneas-dir` rather than relying on a runner's historical default;
+`~/source/nom/` is a design reference. Updating to an unpinned tool revision is a
+separate compatibility task.
 
 Edit Rust to change generated behavior; do not hand-edit
 [`Rusthammer.lean`](../rusthammer/lean/RustHammer/Rusthammer.lean).
@@ -1047,7 +1054,7 @@ diagnostic, and how grammar source locations are represented. Prove annotations
 preserve the underlying acceptance, decoded values, consumption, and error
 control flow. The API and first-version scope remain to be selected.
 
-The next recommended investigation, recorded at the 2026-10-08 handoff, is:
+The investigation requested at the 2026-10-08 handoff covered:
 
 1. Define what a report retains: the failing input `Cursor`, parser-occurrence
    labels, optional grammar-construction locations, and any expected-input
@@ -1066,12 +1073,17 @@ The next recommended investigation, recorded at the 2026-10-08 handoff, is:
    the underlying parse outcomes, values, and returned cursors. Treat successful
    extraction as compatibility evidence, separate from that semantic proof.
 
-Read the C annotations and diagnostic API in [`hammer.h`](../src/hammer.h),
-the implementation in [`trace.c`](../src/trace.c), and the
-[trace tests](../tests/backends/test_trace.c) for reference. Record the findings
-before selecting the permanent API; do not add a temporary wrapper that merely
-stores labels without a specified reporting mechanism. This investigation has
-not begun and has no chosen implementation or identified extraction blocker.
+The [design report](rusthammer-diagnostics.md) records the C read-through,
+selection rules, proposed observer hooks, and remaining production decisions.
+The [private probe](../rusthammer/probes/diagnostics/README.md) checks both MIR
+stages and an ordinary Cargo consumer, proves hook totality and generic scope
+preservation, and proves enabled/disabled equivalence for a labelled byte grammar.
+Caller-supplied borrowed metadata works. Unit-valued no-op marks produce an
+ill-typed generated dictionary (Boolean marks pass); locally constructed static
+string metadata still fails extraction in minimized parser-free controls.
+Resolve the intended static-metadata source forms, report storage, and backend
+migration before selecting the permanent API. There is no production annotation
+wrapper yet, and first-version inclusion remains open.
 
 ### Recursion, progress, and resources
 

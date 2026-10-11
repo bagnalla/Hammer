@@ -50,6 +50,15 @@ CONSTRUCTOR_THEOREMS = tuple(f"RustHammer.Constructors.{name}" for name in (
     "reuse_spec", "seq_eval_spec",
 ))
 
+MAVLINK_THEOREMS = tuple(f"RustHammer.Mavlink.{name}" for name in (
+    "crc_rounds_spec", "crc_accumulate_spec", "crc_buffer_spec", "crc_spec",
+    "header_constructor", "header_spec", "payload_spec", "body_spec", "checksum_spec",
+    "checksum_predicate_spec", "fields_spec", "checked_spec", "packet_spec",
+    "frame_constructor", "frame_parser_spec", "mavlink_spec", "heartbeat_lookup_spec",
+    "header_success", "frame_success", "frame_final_not_more", "mavlink_final_not_more",
+    "payload_truncated",
+))
+
 PERMUTATION_THEOREMS = tuple(f"RustHammer.Permutation.{name}" for name in (
     "search_spec", "eval_spec", "required_eq", "permutation_eq", "required_eval_spec",
     "required_slot_spec", "optional_slot_spec", "required_entry_spec", "optional_entry_spec",
@@ -89,14 +98,16 @@ def translate(aeneas, llbc, destination, namespace):
     )
 
 
-def audit_proofs():
+def audit_proofs(lake_args=()):
     theorems = (ORDER_THEOREMS + BACKEND_THEOREMS + SPAN_THEOREMS
-                + CONSTRUCTOR_THEOREMS + PERMUTATION_THEOREMS + SEEK_THEOREMS)
+                + CONSTRUCTOR_THEOREMS + PERMUTATION_THEOREMS + SEEK_THEOREMS
+                + MAVLINK_THEOREMS)
     audit = ROOT / "target" / "proof-axioms.lean"
     audit.write_text("import RustHammer\n" + "".join(
         f"#print axioms {name}\n" for name in theorems
     ))
-    result = output("lake", "env", "lean", "-DwarningAsError=true", audit, cwd=ROOT / "lean")
+    result = output("lake", *lake_args, "env", "lean", "-DwarningAsError=true", audit,
+                    cwd=ROOT / "lean")
     audits = re.findall(
         r"'([^']+)' (?:depends on axioms: \[([^]]*)\]|does not depend on any axioms)", result,
     )
@@ -116,7 +127,14 @@ def main():
         default=Path.home() / "source" / "aeneas",
         help="local Aeneas checkout containing bin/aeneas and charon/bin/charon",
     )
+    parser.add_argument(
+        "--lean-packages", type=Path,
+        help="optional Lake package overrides for existing local dependency checkouts",
+    )
     args = parser.parse_args()
+    lake_args = () if args.lean_packages is None else (
+        f"--packages={args.lean_packages.expanduser().resolve()}",
+    )
     checkout = args.aeneas_dir.expanduser().resolve()
     aeneas = checkout / "bin" / "aeneas"
     charon = checkout / "charon" / "bin" / "charon"
@@ -163,6 +181,8 @@ def main():
         "--start-from", "{impl core::clone::Clone for rusthammer::grammar::permutation::Required}",
         "--start-from", "rusthammer::marker_example::parse_marker",
         "--start-from", "rusthammer::record_example::parse_record",
+        "--start-from", "rusthammer::mavlink_example::mavlink_v2",
+        "--start-from", "rusthammer::mavlink_example::heartbeat_crc_extra",
         "--start-from", "rusthammer::grammar::numeric::Bits::new",
         "--start-from", "rusthammer::grammar::numeric::Bits::width",
         "--start-from", "rusthammer::span_types::BitSpan::new",
@@ -230,6 +250,8 @@ def main():
         "--start-from", "{impl core::clone::Clone for rusthammer::marker_example::Marker}",
         "--start-from", "{impl core::clone::Clone for rusthammer::record_example::RecordParser}",
         "--include", "core::option::{impl core::clone::Clone for core::option::Option}",
+        # MAVLink borrows the CRC lookup callback; translate reference-call forwarding.
+        "--include", "core::ops::function::impls::_",
     )
     run(
         *library_extraction,
@@ -305,10 +327,10 @@ def main():
     for path in [*(ROOT / "lean" / "RustHammer").glob("*.lean"), *compatibility_files]:
         if re.search(r"\b(?:sorry|admit)\b|^\s*(?:axiom|opaque)\s", path.read_text(), re.M):
             parser.error(f"unproved or opaque declaration in {path}")
-    run("lake", "build", cwd=ROOT / "lean")
-    audit_proofs()
+    run("lake", *lake_args, "build", cwd=ROOT / "lean")
+    audit_proofs(lake_args)
     for path in compatibility_files:
-        run("lake", "env", "lean", "-DwarningAsError=true", path, cwd=ROOT / "lean")
+        run("lake", *lake_args, "env", "lean", "-DwarningAsError=true", path, cwd=ROOT / "lean")
 
 
 if __name__ == "__main__":

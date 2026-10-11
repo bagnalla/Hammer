@@ -6,6 +6,19 @@ mapping probe includes the actual library source to exercise a concrete callback
 The `cross_crate` fixture instead uses a normal Cargo dependency and is checked
 by the local verification command.
 
+## Diagnostic annotations
+
+The [diagnostics investigation](diagnostics/README.md) checks scoped observer
+hooks, borrowed labels/source metadata, bounded reports, and preservation of
+outcomes/backend state. Probe and ordinary consumer translations pass both MIR
+stages for caller-supplied metadata; preservation proofs are checked against each
+freshly generated probe implementation. A unit-valued no-op mark produces an
+ill-typed Lean dictionary (an ignored Boolean mark passes). Static metadata
+returns fail in separate minimized controls, including a parser-free label
+constructor. Run `python3 tools/check_diagnostics.py --aeneas-dir /path/to/aeneas`;
+the runner checks both supported forms and the expected failures. No production
+diagnostic API or extraction-tool patch is included.
+
 ## Floating-point fields and ranges
 
 Native floating-point support and its Aeneas tool/model work are deferred beyond

@@ -20,3 +20,4 @@ import RustHammer.BackendProofs
 import RustHammer.SpanProofs
 import RustHammer.ConstructorProofs
 import RustHammer.PermutationTupleProofs
+import RustHammer.MavlinkProperties

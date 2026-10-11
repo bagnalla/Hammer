@@ -553,10 +553,12 @@ are deferred at the user's request; the probe remains evidence for later work.
    diagnostic annotations and the remaining
    [dependent helpers](#dependent-parsing-and-reusable-helpers), including
    length/count wrappers and ASCII whitespace.
-   The latest recommendation is the [diagnostics design and extraction
-   investigation](rusthammer.md#diagnostic-annotations), which has not started.
-   It must settle failure information, selection rules, instrumentation, and
-   preservation of parsing behavior before choosing a public API.
+   The [diagnostics investigation](rusthammer-diagnostics.md) now records scoped
+   selection rules, private backend hooks, and checked preservation proofs.
+   Both MIR stages and downstream borrowed-metadata examples pass. Static string
+   metadata returned from local construction still has a minimized extraction
+   failure. Settle that gate, durable report storage, and backend migration before
+   choosing a public API; first-version inclusion remains open.
    Select the operations needed for the first version and their implementation
    order, specify their contracts, and reuse the existing primitives, `Bind`,
    and repetition where appropriate.
